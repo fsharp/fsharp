@@ -1,0 +1,651 @@
+<html>
+
+<head>
+    <Attribute>
+<title>F# Compiler Source Drop, April 2010</title>
+
+
+  <style type="text/css">
+  TT { font-weight: bold; color: blue; font-size: 10pt; }
+  PRE { font-weight: bold; color: blue; font-size: 10pt;  }
+      
+.title_2ndLvl
+{
+	font-family: tahoma;
+	font-size: 120%;
+	color: #FFFFFF;
+	padding-left: 5px;
+}
+.BODY
+{
+	font-family:verdana;
+}
+A
+{
+	color: #003399;
+}
+.VR
+{
+	background-color: #cccccc;
+	width: 1px;
+}
+.HR
+{
+	background-color: #cccccc;
+	height: 1px;
+}
+.link1
+{
+	font-size:70%;
+	font-family: verdana;
+}
+.link2
+{
+	font-size: 70%;
+	font-family:Verdana;
+	font-style:italic;
+}
+.link3
+{
+	font-style: italic;
+	font-family: Verdana;
+	color: #000000;
+	font-weight: bold;
+}
+.link4
+{
+	font: italic 70% Verdana;
+	color: #000000;
+	text-decoration: none;
+}
+.link5
+{
+	font: 70% Verdana;
+	color: #003399;
+	text-decoration: none;
+}
+.link6
+{
+	font: 70% verdana;
+	color: #003399;
+}
+.text1
+{
+	font: 70% Verdana;
+}
+.text2
+{
+	padding-bottom: 10px;
+	font: 70% Verdana;
+}
+.text3
+{
+	font-size: 120%;
+	font-family:Verdana;
+	color: #000000;
+}
+.text3_w_padding
+{
+	font: 120% Verdana;
+	color: #000000;
+	padding-left:20px;
+}
+.text4
+{
+	font-weight: bold;
+	font-size: 70%;
+	font-family: Verdana;
+	color: #000000;
+}
+.text5
+{
+	padding-left: 5px;
+	font-weight: bold;
+	font-size: 70%;
+	font-family: Verdana;
+	color: #ffffff;
+}
+.text6
+{
+	font: 70%;
+	font-family: verdana;
+}
+.newsTitle
+{
+	font-family: tahoma;
+	font-size: 120%;
+	color: #CCCCCC;
+}
+.areaTitle
+{
+	font-family: tahoma;
+	font-size: 120%;
+	color: #FFFFFF;
+}
+.newsContentTitle
+{
+	font-family: tahoma;
+	font-size: 120%;
+	color: #FFFFFF;
+}
+.areaContentTitle
+{
+	font-family: verdana;
+	font-size: 140%;
+	color: #000000;
+}
+.areaContentTitle_w_pad
+{
+	font-family: verdana;
+	font-size: 140%;
+	color: #000000;
+	padding-left: 20px;
+	padding-top: 20px;
+}
+
+.newsArchiveTitle
+{
+	font-family: verdana;
+	font-size: 150%;
+	color: #000000;
+}
+.FeatureStoryTitle
+{
+	font-family: verdana;
+	font-size: 130%;
+	color: #000000;
+}
+.FeatureStoryByLine
+{
+	font-family: verdana;
+	font-size: 80%;
+	color: #000000;
+}
+.SideBarLink
+{
+	font-family: verdana;
+	font-size: 80%;
+	color: #000000;
+}
+.newsArchiveSubTitle
+{
+	font-family: verdana;
+	font-size: 118%;
+	color: #666666;
+}
+.newsArchiveYear
+{
+	font: bold 80% Verdana;
+	color: #000000;
+	border-bottom: #cccccc 1px solid;
+	border-top: #cccccc 1px solid;
+}
+
+.newsHeadlineTitle
+{
+	font-family: verdana;
+	font-size: 140%;
+	color: #000000;
+}
+
+.newsPublicationDate
+{
+	font-family: Verdana;
+	font-size: 60%;
+	color: #000000;
+	font-weight: bold;
+}
+.newsPublicationSource
+{
+	font-family: Verdana;
+	font-size: 60%;
+	color: #000000;
+	font-weight: bold;
+}
+H1
+{
+	font-family: tahoma;
+	font-weight: bold;
+	font-size: 120%;
+	color: #000000;
+}
+H3
+{
+	font-family: tahoma;
+	font-weight: bold;
+	font-size: 110%;
+	color: #000000;
+}
+P
+{
+	font-family: verdana;
+	font-size: 70%;
+	color: #000000;
+}
+P P
+{
+	font-size: 100%;
+}
+HR
+{
+	color: #cccccc;
+	height: 1px;
+}
+
+
+.groupheading
+{
+	padding-left: 20px;
+	padding-top: 40px;
+	padding-bottom: 10px;
+	font-size: 1.4em;
+	color: #0065CF;
+	font-family:verdana;
+}
+.GroupTitle
+{
+	padding-left: 20px;
+	padding-top: 20px;
+	padding-bottom: 10px;
+	font-size: 1.4em;
+	color: #0065CF;
+}
+LI
+{
+	font-size: 70%;
+	font-family: Verdana;	
+}
+LI LI
+{
+	font-size: 100%;
+}
+LI A
+{
+	font-size: 100%;
+}
+.linkbox
+{
+	margin-left: 20px;
+	margin-right: 30px;
+	margin-bottom: 20px;
+	padding-bottom: 10px;
+	width: 175px;
+	float: right;
+	border-right: #0066CC 1px solid;
+	background: #f1f1f1;
+	border-left: #0066CC 1px solid;
+	border-bottom: #0066CC 1px solid;
+}
+.outlineDivTitle
+{
+	background-color: #0066CC;
+	color: #FFFFFF;
+	padding-left: 15px;
+	padding-bottom: 2px;
+	padding-top: 2px;
+	font: bold 70% Verdana;
+	color: #ffffff;
+}
+.outlineDiv
+{
+	padding-left: 20px;
+	background-image: URL(/images/blueTriangle.gif);
+	background-repeat: no-repeat;
+	background-position: 6 8;
+	font: 70% verdana;
+	color: #003399;
+	line-height: 200%;
+}  </style>
+</head>
+
+<body>
+
+<h1>F# 2.0 Compiler + Library Source Code Drop, matching April 2010 binary releases</h1>
+
+<p>This directory contains a drop of the source code for an F# 2.0 compiler and core 
+    library.
+The code has been cleaned up &quot;a little" to try to help ensure better stability as
+more development is done on the codebase. </p>
+
+<p><b>Before we start, are sure you&#39;re in the right place?</b></p>
+<ul>
+    <li>To get an F# compiler, go to <a href="http://fsharp.net">fsharp.net</a> or
+        <a href="http://tryfsharp.org">tryfsharp.org</a>&nbsp;&nbsp; </li>
+    <li>To learn F#, go to <a href="http://fsharp.net">fsharp.net</a> or
+        <a href="http://tryfsharp.org">tryfsharp.org</a>&nbsp;&nbsp; </li>
+    <li>To learn what F# is and why it&#39;s interesting, go to <a href="http://fsharp.net">fsharp.net</a> 
+        or <a href="http://tryfsharp.org">tryfsharp.org</a>&nbsp;&nbsp; </li>
+    <li>To download and install an F# compiler, go to <a href="http://fsharp.net">fsharp.net</a> 
+        or <a href="http://tryfsharp.org">tryfsharp.org</a>&nbsp;&nbsp; </li>
+    <li>If you want to to use F# in Visual Studio 2008 (R) or Visual Studio 2010 (R), go to         <a href="http://fsharp.net">fsharp.net</a>.</li>
+    <li>Looking for F# coding samples? Go to <a href="http://fsharp.net">fsharp.net</a> 
+        or search elsewhere. This code is not a model F# codebase and should not be used 
+        as guidance for F# coding style - there are plenty of things we would change if 
+        we had all the time in the world.</li>
+</ul>
+<p>
+    To emphasize, this distribution should not be seen as a way to &quot;get&quot; an F# 
+    compiler for immediate use. For that you&#39;re better going to <a href="http://fsharp.net">fsharp.net</a> or
+        <a href="http://tryfsharp.org">tryfsharp.org</a>&nbsp;&nbsp;</p>
+<p>
+    <b>Copyright:</b> Copyright 2002-2010 (c) Microsoft Corporation.</p>
+
+<p>
+<b>License:</b> subject to terms and conditions of the Apache License, Version 2.0. A 
+copy of the license can be found in the <a href="license.html">License.html</a> file at the root of this distribution. 
+By using this source code in any fashion, you are agreeing to be bound 
+by the terms of the Apache License, Version 2.0.</p>
+<p>
+You must not remove this notice, or any other, from this software.</p>
+<p><b>Questions?</b> If you have questions about the source code, please ask on a 
+    forum, or start a forum for community discussions, or post to the forum on 
+    fsharppowerpack.codeplex.com. Please do not ask the F# team at Microsoft for 
+    help with this source code: they like to be friendly, but they are very busy 
+    working on improving F# and need to focus on that.</p>
+<p><b>Updates?</b> The F# team do not do active development in this repository, 
+    though some changes such as cleanup or additional tools may be submitted. They 
+    aspire to update the tree as and when future versions of F# compilers are 
+    released from Microsoft.</p>
+
+<h3>What do I get when I compile?</h3>
+
+<p>When you compile, you get <tt>fsc.exe</tt>, <tt>fsi.exe</tt>, <tt>FSharp.Core.dll</tt> and some related DLLs.</p>
+
+<h3>How do I compile?</h3>
+
+<p>The prerequisites and build command line for compiling the source (on Windows) are shown 
+    later in this README. Here's the
+logic of the build:</p>
+<ul>
+<li>We first need an existing F# compiler, usually the one available from <a href="http://fsharp.net">fsharp.net</a>,
+although it could also be another. Let's assume this compiler has an FSharp.Core.dll with version X.</li>
+<li>We use this compiler to compile the source in this distribution, to produce a "proto" compiler, in the Proto
+directory. When run, this compiler still relies on the FSharp.Core.dll with version X.</li>
+<li>We use the proto compiler to compile the source for FSharp.Core.dll in this distribution, producing 
+an FSharp.Core.dll with the version identified in src\source-build-version, usually 1.9.999.</li>
+<li>We use the proto compiler to compile the source for FSharp.Compiler.dll, fsc.exe, fsi.exe and other
+binaries found in this distribution. When run, these binaries will rely on the FSharp.Core.dll with version
+1.9.999. This is good, since it means the 1.9.999 binaries now form a consistent, bootstrapped compiler. If
+you like you should now be able to throw away the compiler with version X.</li>
+</ul>
+<p>Some additional tools are required to build the compiler, notably fslex.exe, fsyacc.exe,
+FSharp.PowerPack.Build.Tasks.dll, FsSrGen.exe, FSharp.SRGen.Build.Tasks.dll and the other
+tools found in the lkg directory. These are "Last Known Good" binaries created from a version of the F# Power Pack
+on CodePlex. If you like you can throw away these binaries and use your own compiled versions of these.
+tools.</p>
+
+<h3>Strong names and versions</h3>
+
+<p>When you build the compiler using the instructions below, the compiler and 
+    library binaries produced are not strong-named or signed,
+and use CLI assembly version nunmber 1.9.9.999. Without a strong-name you will not be able to add FSharp.Core.dll to the GAC, though
+that is not a problem for most purposes since the FSharp.Core.dll you compile can be copied as part of your 
+application.</p>
+<p>Once you have an F# compiler, you will normally be able to reference another or 
+    an existing FSharp.Core.dll and matching mscorlib.dll explicitly to target that 
+    profile.</p>
+
+<p>To add strong names you would need to adjust the build settings. Our recommendation is not to use the 
+version number 2.0 on your binaries, since that can get confusing if you already have an installation of 
+an F# 2.0 compiler.</p>
+
+<h3>Building on Windows using MSBuild from the Command Linees</h3>
+
+<ul>
+   <li>Both .NET 2.0 and .NET 4.0</li>
+   <li>Visual Studio 2010 Shell (Integrated Edition, with F# CTP MSI added), OR Visual Studio Professional 2010, OR
+       another non-Express version of Visual Studio 2010 OR the F# CTP MSI installed as a standlone compiler.</li>
+</ul>
+
+<h3>Steps - Cleaning (if needed)</h3>
+
+<pre>
+cd src 
+rmdir /s /q ..\Proto
+rmdir /s /q ..\Debug
+rmdir /s /q ..\Release
+</pre>
+<h3>Steps - Building a Proto Compiler for Mono or .NET 2.0 using .NET 2.0/4.0 tools</h3>
+<pre>
+  cd src 
+  msbuild fsharp-proto-build.proj /p:TargetFramework=cli\2.0
+</pre>
+<p>Note: Make sure you run the .NET 4.0 msbuild.exe, e.g. <tt>C:\Windows\Microsoft.NET\Framework\v4.0.30319\MSBuild.exe</tt>.</p>
+
+<h3>Steps - NGEN the Proto Compiler for faster future startup (optional)</h3>
+<pre>
+ngen install ..\Proto\cli\2.0\bin\fsi.exe
+</pre>
+
+<h3>Steps - Building the F# core library and unittests for running on Mono or .NET 2.0-4.0, using the Proto compiler</h3>
+<pre>
+msbuild fsharp-library-build.proj /p:TargetFramework=cli\2.0
+</pre>
+<p>Note: Make sure you run the .NET 4.0 msbuild.exe, e.g. <tt>C:\Windows\Microsoft.NET\Framework\v4.0.30319\MSBuild.exe</tt>.</p>
+
+<h3>Steps - Building a bootstrapped F# Compiler for running on Mono or .NET 2.0-4.0, using the Proto Compiler</h3>
+<pre>
+msbuild fsharp-compiler-build.proj /p:TargetFramework=cli\2.0
+</pre>
+<p>Note: Make sure you run the .NET 4.0 msbuild.exe, e.g. <tt>C:\Windows\Microsoft.NET\Framework\v4.0.30319\MSBuild.exe</tt>.</p>
+
+
+<h3>Steps - Building a F# Compiler unit tests for NUnit for running on Mono or .NET 2.0-4.0, using the Proto Compiler</h3>
+<pre>
+msbuild fsharp-library-unittests-build.proj /p:TargetFramework=cli\2.0
+msbuild fsharp-compiler-unittests-build.proj /p:TargetFramework=cli\2.0
+</pre>
+<p>Note: You must have NUnit installed.</p>
+
+<h3>Validation and Use</h3>
+
+<pre>
+ngen install ..\Debug\cli\2.0\bin\fsi.exe
+..\Debug\cli\2.0\bin\fsi.exe
+1 + 1;;
+#q;;
+..\Debug\cli\2.0\bin\fsi.exe /help
+..\Debug\cli\2.0\bin\fsc.exe /help
+echo printfn "hello world" > hello.fs
+..\Debug\cli\2.0\bin\fsc.exe hello.fs
+copy ..\Debug\cli\2.0\bin\FSharp.Core.dll .
+hello.exe
+del /q FSharp.Core.dll 
+
+
+
+</pre>
+
+
+
+<h3>Some alternative Steps - Building the F# core library and unittests for alternative CLI/.NET/CIL implementations, using the Proto compiler</h3>
+<pre>
+msbuild fsharp-library-build.proj /p:TargetFramework=Silverlight\3.0
+msbuild fsharp-library-build.proj /p:TargetFramework=Silverlight\4.0
+msbuild fsharp-library-build.proj /p:TargetFramework=WindowsPhone7\Silverlight\4.0
+msbuild fsharp-library-build.proj /p:TargetFramework=CompactFramework\2.0
+msbuild fsharp-library-build.proj /p:TargetFramework=CompactFramework\3.5
+</pre>
+
+
+<h3>Some alternative Steps - Building for .NET 4.0 profile</h3>
+<pre>
+cd src 
+msbuild fsharp-proto-build.proj /p:TargetFramework=cli\4.0
+msbuild fsharp-library-build.proj /p:TargetFramework=cli\4.0
+msbuild fsharp-compiler-build.proj /p:TargetFramework=cli\4.0
+msbuild fsharp-library-unittests-build.proj /p:TargetFramework=cli\4.0
+msbuild fsharp-compiler-unittests-build.proj /p:TargetFramework=cli\4.0
+
+ngen install ..\Debug\cli\4.0\bin\fsi.exe
+..\Debug\cli\4.0\bin\fsi.exe
+1 + 1;;
+#q;;
+..\Debug\cli\4.0\bin\fsi.exe /help
+..\Debug\cli\4.0\bin\fsc.exe /help
+echo printfn "hello world" > hello.fs
+..\Debug\cli\4.0\bin\fsc.exe hello.fs
+copy ..\Debug\cli\4.0\bin\FSharp.Core.dll .
+hello.exe
+del /q FSharp.Core.dll 
+
+msbuild fsharp-compiler-build.proj /p:TargetFramework=cli\4.0 /p:Configuration=Release
+
+ngen install ..\Release\cli\4.0\bin\fsi.exe
+..\Release\cli\4.0\bin\fsi.exe
+1 + 1;;
+#q;;
+..\Release\cli\4.0\bin\fsi.exe /help
+..\Release\cli\4.0\bin\fsc.exe /help
+echo printfn "hello world" > hello.fs
+..\Release\cli\4.0\bin\fsc.exe hello.fs
+copy ..\Release\cli\4.0\bin\FSharp.Core.dll .
+hello.exe
+del /q FSharp.Core.dll 
+</pre>
+
+<h3>Some alternative Steps - Building Release mode (choose some of these as you need)</h3>
+<pre>
+
+msbuild fsharp-library-build.proj /p:Configuration=Release
+msbuild fsharp-library-build.proj /p:TargetFramework=cli\2.0 /p:Configuration=Release
+msbuild fsharp-library-build.proj /p:TargetFramework=cli\4.0 /p:Configuration=Release
+msbuild fsharp-library-build.proj /p:TargetFramework=Silverlight\3.0 /p:Configuration=Release
+msbuild fsharp-library-build.proj /p:TargetFramework=Silverlight\4.0 /p:Configuration=Release
+msbuild fsharp-library-build.proj /p:TargetFramework=WindowsPhone7\Silverlight\4.0 /p:Configuration=Release
+msbuild fsharp-library-build.proj /p:TargetFramework=CompactFramework\2.0 /p:Configuration=Release
+msbuild fsharp-library-build.proj /p:TargetFramework=CompactFramework\3.5 /p:Configuration=Release
+
+msbuild fsharp-compiler-build.proj /p:TargetFramework=cli\2.0 /p:Configuration=Release
+
+ngen install ..\Release\cli\2.0\bin\fsi.exe
+..\Release\cli\2.0\bin\fsi.exe
+1 + 1;;
+#q;;
+..\Release\cli\2.0\bin\fsi.exe /help
+..\Release\cli\2.0\bin\fsc.exe /help
+echo printfn "hello world" > hello.fs
+..\Release\cli\2.0\bin\fsc.exe hello.fs
+copy ..\Release\cli\2.0\bin\FSharp.Core.dll .
+hello.exe
+del /q FSharp.Core.dll 
+"c:\Program Files\Mono-2.8\bin\mono.exe" ..\Release\cli\2.0\bin\Fsi.exe /help
+"c:\Program Files\Mono-2.8\bin\mono.exe" ..\Release\cli\2.0\bin\Fsc.exe /help
+"c:\Program Files\Mono-2.8\bin\mono.exe" ..\Release\cli\2.0\bin\Fsi.exe < hello.fs
+"c:\Program Files\Mono-2.8\bin\mono.exe" ..\Release\cli\2.0\bin\Fsc.exe hello.fs
+
+</pre>
+
+<h3>Editing and Building on Windows using Visual Studio 2010</h3>
+
+
+<h3>Prerequisites</h3>
+
+<ul>
+   <li>Visual Studio Shell 2010 (with F# CTP MSI added), Visual Studio Professional 2010 or another non-Express version of Visual Studio 2010.</li>
+</ul>
+
+<h3>Editing and Building</h3>
+
+
+
+<p>Open all-vs2010.sln, and edit in modes Debug or Release. The compiler takes a long time to compile and
+that can be a bit invasive to the work flow, so it's normally better to do the actual compilation from the command line,
+see above.</p>
+
+
+
+
+
+
+<h3>Building where a Proto compiler is run on Mono 2.8, Windows</h3>
+
+<p>This can be useful if you want to prove to yourself that it's possible to build without running the 
+base compiler using .NET CLR. At the moment however the steps below still use MSBuild and compile against
+the .NET 2.0 reference assemblies. It would need more work to get the build going against the Mono libraries.</p>
+
+<h3>Prerequisites</h3>
+
+<ul>
+   <li>An existing F# compiler to start the bootstrap. You can start with the Microsoft F# release, then
+       build a new compiler using that, then throw away the former and just use the compiler(s) you've built
+       from then on.
+   <li>Mono 2.8 for Windows
+</ul>
+
+<h3>Building</h3>
+
+<p>See below for some of the sample steps. On Windows it is best to use fsc-mono.bat files to act as a "compiler that
+just happens to run using Mono".</p>
+
+<h3>Steps - Building a Proto Compiler for Mono or .NET 2.0 (either one)</h3>
+<pre>
+cd src 
+REM Prepare driver batch files that run the corresponding exe using Mono
+copy /y setups\run-as-mono.bat ..\lkg\bin\fsc-mono.bat
+copy /y setups\run-as-mono.bat  ..\lkg\FSharp-2.0.50726.900\bin\fslex-mono.bat
+copy /y setups\run-as-mono.bat  ..\lkg\FSharp-2.0.50726.900\bin\fsyacc-mono.bat
+msbuild fsharp-proto-build.proj /p:TargetFramework=mono\2.0
+</pre>
+
+<h3>Steps - Prepare proto compiler for execution on Mono by registering FSharp.Core.dll for the base compiler</h3>
+<pre>
+
+copy /y "C:\Program Files\Reference Assemblies\Microsoft\FSharp\2.0\Runtime\v2.0\FSharp.Core.dll" setups\FSharp.Core.dll
+"C:\Program Files\Mono-2.8\bin\sn" -R setups\FSharp.Core.dll setups\mono.snk  
+"C:\Program Files\Mono-2.8\bin\gacutil" /i setups\FSharp.Core.dll 
+del setups\FSharp.Core.dll
+</pre>
+
+<h3>Steps - Prepare driver batch files that run the corresponding exe with mono</h3>
+<pre>
+
+copy /y setups\run-as-mono.bat ..\Proto\cli\2.0\bin\fsc-proto-mono.bat
+copy /y setups\run-as-mono.bat  ..\lkg\FSharp-2.0.50726.900\bin\fslex-mono.bat
+copy /y setups\run-as-mono.bat  ..\lkg\FSharp-2.0.50726.900\bin\fsyacc-mono.bat
+
+</pre>
+
+<h3>Steps - Build the core library using the proto compiler, running the proto with Mono on Windows</h3>
+<pre>
+
+
+msbuild fsharp-library-build.proj /p:TargetFramework=mono\2.0
+
+</pre>
+
+<h3>Steps - Bootstrap the compiler using the proto compiler, running the proto with Mono on Windows</h3>
+<pre>
+
+msbuild fsharp-compiler-build.proj /p:TargetFramework=mono\2.0
+
+</pre>
+
+<h3>Validation and Use</h3>
+<pre>
+"c:\Program Files\Mono-2.8\bin\mono.exe" ..\Debug\mono\2.0\bin\fsi.exe
+1 + 1;;
+#q;;
+"c:\Program Files\Mono-2.8\bin\mono.exe" ..\Debug\mono\2.0\bin\fsi.exe /help
+"c:\Program Files\Mono-2.8\bin\mono.exe" ..\Debug\mono\2.0\bin\fsc.exe /help
+echo printfn "hello world" > hello.fs
+"c:\Program Files\Mono-2.8\bin\mono.exe" ..\Debug\mono\2.0\bin\fsc.exe hello.fs
+copy ..\Debug\mono\2.0\bin\FSharp.Core.dll .
+"c:\Program Files\Mono-2.8\bin\mono.exe" hello.exe
+del /q FSharp.Core.dll 
+
+
+</pre>
+
+<h3>Building on Unix with Mono</h3>
+
+<p>Because of some issues with xbuild, some shell scripts are provided
+to build the compiler on Unix. You may need to adapt the paths in config.sh first.</p>
+
+<pre>
+./make_proto.sh
+./make_library.sh
+./make_compiler.sh
+</pre>
+
+</body>

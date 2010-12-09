@@ -1,0 +1,95 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!--
+# Copyright (c) 2002-2010 Microsoft Corporation. 
+#
+# This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
+# copy of the license can be found in the License.html file at the root of this distribution. 
+# By using this source code in any fashion, you are agreeing to be bound 
+# by the terms of the Apache License, Version 2.0.
+#
+# You must not remove this notice, or any other, from this software.
+-->
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <FSharpSourcesRoot>..\..</FSharpSourcesRoot>
+  </PropertyGroup>
+  <Import Project="$(FSharpSourcesRoot)\FSharpSource.Settings.targets" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <SchemaVersion>2.0</SchemaVersion>
+    <AllowCrossTargeting>true</AllowCrossTargeting>
+    <ReferenceVsAssemblies>true</ReferenceVsAssemblies>
+    <ProjectGuid>{EE85AAB7-CDA0-4C4E-BDA0-A64DDDD13E3F}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AssemblyName>Unittests</AssemblyName>
+    <GenerateInterfaceFile>UnittestsGeneratedInterfaceFileToTestGotoDefinition.ReservedName.fsi</GenerateInterfaceFile>
+    <NoWarn>$(NoWarn);45;47;52;58;75</NoWarn>
+    <TargetFrameworkVersion Condition="'$(TargetFramework)'=='cli\2.0' or '$(TargetFramework)'=='mono\2.0'">v3.5</TargetFrameworkVersion>
+    <!-- always disable optimizations for this DLL for better debugging in the unit tests themselves -->
+    <OtherFlags>$(OtherFlags) --optimize- --maxerrors:100</OtherFlags>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="TestLib.fs" />
+    <Compile Include="..\..\utils\CompilerLocationUtils.fs">
+      <Link>CompilerLocationUtils.fs</Link>
+    </Compile>
+    <!--    <Compile Include="..\FSharp.Build\Fsc.fs">
+      <Link>Fsc.fs</Link>
+    </Compile> -->
+    <Compile Include="..\InternalCollections.fsi">
+      <Link>InternalCollections.fsi</Link>
+    </Compile>
+    <Compile Include="..\InternalCollections.fs">
+      <Link>InternalCollections.fs</Link>
+    </Compile>
+    <Compile Include="UnitTestUtils.fs" />
+    <Compile Include="General.Unittests.fs" />
+    <Compile Include="Build.Unittests.fs" />
+    <None Include="Unittests.dll.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="mscorlib" />
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Numerics"  Condition="'$(TargetFramework)' == 'cli\4.0'" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="Microsoft.Build.Engine" />
+    <Reference Include="Microsoft.Build.Framework" />
+    <Reference Include="Microsoft.Build.Utilities" />
+    <Reference Include="Microsoft.Build.Utilities.v3.5" />
+    <Reference Include="nunit.framework" />
+    <Reference Include="System.Net" Condition="'$(TargetFramework)' == 'Silverlight\2.0' OR '$(TargetFramework)' == 'Silverlight\3.0' OR '$(TargetFramework)' == 'WindowsPhone7\Silverlight\4.0'" />
+    <ProjectReference Include="..\Fsc\Fsc.fsproj">
+      <Name>Fsc</Name>
+      <Project>{C94C257C-3C0A-4858-B5D8-D746498D1F08}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\FSharp.Build\FSharp.Build.fsproj">
+      <Name>FSharp.Build</Name>
+      <Project>{702a7979-bcf9-4c41-853e-3adfc9897890}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\FSharp.Compiler\FSharp.Compiler.fsproj">
+      <Name>FSharp.Compiler</Name>
+      <Project>{2e4d67b4-522d-4cf7-97e4-ba940f0b18f3}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\FSharp.Core\FSharp.Core.fsproj" >
+      <Project>{DED3BBD7-53F4-428A-8C9F-27968E768605}</Project>
+      <Name>FSharp.Core</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(FSharpSourcesRoot)\FSharpSource.targets" />
+  <PropertyGroup>
+    <PrepareForRunDependsOn>$(PrepareForRunDependsOn);CopyToTempDir</PrepareForRunDependsOn>
+  </PropertyGroup>
+  <Target Name="CopyToTempDir">
+    <Copy SourceFiles="UnittestsGeneratedInterfaceFileToTestGotoDefinition.ReservedName.fsi" DestinationFolder="$(TEMP)\MicrosoftVisualStudioFSharpTemporaryFiles" SkipUnchangedFiles="true">
+      <Output TaskParameter="DestinationFiles" ItemName="FileWrites" />
+    </Copy>
+  </Target>
+</Project>

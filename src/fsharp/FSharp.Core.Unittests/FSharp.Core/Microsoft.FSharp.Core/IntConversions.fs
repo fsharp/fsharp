@@ -1,0 +1,23 @@
+﻿namespace FSharp.Core.Unittests.FSharp_Core.FSharp.Core
+open System
+open NUnit.Framework
+
+[<TestFixture>]
+type IntConversions() =
+
+    [<Test>]
+    member this.``Unchecked.SignedToUInt64`` () =
+        let d = System.Int32.MinValue
+        let e = uint64 d
+        let f = uint64 (uint32 d)
+        Assert.IsTrue (e <> f)                 
+        ()
+        
+    [<Test>]
+    member this.``Unchecked.SignedToUInt32`` () =
+        let d = System.Int16.MinValue
+        let e = uint32 d
+        let f = uint32 (uint16 d)
+        Assert.IsTrue (e <> f)                 
+        ()
+        
