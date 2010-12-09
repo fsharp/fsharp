@@ -1,0 +1,91 @@
+//----------------------------------------------------------------------------
+//
+// Copyright (c) 2002-2010 Microsoft Corporation. 
+//
+// This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
+// copy of the license can be found in the License.html file at the root of this distribution. 
+// By using this source code in any fashion, you are agreeing to be bound 
+// by the terms of the Apache License, Version 2.0.
+//
+// You must not remove this notice, or any other, from this software.
+//----------------------------------------------------------------------------
+
+module internal Microsoft.FSharp.Compiler.Range
+
+open System.Text
+open System.Collections.Generic
+open Internal.Utilities
+open Microsoft.FSharp.Compiler.AbstractIL 
+open Microsoft.FSharp.Compiler.AbstractIL.Internal 
+open Microsoft.FSharp.Compiler  
+
+  
+(* we keep a global tables of filenames that we can reference by integers *)
+type FileIndex = int32 
+val fileIndexOfFile : string -> FileIndex
+val fileOfFileIndex : FileIndex -> string
+
+[<Struct>]
+type pos =
+    member Line : int
+    member Column : int
+
+    member Encoding : int32
+    static member Decode : int32 -> pos
+    /// The maximum number of bits needed to store an encoded position 
+    static member EncodingSize : int32 
+  
+/// Create a position for the given line and column
+val mkPos : line:int -> column:int -> pos
+
+val posOrder : IComparer<pos>
+
+[<Struct>]
+type range =
+    member StartLine : int
+    member StartColumn : int
+    member EndLine : int
+    member EndColumn : int
+    member Start : pos
+    member End : pos
+    member StartRange: range
+    member EndRange: range
+    member FileIndex : int
+    member FileName : string
+    static member Zero : range
+  
+/// This view of range marks uses file indexes explicitly 
+val mkFileIndexRange : FileIndex -> pos -> pos -> range
+
+/// This view hides the use of file indexes and just uses filenames 
+val mkRange : string -> pos -> pos -> range
+
+val trimRangeRight : range -> int -> range
+val trimRangeToLine : range -> range
+
+/// not a total order, but enough to sort on ranges 
+val rangeOrder : IComparer<range>
+
+val outputPos : System.IO.TextWriter -> pos -> unit
+val outputRange : System.IO.TextWriter -> range -> unit
+val boutputPos : StringBuilder -> pos -> unit
+val boutputRange : StringBuilder -> range -> unit
+    
+val posGt : pos -> pos -> bool
+val posEq : pos -> pos -> bool
+val posGeq : pos -> pos -> bool
+
+val unionRanges : range -> range -> range
+val rangeContainsRange : range -> range -> bool
+val rangeContainsPos : range -> pos -> bool
+val rangeBeforePos : range -> pos -> bool
+
+val rangeN : string -> int -> range
+val pos0 : pos
+val range0 : range
+val rangeStartup : range
+val rangeCmdArgs : range
+ 
+(* For diagnostics *)  
+val stringOfPos   : pos   -> string
+val stringOfRange : range -> string

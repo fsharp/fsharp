@@ -1,0 +1,340 @@
+"General"
+{
+"ProjectIdGuid" = "{98DBEA9C-13D8-4E78-B2D3-D481726493EC}"
+}
+"Configurations"
+{
+    "Debug|Win32"
+    {
+    "ProjectType" = "DLL"
+    "OptLevel" = "Off"
+    "StrongNamingLevel" = "None"
+    "OutputPath" = "..\\..\\built\\bin"
+    "SearchPath" = "-r ..\\..\\built\\bin\\Microsoft.Research.AbstractIL-edit.dll --namespace Microsoft.FSharp.Compiler -i --define GENERICS  --no-warn 50 --no-warn 44 --no-warn 62 "
+    "StrongNameFile" = ""
+    "OutputBase" = "FSharp.Compiler-edit"
+    "CustomCommandLine" = ""
+    "CustomCompiler" = ""
+    "DebugCheck" = "FALSE"
+    "CustomCompilationCheck" = "FALSE"
+    "DebugStartMode" = "0"
+    "StartApp" = ""
+    "StartAppPath" = ""
+    "CustomStartupArguments" = ""
+    }
+    "Release|Win32"
+    {
+    "ProjectType" = "EXE"
+    "OptLevel" = "3"
+    "StrongNamingLevel" = "None"
+    "OutputPath" = ""
+    "SearchPath" = ""
+    "StrongNameFile" = ""
+    "OutputBase" = ""
+    "CustomCommandLine" = ""
+    "CustomCompiler" = ""
+    "DebugCheck" = "FALSE"
+    "CustomCompilationCheck" = "FALSE"
+    "DebugStartMode" = "0"
+    "StartApp" = ""
+    "StartAppPath" = ""
+    "CustomStartupArguments" = ""
+    }
+}
+"Files"
+{
+    "..\\ilx\\ilxsettings.mli"
+    {
+    "ProjRelPath" = "T"
+    }
+    "..\\ilx\\ilxsettings.ml"
+    {
+    "ProjRelPath" = "T"
+    }
+    "..\\ilx\\ilxconfig.mli"
+    {
+    "ProjRelPath" = "T"
+    }
+    "..\\ilx\\ilxconfig.ml"
+    {
+    "ProjRelPath" = "T"
+    }
+    "..\\ilx\\msilxlib.mli"
+    {
+    "ProjRelPath" = "T"
+    }
+    "..\\ilx\\msilxlib.ml"
+    {
+    "ProjRelPath" = "T"
+    }
+    "..\\ilx\\cu_erase.mli"
+    {
+    "ProjRelPath" = "T"
+    }
+    "..\\ilx\\cu_erase.ml"
+    {
+    "ProjRelPath" = "T"
+    }
+    "..\\ilx\\pubclo.mli"
+    {
+    "ProjRelPath" = "T"
+    }
+    "..\\ilx\\pubclo.ml"
+    {
+    "ProjRelPath" = "T"
+    }
+    "..\\ilx\\ilxerase.mli"
+    {
+    "ProjRelPath" = "T"
+    }
+    "..\\ilx\\ilxerase.ml"
+    {
+    "ProjRelPath" = "T"
+    }
+    "TraceCall.fs"
+    {
+    "ProjRelPath" = "T"
+    }
+    "InternalCollections.fsi"
+    {
+    "ProjRelPath" = "T"
+    }
+    "InternalCollections.fs"
+    {
+    "ProjRelPath" = "T"
+    }
+    "unilex.ml"
+    {
+    "ProjRelPath" = "T"
+    }
+    "lib.ml"
+    {
+    "ProjRelPath" = "T"
+    }
+    "range.mli"
+    {
+    "ProjRelPath" = "T"
+    }
+    "range.ml"
+    {
+    "ProjRelPath" = "T"
+    }
+    "ast.ml"
+    {
+    "ProjRelPath" = "T"
+    }
+    "ccuthunk.ml"
+    {
+    "ProjRelPath" = "T"
+    }
+    "layout.mli"
+    {
+    "ProjRelPath" = "T"
+    }
+    "layout.ml"
+    {
+    "ProjRelPath" = "T"
+    }
+    "tast.ml"
+    {
+    "ProjRelPath" = "T"
+    }
+    "env.ml"
+    {
+    "ProjRelPath" = "T"
+    }
+    "tastops.mli"
+    {
+    "ProjRelPath" = "T"
+    }
+    "tastops.ml"
+    {
+    "ProjRelPath" = "T"
+    }
+    "augment.mli"
+    {
+    "ProjRelPath" = "T"
+    }
+    "augment.ml"
+    {
+    "ProjRelPath" = "T"
+    }
+    "pars.mly"
+    {
+    "ProjRelPath" = "T"
+    }
+    "..\\..\\built\\fsyacc_proto\\fsharp\\pars.ml"
+    {
+    "ProjRelPath" = "T"
+    }
+    "lexhelp.ml"
+    {
+    "ProjRelPath" = "T"
+    }
+    "..\\..\\built\\fslex_proto\\fsharp\\lex.ml"
+    {
+    "ProjRelPath" = "T"
+    }
+    "lexfilter.ml"
+    {
+    "ProjRelPath" = "T"
+    }
+    "import.ml"
+    {
+    "ProjRelPath" = "T"
+    }
+    "sreflect.mli"
+    {
+    "ProjRelPath" = "T"
+    }
+    "sreflect.ml"
+    {
+    "ProjRelPath" = "T"
+    }
+    "infos.ml"
+    {
+    "ProjRelPath" = "T"
+    }
+    "typrelns.ml"
+    {
+    "ProjRelPath" = "T"
+    }
+    "patcompile.mli"
+    {
+    "ProjRelPath" = "T"
+    }
+    "patcompile.ml"
+    {
+    "ProjRelPath" = "T"
+    }
+    "creflect.mli"
+    {
+    "ProjRelPath" = "T"
+    }
+    "creflect.ml"
+    {
+    "ProjRelPath" = "T"
+    }
+    "outcome.ml"
+    {
+    "ProjRelPath" = "T"
+    }
+    "csolve.ml"
+    {
+    "ProjRelPath" = "T"
+    }
+    "nameres.ml"
+    {
+    "ProjRelPath" = "T"
+    }
+    "formats.mli"
+    {
+    "ProjRelPath" = "T"
+    }
+    "formats.ml"
+    {
+    "ProjRelPath" = "T"
+    }
+    "unsolved.ml"
+    {
+    "ProjRelPath" = "T"
+    }
+    "check.ml"
+    {
+    "ProjRelPath" = "T"
+    }
+    "tc.mli"
+    {
+    "ProjRelPath" = "T"
+    }
+    "tc.ml"
+    {
+    "ProjRelPath" = "T"
+    }
+    "pickle.mli"
+    {
+    "ProjRelPath" = "T"
+    }
+    "pickle.ml"
+    {
+    "ProjRelPath" = "T"
+    }
+    "opt.mli"
+    {
+    "ProjRelPath" = "T"
+    }
+    "opt.ml"
+    {
+    "ProjRelPath" = "T"
+    }
+    "detuple.mli"
+    {
+    "ProjRelPath" = "T"
+    }
+    "detuple.ml"
+    {
+    "ProjRelPath" = "T"
+    }
+    "build.mli"
+    {
+    "ProjRelPath" = "T"
+    }
+    "build.ml"
+    {
+    "ProjRelPath" = "T"
+    }
+    "lowertop.ml"
+    {
+    "ProjRelPath" = "T"
+    }
+    "tlr.ml"
+    {
+    "ProjRelPath" = "T"
+    }
+    "ilxgen.mli"
+    {
+    "ProjRelPath" = "T"
+    }
+    "ilxgen.ml"
+    {
+    "ProjRelPath" = "T"
+    }
+    "fscopts.ml"
+    {
+    "ProjRelPath" = "T"
+    }
+    "fsc.ml"
+    {
+    "ProjRelPath" = "T"
+    }
+    "vs\\IncrementalBuild.fsi"
+    {
+    "ProjRelPath" = "T"
+    }
+    "vs\\IncrementalBuild.fs"
+    {
+    "ProjRelPath" = "T"
+    }
+    "vs\\service.mli"
+    {
+    "ProjRelPath" = "T"
+    }
+    "vs\\service.ml"
+    {
+    "ProjRelPath" = "T"
+    }
+    "fsi\\console.fs"
+    {
+    "ProjRelPath" = "T"
+    }
+    "fsi\\fsi.fs"
+    {
+    "ProjRelPath" = "T"
+    }
+}
+"ProjStartupServices"
+{
+}
+"Globals"
+{
+}

@@ -1,0 +1,29 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
+         ToolsVersion="4.0">
+<!--
+# Copyright (c) 2002-2010 Microsoft Corporation. 
+#
+# This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
+# copy of the license can be found in the License.html file at the root of this distribution. 
+# By using this source code in any fashion, you are agreeing to be bound 
+# by the terms of the Apache License, Version 2.0.
+#
+# You must not remove this notice, or any other, from this software.
+-->
+
+  <PropertyGroup>
+    <TargetFramework Condition="'$(TargetFramework)'==''">cli\4.0</TargetFramework>
+  </PropertyGroup>
+
+  <!-- Compiler: .NET 2.0 and 4.0 only -->
+  <ItemGroup Condition=" '$(TargetFramework)' == 'cli\2.0' or '$(TargetFramework)' == 'cli\4.0' or '$(TargetFramework)' == 'mono\2.0' or '$(TargetFramework)' == 'mono\4.0'">
+    <ProjectFiles Include="fsharp/Unittests/Unittests.fsproj"/>
+  </ItemGroup>
+
+
+  <Import Project="root.traversal.targets"/>
+
+  <!-- Insert any customizations for targets here -->
+
+</Project>
+
