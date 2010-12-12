@@ -378,6 +378,9 @@ namespace Microsoft.FSharp.Core
                     res 
                 else 
                     let v = 
+#if MONO
+                       BigInteger.Parse s
+#else
 #if FX_ATLEAST_40
                        if  isOX s then 
                           BigInteger.Parse (s.[2..],NumberStyles.AllowHexSpecifier,CultureInfo.InvariantCulture)
@@ -385,6 +388,7 @@ namespace Microsoft.FSharp.Core
                           BigInteger.Parse (s,NumberStyles.AllowLeadingSign,CultureInfo.InvariantCulture)
 #else
                        BigInteger.Parse s
+#endif
 #endif
                     res <-  v
                     tabParse.[s] <- res
