@@ -1,0 +1,37 @@
+NAME=fsc
+ASSEMBLY = $(NAME).exe
+SIGN=1
+
+srcdir := @abs_srcdir@/
+
+include @abs_top_builddir@/config.make
+
+FSC=$(protodir)fsc-proto.exe
+
+FLAGS += \
+	$(FINAL_FLAGS) \
+	--target:exe
+
+REFERENCES += \
+	-r:$(outdir)FSharp.Core.dll \
+	-r:$(outdir)FSharp.Compiler.dll \
+	-r:$(libdir)System.Runtime.Remoting.dll \
+	-r:$(libdir)System.Windows.Forms.dll 
+
+sources = \
+	$(tmpdir)FSCstrings.fs \
+	../../assemblyinfo/assemblyinfo.fsc.exe.fs \
+	../fsc.fs \
+	../fscmain.fs
+
+RESOURCES = \
+	$(tmpdir)FSCstrings.resources
+
+$(tmpdir)FSCstrings.resources: $(srcdir)../FSCstrings.txt
+	mono --debug $(FSSRGEN) $< $(@:.resources=.fs) $(@:.resources=.resx)
+	resgen $(@:.resources=.resx) $@
+
+include $(topdir)/src/fsharp/targets.make
+
+install: install-bin-2 install-bin-4
+

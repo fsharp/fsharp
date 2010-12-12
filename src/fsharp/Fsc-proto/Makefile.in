@@ -1,0 +1,39 @@
+NAME=fsc-proto
+ASSEMBLY = $(NAME).exe
+
+srcdir := @abs_srcdir@/
+
+include @abs_top_builddir@/config.make
+
+CONFIG=proto
+
+FSC=$(bindir)fsc.exe
+
+FLAGS += --target:exe
+
+DEFINES += \
+	--define:BUILDING_PROTO \
+	--define:BUILDING_WITH_LKG \
+	--define:COMPILER
+
+REFERENCES += \
+	-r:$(bindir)FSharp.Core.dll \
+	-r:$(outdir)FSharp.Compiler-proto.dll \
+	-r:$(libdir)System.Runtime.Remoting.dll \
+	-r:$(libdir)System.Windows.Forms.dll
+
+sources = \
+	$(tmpdir)FSCstrings.fs \
+	../../utils/filename.fsi \
+	../../utils/filename.fs \
+	../fsc.fs \
+	../fscmain.fs
+
+RESOURCES = \
+	$(tmpdir)FSCstrings.resources
+
+$(tmpdir)FSCstrings.resources: $(srcdir)../FSCstrings.txt
+	mono --debug $(FSSRGEN) $< $(@:.resources=.fs) $(@:.resources=.resx)
+	resgen $(@:.resources=.resx) $@
+
+include $(topdir)/src/fsharp/targets.make
