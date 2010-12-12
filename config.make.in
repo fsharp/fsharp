@@ -1,0 +1,96 @@
+bootstrap := @with_bootstrap@
+prefix := @prefix@
+topdir := @abs_top_srcdir@/
+builddir := @abs_top_builddir@/
+libdir := ${prefix}/lib/
+installdir := ${prefix}/bin/
+monodir := $(libdir)mono/
+libdir2 := $(monodir)2.0/
+libdir35 := $(monodir)3.5/
+libdir4 := $(monodir)4.0/
+tooldir := $(topdir)lib/bootstrap/2.0/
+
+bindir = $(bootstrap)/$(TARGET)/
+tmpdir = .libs/
+objdir = $(tmpdir)$(TARGET)/
+protodir = $(builddir)/lib/proto/$(TARGET)/
+outdir = $(builddir)lib/$(CONFIG)/$(TARGET)/
+
+FSSRGEN := $(tooldir)fssrgen.exe
+FSLEX := $(tooldir)fslex.exe
+FSYACC := $(tooldir)fsyacc.exe
+
+CONFIG := debug
+DISTVERSION := 201011
+
+VERSION_2_0 := 2.0.0.0
+VERSION_4_0 := 4.0.0.0
+TARGET_2_0 := 2.0
+TARGET_4_0 := 4.0
+
+FLAGS = \
+	--doc:$(objdir)$(NAME).xml \
+	--version:$(VERSION) \
+	-g \
+	--mlcompatibility \
+	--noframework \
+	--fullpaths \
+	--times \
+	--nowarn:9
+
+FINAL_FLAGS = \
+	--delaysign+ \
+	--keyfile:$(topdir)msfinal.pub
+
+DEFINES_GENERAL = \
+	--define:NO_STRONG_NAMES \
+	--define:TRACE \
+	--define:FX_ATLEAST_35 \
+	--define:MONO
+	
+DEFINES_DEBUG = \
+	--define:CODE_ANALYSIS \
+	--define:DEBUG
+
+DEFINES_2_0 = \
+	$(DEFINES_GENERAL) \
+	$(DEFINES_DEBUG) \
+	--define:FX_FSLIB_STRUCTURAL_EQUALITY \
+	--define:FX_FSLIB_IOBSERVABLE \
+	--define:FX_FSLIB_TUPLE \
+	--define:FX_FSLIB_LAZY
+
+DEFINES_4_0 = \
+	$(DEFINES_GENERAL) \
+	$(DEFINES_DEBUG) \
+	--define:FX_ATLEAST_40
+
+REFERENCES_2_0 = \
+	-r:$(libdir)Microsoft.Build.Engine.dll \
+	-r:$(libdir)Microsoft.Build.Framework.dll \
+	-r:$(libdir35)Microsoft.Build.Tasks.v3.5.dll \
+	-r:$(libdir35)Microsoft.Build.Utilities.v3.5.dll \
+	-r:$(libdir)mscorlib.dll \
+	-r:$(libdir)System.Core.dll \
+	-r:$(libdir)System.dll
+
+REFERENCES_4_0 = \
+	-r:$(libdir)Microsoft.Build.Engine.dll \
+	-r:$(libdir)Microsoft.Build.Framework.dll \
+	-r:$(libdir35)Microsoft.Build.Tasks.v3.5.dll \
+	-r:$(libdir35)Microsoft.Build.Utilities.v3.5.dll \
+	-r:$(libdir)mscorlib.dll \
+	-r:$(libdir)System.Core.dll \
+	-r:$(libdir)System.dll \
+	-r:$(libdir)System.Numerics.dll
+
+INSTALL = $(SHELL) $(topdir)install-sh
+INSTALL_DATA = $(INSTALL) -c -m 644
+INSTALL_BIN = $(INSTALL) -c -m 755
+INSTALL_LIB = $(INSTALL_BIN)
+
+EXTRA_DIST = configure
+NO_DIST = .gitignore lib
+
+DEFAULT: all
+

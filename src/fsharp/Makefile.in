@@ -1,0 +1,14 @@
+all clean do-2-0 do-4-0 clean-2-0 clean-4-0:
+	$(MAKE) -C FSharp.Build-proto $@
+	$(MAKE) -C FSharp.Compiler-proto $@
+	$(MAKE) -C Fsc-proto $@
+	$(MAKE) -C FSharp.Core $@
+	$(MAKE) -C FSharp.Build $@
+	$(MAKE) -C FSharp.Compiler $@
+	$(MAKE) -C Fsc $@
+
+install:
+	$(MAKE) -C FSharp.Core $@
+	$(MAKE) -C FSharp.Compiler $@
+	$(MAKE) -C Fsc $@
+

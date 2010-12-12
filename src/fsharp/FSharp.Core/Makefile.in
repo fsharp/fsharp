@@ -1,0 +1,83 @@
+NAME=FSharp.Core
+ASSEMBLY = $(NAME).dll
+SIGN=1
+
+srcdir := @abs_srcdir@/
+
+include @abs_top_builddir@/config.make
+
+FSC=$(protodir)fsc-proto.exe
+
+FLAGS_2_0 += \
+	$(FINAL_FLAGS) \
+	--target:library \
+	--compiling-fslib
+
+FLAGS_4_0 += \
+	$(FINAL_FLAGS) \
+	$(FLAGS_2_0) \
+	--compiling-fslib-mscorlib40:$(libdir)mscorlib.dll
+
+DEFINES += \
+	--define:RUNTIME
+
+sources = \
+	prim-types-prelude.fsi \
+	prim-types-prelude.fs \
+	SR.fs \
+	prim-types.fsi \
+	prim-types.fs \
+	local.fsi \
+	local.fs \
+	array2.fsi \
+	array2.fs \
+	option.fsi \
+	option.fs \
+	collections.fsi \
+	collections.fs \
+	seq.fsi \
+	seq.fs \
+	string.fsi \
+	string.fs \
+	list.fsi \
+	list.fs \
+	array.fsi \
+	array.fs \
+	array3.fsi \
+	array3.fs \
+	map.fsi \
+	map.fs \
+	set.fsi \
+	set.fs \
+	reflect.fsi \
+	reflect.fs \
+	event.fsi \
+	event.fs \
+	math/n.fsi \
+	math/n.fs \
+	math/z.fsi \
+	math/z.fs \
+	../../utils/sformat.fsi \
+	../../utils/sformat.fs \
+	printf.fsi \
+	printf.fs \
+	quotations.fsi \
+	quotations.fs \
+	nativeptr.fsi \
+	nativeptr.fs \
+	control.fsi \
+	control.fs \
+	fslib-extra-pervasives.fsi \
+	fslib-extra-pervasives.fs \
+	../../assemblyinfo/assemblyinfo.FSharp.Core.dll.fs
+
+RESOURCES = \
+	$(tmpdir)FSCore.resources
+
+$(tmpdir)FSCore.resources: $(srcdir)FSCore.resx
+	resgen $< $@
+
+include $(topdir)/src/fsharp/targets.make
+
+install: install-lib-2 install-lib-4
+

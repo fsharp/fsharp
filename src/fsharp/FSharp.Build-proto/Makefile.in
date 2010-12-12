@@ -1,0 +1,36 @@
+NAME=FSharp.Build-proto
+ASSEMBLY = $(NAME).dll
+
+srcdir := @abs_srcdir@/
+
+include @abs_top_builddir@/config.make
+
+CONFIG=proto
+
+FSC=$(bindir)fsc.exe
+
+FLAGS += --target:library
+
+DEFINES += \
+	--define:BUILDING_WITH_LKG
+
+REFERENCES += \
+	-r:$(bindir)FSharp.Core.dll 
+
+sources= \
+	$(objdir)FSBuild.fs \
+	../../utils/CompilerLocationUtils.fs \
+	../FSharp.Build/CreateFSharpManifestResourceName.fsi \
+	../FSharp.Build/CreateFSharpManifestResourceName.fs \
+	../FSharp.Build/Fsc.fsi \
+	../FSharp.Build/Fsc.fs
+
+RESOURCES = \
+	$(tmpdir)FSBuild.resources
+
+$(tmpdir)FSBuild.resources: $(srcdir)../FSharp.Build/FSBuild.txt
+	mono --debug $(FSSRGEN) $< $(@:.resources=.fs) $(@:.resources=.resx)
+	resgen $(@:.resources=.resx) $@
+
+include $(topdir)/src/fsharp/targets.make
+

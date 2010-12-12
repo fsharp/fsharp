@@ -1,0 +1,184 @@
+NAME=FSharp.Compiler
+ASSEMBLY = $(NAME).dll
+SIGN=1
+
+srcdir := @abs_srcdir@/
+
+include @abs_top_builddir@/config.make
+
+FSC=$(protodir)fsc-proto.exe
+
+FLAGS += \
+	$(FINAL_FLAGS) \
+	--target:library
+
+DEFINES += \
+	--define:TRYING_TO_FIX_4577 \
+	--define:COMPILER \
+	--define:INCLUDE_METADATA_READER \
+	--define:INCLUDE_METADATA_WRITER \
+	--define:EXTENSIBLE_DUMPER 
+
+REFERENCES += \
+	-r:$(outdir)FSharp.Core.dll \
+	-r:Mono.Security.dll
+
+sources = \
+	$(tmpdir)FSComp.fs \
+	../../assemblyinfo/assemblyinfo.FSharp.Compiler.dll.fs \
+	../ExtensibleDumper.fsi \
+	../ExtensibleDumper.fs \
+	../../utils/sformat.fsi \
+	../../utils/sformat.fs \
+	../sr.fsi \
+	../sr.fs \
+	../../utils/prim-lexing.fsi \
+	../../utils/prim-lexing.fs \
+	../../utils/prim-parsing.fsi \
+	../../utils/prim-parsing.fs \
+	../../utils/resizearray.fsi \
+	../../utils/resizearray.fs \
+	../../utils/HashMultiMap.fsi \
+	../../utils/HashMultiMap.fs \
+	../../utils/TaggedCollections.fsi \
+	../../utils/TaggedCollections.fs \
+	../../utils/filename.fsi \
+	../../utils/filename.fs \
+	../FlatList.fs \
+	../../absil/illib.fs \
+	../../absil/zmap.fsi \
+	../../absil/zmap.fs \
+	../../absil/zset.fsi \
+	../../absil/zset.fs \
+	../../absil/bytes.fsi \
+	../../absil/bytes.fs \
+	../../absil/ildiag.fsi \
+	../../absil/ildiag.fs \
+	../ReferenceResolution.fs \
+	../../absil/il.fsi \
+	../../absil/il.fs \
+	../../absil/ilx.fsi \
+	../../absil/ilx.fs \
+	../../absil/ilascii.fsi \
+	../../absil/ilascii.fs \
+	../../absil/ilprint.fsi \
+	../../absil/ilprint.fs \
+	../../absil/ilmorph.fsi \
+	../../absil/ilmorph.fs \
+	../../absil/ilsupp.fsi \
+	../../absil/ilsupp.fs \
+	$(tmpdir)ilpars.fs \
+	$(tmpdir)illex.fs \
+	../../absil/ilbinary.fsi \
+	../../absil/ilbinary.fs \
+	../lib.fs \
+	../range.fsi \
+	../range.fs \
+	../ErrorLogger.fs \
+	../InternalCollections.fsi \
+	../InternalCollections.fs \
+	../../absil/ilread.fsi \
+	../../absil/ilread.fs \
+	../../absil/ilwrite.fsi \
+	../../absil/ilwrite.fs \
+	../../absil/ilreflect.fs \
+	../../utils/CompilerLocationUtils.fs \
+	../PrettyNaming.fs \
+	../../ilx/ilxsettings.fs \
+	../../ilx/pubclo.fsi \
+	../../ilx/pubclo.fs \
+	../../ilx/cu_erase.fsi \
+	../../ilx/cu_erase.fs \
+	../InternalFileSystemUtils.fsi \
+	../InternalFileSystemUtils.fs \
+	../unilex.fsi \
+	../unilex.fs \
+	../layout.fsi \
+	../layout.fs \
+	../ast.fs \
+	$(tmpdir)pars.fs \
+	../lexhelp.fsi \
+	../lexhelp.fs \
+	$(tmpdir)lex.fs \
+	../sreflect.fsi \
+	../sreflect.fs \
+	../QueueList.fs \
+	../tast.fs \
+	../env.fs \
+	../tastops.fsi \
+	../tastops.fs \
+	../pickle.fsi \
+	../pickle.fs \
+	../lexfilter.fs \
+	../import.fsi \
+	../import.fs \
+	../infos.fs \
+	../augment.fsi \
+	../augment.fs \
+	../outcome.fsi \
+	../outcome.fs \
+	../nameres.fsi \
+	../nameres.fs \
+	../typrelns.fs \
+	../patcompile.fsi \
+	../patcompile.fs \
+	../csolve.fsi \
+	../csolve.fs \
+	../formats.fsi \
+	../formats.fs \
+	../unsolved.fs \
+	../creflect.fsi \
+	../creflect.fs \
+	../check.fsi \
+	../check.fs \
+	../tc.fsi \
+	../tc.fs \
+	../opt.fsi \
+	../detuple.fsi \
+	../opt.fs \
+	../detuple.fs \
+	../tlr.fsi \
+	../tlr.fs \
+	../lowertop.fs \
+	../ilxgen.fsi \
+	../ilxgen.fs \
+	../TraceCall.fs \
+	../build.fsi \
+	../build.fs \
+	../fscopts.fsi \
+	../fscopts.fs \
+	../vs/IncrementalBuild.fsi \
+	../vs/IncrementalBuild.fs \
+	../vs/Reactor.fsi \
+	../vs/Reactor.fs \
+	../vs/service.fsi \
+	../vs/service.fs
+
+RESOURCES= \
+	$(tmpdir)FSStrings.resources \
+	$(tmpdir)FSComp.resources
+
+$(tmpdir)FSComp.resources: $(srcdir)../FSComp.txt
+	mono --debug $(FSSRGEN) $< $(@:.resources=.fs) $(@:.resources=.resx)
+	resgen $(@:.resources=.resx) $@
+
+$(tmpdir)FSStrings.resources: $(srcdir)../FSStrings.resx
+	resgen $< $@
+
+$(tmpdir)lex.fs: $(srcdir)../lex.fsl
+	mono --debug $(FSLEX) $< -o $@ --lexlib Internal.Utilities.Text.Lexing --unicode
+
+$(tmpdir)illex.fs: $(srcdir)../../absil/illex.fsl
+	mono --debug $(FSLEX) $< -o $@ --lexlib Internal.Utilities.Text.Lexing --unicode
+
+$(tmpdir)pars.fs: $(srcdir)../pars.fsy
+	mono --debug $(FSYACC) $< -o $@ --internal --open Microsoft.FSharp.Compiler --module Microsoft.FSharp.Compiler.Parser --lexlib Internal.Utilities.Text.Lexing --parslib Internal.Utilities.Text.Parsing
+
+$(tmpdir)ilpars.fs: $(srcdir)../../absil/ilpars.fsy
+	mono --debug $(FSYACC) $< -o $@ --internal --module Microsoft.FSharp.Compiler.AbstractIL.Internal.AsciiParser --lexlib Internal.Utilities.Text.Lexing --parslib Internal.Utilities.Text.Parsing
+
+include $(topdir)/src/fsharp/targets.make
+
+install: install-lib-2 install-lib-4
+
+
