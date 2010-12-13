@@ -4,7 +4,7 @@ topdir := @abs_top_srcdir@/
 builddir := @abs_top_builddir@/
 libdir := ${prefix}/lib/
 installdir := ${prefix}/bin/
-monodir := `pkg-config --variable=libdir mono`/mono/
+monodir := @MONODIR@
 libdir2 := $(monodir)2.0/
 libdir35 := $(monodir)3.5/
 libdir4 := $(monodir)4.0/
