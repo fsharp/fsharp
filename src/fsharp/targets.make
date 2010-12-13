@@ -2,16 +2,16 @@ SOURCES := $(patsubst $(srcdir)$(tmpdir)%,$(tmpdir)%,$(patsubst %,$(srcdir)%,$(s
 
 .PHONY: install install-bin install-bin-2 install-bin-4 install-lib
 
-all: $(objdir) $(objdir)$(TARGET_2_0) $(objdir)$(TARGET_4_0) do-4-0 do-2-0
+all: do-4-0 do-2-0
 
 install:
 
 clean: clean-4-0 clean-2-0
+	@-rm -f $(tmpdir)*
 
 clean-2-0: TARGET := $(TARGET_2_0)
 clean-2-0:
-	@-rm -f $(tmpdir)*/*
-	@-rm -f $(objdir)*/*
+	@-rm -rf $(objdir)
 	@-rm -f $(outdir)$(ASSEMBLY)
 	@-rm -f $(outdir)$(ASSEMBLY).mdb
 	@-rm -f $(outdir)$(NAME).xml
@@ -20,8 +20,7 @@ clean-2-0:
 
 clean-4-0: TARGET := $(TARGET_4_0)
 clean-4-0:
-	@-rm -f $(tmpdir)*/*
-	@-rm -f $(objdir)*/*
+	@-rm -rf $(objdir)
 	@-rm -f $(outdir)$(ASSEMBLY)
 	@-rm -f $(outdir)$(ASSEMBLY).mdb
 	@-rm -f $(outdir)$(NAME).xml
@@ -34,7 +33,7 @@ do-2-0: FLAGS += $(FLAGS_2_0)
 do-2-0: TARGET := $(TARGET_2_0)
 do-2-0: VERSION := $(VERSION_2_0)
 do-2-0: libdir = $(libdir2)
-do-2-0: $(objdir)$(TARGET_2_0)/$(ASSEMBLY)
+do-2-0: $(objdir) $(objdir)$(TARGET_2_0) $(objdir)$(TARGET_4_0) $(objdir)$(TARGET_2_0)/$(ASSEMBLY)
 	@mkdir -p $(outdir)
 	@cp $(objdir)$(ASSEMBLY) $(outdir)
 	@-cp $(objdir)$(NAME).xml $(outdir)
@@ -55,7 +54,7 @@ do-4-0: FLAGS += $(FLAGS_4_0)
 do-4-0: TARGET := $(TARGET_4_0)
 do-4-0: VERSION := $(VERSION_4_0)
 do-4-0: libdir = $(libdir4)
-do-4-0: $(objdir)$(TARGET_4_0)/$(ASSEMBLY)
+do-4-0: $(objdir) $(objdir)$(TARGET_2_0) $(objdir)$(TARGET_4_0) $(objdir)$(TARGET_4_0)/$(ASSEMBLY)
 	@mkdir -p $(outdir)
 	@cp $(objdir)$(ASSEMBLY) $(outdir)
 	@-cp $(objdir)$(NAME).xml $(outdir)
