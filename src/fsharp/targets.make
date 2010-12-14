@@ -70,33 +70,29 @@ do-4-0: $(objdir) $(objdir)$(TARGET_2_0) $(objdir)$(TARGET_4_0) $(objdir)$(TARGE
 	fi
 
 install-lib-2: TARGET := $(TARGET_2_0)
-install-lib-2: libdir = $(libdir2)
 install-lib-4: TARGET := $(TARGET_4_0)
-install-lib-4: libdir = $(libdir4)
 install-bin-2: TARGET := $(TARGET_2_0)
 install-bin-2: VERSION := 2
-install-bin-2: libdir = $(libdir2)
 install-bin-4: TARGET := $(TARGET_4_0)
-install-bin-4: libdir = $(libdir4)
 
 install-lib-2 install-lib-4:
 	@echo "Installing $(ASSEMBLY)"
-	@gacutil -i $(outdir)$(ASSEMBLY)
-	@ln -s -f $(monodir)gac/$(NAME)/$(TARGET).0.0__b03f5f7f11d50a3a/$(ASSEMBLY) $(libdir)
-
-do_subst = sed -e 's,[@]DIR[@],$(libdir),g' -e 's,[@]TOOL[@],fsc.exe,g'
+	@mkdir -p $(DESTDIR)/$(libdir)
+	@gacutil -i $(outdir)$(ASSEMBLY) -root $(DESTDIR)/$(libdir) -package fsharp-$(TARGET)
 
 install-bin-2 install-bin-4:
-	$(do_subst) < $(topdir)launcher.in > $(outdir)$(NAME)$(VERSION)
+	sed -e 's,[@]DIR[@],$(DESTDIR)$(libdir)mono/fsharp-$(TARGET),g' -e 's,[@]TOOL[@],fsc.exe,g' < $(topdir)launcher.in > $(outdir)$(NAME)$(VERSION)
 	chmod +x $(outdir)$(NAME)$(VERSION)
-	$(INSTALL_LIB) $(outdir)$(ASSEMBLY) $(libdir)
-	$(INSTALL_BIN) $(outdir)$(NAME)$(VERSION) $(installdir)
+	@mkdir -p $(DESTDIR)/$(libdir)
+	@mkdir -p $(DESTDIR)/$(bindir)
+	$(INSTALL_LIB) $(outdir)$(ASSEMBLY) $(DESTDIR)$(libdir)mono/fsharp-$(TARGET)
+	$(INSTALL_BIN) $(outdir)$(NAME)$(VERSION) $(DESTDIR)/$(bindir)
 
 $(objdir) $(objdir)$(TARGET_2_0) $(objdir)$(TARGET_4_0):
 	mkdir -p $@
 
 $(objdir)$(TARGET_2_0)/$(ASSEMBLY): $(RESOURCES) $(SOURCES)
-	MONO_PATH=$(bindir) mono $(MONO_OPTIONS) --debug $(FSC) -o:$(objdir)$(ASSEMBLY) $(REFERENCES) $(DEFINES) $(FLAGS) $(patsubst %,--resource:%,$(RESOURCES)) $(SOURCES)
+	MONO_PATH=$(bootstrapdir) mono $(MONO_OPTIONS) --debug $(FSC) -o:$(objdir)$(ASSEMBLY) $(REFERENCES) $(DEFINES) $(FLAGS) $(patsubst %,--resource:%,$(RESOURCES)) $(SOURCES)
 
 $(objdir)$(TARGET_4_0)/$(ASSEMBLY):  $(RESOURCES) $(SOURCES)
-	MONO_PATH=$(bindir) mono $(MONO_OPTIONS) --debug $(FSC) -o:$(objdir)$(ASSEMBLY) $(REFERENCES) $(DEFINES) $(FLAGS) $(patsubst %,--resource:%,$(RESOURCES)) $(SOURCES)
+	MONO_PATH=$(bootstrapdir) mono $(MONO_OPTIONS) --debug $(FSC) -o:$(objdir)$(ASSEMBLY) $(REFERENCES) $(DEFINES) $(FLAGS) $(patsubst %,--resource:%,$(RESOURCES)) $(SOURCES)
