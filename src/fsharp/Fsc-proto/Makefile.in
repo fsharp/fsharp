@@ -7,7 +7,7 @@ include @abs_top_builddir@/config.make
 
 CONFIG=proto
 
-FSC=$(bindir)fsc.exe
+FSC=$(bootstrapdir)fsc.exe
 
 FLAGS += --target:exe
 
@@ -17,10 +17,10 @@ DEFINES += \
 	--define:COMPILER
 
 REFERENCES += \
-	-r:$(bindir)FSharp.Core.dll \
+	-r:$(bootstrapdir)FSharp.Core.dll \
 	-r:$(outdir)FSharp.Compiler-proto.dll \
-	-r:$(libdir)System.Runtime.Remoting.dll \
-	-r:$(libdir)System.Windows.Forms.dll
+	-r:$(monolibdir)System.Runtime.Remoting.dll \
+	-r:$(monolibdir)System.Windows.Forms.dll
 
 sources = \
 	$(tmpdir)FSCstrings.fs \

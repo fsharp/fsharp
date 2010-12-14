@@ -15,8 +15,8 @@ FLAGS += \
 REFERENCES += \
 	-r:$(outdir)FSharp.Core.dll \
 	-r:$(outdir)FSharp.Compiler.dll \
-	-r:$(libdir)System.Runtime.Remoting.dll \
-	-r:$(libdir)System.Windows.Forms.dll 
+	-r:$(monolibdir)System.Runtime.Remoting.dll \
+	-r:$(monolibdir)System.Windows.Forms.dll
 
 sources = \
 	$(tmpdir)FSCstrings.fs \

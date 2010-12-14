@@ -7,7 +7,7 @@ include @abs_top_builddir@/config.make
 
 CONFIG=proto
 
-FSC=$(bindir)fsc.exe
+FSC=$(bootstrapdir)fsc.exe
 
 FLAGS += --target:library
 
@@ -20,7 +20,7 @@ DEFINES += \
 	--define:TRYING_TO_FIX_4577
 
 REFERENCES += \
-	-r:$(bindir)FSharp.Core.dll \
+	-r:$(bootstrapdir)FSharp.Core.dll \
 	-r:Mono.Security.dll
 
 sources = \

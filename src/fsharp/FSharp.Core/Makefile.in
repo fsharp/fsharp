@@ -16,7 +16,7 @@ FLAGS_2_0 += \
 FLAGS_4_0 += \
 	$(FINAL_FLAGS) \
 	$(FLAGS_2_0) \
-	--compiling-fslib-mscorlib40:$(libdir)mscorlib.dll
+	--compiling-fslib-mscorlib40:$(monolibdir)mscorlib.dll
 
 DEFINES += \
 	--define:RUNTIME

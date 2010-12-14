@@ -7,7 +7,7 @@ include @abs_top_builddir@/config.make
 
 CONFIG=proto
 
-FSC=$(bindir)fsc.exe
+FSC=$(bootstrapdir)fsc.exe
 
 FLAGS += --target:library
 
@@ -15,7 +15,7 @@ DEFINES += \
 	--define:BUILDING_WITH_LKG
 
 REFERENCES += \
-	-r:$(bindir)FSharp.Core.dll 
+	-r:$(bootstrapdir)FSharp.Core.dll
 
 sources= \
 	$(objdir)FSBuild.fs \
