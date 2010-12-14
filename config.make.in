@@ -3,14 +3,14 @@ prefix := @prefix@
 topdir := @abs_top_srcdir@/
 builddir := @abs_top_builddir@/
 libdir := ${prefix}/lib/
-installdir := ${prefix}/bin/
-monodir := @MONODIR@
+bindir := ${prefix}/bin/
+monodir := @MONODIR@/
 libdir2 := $(monodir)2.0/
 libdir35 := $(monodir)3.5/
 libdir4 := $(monodir)4.0/
 tooldir := $(topdir)lib/bootstrap/2.0/
 
-bindir = $(bootstrap)/$(TARGET)/
+bootstrapdir = $(bootstrap)/$(TARGET)/
 tmpdir = .libs/
 objdir = $(tmpdir)$(TARGET)/
 protodir = $(builddir)/lib/proto/$(TARGET)/
@@ -90,7 +90,7 @@ INSTALL_BIN = $(INSTALL) -c -m 755
 INSTALL_LIB = $(INSTALL_BIN)
 
 EXTRA_DIST = configure
-NO_DIST = .gitignore lib
+NO_DIST = .gitignore lib/debug lib/proto lib/release
 
 DEFAULT: all
 
