@@ -1,5 +1,6 @@
 NAME=FSharp.Build
 ASSEMBLY = $(NAME).dll
+SIGN=1
 
 srcdir := @abs_srcdir@/
 
@@ -31,4 +32,6 @@ $(tmpdir)FSBuild.resources: $(srcdir)FSBuild.txt
 	resgen $(@:.resources=.resx) $@
 
 include $(topdir)/src/fsharp/targets.make
+
+install: install-lib-2 install-lib-4
 

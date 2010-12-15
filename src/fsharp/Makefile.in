@@ -9,6 +9,7 @@ all clean do-2-0 do-4-0 clean-2-0 clean-4-0:
 
 install:
 	$(MAKE) -C FSharp.Core $@
+	$(MAKE) -C FSharp.Build $@
 	$(MAKE) -C FSharp.Compiler $@
 	$(MAKE) -C Fsc $@
 
