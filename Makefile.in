@@ -10,6 +10,6 @@ dist:
 	list='$(EXTRA_DIST)'; for s in $$list; do \
 		(cp $(topdir)$$s fsharp-$(DISTVERSION)/$$s) \
 	done;
-	tar cvjf fsharp-$(DISTVERSION).tar.bz2 -C fsharp-$(DISTVERSION) $(patsubst %,--exclude=%, $(NO_DIST)) .
+	tar cvjf fsharp-$(DISTVERSION).tar.bz2 $(patsubst %,--exclude=%, $(NO_DIST)) fsharp-$(DISTVERSION)
 	du -b fsharp-$(DISTVERSION).tar.bz2
 
