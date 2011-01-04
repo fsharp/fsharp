@@ -81,7 +81,7 @@ install-lib-2 install-lib-4:
 	@gacutil -i $(outdir)$(ASSEMBLY) -root $(DESTDIR)/$(libdir) -package fsharp-$(TARGET)
 
 install-bin-2 install-bin-4:
-	sed -e 's,[@]DIR[@],$(DESTDIR)$(libdir)mono/fsharp-$(TARGET),g' -e 's,[@]TOOL[@],fsc.exe,g' < $(topdir)launcher.in > $(outdir)$(NAME)$(VERSION)
+	sed -e 's,[@]DIR[@],$(libdir)mono/fsharp-$(TARGET),g' -e 's,[@]TOOL[@],fsc.exe,g' < $(topdir)launcher.in > $(outdir)$(NAME)$(VERSION)
 	chmod +x $(outdir)$(NAME)$(VERSION)
 	@mkdir -p $(DESTDIR)/$(libdir)
 	@mkdir -p $(DESTDIR)/$(bindir)
