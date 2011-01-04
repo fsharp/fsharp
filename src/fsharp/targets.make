@@ -92,11 +92,11 @@ install-lib-2 install-lib-4:
 	@gacutil -i $(outdir)$(ASSEMBLY) -root $(DESTDIR)/$(libdir) -package $(TARGET)
 	@if test -e $(outdir)$(NAME).sigdata; then \
 		$(INSTALL_LIB) $(outdir)$(NAME).sigdata $(DESTDIR)/$(libdir)mono/gac/$(NAME)/$(VERSION)__$(TOKEN); \
-		ln -fs $(DESTDIR)/$(libdir)mono/gac/$(NAME)/$(VERSION)__$(TOKEN)/$(NAME).sigdata $(DESTDIR)/$(libdir)mono/$(TARGET)/$(NAME).sigdata; \
+		ln -fs -t $(DESTDIR)/$(libdir)mono/$(TARGET)/ ../gac/$(NAME)/$(VERSION)__$(TOKEN)/$(NAME).sigdata; \
 	fi
 	@if test -e $(outdir)$(NAME).optdata; then \
 		$(INSTALL_LIB) $(outdir)$(NAME).optdata $(DESTDIR)/$(libdir)mono/gac/$(NAME)/$(VERSION)__$(TOKEN); \
-		ln -fs $(DESTDIR)/$(libdir)mono/gac/$(NAME)/$(VERSION)__$(TOKEN)/$(NAME).optdata $(DESTDIR)/$(libdir)mono/$(TARGET)/$(NAME).optdata; \
+		ln -fs -t $(DESTDIR)/$(libdir)mono/$(TARGET)/ ../gac/$(NAME)/$(VERSION)__$(TOKEN)/$(NAME).optdata; \
 	fi
 	$(INSTALL_LIB) $(outdir)Microsoft.FSharp.targets $(DESTDIR)/$(libdir)mono/$(TARGET)/;
 
