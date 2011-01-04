@@ -47,6 +47,9 @@ do-2-0: $(objdir) $(objdir)$(TARGET_2_0) $(objdir)$(TARGET_4_0) $(objdir)$(TARGE
 	@if test "x$(SIGN)" = "x1"; \
 		then sn -R $(outdir)$(ASSEMBLY) $(srcdir)../../../mono.snk; \
 	fi
+	@if test -e Microsoft.FSharp.targets; then \
+		cp Microsoft.FSharp.targets $(outdir); \
+	fi
 
 do-4-0: DEFINES += $(DEFINES_4_0)
 do-4-0: REFERENCES += $(REFERENCES_4_0)
@@ -68,6 +71,9 @@ do-4-0: $(objdir) $(objdir)$(TARGET_2_0) $(objdir)$(TARGET_4_0) $(objdir)$(TARGE
 	@if test "x$(SIGN)" = "x1"; \
 		then sn -R $(outdir)$(ASSEMBLY) $(srcdir)../../../mono.snk; \
 	fi
+	@if test -e Microsoft.FSharp.targets; then \
+		cp Microsoft.FSharp.targets $(outdir); \
+	fi
 
 install-lib-2: TARGET := $(TARGET_2_0)
 install-lib-2: VERSION := $(VERSION_2_0)
@@ -82,22 +88,24 @@ install-bin-4: TARGET := $(TARGET_4_0)
 install-lib-2 install-lib-4:
 	@echo "Installing $(ASSEMBLY)"
 	@mkdir -p $(DESTDIR)/$(libdir)
-	@gacutil -i $(outdir)$(ASSEMBLY) -root $(DESTDIR)/$(libdir) -package fsharp-$(TARGET)
+	@mkdir -p $(DESTDIR)/$(libdir)mono/$(TARGET)
+	@gacutil -i $(outdir)$(ASSEMBLY) -root $(DESTDIR)/$(libdir) -package $(TARGET)
 	@if test -e $(outdir)$(NAME).sigdata; then \
 		$(INSTALL_LIB) $(outdir)$(NAME).sigdata $(DESTDIR)/$(libdir)mono/gac/$(NAME)/$(VERSION)__$(TOKEN); \
-		ln -s $(DESTDIR)/$(libdir)mono/gac/$(NAME)/$(VERSION)__$(TOKEN)/$(NAME).sigdata $(DESTDIR)/$(libdir)mono/fsharp-$(TARGET)/$(NAME).sigdata; \
+		ln -fs $(DESTDIR)/$(libdir)mono/gac/$(NAME)/$(VERSION)__$(TOKEN)/$(NAME).sigdata $(DESTDIR)/$(libdir)mono/$(TARGET)/$(NAME).sigdata; \
 	fi
 	@if test -e $(outdir)$(NAME).optdata; then \
 		$(INSTALL_LIB) $(outdir)$(NAME).optdata $(DESTDIR)/$(libdir)mono/gac/$(NAME)/$(VERSION)__$(TOKEN); \
-		ln -s $(DESTDIR)/$(libdir)mono/gac/$(NAME)/$(VERSION)__$(TOKEN)/$(NAME).optdata $(DESTDIR)/$(libdir)mono/fsharp-$(TARGET)/$(NAME).optdata; \
+		ln -fs $(DESTDIR)/$(libdir)mono/gac/$(NAME)/$(VERSION)__$(TOKEN)/$(NAME).optdata $(DESTDIR)/$(libdir)mono/$(TARGET)/$(NAME).optdata; \
 	fi
+	$(INSTALL_LIB) $(outdir)Microsoft.FSharp.targets $(DESTDIR)/$(libdir)mono/$(TARGET)/;
 
 install-bin-2 install-bin-4:
-	sed -e 's,[@]DIR[@],$(libdir)mono/fsharp-$(TARGET),g' -e 's,[@]TOOL[@],fsc.exe,g' < $(topdir)launcher.in > $(outdir)$(NAME)$(VERSION)
+	sed -e 's,[@]DIR[@],$(libdir)mono/$(TARGET),g' -e 's,[@]TOOL[@],fsc.exe,g' < $(topdir)launcher.in > $(outdir)$(NAME)$(VERSION)
 	chmod +x $(outdir)$(NAME)$(VERSION)
 	@mkdir -p $(DESTDIR)/$(libdir)
 	@mkdir -p $(DESTDIR)/$(bindir)
-	$(INSTALL_LIB) $(outdir)$(ASSEMBLY) $(DESTDIR)$(libdir)mono/fsharp-$(TARGET)
+	$(INSTALL_LIB) $(outdir)$(ASSEMBLY) $(DESTDIR)$(libdir)mono/$(TARGET)
 	$(INSTALL_BIN) $(outdir)$(NAME)$(VERSION) $(DESTDIR)/$(bindir)
 
 $(objdir) $(objdir)$(TARGET_2_0) $(objdir)$(TARGET_4_0):
