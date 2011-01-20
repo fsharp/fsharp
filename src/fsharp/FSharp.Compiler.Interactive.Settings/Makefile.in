@@ -1,0 +1,36 @@
+NAME=FSharp.Compiler.Interactive.Settings
+ASSEMBLY = $(NAME).dll
+SIGN=1
+
+srcdir := @abs_srcdir@/
+
+include @abs_top_builddir@/config.make
+
+FSC=$(protodir)fsc-proto.exe
+
+FLAGS += \
+	$(FINAL_FLAGS) \
+	--target:library
+
+REFERENCES += \
+	-r:$(outdir)FSharp.Core.dll \
+	-r:Mono.Security.dll
+
+sources = \
+	../../assemblyinfo/assemblyinfo.FSharp.Compiler.Interactive.Settings.dll.fs \
+	../fsiaux.fsi \
+	../fsiaux.fs \
+	../fsiattrs.fs
+
+RESOURCES= \
+	$(tmpdir)FSInteractiveSettings.resources
+
+$(tmpdir)FSInteractiveSettings.resources: $(srcdir)../FSInteractiveSettings.txt
+	mono --debug $(FSSRGEN) $< $(@:.resources=.fs) $(@:.resources=.resx)
+	resgen $(@:.resources=.resx) $@
+
+include $(topdir)/src/fsharp/targets.make
+
+install: install-lib-2 install-lib-4
+
+
