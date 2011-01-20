@@ -54,5 +54,8 @@ src/fsharp/FSharp.Core/Makefile
 src/fsharp/FSharp.Build/Makefile
 src/fsharp/FSharp.Compiler/Makefile
 src/fsharp/Fsc/Makefile
+src/fsharp/FSharp.Compiler.Interactive.Settings/Makefile
+src/fsharp/FSharp.Compiler.Server.Shared/Makefile
+src/fsharp/fsi/Makefile
 ])
 AC_OUTPUT

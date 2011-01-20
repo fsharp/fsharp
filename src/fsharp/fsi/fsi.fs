@@ -180,6 +180,7 @@ type FsiValuePrinter(ilGlobals,generateDebugInfo,resolvePath) =
                     yield DefaultPrintingIntercept];
               FloatingPointFormat = fsi.FloatingPointFormat;
               PrintWidth = fsi.PrintWidth; 
+
               PrintDepth = fsi.PrintDepth; 
               PrintLength = fsi.PrintLength;
               PrintSize = fsi.PrintSize;
@@ -1314,8 +1315,16 @@ module MagicAssemblyResolution =
     //  It is an explicit user trust decision to load an assembly with #r. Scripts are not run automatically (for example, by double-clicking in explorer).
     //  We considered setting loadFromRemoteSources in fsi.exe.config but this would transitively confer unsafe loading to the code in the referenced 
     //  assemblies. Better to let those assemblies decide for themselves which is safer.
+
 #if FX_ATLEAST_40
+
+    // Mono doesn't provide the UnsafeLoadFrom. LoadFrom works fine.
+#if MONO
+        Assembly.LoadFrom(path)
+#else
         Assembly.UnsafeLoadFrom(path)
+#endif
+
 #else
         Assembly.LoadFrom(path)
 #endif
