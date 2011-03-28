@@ -9,6 +9,8 @@ fail to build due to a possible tail call bug on Mono.
 
 This build is based on F# Powerpack r54075
 
+F# original powerpack sources are available from http://fsharppowerpack.codeplex.com/
+
 ======= REQUIREMENTS =======
 
 Requires mono trunk, after September 23 - this is due to missing IStructuralComparable.CompareTo
