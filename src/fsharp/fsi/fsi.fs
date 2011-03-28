@@ -181,6 +181,7 @@ type FsiValuePrinter(ilGlobals,generateDebugInfo,resolvePath) =
               FloatingPointFormat = fsi.FloatingPointFormat;
               PrintWidth = fsi.PrintWidth; 
 
+
               PrintDepth = fsi.PrintDepth; 
               PrintLength = fsi.PrintLength;
               PrintSize = fsi.PrintSize;
@@ -416,7 +417,7 @@ type FsiCommandLineOptions(tcConfigB, fsiConsoleOutput: FsiConsoleOutput) =
     let mutable enableConsoleKeyProcessing = 
        // Mono on Win32 doesn't implement correct console processing
        not (runningOnMono && System.Environment.OSVersion.Platform = System.PlatformID.Win32NT) 
-    let mutable gui        = true // override via "--gui", on by default
+    let mutable gui        = false // override via "--gui", on by default
 #if DEBUG
     let mutable showILCode = false // show modul il code 
 #endif
