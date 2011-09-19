@@ -101,12 +101,12 @@ install-lib-2 install-lib-4:
 	$(INSTALL_LIB) $(outdir)Microsoft.FSharp.targets $(DESTDIR)/$(libdir)mono/$(TARGET)/;
 
 install-bin-2 install-bin-4:
-	sed -e 's,[@]DIR[@],$(libdir)mono/$(TARGET),g' -e 's,[@]TOOL[@],$(ASSEMBLY),g' < $(topdir)launcher.in > $(outdir)$(NAME)$(VERSION)
-	chmod +x $(outdir)$(NAME)$(VERSION)
+	sed -e 's,[@]DIR[@],$(libdir)mono/$(TARGET),g' -e 's,[@]TOOL[@],$(ASSEMBLY),g' < $(topdir)launcher.in > $(outdir)$(subst fs,fsharp,$(NAME))$(VERSION)
+	chmod +x $(outdir)$(subst fs,fsharp,$(NAME))$(VERSION)
 	@mkdir -p $(DESTDIR)/$(libdir)
 	@mkdir -p $(DESTDIR)/$(bindir)
 	$(INSTALL_LIB) $(outdir)$(ASSEMBLY) $(DESTDIR)$(libdir)mono/$(TARGET)
-	$(INSTALL_BIN) $(outdir)$(NAME)$(VERSION) $(DESTDIR)/$(bindir)
+	$(INSTALL_BIN) $(outdir)$(subst fs,fsharp,$(NAME))$(VERSION) $(DESTDIR)/$(bindir)
 
 $(objdir) $(objdir)$(TARGET_2_0) $(objdir)$(TARGET_4_0):
 	mkdir -p $@
