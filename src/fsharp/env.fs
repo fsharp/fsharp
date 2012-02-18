@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2010 Microsoft Corporation. 
+// Copyright (c) 2002-2011 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -371,7 +371,8 @@ type public TcGlobals =
       attrib_NoDynamicInvocationAttribute           : BuiltinAttribInfo;
       
       attrib_SecurityAttribute                      : BuiltinAttribInfo;
-
+      attrib_SecurityCriticalAttribute              : BuiltinAttribInfo;
+      attrib_SecuritySafeCriticalAttribute          : BuiltinAttribInfo;
       
       cons_ucref : UnionCaseRef;
       nil_ucref : UnionCaseRef;
@@ -710,18 +711,9 @@ let mkTcGlobals (compilingFslib,sysCcu,ilg,fslibCcu,directoryToResolveRelativePa
   let mkMscorlibAttrib nm : BuiltinAttribInfo = 
       AttribInfo(mkILTyRef (ilg.mscorlibScopeRef,nm), mkKnownTyconRef sysCcu nm)
 
-  let normalize (filename:string) = 
-      let n = filename.Length 
-      let res = System.Text.StringBuilder n 
-      for i = 0 to n-1 do 
-        let c = filename.[i] 
-        res.Append (match c with '/' -> '\\' | _ -> c) |> ignore;
-      done;
-      res.ToString()
-
   let mk_doc filename = ILSourceDocument.Create(language=None, vendor=None, documentType=None, file=filename)
   // Build the memoization table for files
-  let memoize_file = new MemoizationTable<int,ILSourceDocument> ((fileOfFileIndex >> Filename.fullpath directoryToResolveRelativePaths >> normalize >> mk_doc), keyComparer=HashIdentity.Structural)
+  let memoize_file = new MemoizationTable<int,ILSourceDocument> ((fileOfFileIndex >> Filename.fullpath directoryToResolveRelativePaths >> mk_doc), keyComparer=HashIdentity.Structural)
 
   //let unary_neg_sinfo =            fslib_MFIntrinsicOperators_nleref, (CompileOpName "~-")        
   let and_info =                   MakeIntrinsicValRef(fslib_MFIntrinsicOperators_nleref,                    CompileOpName "&"                      ,None,[],         mk_rel_sig bool_ty) 
@@ -1088,6 +1080,9 @@ let mkTcGlobals (compilingFslib,sysCcu,ilg,fslibCcu,directoryToResolveRelativePa
     attrib_GeneratedEstTypeAttribute              = mk_MFCore_attrib "GenerateAttribute";
     attrib_NoDynamicInvocationAttribute           = mk_MFCore_attrib "NoDynamicInvocationAttribute";
     attrib_SecurityAttribute                      = mkMscorlibAttrib "System.Security.Permissions.SecurityAttribute"
+    attrib_SecurityCriticalAttribute              = mkMscorlibAttrib "System.Security.SecurityCriticalAttribute"
+    attrib_SecuritySafeCriticalAttribute          = mkMscorlibAttrib "System.Security.SecuritySafeCriticalAttribute"
+    
 
     // Build a map that uses the "canonical" F# type names and TyconRef's for these
     // in preference to the .NET type names. Doing this normalization is a fairly performance critical

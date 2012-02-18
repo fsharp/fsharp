@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2010 Microsoft Corporation. 
+// Copyright (c) 2002-2011 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -28,7 +28,7 @@ open Microsoft.FSharp.Compiler.Tastops
 open Microsoft.FSharp.Compiler.Lib
 open Microsoft.FSharp.Compiler.Infos
 
-
+open System.Collections.Generic
 
 [<Sealed>]
 type TcEnv =
@@ -113,6 +113,8 @@ exception internal NonUniqueInferredAbstractSlot of Env.TcGlobals * DisplayEnv *
 exception internal StandardOperatorRedefinitionWarning of string * range
 exception internal ParameterlessStructCtor of range
 
+val IsSecurityAttribute : Env.TcGlobals -> Import.ImportMap -> Dictionary<Stamp,bool> -> Tast.Attrib -> Range.range -> bool
+val IsSecurityCriticalAttribute : Env.TcGlobals -> Tast.Attrib -> bool
 val internal TcFieldInit : range -> ILFieldInit -> Tast.Const
 
 

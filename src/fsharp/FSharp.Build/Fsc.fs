@@ -14,7 +14,6 @@ open Internal.Utilities
 [<assembly: System.CLSCompliant(true)>]
 
 [<assembly: SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", Scope="type", Target="Microsoft.FSharp.Build.Fsc", MessageId="Fsc")>]
-[<assembly: SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", Scope="type", Target="Microsoft.FSharp.Build.FscCustomBuildEventArgs", MessageId="Fsc")>]
 do()
 
 
@@ -101,12 +100,6 @@ type FscCommandLineBuilder() =
         builder.AppendSwitch(switch)
         args <- switch :: args
 
-// for unit testing (attaching a Logger listener)
-[<Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly")>]  
-type FscCustomBuildEventArgs(commandLine:string) =
-    inherit CustomBuildEventArgs()
-    member this.CommandLine = commandLine
-    
 //There are a lot of flags on fsc.exe.
 //For now, not all of them are represented in the "Fsc class" object model.
 //The goal is to have the most common/important flags available via the Fsc class, and the
@@ -471,8 +464,6 @@ type [<Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:Iden
         builder.AppendFileNamesIfNotNull(sources, " ")
         capturedFilenames <- builder.CapturedFilenames()
         let s = builder.ToString()
-        if fsc.BuildEngine <> null then  // when doing simple unit tests using API, no BuildEnginer/Logger is attached
-            fsc.BuildEngine.LogCustomEvent( new FscCustomBuildEventArgs(s) )
         s
     // expose this to internal components (for nunit testing)
     member internal fsc.InternalGenerateCommandLineCommands() =

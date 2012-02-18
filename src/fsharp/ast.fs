@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2010 Microsoft Corporation. 
+// Copyright (c) 2002-2011 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -94,7 +94,11 @@ type XmlDoc =
                 if lineAT = "" then processLines rest
                 else if String.hasPrefix lineAT "<" then lines
                 else ["<summary>"] @
+#if SILVERLIGHT
+                     lines @
+#else        
                      (lines |> List.map (fun line -> System.Security.SecurityElement.Escape(line))) @
+#endif
                      ["</summary>"]               
 
         let lines = processLines (Array.toList lines)
@@ -162,28 +166,56 @@ type SynTypar =
 
 type 
     [<NoEquality; NoComparison; RequireQualifiedAccess>]
+    /// The unchecked abstract syntax tree of constants in F# types and expressions.
     SynConst = 
+    /// F# syntax: ()
     | Unit
+    /// F# syntax: true, false
     | Bool of bool
+    /// F# syntax: 13y, 0xFFy, 0o077y, 0b0111101y
     | SByte of sbyte
+    /// F# syntax: 13uy, 0x40uy, 0oFFuy, 0b0111101uy
     | Byte of byte
+    /// F# syntax: 13s, 0x4000s, 0o0777s, 0b0111101s
     | Int16 of int16
+    /// F# syntax: 13us, 0x4000us, 0o0777us, 0b0111101us
     | UInt16 of uint16
+    /// F# syntax: 13, 0x4000, 0o0777
     | Int32 of int32
+    /// F# syntax: 13u, 0x4000u, 0o0777u
     | UInt32 of uint32
+    /// F# syntax: 13L
     | Int64 of int64
+    /// F# syntax: 13UL
     | UInt64 of uint64
+    /// F# syntax: 13n
     | IntPtr of int64
+    /// F# syntax: 13un
     | UIntPtr of uint64
+    /// F# syntax: 1.30f, 1.40e10f etc.
     | Single of single
+    /// F# syntax: 1.30, 1.40e10 etc.
     | Double of double
+    /// F# syntax: 'a'
     | Char of char
+    /// F# syntax: 23.4M
     | Decimal of System.Decimal
-    | UserNum of ( (* value: *) string * (* suffix: *) string)
+    /// UserNum(value, suffix)
+    ///
+    /// F# syntax: 1Q, 1Z, 1R, 1N, 1G
+    | UserNum of ( string * string)
+    /// F# syntax: verbatim or regular string, e.g. "abc"
     | String of string * range 
+    /// F# syntax: verbatim or regular byte string, e.g. "abc"B.
+    ///
+    /// Also used internally in the typechecker once an array of unit16 contants 
+    /// is detected, to allow more efficient processing of large arrays of uint16 constants. 
     | Bytes of byte[] * range 
+    /// Used internally in the typechecker once an array of unit16 contants 
+    /// is detected, to allow more efficient processing of large arrays of uint16 constants. 
     | UInt16s of uint16[] 
-    | Measure of SynConst * SynMeasure (* we never iterate, so the const here is not another SynConst.Measure *)
+    /// Old comment: "we never iterate, so the const here is not another SynConst.Measure"
+    | Measure of SynConst * SynMeasure 
     member c.Range dflt = 
         match c with 
         | SynConst.String (_,m0) | SynConst.Bytes (_,m0) -> m0 
@@ -191,6 +223,8 @@ type
       
 and  
     [<NoEquality; NoComparison>]
+    /// The unchecked abstract syntax tree of F# unit of measure annotaitons. 
+    /// This should probably be merged with the represenation of SynType.
     SynMeasure = 
     | Named of LongIdent * range
     | Product of SynMeasure * SynMeasure * range
@@ -210,7 +244,6 @@ type SynAccess =
     | Public
     | Internal
     | Private
-    //Access of int  (* 0 = public, 1 = assembly, 2 = outer module etc. *)
 
 
 type SequencePointInfoForTarget = 
@@ -272,57 +305,93 @@ type SequencePointInfoForBinding =
         | _, (SequencePointAtBinding _ as g)  -> g
         | _ -> x
 
+/// Indicates if a for loop is 'for x in e1 -> e2', only valid in sequence expressions
 type SeqExprOnly = 
     | SeqExprOnly of bool
 
 type ExprAtomicFlag =
+    /// Says that the expression is an atomic expression, i.e. is of a form that has no whitespace unless 
+    /// enclosed in parantheses, e.g. 1, "3", ident, ident.[expr] and (expr). If an atomic expression has
+    /// type T, then the largest expression ending at the same range as the atomic expression also has type T.
     | Atomic = 0
     | NonAtomic = 1
 
+/// The kind associated with a binding - "let", "do" or a standalone expression
 type SynBindingKind = 
+    /// A standalone expression in a module
     | StandaloneExpression
+    /// A normal 'let' binding in a module
     | NormalBinding
+    /// A 'do' binding in a module. Must have type 'unit'
     | DoBinding
   
 type
     [<NoEquality; NoComparison>]
+    /// Represents the explicit declaration of a type parameter
     SynTyparDecl = 
     | TyparDecl of SynAttributes * SynTypar
 
 
 and 
     [<NoEquality; NoComparison>]
+    /// The unchecked abstract syntax tree of F# type constraints
     SynTypeConstraint =
+    /// F# syntax : is 'typar : struct
     | WhereTyparIsValueType of SynTypar * range
+    /// F# syntax : is 'typar : not struct
     | WhereTyparIsReferenceType of SynTypar * range
+    /// F# syntax is 'typar : unmanaged
     | WhereTyparIsUnmanaged of SynTypar * range
+    /// F# syntax is 'typar : null
     | WhereTyparSupportsNull of SynTypar * range
+    /// F# syntax is 'typar : comparison 
     | WhereTyparIsComparable of SynTypar * range
+    /// F# syntax is 'typar : equality
     | WhereTyparIsEquatable of SynTypar * range
+    /// F# syntax is default ^T : type
     | WhereTyparDefaultsToType of SynTypar * SynType * range
     | WhereTyparEqualsType of SynTypar *  SynType * range
+    /// F# syntax is 'typar :> type
     | WhereTyparSubtypeOfType of SynTypar *  SynType * range
+    /// F# syntax is ^T : (static member MemberName : ^T * int -> ^T) 
     | WhereTyparSupportsMember of SynTypar list * SynMemberSig * range
+    /// F# syntax is 'typar : enum<'UnderlyingType>
     | WhereTyparIsEnum of SynTypar * SynType list * range
+    /// F# syntax is 'typar : delegate<'Args,unit>
     | WhereTyparIsDelegate of SynTypar * SynType list * range
 
 and 
     [<NoEquality; NoComparison;RequireQualifiedAccess>]
+    /// The unchecked abstract syntax tree of F# types 
     SynType =
+    /// F# syntax : A.B.C
     | LongIdent of LongIdent * range
+    /// F# syntax : type<type, ..., type> or type type or (type,...,type) type
+    ///   isPostfix: indicates a postfix type application e.g. "int list" or "(int,string) dict"
+    ///   commasm: ranges for interstitial commas, these only matter for parsing/design-time tooling, the typechecker may munge/discard them
     | App of SynType * SynType list * bool * range // the bool is true if this is a postfix type application e.g. "int list" or "(int,string) dict"
+    /// F# syntax : type.A.B.C<type, ..., type>
+    ///   commasm: ranges for interstitial commas, these only matter for parsing/design-time tooling, the typechecker may munge/discard them
     | LongIdentApp of SynType * LongIdent * SynType list * range
+    /// F# syntax : type * ... * type
+    // the bool is true if / rather than * follows the type
     | Tuple of (bool*SynType) list * range    // the bool is true if / rather than * follows the type
+    /// F# syntax : type[]
     | Array of  int * SynType * range
     | Lazy of  SynType * range
+    /// F# syntax : type -> type
     | Fun of  SynType * SynType * range
+    /// F# syntax : 'Var
     | Var of SynTypar * range
+    /// F# syntax : _
     | Anon of range
+    /// F# syntax : typ with constraints
     | WithGlobalConstraints of SynType * SynTypeConstraint list * range
+    /// F# syntax : #type
     | HashConstraint of SynType * range
-    /// For units of measure e.g. m / s 
+    /// F# syntax : for units of measure e.g. m / s 
     | MeasureDivide of SynType * SynType * range       
-    /// For units of measure e.g. m^3 
+    /// F# syntax : for units of measure e.g. m^3 
     | MeasurePower of SynType * int * range      
     /// For the dimensionless units i.e. 1 
     | MeasureOne of range          
@@ -336,100 +405,187 @@ and
 and  
     [<NoEquality; NoComparison;RequireQualifiedAccess>]
     SynExpr =
+
+    /// F# syntax: (expr)
+    ///
     /// Parenthesized expressions. Kept in AST to distinguish A.M((x,y)) 
     /// from A.M(x,y), among other things.
     | Paren of SynExpr * range  
-    /// <@ expr @>, <@@ expr @@>
+    /// F# syntax: <@ expr @>, <@@ expr @@>
+    /// 
     | Quote of SynExpr * bool * SynExpr * range 
-    /// 1, 1.3, () etc.
+
+    /// F# syntax: 1, 1.3, () etc.
     | Const of SynConst * range
-    /// expr : type
+
+    /// F# syntax: expr : type
     | Typed of  SynExpr * SynType * range
-    /// e1, ..., eN
+
+    /// F# syntax: e1, ..., eN
     | Tuple of  SynExpr list * range
-    /// [ e1; ...; en ], [| e1; ...; en |]
+
+    /// F# syntax: [ e1; ...; en ], [| e1; ...; en |]
     | ArrayOrList of  bool * SynExpr list * range 
-    /// { f1=e1; ...; fn=en }
+
+    /// F# syntax: { f1=e1; ...; fn=en }
     | Record of (SynType * SynExpr * range) option * SynExpr option * ((LongIdent * Ident) * SynExpr) list * range
-    /// new C(...)
+
+    /// F# syntax: new C(...)
     /// The flag is true if known to be 'family' ('protected') scope 
     | New of bool * SynType * SynExpr * range 
-    /// { new ... with ... }
+
+    /// F# syntax: { new ... with ... }
     | ObjExpr of SynType * (SynExpr * Ident option) option * SynBinding list * SynInterfaceImpl list * range
-    /// 'while ... do ...'
+
+    /// F# syntax: 'while ... do ...'
     | While of SequencePointInfoForWhileLoop * SynExpr * SynExpr * range
-    /// 'for i = ... to ... do ...'
+
+    /// F# syntax: 'for i = ... to ... do ...'
     | For of SequencePointInfoForForLoop * Ident * SynExpr * bool * SynExpr * SynExpr * range
-    /// 'for ... in ... do ...'
+
+    /// F# syntax: 'for ... in ... do ...'
     | ForEach of SequencePointInfoForForLoop * SeqExprOnly * SynPat * SynExpr * SynExpr * range
-    /// [ expr ], [| expr |]
+
+    /// F# syntax: [ expr ], [| expr |]
     | ArrayOrListOfSeqExpr of bool * SynExpr * range
-    /// { expr }
+
+    /// F# syntax: { expr }
     | CompExpr of bool * bool ref * SynExpr * range
+
     /// First bool indicates if lambda originates from a method. Patterns here are always "simple" 
     /// Second bool indicates if this is a "later" part of an iterated sequence of lambdas
+    ///
+    /// F# syntax: fun pat -> expr
     | Lambda of  bool * bool * SynSimplePats * SynExpr * range 
+
+    /// F# syntax: match expr with pat1 -> expr | ... | patN -> exprN
     | Match of  SequencePointInfoForBinding * SynExpr * SynMatchClause list * bool * range (* bool indicates if this is an exception match in a computation expression which throws unmatched exceptions *)
+
+    /// F# syntax: do expr 
     | Do of  SynExpr * range
+
+    /// F# syntax: assert expr 
     | Assert of SynExpr * range
+
+    /// F# syntax: f x
     | App of ExprAtomicFlag * SynExpr * SynExpr * range
+
+    /// F# syntax: expr<type1,...,typeN>
     | TypeApp of SynExpr * SynType list * range
-    /// let pat = expr in expr 
-    /// let f pat1 .. patN = expr in expr 
-    /// let rec f pat1 .. patN = expr in expr 
-    /// use pat = expr in expr 
+
+    ///
+    /// F# syntax: let pat = expr in expr 
+    /// F# syntax: let f pat1 .. patN = expr in expr 
+    /// F# syntax: let rec f pat1 .. patN = expr in expr 
+    /// F# syntax: use pat = expr in expr 
     | LetOrUse of (* isRecursive: *) bool * (* isUse: *) bool * SynBinding list * SynExpr * range
-    /// try expr with pat -> expr
+
+    /// F# syntax: try expr with pat -> expr
     | TryWith of SynExpr * range * SynMatchClause list * range * range * SequencePointInfoForTry * SequencePointInfoForWith
-    /// try expr finally expr
+
+    /// F# syntax: try expr finally expr
     | TryFinally of SynExpr * SynExpr * range * SequencePointInfoForTry * SequencePointInfoForFinally
+
+    /// F# syntax: lazy expr
     | Lazy of SynExpr * range
+
+    /// F# syntax: expr; expr
     | Seq of SequencePointInfoForSeq * bool * SynExpr * SynExpr * range (* false for first flag indicates "do a then b then return a" *)
+
+    /// F# syntax: if expr then expr
+    /// F# syntax: if expr then expr else expr
     | IfThenElse of SynExpr * SynExpr * SynExpr option * SequencePointInfoForBinding * range * range
 
+    /// F# syntax: ident
     /// Optimized representation, = SynExpr.LongIdent(false,[id],id.idRange) 
     | Ident of Ident 
+
+    /// F# syntax: ident.ident...ident
     // bool true if preceded by a '?' for an optional named parameter 
     | LongIdent of bool * LongIdent * range  
+
+    /// F# syntax: ident.ident...ident <- expr
     | LongIdentSet of LongIdent * SynExpr * range
+
+    /// F# syntax: expr.ident.ident
     | DotGet of SynExpr * LongIdent * range
+
+    /// F# syntax: expr.ident...ident <- expr
     | DotSet of SynExpr * LongIdent * SynExpr * range
+
+    /// F# syntax: expr.[expr,...,expr] 
     | DotIndexedGet of SynExpr * SynExpr list * range * range
+
+    /// F# syntax: expr.[expr,...,expr] <- expr
     | DotIndexedSet of SynExpr * SynExpr list * SynExpr * range * range
-    /// Type.Items(e1) <- e2 , rarely used named-property-setter notation, e.g. str.Chars(3) <- 'a'
+
+    /// F# syntax: Type.Items(e1) <- e2 , rarely used named-property-setter notation, e.g. Foo.Bar.Chars(3) <- 'a'
     | NamedIndexedPropertySet of LongIdent * SynExpr * SynExpr * range
-    /// expr.Items(e1) <- e2 , rarely used named-property-setter notation, e.g. str.Chars(3) <- 'a'
+
+    /// F# syntax: expr.Items(e1) <- e2 , rarely used named-property-setter notation, e.g. (stringExpr).Chars(3) <- 'a'
     | DotNamedIndexedPropertySet of SynExpr * LongIdent * SynExpr * SynExpr * range
 
+    /// F# syntax: expr :? type
     | TypeTest of  SynExpr * SynType * range
+
+    /// F# syntax: expr :> type 
     | Upcast of  SynExpr * SynType * range
+
+    /// F# syntax: expr :?> type 
     | Downcast of  SynExpr * SynType * range
+
+    /// F# syntax: upcast expr
     | InferredUpcast of  SynExpr * range
+
+    /// F# syntax: downcast expr
     | InferredDowncast of  SynExpr * range
+
+    /// F# syntax: null
     | Null of range
 
+    /// F# syntax: &expr, &&expr
     | AddressOf of  bool * SynExpr * range * range
+
+    /// F# syntax: ((typar1 or ... or typarN): (member-dig) expr)
     | TraitCall of SynTypar list * SynMemberSig * SynExpr * range
 
+    /// F# syntax: <implicit>
     /// Computation expressions only, implied by final "do" or "do!"
     | ImplicitZero of range 
+
+    /// F# syntax: yield expr 
+    /// F# syntax: return expr 
     /// Computation expressions only
     | YieldOrReturn   of (bool * bool) * SynExpr * range
+
+    /// F# syntax: yield! expr 
+    /// F# syntax: return! expr 
     /// Computation expressions only
     | YieldOrReturnFrom  of (bool * bool) * SynExpr * range
+
+    /// SynExpr.LetOrUseBang(spBind, isUse, isFromSource, pat, rhsExpr, bodyExpr, mWholeExpr).
+    ///
+    /// F# syntax: let! pat = expr in expr
+    /// F# syntax: use! pat = expr in expr
     /// Computation expressions only
     | LetOrUseBang    of SequencePointInfoForBinding * bool * SynPat * SynExpr * SynExpr * range
+
+    /// F# syntax: do! expr 
     /// Computation expressions only
     | DoBang      of SynExpr * range
 
     /// (type int) -- deprecated
     | DeprecatedTypeOf of SynType * range
+
     /// Only used in FSharp.Core
     | LibraryOnlyILAssembly of ILInstr array *  SynType list * SynExpr list * SynType list * range (* Embedded IL assembly code *)
+
     /// Only used in FSharp.Core
     | LibraryOnlyStaticOptimization of SynStaticOptimizationConstraint list * SynExpr * SynExpr * range
+
     /// Only used in FSharp.Core
     | LibraryOnlyUnionCaseFieldGet of SynExpr * LongIdent * int * range
+
     /// Only used in FSharp.Core
     | LibraryOnlyUnionCaseFieldSet of SynExpr * LongIdent * int * SynExpr * range
   
@@ -441,6 +597,7 @@ and
 and  
     [<NoEquality; NoComparison; RequireQualifiedAccess>]
     SynSimplePat =
+
     /// Id (ident, isCompilerGenerated, isThisVar, isOptArg, range)
     ///
     /// Indicates a simple pattern variable.
@@ -461,6 +618,10 @@ and
 
 and  
     [<NoEquality; NoComparison;RequireQualifiedAccess>]
+    /// Represents a simple set of variable bindings a, (a,b) or (a:Type,b:Type) at a lambda,
+    /// function definition or other binding point, after the elimination of pattern matching
+    /// from the construct, e.g. after changing a "function pat1 -> rule1 | ..." to a 
+    /// "fun v -> match v with ..."
     SynSimplePats =
     | SimplePats of SynSimplePat list * range
     | Typed of  SynSimplePats * SynType * range
@@ -486,7 +647,7 @@ and
     | OptionalVal of Ident * range
     /// ':? type '
     | IsInst of SynType * range
-    /// <@ expr @>
+    /// <@ expr @>, used for active pattern arguments
     | QuoteExpr of SynExpr * range
 
     /// Deprecated character ranges
@@ -572,10 +733,13 @@ and
     | Member 
     | PropertyGet 
     | PropertySet    
+    /// An artifical member kind used prior to the point where a get/set property is split into two distinct members.
     | PropertyGetSet    
 
 and 
     [<NoEquality; NoComparison; RequireQualifiedAccess>]
+    /// The untyped, unchecked syntax tree for a member signature, used in signature files, abstract member declarations
+    /// and member constraints.
     SynMemberSig = 
     | Member of SynValSig  * MemberFlags * range 
     | Interface of SynType  * range
@@ -603,13 +767,25 @@ and
 
 and 
     [<NoEquality; NoComparison; RequireQualifiedAccess>]
+    /// The untyped, unchecked syntax tree for the core of a simple type definition, in either signature
+    /// or implementation. 
     SynTypeDefnSimpleRepr =
+    /// A union type definition, type X = A | B
     | Union      of SynAccess option * SynUnionCases * range
+    /// An enum type definition, type X = A = 1 | B = 2
     | Enum       of SynEnumCases * range
+    /// A record type definition, type X = { A : int; B : int }
     | Record     of SynAccess option * SynFields * range
+    /// An object oriented type definition. This is not a parse-tree form, but represents the core
+    /// type representation which the type checker splits out from the "ObjectModel" cases of type definitions.
     | General    of SynTypeDefnKind * (SynType * range * Ident option) list * (SynValSig * MemberFlags) list * SynFields * bool * bool * SynSimplePat list option * range 
+    /// A type defined by using an IL assembly representation. Only used in FSharp.Core.
+    /// 
+    /// F# syntax: "type X = (# "..."#)
     | ILAssembly of ILType * range
+    /// A type abbreviation, "type X = A.B.C"
     | TypeAbbrev of SynType * range
+    /// An abstract definition , "type X"
     | None       of range
 
 and SynEnumCases = SynEnumCase list
@@ -617,6 +793,7 @@ and SynEnumCases = SynEnumCase list
 and 
     [<NoEquality; NoComparison>]
     SynEnumCase =
+    /// The untyped, unchecked syntax tree for one case in an enum definition.
     | EnumCase of SynAttributes * Ident * SynConst * PreXmlDoc * range
 
 and SynUnionCases = SynUnionCase list
@@ -624,24 +801,33 @@ and SynUnionCases = SynUnionCase list
 and 
     [<NoEquality; NoComparison>]
     SynUnionCase = 
+    /// The untyped, unchecked syntax tree for one case in a union definition.
     | UnionCase of SynAttributes * Ident * SynUnionCaseType * PreXmlDoc * SynAccess option * range
 
 and 
     [<NoEquality; NoComparison>]
+    /// The untyped, unchecked syntax tree for the right-hand-side of union definition, excluding members,
+    /// in either a signature or implementation.
     SynUnionCaseType = 
-    /// Normal ML-style declaration 
+    /// Normal style declaration 
     | UnionCaseFields of SynField list      
-    /// Full type spec given by 'UnionCase : ty1 * tyN -> rty' 
+    /// Full type spec given by 'UnionCase : ty1 * tyN -> rty'. Only used in FSharp.Core, otherwise a warning.
     | UnionCaseFullType of (SynType * SynValInfo) 
 
 and 
     [<NoEquality; NoComparison; RequireQualifiedAccess>]
+    /// The untyped, unchecked syntax tree for the right-hand-side of a type definition in a signature.
+    /// Note: in practice, using a discriminated union to make a distinction between 
+    /// "simple" types and "object oriented" types is not particularly useful.
     SynTypeDefnSigRepr =
+    /// Indicates the right right-hand-side is a class, struct, interface or other object-model type
     | ObjectModel of SynTypeDefnKind * SynMemberSigs * range
+    /// Indicates the right right-hand-side is a record, union or other simple type. 
     | Simple of SynTypeDefnSimpleRepr * range 
 
 and 
     [<NoEquality; NoComparison>]
+    /// The untyped, unchecked syntax tree for a type definition in a signature
     SynTypeDefnSig =
     /// The information for a type definition in a signature
     | TypeDefnSig of SynComponentInfo * SynTypeDefnSigRepr * SynMemberSigs * range
@@ -650,14 +836,17 @@ and SynFields = SynField list
 
 and 
     [<NoEquality; NoComparison>]
-    /// The information for a field declaration in a record or class
+    /// The untyped, unchecked syntax tree for a field declaration in a record or class
     SynField = 
     | Field of SynAttributes * (* static: *) bool * Ident option * SynType * bool * PreXmlDoc * SynAccess option * range
 
 
 and 
     [<NoEquality; NoComparison>]
-    /// The names, attributes, type parameters, constraints, documentation and accessibility 
+    /// The untyped, unchecked syntax tree associated with the name of a type definition or module
+    /// in signature or implementation. 
+    ///
+    /// This includes the name, attributes, type parameters, constraints, documentation and accessibility 
     /// for a type definition or module. For modules, entries such as the type parameters are
     /// always empty.
     SynComponentInfo = 
@@ -687,7 +876,8 @@ and
 and 
     [<NoEquality; NoComparison>]
     SynValInfo = 
-    | SynValInfo of (*args:*) SynArgInfo list list * (*return:*) SynArgInfo 
+    /// SynValInfo(curriedArgInfos, returnInfo)
+    | SynValInfo of SynArgInfo list list * SynArgInfo 
     member x.ArgInfos = (let (SynValInfo(args,_)) = x in args)
 
 /// The argument names and other metadata for a parameter for a member or function
@@ -1153,14 +1343,24 @@ let PushCurriedPatternsToExpr wholem isMember pats rhs =
     spatsl,expr
 
 /// Helper for parsing the inline IL fragments. 
+#if SILVERLIGHT
+let ParseAssemblyCodeInstructions _s m = 
+    errorR(Error((193,"Inline IL not valid in a hosted environment"),m)) ; [| |]
+#else
 let ParseAssemblyCodeInstructions s m = 
     try Microsoft.FSharp.Compiler.AbstractIL.Internal.AsciiParser.ilInstrs 
            Microsoft.FSharp.Compiler.AbstractIL.Internal.AsciiLexer.token 
            (UnicodeLexing.StringAsLexbuf s)
     with RecoverableParseError -> 
       errorR(Error(FSComp.SR.astParseEmbeddedILError(), m)); [| |]
+#endif      
 
 /// Helper for parsing the inline IL fragments. 
+#if SILVERLIGHT
+let ParseAssemblyCodeType _s m = 
+    // REVIEW: break out into a resource
+    errorR(Error((193,"Inline IL not valid in a hosted environment"),m)) ; IL.ecmaILGlobals.typ_Object
+#else
 let ParseAssemblyCodeType s m = 
     try Microsoft.FSharp.Compiler.AbstractIL.Internal.AsciiParser.ilType 
            Microsoft.FSharp.Compiler.AbstractIL.Internal.AsciiLexer.token 
@@ -1168,6 +1368,7 @@ let ParseAssemblyCodeType s m =
     with RecoverableParseError -> 
       errorR(Error(FSComp.SR.astParseEmbeddedILTypeError(),m)); 
       IL.ecmaILGlobals.typ_Object
+#endif
 
 //------------------------------------------------------------------------
 // AST constructors

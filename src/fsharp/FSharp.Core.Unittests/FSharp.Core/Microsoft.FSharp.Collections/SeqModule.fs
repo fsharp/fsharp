@@ -761,3 +761,38 @@ type SeqModule() =
         let group_byNull = Seq.groupBy funcInt nullSeq
         CheckThrowsArgumentNullException (fun () -> Seq.iter (fun _ -> ()) group_byNull) 
         () 
+    
+    [<Test>]
+    member this.DisposalOfUnstartedEnumerator() =
+        let run = ref false
+        let f() = seq {                
+                try
+                    ()
+                finally 
+                    run := true
+              }
+  
+        f().GetEnumerator().Dispose() 
+        Assert.IsFalse(!run)
+
+    [<Test>]
+    member this.WeirdLocalNames() =
+       
+        let f pc = seq {                
+                yield pc
+                yield (pc+1)
+                yield (pc+2)
+              }
+  
+        let l = f 3 |> Seq.toList
+        Assert.AreEqual([3;4;5], l)
+
+        let f i = seq {                
+                let pc = i*2
+                yield pc
+                yield (pc+1)
+                yield (pc+2)
+              }
+        let l = f 3 |> Seq.toList
+        Assert.AreEqual([6;7;8], l)
+

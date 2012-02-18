@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2010 Microsoft Corporation. 
+// Copyright (c) 2002-2011 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -10,8 +10,7 @@
 // You must not remove this notice, or any other, from this software.
 //----------------------------------------------------------------------------
 
-#if FX_ATLEAST_40
-#else
+#if FX_NO_CANCELLATIONTOKEN_CLASSES
 namespace System
     open Microsoft.FSharp.Core
     open Microsoft.FSharp.Collections
@@ -110,7 +109,8 @@ namespace Microsoft.FSharp.Control
     open Microsoft.FSharp.Control
     open Microsoft.FSharp.Collections
     open System.Threading
-#if FX_ATLEAST_40
+#if FX_NO_TASK
+#else
     open System.Runtime.CompilerServices
     open System.Threading.Tasks
 #endif
@@ -175,7 +175,8 @@ namespace Microsoft.FSharp.Control
         /// If one is not supplied, the default cancellation token is used.</param>
         static member Start : computation:Async<unit> * ?cancellationToken:CancellationToken -> unit
 
-#if FX_ATLEAST_40
+#if FX_NO_TASK
+#else
         /// Executes a computation in the thread pool. Returns a <c>System.Threading.Tasks.Task</c> that will be completed
         /// in the corresponding state once the computation terminates (produces the result, throws exception or gets canceled)
         ///        
@@ -344,7 +345,8 @@ namespace Microsoft.FSharp.Control
         /// <returns>An asynchronous computation that waits on the given <c>IAsyncResult</c>.</returns>
         static member AwaitIAsyncResult: iar: System.IAsyncResult * ?millisecondsTimeout:int -> Async<bool>
 
-#if FX_ATLEAST_40
+#if FX_NO_TASK
+#else
         /// Return an asynchronous computation that will wait for the given task to complete and return
         /// its result.
         static member AwaitTask: task: Task<'T> -> Async<'T>

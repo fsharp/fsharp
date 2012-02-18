@@ -17,12 +17,16 @@ Copyright (C) Microsoft Corporation. All rights reserved.
 
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
-    <UsingTask TaskName="Fsc" AssemblyFile="FSharp.Build.dll"/>
-    <UsingTask TaskName="CreateFSharpManifestResourceName" AssemblyFile="FSharp.Build.dll"/>
+    <UsingTask TaskName="Fsc" AssemblyFile="FSharp.Build{BuildSuffix}.dll"/>
+    <UsingTask TaskName="CreateFSharpManifestResourceName" AssemblyFile="FSharp.Build{BuildSuffix}.dll"/>
 
 
     <PropertyGroup>
-		<MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildToolsPath)\Microsoft.FSharp.targets</MSBuildAllProjects>
+        <!-- FSharpTargetsDir is the directory where the targets file lives -->
+        <FSharpTargetsDir Condition="'$(FSharpTargetsDir)'==''">$(MSBuildExtensionsPath32)\FSharp\1.0\</FSharpTargetsDir>
+        <!-- FSharpTargetsFullPath is the full path (dir + filename) of the targets file -->
+        <FSharpTargetsFullPath Condition="'$(FSharpTargetsDir)'!=''">$(FSharpTargetsDir)\Microsoft.FSharp{BuildSuffix}.targets</FSharpTargetsFullPath>
+        <MSBuildAllProjects>$(MSBuildAllProjects);$(FSharpTargetsFullPath)</MSBuildAllProjects>
         <DefaultLanguageSourceExtension>.fs</DefaultLanguageSourceExtension>
         <Language>F#</Language>
         <Tailcalls Condition="'$(Tailcalls)'==''">$(Optimize)</Tailcalls>
@@ -184,6 +188,6 @@ Copyright (C) Microsoft Corporation. All rights reserved.
 
     </Target>
 
-    <Import Project="Microsoft.Common.targets"/>
+    <Import Project="$(MSBuildBinPath)\Microsoft.Common.targets"/>
 
 </Project>

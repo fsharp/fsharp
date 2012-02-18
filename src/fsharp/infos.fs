@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2010 Microsoft Corporation. 
+// Copyright (c) 2002-2011 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -1338,18 +1338,21 @@ let FormatMethArgToBuffer denv os (ParamData(_isParamArrayArg,_isOutArg,optArgIn
     match nmOpt, isOptArg, tryDestOptionTy denv.g pty with 
     // Layout an optional argument 
     | Some(nm), true, Some(pty) -> 
-        bprintf os "?%s: %a" nm (NicePrint.outputTy denv) pty
+        bprintf os "?%s: " nm 
+        NicePrint.outputTy denv os pty
     // Layout an unnamed argument 
     | None, _,_ -> 
-        bprintf os "%a" (NicePrint.outputTy denv) pty;
+        NicePrint.outputTy denv os pty;
     // Layout a named argument 
     | Some nm,_,_ -> 
-        bprintf os "%s: %a" nm (NicePrint.outputTy denv) pty
+        bprintf os "%s: " nm 
+        NicePrint.outputTy denv os pty
 
 let FormatMethInfoToBuffer amap m denv os minfo =
     match minfo with 
     | DefaultStructCtor(g,_typ) -> 
-        bprintf os "%a()" (NicePrint.outputTyconRef denv) (tcrefOfAppTy g minfo.EnclosingType);
+        NicePrint.outputTyconRef denv os (tcrefOfAppTy g minfo.EnclosingType);
+        bprintf os "()" 
     | FSMeth(_g,_,vref,_) -> 
         NicePrint.outputQualifiedValSpec denv os vref.Deref
     | ILMeth(g,ilminfo,_) -> 
@@ -1362,16 +1365,19 @@ let FormatMethInfoToBuffer amap m denv os minfo =
             minfo,minst
         
         let retTy = FSharpReturnTyOfMeth amap m minfo minst
-        bprintf os "%a" (NicePrint.outputTyconRef denv) (tcrefOfAppTy g minfo.EnclosingType);
+        NicePrint.outputTyconRef denv os (tcrefOfAppTy g minfo.EnclosingType);
         if minfo.LogicalName = ".ctor" then  
           bprintf os "("
         else
-          bprintf os ".%a(" (NicePrint.outputTypars denv minfo.LogicalName) minfo.FormalMethodTypars;
+          bprintf os "."
+          NicePrint.outputTypars denv minfo.LogicalName os minfo.FormalMethodTypars;
+          bprintf os "(" 
         let paramDatas = ParamDatasOfMethInfo amap m minfo minst
         paramDatas |> List.iter (List.iteri (fun i arg -> 
               if i > 0 then bprintf os ", "; 
               FormatMethArgToBuffer denv os arg))
-        bprintf os ") : %a"  (NicePrint.outputTy denv) retTy
+        bprintf os ") : "  
+        NicePrint.outputTy denv os retTy
 
 
 let stringOfMethInfo amap m denv d = bufs (fun buf -> FormatMethInfoToBuffer amap m denv buf d)

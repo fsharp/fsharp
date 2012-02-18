@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <!--
-# Copyright (c) 2002-2010 Microsoft Corporation. 
+# Copyright (c) 2002-2011 Microsoft Corporation. 
 #
 # This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 # copy of the license can be found in the License.html file at the root of this distribution. 
@@ -36,9 +36,6 @@
     </FsSrGen>
     <Compile Include="..\..\assemblyinfo\assemblyinfo.fsc.exe.fs">
       <Link>assemblyinfo.fsc.exe.fs</Link>
-    </Compile>
-    <Compile Include="..\fsc.fs">
-      <Link>fsc.fs</Link>
     </Compile>
     <Compile Include="..\fscmain.fs">
       <Link>fscmain.fs</Link>
