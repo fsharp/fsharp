@@ -129,10 +129,12 @@ type public SimpleSourceCodeServices() =
 
     /// For errors, quick info, goto-definition, declaration list intellisense, method overload intellisense
     member x.TypeCheckSource (source:string, otherFlags: string[]) = 
+#if FX_ATLEAST_40    
         begin 
             use file =  new System.IO.StreamWriter(System.IO.IsolatedStorage.IsolatedStorageFile.GetUserStoreForApplication().CreateFile(filename))
             file.Write source
         end;
+#endif        
         //let options = checker.GetCheckOptionsFromScriptRoot(filename, source, otherFlags)
         let options = { ProjectFileName="console.fsproj"; ProjectFileNames=[| filename |]; ProjectOptions=otherFlags; IsIncompleteTypeCheckEnvironment=false; UseScriptResolutionRules=true }
         checker.StartBackgroundCompile options;
