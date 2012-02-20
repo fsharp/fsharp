@@ -3921,7 +3921,7 @@ type BackgroundCompiler(fileTypeCheckStateIsDirty:FileTypeCheckStateIsDirty) =
         let commandLineArgs = options.ProjectOptions |> Array.toList 
 
         // Build initial TC config
-        let tcConfigB = CompilerEnvironment.CreateTcConfig(options.ProjectDirectory, commandLineArgs, options.UseScriptResolutionRules)
+        let tcConfigB = CompilerEnvironment.CreateTcConfig((if options.ProjectDirectory <> "" then options.ProjectDirectory else System.IO.Directory.GetCurrentDirectory()), commandLineArgs, options.UseScriptResolutionRules)
         let _, _, assemblyName = tcConfigB.DecideNames sourceFiles
         
         let tcConfig = TcConfig.Create(tcConfigB,validate=true)
