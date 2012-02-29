@@ -32,7 +32,8 @@ TOKEN := b03f5f7f11d50a3a
 FLAGS = \
 	--doc:$(objdir)$(NAME).xml \
 	--version:$(VERSION) \
-	-g \
+	--debug- \
+	--optimize+ \
 	--mlcompatibility \
 	--noframework \
 	--fullpaths \
