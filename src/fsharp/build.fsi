@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2010 Microsoft Corporation. 
+// Copyright (c) 2002-2011 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -177,7 +177,8 @@ type TcConfigBuilder =
       mutable openDebugInformationForLaterStaticLinking: bool;
       defaultFSharpBinariesDir: string;
       mutable compilingFslib: bool;
-      mutable compilingFslibPre40: string option;
+      mutable compilingFslib20: string option;
+      mutable compilingFslib40: bool;
       mutable useIncrementalBuilder: bool;
       mutable includes: string list;
       mutable implicitOpens: string list;
@@ -271,7 +272,8 @@ type TcConfigBuilder =
       mutable showBanner  : bool
       mutable showTimes : bool
       mutable pause : bool 
-      mutable indirectCallArrayMethods : bool}
+      mutable indirectCallArrayMethods : bool
+      mutable noDebugData : bool}
     static member CreateNew : string * bool * string  -> TcConfigBuilder
     member DecideNames : string list -> (*outfile*)string * (*pdbfile*)string option * (*assemblyName*)string 
     member TurnWarningOff : range * string -> unit
@@ -297,7 +299,8 @@ type TcConfig =
     member openDebugInformationForLaterStaticLinking: bool;
     member fsharpBinariesDir: string;
     member compilingFslib: bool;
-    member compilingFslibPre40: string option;
+    member compilingFslib20: string option;
+    member compilingFslib40: bool;
     member useIncrementalBuilder: bool;
     member includes: string list;
     member implicitOpens: string list;
@@ -390,6 +393,7 @@ type TcConfig =
     member showTimes : bool
     member pause : bool 
     member indirectCallArrayMethods : bool
+    member noDebugData : bool    
 
 
     member ComputeLightSyntaxInitialStatus : string -> bool

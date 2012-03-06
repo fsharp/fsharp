@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2010 Microsoft Corporation. 
+// Copyright (c) 2002-2011 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -33,11 +33,7 @@ open Microsoft.FSharp.Compiler.Range
 module QP = Microsoft.FSharp.Compiler.QuotationPickler
 
 
-#if DEBUG
-let verboseCReflect = try (System.Environment.GetEnvironmentVariable("VERBOSE_CREFLECT") <> null) with _ -> false
-#else
 let verboseCReflect = false
-#endif
 
 let mscorlibName = ""
 let mkVoidTy = QP.mkILNamedTy({ tcName = "System.Void"; tcAssembly=mscorlibName},[])

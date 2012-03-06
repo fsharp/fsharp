@@ -1,12 +1,6 @@
 ﻿namespace Microsoft.FSharp.Compiler
 
 module internal MSBuildResolver = 
-    open System
-    open Microsoft.Build.Tasks
-    open Microsoft.Build.Utilities
-    open Microsoft.Build.Framework
-    open Microsoft.Build.BuildEngine
-    open System.IO
 
     exception ResolutionFailure
     
@@ -19,6 +13,17 @@ module internal MSBuildResolver =
         | Path of string 
         | Unknown
     
+    type ResolutionEnvironment = CompileTimeLike | RuntimeLike | DesigntimeLike
+    
+#if SILVERLIGHT
+#else
+    open System
+    open Microsoft.Build.Tasks
+    open Microsoft.Build.Utilities
+    open Microsoft.Build.Framework
+    open Microsoft.Build.BuildEngine
+    open System.IO
+
     type ResolvedFile = {
             itemSpec:string
             resolvedFrom:ResolvedFrom
@@ -95,13 +100,11 @@ module internal MSBuildResolver =
         | r when Same "{TargetFrameworkDirectory}" r -> TargetFrameworkDirectory
         | r when Same "{AssemblyFolders}" r -> AssemblyFolders
         | r when r.Length >= 10 && Same "{Registry:" (r.Substring(0,10)) -> AssemblyFoldersEx
-        | r -> Path r
+        | r -> ResolvedFrom.Path r
         
 
     type ErrorWarningCallbackSig = ((*code:*)string->(*message*)string->unit)
-                      
-    type ResolutionEnvironment = CompileTimeLike | RuntimeLike | DesigntimeLike
-    
+
     type Foregrounded =
         | ForegroundedMessage of string 
         | ForegroundedError of string * string
@@ -347,3 +350,4 @@ module internal MSBuildResolver =
             suggestedBindingRedirects = set rootedResults.suggestedBindingRedirects |> Set.union (set unrootedResults.suggestedBindingRedirects) |> Set.toArray 
         }
 
+#endif

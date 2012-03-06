@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2010 Microsoft Corporation. 
+// Copyright (c) 2002-2011 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -12,11 +12,21 @@
 
 module internal Microsoft.FSharp.Compiler.AbstractIL.Internal.Support 
 
+let DateTime1970Jan01 = new System.DateTime(1970,1,1,0,0,0,System.DateTimeKind.Utc) (* ECMA Spec (Oct2002), Part II, 24.2.2 PE File Header. *)
+let absilWriteGetTimeStamp () = (System.DateTime.UtcNow - DateTime1970Jan01).TotalSeconds |> int
 
+
+#if SILVERLIGHT
+type PdbReader = | NeverImplemented
+let pdbReadClose (_pdb:PdbReader) = ()
+type PdbWriter = | NeverImplemented
+let pdbInitialize (_:string) (_:string) = PdbWriter.NeverImplemented
+#else
 
 open Internal.Utilities
 open Microsoft.FSharp.Compiler.AbstractIL 
 open Microsoft.FSharp.Compiler.AbstractIL.Internal 
+open Microsoft.FSharp.Compiler.AbstractIL.Internal.Library 
 open Microsoft.FSharp.Compiler.AbstractIL.Internal.Bytes
 open Microsoft.FSharp.Compiler.AbstractIL.Diagnostics
 
@@ -29,9 +39,6 @@ open System.Runtime.InteropServices
 #if FX_ATLEAST_40
 open System.Runtime.CompilerServices
 #endif
-#if MONO
-open Mono.Security
-#endif
 
 // Force inline, so GetLastWin32Error calls are immediately after interop calls as seen by FxCop under Debug build.
 let inline ignore _x = ()
@@ -39,7 +46,6 @@ let inline ignore _x = ()
 // Native Resource linking/unlinking
 type IStream = System.Runtime.InteropServices.ComTypes.IStream
 type ClrKind = Microsoft | Mono 
-
 
 let currentConfiguration () = 
   if IL.runningOnMono then Mono
@@ -689,7 +695,7 @@ let linkNativeResources (unlinkedResources:byte[] list)  (ulLinkedResourceBaseRV
                 check "Process.Start" p.ExitCode 
                 
                 // Conversion was successful, so read the object file
-                objBytes <- System.IO.File.ReadAllBytes(tempObjFileName) ; 
+                objBytes <- System.IO.File.ReadAllBytesShim(tempObjFileName) ; 
                 //Array.Copy(objBytes, pbUnlinkedResource, pbUnlinkedResource.Length)
                 System.IO.File.Delete(tempObjFileName)
             finally
@@ -766,9 +772,6 @@ let linkNativeResources (unlinkedResources:byte[] list)  (ulLinkedResourceBaseRV
         pResBuffer
 
     
-let DateTime1970Jan01 = new System.DateTime(1970,1,1,0,0,0,System.DateTimeKind.Utc) (* ECMA Spec (Oct2002), Part II, 24.2.2 PE File Header. *)
-let absilWriteGetTimeStamp () = (System.DateTime.UtcNow - DateTime1970Jan01).TotalSeconds |> int
-
 let clrInstallationDirectory () = System.Runtime.InteropServices.RuntimeEnvironment.GetRuntimeDirectory()
 let clrVersion () = System.Runtime.InteropServices.RuntimeEnvironment.GetSystemVersion()
 
@@ -1177,9 +1180,6 @@ type PdbSequencePoint =
       pdbSeqPointEndColumn: int; }
 
 let pdbReadOpen (moduleName:string) (path:string) :  PdbReader = 
-#if MONO
-  { symReader = null }
-#else
   let CorMetaDataDispenser = System.Type.GetTypeFromProgID("CLRMetaData.CorMetaDataDispenser")
   let mutable IID_IMetaDataImport = new Guid("7DAC8207-D3AE-4c75-9B67-92801A497D44");
   let mdd = System.Activator.CreateInstance(CorMetaDataDispenser) :?> IMetaDataDispenser
@@ -1201,7 +1201,6 @@ let pdbReadOpen (moduleName:string) (path:string) :  PdbReader =
       // Marshal.GetComInterfaceForObject adds an extra ref for importerPtr
       if IntPtr.Zero <> importerPtr then
         Marshal.Release(importerPtr) |> ignore
-#endif
 
 // The symbol reader's finalize method will clean up any unmanaged resources.
 // If file locks persist, we may want to manually invoke finalize
@@ -1443,10 +1442,10 @@ let StrongNameSignatureVerificationEx
 #endif
 
 let signerOpenPublicKeyFile filePath = 
-  System.IO.File.ReadAllBytes(filePath)
+  System.IO.File.ReadAllBytesShim(filePath)
   
 let signerOpenKeyPairFile filePath = 
-  System.IO.File.ReadAllBytes(filePath)
+  System.IO.File.ReadAllBytesShim(filePath)
   
 #if FX_ATLEAST_40
 let mutable iclrsn : ICLRStrongName option = None
@@ -1525,10 +1524,8 @@ let signerCloseKeyContainer kc =
   check "signerCloseKeyContainer" (Marshal.GetLastWin32Error())
 #endif
 
-let signerSignatureSize pk = 
-#if MONO
-  if (pk:byte[]).Length > 32 then pk.Length - 32 else 128
-#else
+let signerSignatureSize (pk:byte[]) = 
+  if IL.runningOnMono then (if pk.Length > 32 then pk.Length - 32 else 128) else
   let mutable pSize =  0u
 #if FX_ATLEAST_40
   let iclrSN = getICLRStrongName()
@@ -1538,21 +1535,14 @@ let signerSignatureSize pk =
   check "signerSignatureSize" (Marshal.GetLastWin32Error())
 #endif
   (int)pSize
-#endif
 
-let signerSignFileWithKeyPair fileName kp = 
-#if MONO
-  let mutable r = 0
-  let sn = new StrongName (kp:byte[])
-  let r = match sn.Sign (fileName) with
-          | true -> 0
-          | false -> -1
-  check "action" r
-  let r = match sn.Verify (fileName) with
-          | true -> 0
-          | false -> -1
-  check "signerSignFileWithKeyPair" r
-#else
+let signerSignFileWithKeyPair fileName (kp:byte[]) = 
+ if IL.runningOnMono then 
+    let sn = System.Type.GetType("Mono.Security.StrongName") 
+    let conv (x:obj) = if (unbox x : bool) then 0 else -1
+    sn.GetType().InvokeMember("Sign", (BindingFlags.InvokeMethod ||| BindingFlags.Instance ||| BindingFlags.Public), null, sn, [| box fileName |], Globalization.CultureInfo.InvariantCulture) |> conv |> check "Sign"
+    sn.GetType().InvokeMember("Verify", (BindingFlags.InvokeMethod ||| BindingFlags.Instance ||| BindingFlags.Public), null, sn, [| box fileName |], Globalization.CultureInfo.InvariantCulture) |> conv |> check "Verify"
+ else
   let mutable pcb = 0u
   let mutable ppb = (nativeint)0
   let mutable ok = false
@@ -1568,7 +1558,6 @@ let signerSignFileWithKeyPair fileName kp =
 #else
   StrongNameSignatureVerificationEx(fileName, true, &ok) |> ignore
   check "signerSignFileWithKeyPair" (Marshal.GetLastWin32Error())
-#endif
 #endif
 
 let signerSignFileWithKeyContainer fileName kcName =
@@ -1587,4 +1576,5 @@ let signerSignFileWithKeyContainer fileName kcName =
 #else
   StrongNameSignatureVerificationEx(fileName, true, &ok) |> ignore
   check "signerSignFileWithKeyPair" (Marshal.GetLastWin32Error())
+#endif
 #endif

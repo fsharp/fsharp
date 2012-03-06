@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2010 Microsoft Corporation. 
+// Copyright (c) 2002-2011 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -10,8 +10,7 @@
 // You must not remove this notice, or any other, from this software.
 //----------------------------------------------------------------------------
 
-#if FX_ATLEAST_40
-#else
+#if FX_NO_CANCELLATIONTOKEN_CLASSES
 namespace System
     open System
     open Microsoft.FSharp.Core
@@ -301,7 +300,8 @@ namespace Microsoft.FSharp.Control
     open Microsoft.FSharp.Control
     open Microsoft.FSharp.Collections
 
-#if FX_ATLEAST_40
+#if FX_NO_TASK
+#else
     open System.Threading
     open System.Threading.Tasks
     
@@ -943,17 +943,28 @@ namespace Microsoft.FSharp.Control
         [<AutoSerializable(false)>]        
         type SuspendedAsync<'T>(args : AsyncParams<'T>) =
             let ctxt = getSyncContext ()
+#if FX_NO_SYNC_CONTEXT
+#else
+            let thread = 
+                match ctxt with
+                |   null -> null // saving a thread-local access
+                |   _ -> Thread.CurrentThread 
+#endif
             let trampolineHolder = args.aux.trampolineHolder
             member this.ContinueImmediate res = 
                 let action () = args.cont res
+                let inline executeImmediately () = trampolineHolder.Protect action
 #if FX_NO_SYNC_CONTEXT
-                trampolineHolder.Protect action
+                executeImmediately ()
 #else
                 let currentCtxt = System.Threading.SynchronizationContext.Current 
-                if Object.Equals(ctxt, currentCtxt) then
-                    trampolineHolder.Protect action
-                else
-                    postOrQueue ctxt trampolineHolder action
+                match ctxt, currentCtxt with
+                |   null, null -> 
+                        executeImmediately ()
+                |   _, _ when Object.Equals(ctxt, currentCtxt) && thread.Equals(Thread.CurrentThread) ->
+                        executeImmediately ()
+                |   _ -> 
+                        postOrQueue ctxt trampolineHolder action
 #endif
                     
             member this.ContinueWithPostOrQueue res =
@@ -1159,7 +1170,8 @@ namespace Microsoft.FSharp.Control
         let StartWithContinuations(token:CancellationToken, a:Async<'T>, cont, econt, ccont) : unit =
             startAsync token (cont >> fake) (econt >> fake) (ccont >> fake) a |> ignore
             
-#if FX_ATLEAST_40      
+#if FX_NO_TASK
+#else
         type VolatileBarrier() =
             [<VolatileField>]
             let mutable isStopped = false
@@ -1254,7 +1266,8 @@ namespace Microsoft.FSharp.Control
             let token = defaultArg cancellationToken (!defaultCancellationTokenSource).Token
             CancellationTokenOps.Start (token, computation)
 
-#if FX_ATLEAST_40
+#if FX_NO_TASK
+#else
         static member StartAsTask (computation,?taskCreationOptions,?cancellationToken)=
             let token = defaultArg cancellationToken (!defaultCancellationTokenSource).Token        
             CancellationTokenOps.StartAsTask(token,computation,taskCreationOptions)
@@ -1713,7 +1726,8 @@ namespace Microsoft.FSharp.Control
         static member TryCancelled (p: Async<'T>,f) = 
             whenCancelledA f p
 
-#if FX_ATLEAST_40            
+#if FX_NO_TASK
+#else
         static member AwaitTask (task:Task<'T>) : Async<'T> =
             protectedPrimitiveWithResync(fun ({aux = aux} as args) ->
                 let continuation (completedTask : Task<_>) : unit =

@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <!--
-# Copyright (c) 2002-2010 Microsoft Corporation. 
+# Copyright (c) 2002-2011 Microsoft Corporation. 
 #
 # This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 # copy of the license can be found in the License.html file at the root of this distribution. 
@@ -21,7 +21,6 @@
     <OutputType>Library</OutputType>
     <AssemblyName>FSharp.Compiler-proto</AssemblyName>
     <DefineConstants>BUILDING_PROTO;BUILDING_WITH_LKG;COMPILER;INCLUDE_METADATA_READER;INCLUDE_METADATA_WRITER;$(DefineConstants)</DefineConstants>
-    <DefineConstants>TRYING_TO_FIX_4577;$(DefineConstants)</DefineConstants>
     <NoWarn>$(NoWarn);35;44;62;9;60;86;47;1203</NoWarn>
     <BuildWith>LKG</BuildWith>
     <AllowCrossTargeting>true</AllowCrossTargeting>
@@ -232,12 +231,6 @@
     </Compile>
 	<Compile Include="..\..\ilx\cu_erase.fs">
       <Link>cu_erase.fs</Link>
-    </Compile>
-    <Compile Include="..\InternalFileSystemUtils.fsi">
-      <Link>InternalFileSystemUtils.fsi</Link>
-    </Compile>
-    <Compile Include="..\InternalFileSystemUtils.fs">
-      <Link>InternalFileSystemUtils.fs</Link>
     </Compile>
     <Compile Include="..\unilex.fsi">
       <Link>unilex.fsi</Link>

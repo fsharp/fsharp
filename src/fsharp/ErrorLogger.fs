@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2010 Microsoft Corporation. 
+// Copyright (c) 2002-2011 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -100,7 +100,13 @@ let QuitProcessExiter =
     { new Exiter with 
         member x.Exit(n) = 
             try 
+#if SILVERLIGHT
+              // SILVERLIGHT-TODO: Wire up an event handler for exit
+              ()
+#else                    
               System.Environment.Exit(n)
+#endif              
+
             with _ -> 
               ()
             failwithf "%s" <| FSComp.SR.elSysEnvExitDidntExit() }
@@ -144,7 +150,10 @@ module BuildPhaseSubcategory =
 type PhasedError = { Exception:exn; Phase:BuildPhase } with
     /// Construct a phased error
     static member Create(exn:exn,phase:BuildPhase) : PhasedError =
+#if SILVERLIGHT
+#else
         System.Diagnostics.Debug.Assert(phase<>BuildPhase.DefaultPhase, sprintf "Compile error seen with no phase to attribute it to.%A %s %s" phase exn.Message exn.StackTrace )        
+#endif
         {Exception = exn; Phase=phase}
     /// This is the textual subcategory to display in error and warning messages (shows only under --vserrors):
     ///
@@ -246,6 +255,8 @@ type internal CompileThreadStatic =
 module ErrorLoggerExtensions = 
     open System.Reflection
 
+#if SILVERLIGHT
+#else
     // Instruct the exception not to reset itself when thrown again.
     // Why don?t we just not catch these in the first place? Because we made the design choice to ask the user to send mail to fsbugs@microsoft.com. 
     // To achieve this, we need to catch the exception, report the email address and stack trace, and then reraise. 
@@ -272,6 +283,7 @@ module ErrorLoggerExtensions =
             PreserveStackTrace(exn)
             raise exn
         | _ -> ()
+#endif
 
     type ErrorLogger with  
         member x.ErrorR  exn = match exn with StopProcessing | ReportedError _ -> raise exn | _ -> x.ErrorSink(PhasedError.Create(exn,CompileThreadStatic.BuildPhase))
@@ -291,7 +303,10 @@ module ErrorLoggerExtensions =
             | _ ->
                 try  
                     x.ErrorR (AttachRange m exn) // may raise exceptions, e.g. an fsi error sink raises StopProcessing.
+#if SILVERLIGHT
+#else
                     ReraiseIfWatsonable(exn)
+#endif
                 with
                   | ReportedError _ | WrappedError(ReportedError _,_)  -> ()
         member x.StopProcessingRecovery (exn:exn) (m:range) =

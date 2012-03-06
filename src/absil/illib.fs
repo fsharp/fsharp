@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2010 Microsoft Corporation. 
+// Copyright (c) 2002-2011 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -596,6 +596,11 @@ module Eventually =
 
     let force e = Option.get (forceWhile (fun () -> true) e)
         
+
+#if SILVERLIGHT
+    let repeatedlyProgressUntilDoneOrTimeShareOver _timeShareInMilliseconds _runner e = 
+        Done (force e)
+#else    
     let repeatedlyProgressUntilDoneOrTimeShareOver timeShareInMilliseconds runner e = 
         let sw = new System.Diagnostics.Stopwatch() 
         let rec runTimeShare e = 
@@ -613,6 +618,7 @@ module Eventually =
                         loop(work())
             loop(e))
         runTimeShare e
+#endif
 
     let rec bind k e = 
         match e with 
@@ -783,3 +789,61 @@ module Tables =
                 res 
             else
                 res <- f x; t.[x] <- res;  res
+
+[<AutoOpen>]
+module Shim =
+#if SILVERLIGHT
+    open System.IO.IsolatedStorage
+    open System.Windows
+
+    type System.IO.File with 
+        static member NewFileStreamShim (fileName:string) = 
+            match Application.GetResourceStream(System.Uri(fileName,System.UriKind.Relative)) with 
+            | null -> IsolatedStorageFile.GetUserStoreForApplication().OpenFile(fileName, System.IO.FileMode.Open) :> System.IO.Stream
+            | resStream -> resStream.Stream
+
+        static member ReadAllBytesShim (fileName:string) = 
+            use stream = System.IO.File.NewFileStreamShim fileName
+            let len = stream.Length
+            let buf = Array.zeroCreate<byte> (int len)
+            stream.Read(buf, 0, (int len)) |> ignore                                            
+            buf
+    type System.IO.Path with 
+        static member GetFullPathShim (fileName:string) = fileName
+        static member IsPathRootedShim (pathName:string) = true
+        static member SafeGetFullPath (fileName:string) = fileName
+
+    type System.IO.File with 
+        static member GetLastWriteTimeShim (fileName:string) = 
+            match Application.GetResourceStream(System.Uri(fileName,System.UriKind.Relative)) with 
+            | null -> IsolatedStorageFile.GetUserStoreForApplication().GetLastAccessTime(fileName).LocalDateTime
+            | _resStream -> System.DateTime.Today.Date
+        static member SafeExists (fileName:string) = 
+            match Application.GetResourceStream(System.Uri(fileName,System.UriKind.Relative)) with 
+            | null -> IsolatedStorageFile.GetUserStoreForApplication().FileExists fileName
+            | resStream -> resStream.Stream <> null
+#else
+    open System.IO
+    type System.IO.File with 
+        static member ReadAllBytesShim (fileName:string) = File.ReadAllBytes fileName
+        static member NewFileStreamShim (fileName:string) = 
+            new FileStream(fileName,FileMode.Open,FileAccess.Read,FileShare.ReadWrite) 
+
+    type System.IO.Path with 
+        static member GetFullPathShim (fileName:string) = System.IO.Path.GetFullPath fileName
+        /// Take in a Windows filename with an absolute path, and return the same filename
+        /// but canonicalized with respect to extra path separators (e.g. C:\\\\foo.txt) 
+        /// and '..' portions
+        static member SafeGetFullPath (fileName:string) = 
+            System.Diagnostics.Debug.Assert(Path.IsPathRooted(fileName), sprintf "SafeGetFullPath: '%s' is not absolute" fileName)
+            Path.GetFullPath fileName
+
+        static member IsPathRootedShim (path:string) = Path.IsPathRooted path
+
+    type System.IO.File with 
+        static member GetLastWriteTimeShim (fileName:string) = File.GetLastWriteTime fileName
+        static member SafeExists (fileName:string) =
+            System.Diagnostics.Debug.Assert(Path.IsPathRooted(fileName), sprintf "SafeExists: '%s' is not absolute" fileName)       
+            File.Exists fileName
+#endif        
+

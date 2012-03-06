@@ -1,6 +1,6 @@
 ﻿//----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2010 Microsoft Corporation. 
+// Copyright (c) 2002-2011 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -760,7 +760,7 @@ module Patterns =
         if (not pinfo.CanWrite) then invalidArg  "pinfo" (SR.GetString(SR.QwritingGetOnly))
         checkArgs (pinfo.GetIndexParameters()) args
         match pinfo.GetSetMethod(true).IsStatic with 
-        | true -> mkFEN (StaticPropSetOp pinfo) (value::args)
+        | true -> mkFEN (StaticPropSetOp pinfo) (args@[value])
         | false -> invalidArg  "pinfo" (SR.GetString(SR.QnonStaticNoReceiverObject))
           
     let mkInstancePropSet (obj,pinfo:PropertyInfo,args:list<Expr>,value:Expr) = 
@@ -770,7 +770,7 @@ module Patterns =
         match pinfo.GetSetMethod(true).IsStatic with 
         | false -> 
             checkObj pinfo obj
-            mkFEN (InstancePropSetOp pinfo) (obj::value::args)
+            mkFEN (InstancePropSetOp pinfo) (obj::(args@[value]))
         | true -> invalidArg  "pinfo" (SR.GetString(SR.QstaticWithReceiverObject))
           
     let mkInstanceMethodCall (obj,minfo:MethodInfo,args:list<Expr>) =
@@ -1356,9 +1356,10 @@ module Patterns =
     let decodedTopResources = new Dictionary<Assembly * string, int>(10,HashIdentity.Structural)
 
 #if FX_NO_REFLECTION_MODULE_HANDLES // not available on Silverlight
-    type ModuleHandle = string
+    [<StructuralEquality;StructuralComparison>]
+    type ModuleHandle = ModuleHandle of string * string
     type System.Reflection.Module with 
-        member x.ModuleHandle = x.FullyQualifiedName
+        member x.ModuleHandle = ModuleHandle(x.Assembly.FullName, x.Name)
 #else
     type ModuleHandle = System.ModuleHandle
 #endif
@@ -1767,8 +1768,8 @@ module ExprShape =
             | TupleGetOp(ty,i),[arg] -> mkTupleGet(ty,i,arg)
             | InstancePropGetOp(pinfo),(obj::args)    -> mkInstancePropGet(obj,pinfo,args)
             | StaticPropGetOp(pinfo),[] -> mkStaticPropGet(pinfo,args)
-            | InstancePropSetOp(pinfo),obj::v::args -> mkInstancePropSet(obj,pinfo,args,v)
-            | StaticPropSetOp(pinfo),v::args -> mkStaticPropSet(pinfo,args,v)
+            | InstancePropSetOp(pinfo),obj::(FrontAndBack(args,v)) -> mkInstancePropSet(obj,pinfo,args,v)
+            | StaticPropSetOp(pinfo),(FrontAndBack(args,v)) -> mkStaticPropSet(pinfo,args,v)
             | InstanceFieldGetOp(finfo),[obj]   -> mkInstanceFieldGet(obj,finfo)
             | StaticFieldGetOp(finfo),[]   -> mkStaticFieldGet(finfo )
             | InstanceFieldSetOp(finfo),[obj;v]   -> mkInstanceFieldSet(obj,finfo,v)
