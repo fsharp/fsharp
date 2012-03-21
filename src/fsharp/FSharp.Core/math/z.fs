@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2010 Microsoft Corporation. 
+// Copyright (c) 2002-2011 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -378,17 +378,21 @@ namespace Microsoft.FSharp.Core
                     res 
                 else 
                     let v = 
-#if MONO
-                       BigInteger.Parse s
-#else
 #if FX_ATLEAST_40
-                       if  isOX s then 
+                       if  isOX s then
+#if MONO
+                          BigInteger.Parse (s.[2..])
+#else
                           BigInteger.Parse (s.[2..],NumberStyles.AllowHexSpecifier,CultureInfo.InvariantCulture)
+#endif
                        else
+#if MONO
+                          BigInteger.Parse s
+#else
                           BigInteger.Parse (s,NumberStyles.AllowLeadingSign,CultureInfo.InvariantCulture)
+#endif
 #else
                        BigInteger.Parse s
-#endif
 #endif
                     res <-  v
                     tabParse.[s] <- res

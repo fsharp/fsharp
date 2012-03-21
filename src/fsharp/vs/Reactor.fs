@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2010 Microsoft Corporation. 
+// Copyright (c) 2002-2011 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -69,7 +69,11 @@ module internal Reactor =
      type Reactor() = 
         // We need to store the culture for the VS thread that is executing now,
         // so that when the reactor picks up a thread from the threadpool we can set the culture
+#if SILVERLIGHT
+        let culture = System.Threading.Thread.CurrentThread.CurrentCulture
+#else
         let culture = new System.Globalization.CultureInfo(System.Threading.Thread.CurrentThread.CurrentUICulture.LCID)
+#endif
 
         let mutable recentBuild : BuildStepper option = None
 

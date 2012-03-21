@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2010 Microsoft Corporation. 
+// Copyright (c) 2002-2011 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -84,15 +84,15 @@ let mkCgt g m e1 e2 = mkRelBinOp g IL.AI_cgt m e1 e2
 // for creating and using GenericComparer objects and for creating and using 
 // IStructuralComparable objects (Eg, Calling CompareTo(obj o, IComparer comp))
 
-let mkILLangPrimTy g = mkILNonGenericBoxedTy g.tcref_LanguagePrimitives.CompiledRepresentationForTyrepNamed
+let mkILLangPrimTy g = mkILNonGenericBoxedTy g.tcref_LanguagePrimitives.CompiledRepresentationForNamedType
 
 let mkILCallGetComparer g m = 
-    let ty = mkILNonGenericBoxedTy g.tcref_System_Collections_IComparer.CompiledRepresentationForTyrepNamed
+    let ty = mkILNonGenericBoxedTy g.tcref_System_Collections_IComparer.CompiledRepresentationForNamedType
     let mspec = mkILNonGenericStaticMethSpecInTy (mkILLangPrimTy g, "get_GenericComparer",[],ty)
     mkAsmExpr([IL.mkNormalCall mspec], [], [], [g.mk_IComparer_ty], m)
 
 let mkILCallGetEqualityComparer g m = 
-    let ty = mkILNonGenericBoxedTy g.tcref_System_Collections_IEqualityComparer.CompiledRepresentationForTyrepNamed
+    let ty = mkILNonGenericBoxedTy g.tcref_System_Collections_IEqualityComparer.CompiledRepresentationForNamedType
     let mspec = mkILNonGenericStaticMethSpecInTy (mkILLangPrimTy g,"get_GenericEqualityComparer",[],ty)
     mkAsmExpr([IL.mkNormalCall mspec], [], [], [g.mk_IEqualityComparer_ty], m)
 
@@ -109,7 +109,7 @@ let mkAddToHashAcc g m e accv acce =
 
      
 let mkCombineHashGenerators g m exprs accv acce =
-    (acce,exprs) ||> List.fold (fun tm e -> mkCompGenSeq m (mkAddToHashAcc g m e accv acce) tm)
+    (acce,exprs) ||> List.fold (fun tm e -> mkCompGenSequential m (mkAddToHashAcc g m e accv acce) tm)
 
 //-------------------------------------------------------------------------
 // Build comparison functions for union, record and exception types.
@@ -621,7 +621,7 @@ let mkUnionHashWithComparer g tcref (tycon:Tycon) compe =
               mbuilder.AddResultTarget 
                 (mkCompGenLet m ucv
                     (mkUnionCaseProof(thise,c1ref,tinst,m))
-                    (mkCompGenSeq m 
+                    (mkCompGenSequential m 
                           (mkValSet m (mkLocalValRef accv) (mkInt g m i)) 
                           (mkCombineHashGenerators g m (List.mapi mkHash ucase1.RecdFields) (mkLocalValRef accv) acce)),
                  SuppressSequencePointAtTarget))

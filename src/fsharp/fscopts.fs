@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2010 Microsoft Corporation. 
+// Copyright (c) 2002-2011 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -39,9 +39,13 @@ open Microsoft.FSharp.Compiler.Ilxgen
 module Attributes = 
     open System.Runtime.CompilerServices
 
+#if SILVERLIGHT
+#else
     //[<assembly: System.Security.SecurityTransparent>]
     [<Dependency("FSharp.Core",LoadHint.Always)>] 
     do()
+#endif    
+
 
 let lexFilterVerbose = false
 let mutable enableConsoleColoring = true // global state
@@ -327,7 +331,11 @@ let libFlagAbbrev (tcConfigB : TcConfigBuilder) =
 let codePageFlag (tcConfigB : TcConfigBuilder) = 
         CompilerOption("codepage", tagN, OptionInt (fun n -> 
                      try 
+#if SILVERLIGHT
+                         System.Text.Encoding.GetEncoding(n.ToString()) |> ignore
+#else                     
                          System.Text.Encoding.GetEncoding(n) |> ignore
+#endif                         
                      with :? System.ArgumentException as err -> 
                          error(Error(FSComp.SR.optsProblemWithCodepage(n,err.Message),rangeCmdArgs))
 
@@ -425,7 +433,10 @@ let internalFlags (tcConfigB:TcConfigBuilder) =
         ()
 #endif
     ), Some(InternalCommandLineOption("--stamps", rangeCmdArgs)), None);
+#if SILVERLIGHT
+#else
     CompilerOption("ranges", tagNone, OptionSet Tastops.DebugPrint.layoutRanges, Some(InternalCommandLineOption("--ranges", rangeCmdArgs)), None);  
+#endif
     CompilerOption("terms" , tagNone, OptionUnit (fun () -> tcConfigB.showTerms <- true), Some(InternalCommandLineOption("--terms", rangeCmdArgs)), None);
     CompilerOption("termsfile" , tagNone, OptionUnit (fun () -> tcConfigB.writeTermsToFiles <- true), Some(InternalCommandLineOption("--termsfile", rangeCmdArgs)), None);
     CompilerOption("use-incremental-build", tagNone, OptionUnit (fun () -> tcConfigB.useIncrementalBuilder <- true), None, None)
@@ -457,6 +468,7 @@ let internalFlags (tcConfigB:TcConfigBuilder) =
     CompilerOption("resolutionassemblyfoldersconditions", tagString, OptionString (fun s -> tcConfigB.resolutionAssemblyFoldersConditions <- ","^s), Some(InternalCommandLineOption("resolutionassemblyfoldersconditions", rangeCmdArgs)), None); // "Additional reference resolution conditions. For example \"OSVersion=5.1.2600.0,PlatformID=id");
     CompilerOption("msbuildresolution", tagNone, OptionUnit (fun () -> tcConfigB.useMonoResolution<-false), Some(InternalCommandLineOption("msbuildresolution", rangeCmdArgs)), None); // "Resolve assembly references using MSBuild resolution rules rather than directory based (Default=true except when running fsc.exe under mono)");
     CompilerOption("indirectcallarraymethods", tagNone, OptionUnit (fun () -> tcConfigB.indirectCallArrayMethods<-true), Some(InternalCommandLineOption("--indirectCallArrayMethods", rangeCmdArgs)), None);
+    CompilerOption("nodebugdata",tagNone, OptionUnit (fun () -> tcConfigB.noDebugData<-true),Some(InternalCommandLineOption("--nodebugdata",rangeCmdArgs)), None);
     testFlag tcConfigB  ] @
   vsSpecificFlags tcConfigB @
   [ CompilerOption("jit", tagNone, OptionSwitch (jitoptimizeSwitch tcConfigB), Some(InternalCommandLineOption("jit", rangeCmdArgs)), None);
@@ -480,7 +492,9 @@ let compilingFsLibFlag (tcConfigB : TcConfigBuilder) =
                                                                          ErrorLogger.reportLibraryOnlyFeatures <- false;
                                                                          IlxSettings.ilxCompilingFSharpCoreLib := true), Some(InternalCommandLineOption("--compiling-fslib", rangeCmdArgs)), None)
 let compilingFsLib40Flag (tcConfigB : TcConfigBuilder) = 
-        CompilerOption("compiling-fslib-mscorlib40", tagNone, OptionString (fun s -> tcConfigB.compilingFslibPre40 <- Some s; ), Some(InternalCommandLineOption("--compiling-fslib-mscorlib40", rangeCmdArgs)), None)
+        CompilerOption("compiling-fslib-40", tagNone, OptionUnit (fun () -> tcConfigB.compilingFslib40 <- true; ), Some(InternalCommandLineOption("--compiling-fslib-40", rangeCmdArgs)), None)
+let compilingFsLib20Flag (tcConfigB : TcConfigBuilder) = 
+        CompilerOption("compiling-fslib-mscorlib40", tagNone, OptionString (fun s -> tcConfigB.compilingFslib20 <- Some s; ), Some(InternalCommandLineOption("--compiling-fslib-mscorlib40", rangeCmdArgs)), None)
 let mlKeywordsFlag = 
         CompilerOption("ml-keywords", tagNone, OptionUnit (fun () -> Lexhelp.Keywords.permitFsharpKeywords := false), Some(DeprecatedCommandLineOptionNoDescription("--ml-keywords", rangeCmdArgs)), None)
 
@@ -506,6 +520,7 @@ let deprecatedFlagsFsc tcConfigB =
     CompilerOption("progress", tagNone, OptionUnit (fun () -> progress := true), Some(DeprecatedCommandLineOptionNoDescription("--progress", rangeCmdArgs)), None);
     (compilingFsLibFlag tcConfigB) ;
     (compilingFsLib40Flag tcConfigB) ;
+    (compilingFsLib20Flag tcConfigB) ;
     CompilerOption("version", tagString, OptionString (fun s -> tcConfigB.version <- VersionString s), Some(DeprecatedCommandLineOptionNoDescription("--version", rangeCmdArgs)), None);
 //  "--clr-mscorlib", OptionString (fun s -> warning(Some(DeprecatedCommandLineOptionNoDescription("--clr-mscorlib", rangeCmdArgs))) ;   tcConfigB.Build.mscorlib_assembly_name <- s), "\n\tThe name of mscorlib on the target CLR"; 
     CompilerOption("local-optimize", tagNone, OptionUnit (fun _ -> tcConfigB.optSettings <- { tcConfigB.optSettings with localOptUser = Some true }), Some(DeprecatedCommandLineOptionNoDescription("--local-optimize", rangeCmdArgs)), None);
@@ -538,7 +553,12 @@ let DisplayBannerText tcConfigB =
 let displayHelpFsc tcConfigB (blocks:CompilerOptionBlock list) =
     DisplayBannerText tcConfigB;
     printCompilerOptionBlocks blocks
+#if SILVERLIGHT
+    ()
+#else        
     exit 0
+#endif    
+
       
 let miscFlagsBoth tcConfigB = 
     [   CompilerOption("nologo", tagNone, OptionUnit (fun () -> tcConfigB.showBanner <- false), None, Some (FSComp.SR.optsNologo()));
@@ -736,13 +756,18 @@ let ReportTime (tcConfig:TcConfig) descr =
         | Some("fsc-ma") -> raise(System.MemberAccessException())
         | Some("fsc-ni") -> raise(System.NotImplementedException())
         | Some("fsc-nr") -> raise(System.NullReferenceException())
+#if SILVERLIGHT
+#else        
         | Some("fsc-oc") -> raise(System.OperationCanceledException())
+#endif        
         | Some("fsc-fail") -> failwith "simulated"
         | _ -> ()
 
 
 
 
+#if SILVERLIGHT
+#else
     if (tcConfig.showTimes || verbose) then 
         // Note that timing calls are relatively expensive on the startup path so we don't
         // make this call unless showTimes has been turned on.
@@ -765,6 +790,7 @@ let ReportTime (tcConfig:TcConfig) descr =
         | _ -> ()
         tPrev := Some (timeNow,gcNow)
 
+#endif
     nPrev := Some descr
 
 //----------------------------------------------------------------------------
@@ -879,7 +905,11 @@ let GenerateIlxCode (ilxBackend,isInteractive, isInteractiveItExpr, isInteractiv
     let cenv = { g=tcGlobals;
                  viewCcu = generatedCcu;
                  generateFilterBlocks = tcConfig.generateFilterBlocks;
+#if SILVERLIGHT
+                 emitConstantArraysUsingStaticDataBlobs = (ignore (isInteractiveOnMono : bool); false);
+#else
                  emitConstantArraysUsingStaticDataBlobs = not isInteractiveOnMono;
+#endif
                  workAroundReflectionEmitBugs=isInteractive; 
                  generateDebugSymbols= tcConfig.debuginfo;
                  fragName = fragName;
@@ -917,6 +947,10 @@ let fsharpModuleName (t:CompilerTarget) (s:string) =
 let ignoreFailureOnMono1_1_16 f = try f() with _ -> ()
 
 let DoWithErrorColor isWarn f =
+#if SILVERLIGHT
+    ignore (isWarn : bool)
+    f()
+#else    
     if not enableConsoleColoring then
         f()
     else
@@ -938,6 +972,7 @@ let DoWithErrorColor isWarn f =
               finally
                 ignoreFailureOnMono1_1_16 (fun () -> Console.ForegroundColor <- c)
 
+#endif
 
           
 

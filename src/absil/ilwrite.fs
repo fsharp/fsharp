@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2010 Microsoft Corporation. 
+// Copyright (c) 2002-2011 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -15,7 +15,6 @@ module internal Microsoft.FSharp.Compiler.AbstractIL.ILBinaryWriter
 
 open Internal.Utilities
 open Microsoft.FSharp.Compiler.AbstractIL 
-open Microsoft.FSharp.Compiler.AbstractIL.ILAsciiWriter 
 open Microsoft.FSharp.Compiler.AbstractIL.IL 
 open Microsoft.FSharp.Compiler.AbstractIL.Diagnostics 
 open Microsoft.FSharp.Compiler.AbstractIL.Extensions.ILX.Types  
@@ -39,6 +38,9 @@ let showEntryLookups = false
 //---------------------------------------------------------------------
 
 let reportTime =
+#if SILVERLIGHT
+    (fun _ _ -> ())
+#else
     let tFirst = ref None     
     let tPrev = ref None     
     fun showTimes descr ->
@@ -48,6 +50,7 @@ let reportTime =
             let first = match !tFirst with None -> (tFirst := Some t; t) | Some t -> t
             dprintf "ilwrite: TIME %10.3f (total)   %10.3f (delta) - %s\n" (t - first) (t - prev) descr;
             tPrev := Some t
+#endif
 
 //---------------------------------------------------------------------
 // Byte, byte array fragments and other concrete representations
@@ -127,6 +130,8 @@ let getUncodedToken (tab:TableName) idx = ((tab.Index <<< 24) ||| idx)
 // 0x01–0x08, 0x0E–0x1F, 0x27, 0x2D,
 // 0x7F. Otherwise, it holds 0. The 1 signifies Unicode characters that require handling beyond that normally provided for 8-bit encoding sets.
 
+// HOWEVER, there is a discrepancy here between the ECMA spec and the Microsoft C# implementation. The code below follows the latter. We’ve raised the issue with both teams. See Dev10 bug 850073 for details.
+
 let markerForUnicodeBytes (b:byte[]) = 
     let len = b.Length
     let rec scan i = 
@@ -134,10 +139,11 @@ let markerForUnicodeBytes (b:byte[]) =
         (let b1 = Bytes.get b (i*2)
          let b2 = Bytes.get b (i*2+1)
          (b2 <> 0)
-         || (b1 >= 0x01 && b1 <= 0x08) 
-         || (b1 >= 0xE && b1 <= 0x1F)
-         || (b1 = 0x27)
-         || (b1 = 0x2D)
+         || (b1 >= 0x01 && b1 <= 0x08)   // as per ECMA and C#
+         || (b1 >= 0xE && b1 <= 0x1F)    // as per ECMA and C#
+         || (b1 = 0x27)                  // as per ECMA and C#
+         || (b1 = 0x2D)                  // as per ECMA and C#
+         || (b1 > 0x7F)                  // as per C# (but ECMA omits this)
          || scan (i+1))
     let marker = if scan 0 then 0x01 else 0x00
     marker
@@ -228,6 +234,8 @@ type PdbData =
 // imperative calls to the Symbol Writer API.
 //---------------------------------------------------------------------
 
+#if SILVERLIGHT
+#else
 let WritePdbInfo fixupOverlappingSequencePoints showTimes f fpdb info = 
     (try System.IO.File.Delete(fpdb) with _ -> ());
     let pdbw = ref Unchecked.defaultof<PdbWriter>
@@ -336,7 +344,7 @@ let WritePdbInfo fixupOverlappingSequencePoints showTimes f fpdb info =
     pdbClose !pdbw;
     reportTime showTimes "PDB: Closed";
     res
-
+#endif
 
 //---------------------------------------------------------------------
 // Support functions for calling 'Mono.CompilerServices.SymbolWriter'
@@ -485,6 +493,19 @@ let DumpDebugInfo (outfile:string) (info:PdbData) =
 // Strong name signing
 //---------------------------------------------------------------------
 
+#if SILVERLIGHT
+type ILStrongNameSigner =  
+    | NeverImplemented
+    static member OpenPublicKeyFile (_s:string) = NeverImplemented
+    static member OpenPublicKey (_pubkey:byte[]) = NeverImplemented
+    static member OpenKeyPairFile (_s:string) = NeverImplemented
+    static member OpenKeyContainer (_s:string) = NeverImplemented
+    member s.Close() = ()      
+    member s.IsFullySigned = true
+    member s.PublicKey =  [| |]
+    member s.SignatureSize = 0x80 
+    member s.SignFile _file = ()
+#else
 type ILStrongNameSigner =  
     | PublicKeySigner of Support.pubkey
     | KeyPair of Support.keyPair
@@ -527,6 +548,7 @@ type ILStrongNameSigner =
         | KeyPair kp -> Support.signerSignFileWithKeyPair file kp
         | KeyContainer kn -> Support.signerSignFileWithKeyContainer file kn
 
+#endif
 
 //---------------------------------------------------------------------
 // TYPES FOR TABLES
@@ -706,7 +728,7 @@ type MetadataTable<'T> =
 //---------------------------------------------------------------------
 
 /// We use this key type to help find ILMethodDefs for MethodRefs 
-type MethodDefKey(tidx:int,garity:int,nm:string,rty:ILType,argtys:ILType list) =
+type MethodDefKey(tidx:int,garity:int,nm:string,rty:ILType,argtys:ILType list,isStatic:bool) =
     // Precompute the hash. The hash doesn't include the return type or 
     // argument types (only argument type count). This is very important, since
     // hashing these is way too expensive
@@ -715,11 +737,13 @@ type MethodDefKey(tidx:int,garity:int,nm:string,rty:ILType,argtys:ILType list) =
        |> combineHash (hash garity) 
        |> combineHash (hash nm) 
        |> combineHash (hash argtys.Length)
+       |> combineHash (hash isStatic)
     member key.TypeIdx = tidx
     member key.GenericArity = garity
     member key.Name = nm
     member key.ReturnType = rty
     member key.ArgTypes = argtys
+    member key.IsStatic = isStatic
     override x.GetHashCode() = hashCode
     override x.Equals(obj:obj) = 
         match obj with 
@@ -729,7 +753,8 @@ type MethodDefKey(tidx:int,garity:int,nm:string,rty:ILType,argtys:ILType list) =
             nm = y.Name && 
             // note: these next two use structural equality on AbstractIL ILType values
             rty = y.ReturnType && 
-            argtys = y.ArgTypes
+            argtys = y.ArgTypes &&
+            isStatic = y.IsStatic
         | _ -> false
 
 /// We use this key type to help find ILFieldDefs for FieldRefs
@@ -1351,7 +1376,7 @@ and GenFieldDefPass2 cenv tidx fd =
     ignore (cenv.fieldDefs.AddUniqueEntry "field" (fun (fdkey:FieldDefKey) -> fdkey.Name) (GetKeyForFieldDef tidx fd))
 
 and GetKeyForMethodDef tidx (md: ILMethodDef) = 
-    MethodDefKey (tidx,md.GenericParams.Length, md.Name, md.Return.Type, md.ParameterTypes)
+    MethodDefKey (tidx,md.GenericParams.Length, md.Name, md.Return.Type, md.ParameterTypes, md.CallingConv.IsStatic)
 
 and GenMethodDefPass2 cenv tidx md = 
     let idx = 
@@ -1485,7 +1510,7 @@ let GetMethodRefAsMethodDefIdx cenv (mref:ILMethodRef) =
         if not (isTypeRefLocal tref) then
              failwithf "method referred to by method impl, event or property is not in a type defined in this module, method ref is %A" mref;
         let tidx = GetIdxForTypeDef cenv (TdKey(tref.Enclosing,tref.Name))
-        let mdkey = MethodDefKey (tidx,mref.GenericArity, mref.Name, mref.ReturnType, mref.ArgTypes)
+        let mdkey = MethodDefKey (tidx,mref.GenericArity, mref.Name, mref.ReturnType, mref.ArgTypes, mref.CallingConv.IsStatic)
         FindMethodDefIdx cenv mdkey
     with e ->
         failwithf "Error in GetMethodRefAsMethodDefIdx for mref = %A, error: %s" mref.Name  e.Message;
@@ -2494,7 +2519,8 @@ let GenILMethodBody mname cenv env (il: ILMethodBody) =
     let codeSize = code.Length
     let methbuf = ByteBuffer.Create (codeSize * 3)
     // Do we use the tiny format? 
-    if isNil il.Locals && il.MaxStack <= 8 && not il.IsZeroInit  && isNil seh && codeSize < 64 then
+    // REVIEW-HOST: port to fsharp branch
+    if isNil il.Locals && il.MaxStack <= 8 && isNil seh && codeSize < 64 then
         // Use Tiny format 
         let alignedCodeSize = align 4 (codeSize + 1)
         let codePadding =  (alignedCodeSize - (codeSize + 1))
@@ -3214,14 +3240,14 @@ let GenModule (cenv : cenv) (modul: ILModuleDef) =
     GenTypeDefsPass4 [] cenv tds;
     reportTime cenv.showTimes "Module Generation Pass 4"
 
-let generateIL requiredDataFixups (desiredMetadataVersion,generatePdb,mscorlib,emitTailcalls,showTimes)  (m : ILModuleDef) cilStartAddress =
+let generateIL requiredDataFixups (desiredMetadataVersion,generatePdb,mscorlib,emitTailcalls,showTimes)  (m : ILModuleDef) noDebugData cilStartAddress =
     let isDll = m.IsDLL
 
     let cenv = 
         { mscorlib=mscorlib;
           emitTailcalls=emitTailcalls;
           showTimes=showTimes;
-          ilg = mkILGlobals mscorlib None; // assumes mscorlib is Scope_assembly _ ILScopeRef 
+          ilg = mkILGlobals mscorlib None noDebugData; // assumes mscorlib is Scope_assembly _ ILScopeRef 
           desiredMetadataVersion=desiredMetadataVersion;
           requiredDataFixups= requiredDataFixups;
           requiredStringFixups = [];
@@ -3317,6 +3343,10 @@ let count f arr =
 
 module FileSystemUtilites = 
     open System.Reflection
+#if SILVERLIGHT
+    let progress = false
+    let setExecutablePermission _filename = ()
+#else
     let progress = try System.Environment.GetEnvironmentVariable("FSharp_DebugSetFilePermissions") <> null with _ -> false
     let setExecutablePermission filename =
 
@@ -3332,8 +3362,9 @@ module FileSystemUtilites =
         with e -> 
             if progress then eprintf "failure: %s...\n" (e.ToString());
             // Fail silently
+#endif
         
-let writeILMetadataAndCode (generatePdb,desiredMetadataVersion,mscorlib,emitTailcalls,showTimes) modul cilStartAddress = 
+let writeILMetadataAndCode (generatePdb,desiredMetadataVersion,mscorlib,emitTailcalls,showTimes) modul noDebugData cilStartAddress = 
 
     // When we know the real RVAs of the data section we fixup the references for the FieldRVA table. 
     // These references are stored as offsets into the metadata we return from this function 
@@ -3342,7 +3373,7 @@ let writeILMetadataAndCode (generatePdb,desiredMetadataVersion,mscorlib,emitTail
     let next = cilStartAddress
 
     let strings,userStrings,blobs,guids,tables,entryPointToken,code,requiredStringFixups,data,resources,pdbData,mappings = 
-      generateIL requiredDataFixups (desiredMetadataVersion,generatePdb,mscorlib,emitTailcalls,showTimes) modul cilStartAddress
+      generateIL requiredDataFixups (desiredMetadataVersion,generatePdb,mscorlib,emitTailcalls,showTimes) modul noDebugData cilStartAddress
 
     reportTime showTimes "Generated Tables and Code";
     let tableSize (tab: TableName) = tables.[tab.Index].Length
@@ -3792,7 +3823,7 @@ let writeDirectory os dict =
 
 let writeBytes (os: BinaryWriter) (chunk:byte[]) = os.Write(chunk,0,chunk.Length)  
 
-let writeBinaryAndReportMappings (outfile, mscorlib, pdbfile: string option, signer: ILStrongNameSigner option, fixupOverlappingSequencePoints, emitTailcalls, showTimes, dumpDebugInfo) modul =
+let writeBinaryAndReportMappings (outfile, mscorlib, pdbfile: string option, signer: ILStrongNameSigner option, fixupOverlappingSequencePoints, emitTailcalls, showTimes, dumpDebugInfo) modul noDebugData =
     // Store the public key from the signer into the manifest.  This means it will be written 
     // to the binary and also acts as an indicator to leave space for delay sign 
 
@@ -3835,7 +3866,12 @@ let writeBinaryAndReportMappings (outfile, mscorlib, pdbfile: string option, sig
 
     let os = 
         try  
-            new BinaryWriter(new FileStream(outfile,FileMode.Create,FileAccess.Write,FileShare.Read ,0x1000,false)) 
+#if SILVERLIGHT
+            let fs1 = System.IO.IsolatedStorage.IsolatedStorageFile.GetUserStoreForApplication().CreateFile(outfile)
+#else
+            let fs1 = new FileStream(outfile,FileMode.Create,FileAccess.Write,FileShare.Read ,0x1000,false) 
+#endif
+            new BinaryWriter(fs1)
         with e -> 
             failwith ("Could not open file for writing (binary mode): " + outfile)    
 
@@ -3909,7 +3945,7 @@ let writeBinaryAndReportMappings (outfile, mscorlib, pdbfile: string option, sig
                     | None -> failwith "Expected msorlib to have a version number"
 
           let entryPointToken,code,codePadding,metadata,data,resources,requiredDataFixups,pdbData,mappings = 
-            writeILMetadataAndCode ((pdbfile <> None), desiredMetadataVersion,mscorlib,emitTailcalls,showTimes) modul next
+            writeILMetadataAndCode ((pdbfile <> None), desiredMetadataVersion,mscorlib,emitTailcalls,showTimes) modul noDebugData next
 
           reportTime showTimes "Generated IL and metadata";
           let _codeChunk,next = chunk code.Length next
@@ -3966,6 +4002,9 @@ let writeBinaryAndReportMappings (outfile, mscorlib, pdbfile: string option, sig
           let dataSectionAddr = next
           let dataSectionVirtToPhys v = v - dataSectionAddr + dataSectionPhysLoc
           
+#if SILVERLIGHT
+          let nativeResources = [| |]
+#else
           let resourceFormat = if modul.Is64Bit then Support.X64 else Support.X86
           
           let nativeResources = 
@@ -3980,6 +4019,7 @@ let writeBinaryAndReportMappings (outfile, mscorlib, pdbfile: string option, sig
                     try linkNativeResources unlinkedResources next resourceFormat (Path.GetDirectoryName(outfile))
                     with e -> failwith ("Linking a native resource failed: "+e.Message+"")
                   end
+#endif
                 
           let nativeResourcesSize = nativeResources.Length
 
@@ -4392,6 +4432,8 @@ let writeBinaryAndReportMappings (outfile, mscorlib, pdbfile: string option, sig
     if dumpDebugInfo then 
         DumpDebugInfo outfile pdbData
 
+#if SILVERLIGHT
+#else
     // Now we've done the bulk of the binary, do the PDB file and fixup the binary. 
     begin match pdbfile with
     | None -> ()
@@ -4404,7 +4446,8 @@ let writeBinaryAndReportMappings (outfile, mscorlib, pdbfile: string option, sig
             reportTime showTimes "Generate PDB Info";
             
           // Now we have the debug data we can go back and fill in the debug directory in the image 
-            let os2 = new BinaryWriter(new FileStream(outfile, FileMode.OpenOrCreate, FileAccess.Write, FileShare.Read, 0x1000, false))
+            let fs2 = new FileStream(outfile, FileMode.OpenOrCreate, FileAccess.Write, FileShare.Read, 0x1000, false)
+            let os2 = new BinaryWriter(fs2)
             try 
                 // write the IMAGE_DEBUG_DIRECTORY 
                 os2.BaseStream.Seek (int64 (textV2P debugDirectoryChunk.addr), SeekOrigin.Begin) |> ignore;
@@ -4437,6 +4480,7 @@ let writeBinaryAndReportMappings (outfile, mscorlib, pdbfile: string option, sig
             reraise()
             
     end;
+#endif
     reportTime showTimes "Finalize PDB";
 
     /// Sign the binary.  No further changes to binary allowed past this point! 
@@ -4467,9 +4511,9 @@ type options =
      showTimes: bool;
      dumpDebugInfo:bool }
 
-
-let WriteILBinary outfile (args: options) modul =
-    ignore (writeBinaryAndReportMappings (outfile, args.mscorlib, args.pdbfile, args.signer, args.fixupOverlappingSequencePoints, args.emitTailcalls, args.showTimes, args.dumpDebugInfo) modul)
+// REVIEW-HOSTING: move noDebugData into options/args
+let WriteILBinary outfile (args: options) modul noDebugData =
+    ignore (writeBinaryAndReportMappings (outfile, args.mscorlib, args.pdbfile, args.signer, args.fixupOverlappingSequencePoints, args.emitTailcalls, args.showTimes, args.dumpDebugInfo) modul noDebugData)
 
 
 

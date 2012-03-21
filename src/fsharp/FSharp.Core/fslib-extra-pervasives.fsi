@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2010 Microsoft Corporation. 
+// Copyright (c) 2002-2011 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -134,4 +134,37 @@ module ExtraTopLevelOperators =
     [<CompiledName("LazyPattern")>]
     val (|Lazy|) : input:Lazy<'T> -> 'T
 
-        
+#if EXTRAS_FOR_SILVERLIGHT_COMPILER
+namespace Microsoft.FSharp
+
+    open Microsoft.FSharp.Core
+
+    [<StructuralEquality; NoComparison>]
+    exception UserInterrupt
+
+    [<Class; NoComparison>]
+    type Silverlight =
+        static member EmitInterruptChecks : bool with get, set
+        static member InterruptThread: id: int -> unit
+        static member ResumeThread: id: int -> unit
+        static member CheckInterrupt: unit -> unit
+
+        static member WriteLine : unit -> unit
+        static member WriteLine : value2:string -> unit
+        static member WriteLine : value:obj -> unit
+        static member WriteLine : value:int -> unit
+        static member WriteLine : format:string * arg0:obj -> unit
+        static member WriteLine : format:string * arg:obj [] -> unit
+        static member WriteLine : format:string * arg0:obj * arg1:obj -> unit
+        static member WriteLine : format:string * arg0:obj * arg1:obj * arg2:obj -> unit
+        static member WriteLine : format:string * arg0:obj * arg1:obj * arg2:obj * arg3:obj -> unit
+
+        static member Write : value2:string -> unit
+        static member Write : value:obj -> unit
+        static member Write : value:int -> unit
+        static member Write : format:string * arg0:obj -> unit
+        static member Write : format:string * arg:obj [] -> unit
+        static member Write : format:string * arg0:obj * arg1:obj -> unit
+        static member Write : format:string * arg0:obj * arg1:obj * arg2:obj -> unit
+        static member Write : format:string * arg0:obj * arg1:obj * arg2:obj * arg3:obj -> unit
+#endif

@@ -1,12 +1,6 @@
 
 /// This namespace contains FSharp.PowerPack extensions for FSharp.Build.dll. MSBuild tasks for the FsYacc and FsLex tools.
 namespace Microsoft.FSharp.Build
-type FscCustomBuildEventArgs = class
-                                 inherit Microsoft.Build.Framework.CustomBuildEventArgs
-                                 new : commandLine:string -> FscCustomBuildEventArgs
-                                 member CommandLine : string
-                               end
-    
 type Fsc = class
              inherit Microsoft.Build.Utilities.ToolTask
              new : unit -> Fsc

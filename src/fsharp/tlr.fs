@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2010 Microsoft Corporation. 
+// Copyright (c) 2002-2011 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -833,7 +833,6 @@ let CreateNewValuesForTLR g tlrS arityM fclassM envPackM =
         let fHatName =  globalNng.FreshCompilerGeneratedName(name,m)
 
         let fHat = mkLocalNameTypeArity f.IsCompilerGenerated m fHatName fHatTy (Some fHatArity)
-        (if verboseTLR then dprintf "new %50s : %s\n" fHat.LogicalName ((DebugPrint.showType fHat.Type)));
         fHat
    
     let fs     = Zset.elements tlrS

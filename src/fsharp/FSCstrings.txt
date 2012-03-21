@@ -1,6 +1,6 @@
 # ****************************************************************************
 #
-# Copyright (c) 2002-2010 Microsoft Corporation. 
+# Copyright (c) 2002-2011 Microsoft Corporation. 
 #
 # This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 # copy of the license can be found in the License.html file at the root of this distribution. 
@@ -11,24 +11,3 @@
 # ***************************************************************************
 #
 # Fsc.exe resource strings
-2001,docfileNoXmlSuffix,"The documentation file has no .xml suffix"
-fscTooManyErrors,"Exiting - too many errors"
-2002,fscNoImplementationFiles,"No implementation files specified"
-2003,fscBadAssemblyVersion,"An AssemblyVersionAttribute specified version '%s', but this value is invalid and has been ignored"
-2004,fscTwoResourceManifests,"Conflicting options specified: 'win32manifest' and 'win32res'. Only one of these can be used."
-2005,fscQuotationLiteralsStaticLinking,"The code in assembly '%s' makes uses of quotation literals. Static linking may not include components that make use of quotation literals."
-2006,fscQuotationLiteralsStaticLinking0,"Code in this assembly makes uses of quotation literals. Static linking may not include components that make use of quotation literals."
-2007,fscStaticLinkingNoEXE,"Static linking may not include a .EXE"
-2008,fscStaticLinkingNoMixedDLL,"Static linking may not include a mixed managed/unmanaged DLL"
-2009,fscIgnoringMixedWhenLinking,"Ignoring mixed managed/unmanaged assembly '%s' during static linking"
-2011,fscAssumeStaticLinkContainsNoDependencies,"Assembly '%s' was referenced transitively and the assembly could not be resolved automatically. Static linking will assume this DLL has no dependencies on the F# library or other statically linked DLLs. Consider adding an explicit reference to this DLL."
-2012,fscAssemblyNotFoundInDependencySet,"Assembly '%s' not found in dependency set of target binary. Statically linked roots should be specified using an assembly name, without a DLL or EXE extension. If this assembly was referenced explicitly then it is possible the assembly was not actually required by the generated binary, in which case it should not be statically linked."
-2013,fscKeyFileCouldNotBeOpened,"The key file '%s' could not be opened"
-2014,fscProblemWritingBinary,"A problem occurred writing the binary '%s': %s"
-2015,fscAssemblyVersionAttributeIgnored,"The 'AssemblyVersionAttribute' has been ignored because a version was given using a command line option"
-2016,fscAssemblyCultureAttributeError,"Error emitting 'System.Reflection.AssemblyCultureAttribute' attribute -- 'Executables cannot be satellite assemblies, Culture should always be empty'"
-2017,fscDelaySignWarning,"Option '--delaysign' overrides attribute 'System.Reflection.AssemblyDelaySignAttribute' given in a source file or added module"
-2018,fscKeyFileWarning,"Option '--keyfile' overrides attribute 'System.Reflection.AssemblyKeyFileAttribute' given in a source file or added module"
-2019,fscKeyNameWarning,"Option '--keycontainer' overrides attribute 'System.Reflection.AssemblyNameAttribute' given in a source file or added module"
-2020,fscReferenceOnCommandLine,"The assembly '%s' is listed on the command line. Assemblies should be referenced using a command line flag such as '-r'."
-2021,fscRemotingError,"The resident compilation service was not used because a problem occured in communicating with the server."

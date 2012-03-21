@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2010 Microsoft Corporation. 
+// Copyright (c) 2002-2011 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -491,8 +491,14 @@ namespace Microsoft.FSharp.Collections
 
         override this.Equals(that) = 
             match that with 
-            | :? Map<'Key,'Value> -> 
-                ((this :> System.IComparable).CompareTo(that) = 0)
+            | :? Map<'Key,'Value> as that -> 
+                use e1 = (this :> seq<_>).GetEnumerator() 
+                use e2 = (that :> seq<_>).GetEnumerator() 
+                let rec loop () = 
+                    let m1 = e1.MoveNext() 
+                    let m2 = e2.MoveNext()
+                    (m1 = m2) && (not m1 || ((e1.Current.Key = e2.Current.Key) && (Unchecked.equals e1.Current.Value e2.Current.Value) && loop()))
+                loop()
             | _ -> false
 
         override this.GetHashCode() = this.ComputeHashCode()

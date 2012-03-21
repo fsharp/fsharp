@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2010 Microsoft Corporation. 
+// Copyright (c) 2002-2011 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -30,9 +30,9 @@ open Microsoft.FSharp.Compiler.AbstractIL
 open Microsoft.FSharp.Compiler.AbstractIL.Internal  
 open Microsoft.FSharp.Compiler.AbstractIL.Internal.Library  
 open Microsoft.FSharp.Compiler 
-open Microsoft.FSharp.Compiler.MSBuildResolver
 open Microsoft.FSharp.Compiler.AbstractIL.Diagnostics 
 open Microsoft.FSharp.Compiler.PrettyNaming
+open Microsoft.FSharp.Compiler.MSBuildResolver
 open Internal.Utilities.Collections
 open Internal.Utilities.Debug
 open System.Security.Permissions
@@ -56,7 +56,7 @@ open Microsoft.FSharp.Compiler.Nameres
 open Internal.Utilities.StructuredFormat
 
 /// Methods for dealing with F# sources files.
-module internal SourceFile =
+module (* internal *) SourceFile =
     /// Source file extensions
     let private compilableExtensions = Build.sigSuffixes @ Build.implSuffixes @ Build.scriptSuffixes
     /// Single file projects extensions
@@ -151,7 +151,11 @@ type TokenInformation = {
 // Flags
 //--------------------------------------------------------------------------
 
-module internal Flags = 
+module Flags = 
+#if SILVERLIGHT
+    let doInit = ()
+    let GetEnvInteger e dflt = dflt
+#else
 #if DEBUG
     let loggingTypes             = System.Environment.GetEnvironmentVariable("mFSharp_Logging")
     let logging                  = not (String.IsNullOrEmpty(loggingTypes))
@@ -243,6 +247,7 @@ module internal Flags =
 
     //let stripFSharpCoreReferences   = not (String.IsNullOrEmpty(System.Environment.GetEnvironmentVariable("mFSharp_StripFSharpCoreReferences")))
     let GetEnvInteger e dflt = match System.Environment.GetEnvironmentVariable(e) with null -> dflt | t -> try int t with _ -> dflt
+#endif
     let buildCacheSize   = GetEnvInteger "mFSharp_BuildCacheSize" 3
     let recentForgroundTypeCheckLookupSize = GetEnvInteger "mFSharp_RecentForegroundTypeCheckCacheSize" 5
     let braceMatchCacheSize = GetEnvInteger "mFSharp_BraceMatchCacheSize" 5
@@ -258,7 +263,7 @@ open Flags
 // Babel flags
 //--------------------------------------------------------------------------
 
-module internal TokenClassifications = 
+module (* internal *) TokenClassifications = 
 
     //----------------------------------------------------------------------------
     //From tokens to flags  
@@ -405,7 +410,7 @@ type ColorState =
     | InitialState = 0 
     
 
-module internal LexerStateEncoding = 
+module (* internal *) LexerStateEncoding = 
 
     let computeNextLexState token (prevLexcont:LexerWhitespaceContinuation) = 
       match token with 
@@ -562,7 +567,7 @@ type SingleLineTokenState =
 
 /// Split a line into tokens and attach information about the tokens. This information is used by Visual Studio.
 [<Sealed>]
-type internal LineTokenizer(text:string, 
+type LineTokenizer(text:string, 
                             filename : string, 
                             lexArgsLightOn : lexargs,
                             lexArgsLightOff : lexargs
@@ -892,13 +897,13 @@ type IPartialEqualityComparer<'T> =
 type iDeclarationSet = int
 
 /// Describe a comment as either a block of text or a file+signature reference into an intellidoc file.
-type internal XmlComment =
+type XmlComment =
     | XmlCommentNone
     | XmlCommentText of string
     | XmlCommentSignature of (*File and Signature*) string * string
 
 /// A single data tip display element
-type internal DataTipElement = 
+type DataTipElement = 
     | DataTipElementNone
     /// A single type, method, etc with comment.
     | DataTipElement of (* text *) string * XmlComment
@@ -908,12 +913,12 @@ type internal DataTipElement =
     | DataTipElementCompositionError of string
 
 /// Information for building a data tip box.
-type internal DataTipText = 
+type DataTipText = 
     /// A list of data tip elements to display.
     | DataTipText of DataTipElement list  
 
 /// Test hooks for tweaking internals
-module internal TestHooks = 
+module (* internal *) TestHooks = 
     /// Function used to construct memebr info text in data tips.
     let FormatOverloadsToList: (DataTipElement->DataTipElement) option ref = ref None
 
@@ -935,7 +940,7 @@ module internal TestHooks =
               member x.Dispose() =
                   enableFsiGenerationHook := oldFsiGenerationHook }
         
-module internal ItemDescriptions = 
+module (* internal *) ItemDescriptions = 
 
     // Hardwired constants from older versions of Visual Studio. These constants were used with Babel and VS internals.
     let iIconGroupClass = 0x0000
@@ -1026,13 +1031,23 @@ module internal ItemDescriptions =
         let ConstructUsefulTypeInfo() =  
             let supertypes = GetSuperTypes()
             let supertypeLs,_ = NicePrint.typesAndConstraintsL denv supertypes 
-            let isEnum = isEnumTy g ty
+            //let isEnum = isEnumTy g ty
             if List.length supertypes > 1 then 
-                bprintf os "\n\n";
+                bprintf os "\n";
                 List.zip supertypes supertypeLs |> List.iter (fun (superty,supertyL) -> 
-                    if typeEquiv g superty ty then bprintf os "  %s: %a\n" (FSComp.SR.typeInfoType()) bufferL supertyL
-                    elif isClassTy g superty || isInterfaceTy g ty then bprintf os "  %s: %a\n" (FSComp.SR.typeInfoInherits()) bufferL supertyL
-                    elif not(isEnum) then bprintf os "  %s: %a\n" (FSComp.SR.typeInfoImplements()) bufferL supertyL)
+                    if typeEquiv g superty ty then 
+                        bprintf os "  %s: " (FSComp.SR.typeInfoType()) 
+                        bufferL os supertyL
+                        bprintf os "\n" 
+                    elif isClassTy g superty || isInterfaceTy g ty then 
+                        bprintf os "  %s: " (FSComp.SR.typeInfoInherits()) 
+                        bufferL os supertyL
+                        bprintf os "\n" 
+                    //elif not(isEnum) then 
+                    //    bprintf os "  %s: " (FSComp.SR.typeInfoImplements()) 
+                    //    bufferL os supertyL
+                    //    bprintf os "\n" 
+                        )
         ErrorScope.ProtectAndDiscard m (fun () -> ConstructUsefulTypeInfo())
            
 
@@ -1078,7 +1093,7 @@ module internal ItemDescriptions =
     let fileNameOfItem g qualProjectDir (m:range) h =
         let file = m.FileName 
         dprintf "file stored in metadata is '%s'\n" file
-        if not (Path.IsPathRooted file) then 
+        if not (Path.IsPathRootedShim file) then 
             match (ccuOfItem g h) with 
             | Some ccu -> 
                 
@@ -1130,7 +1145,7 @@ module internal ItemDescriptions =
                     | Some (libfile) -> 
                         let v = vref.Deref
                         if v.XmlDocSig = "" then
-                            v.XmlDocSig <- XmlDocSigOfVal g vref.TopValActualParent.CompiledRepresentationForTyrepNamed.Name v
+                            v.XmlDocSig <- XmlDocSigOfVal g vref.TopValActualParent.CompiledRepresentationForNamedType.Name v
                         Some (libfile, v.XmlDocSig)
                     | None -> None
                 else 
@@ -1144,7 +1159,7 @@ module internal ItemDescriptions =
                     | None -> None
                     | Some(libfile) -> 
                         if uci.UnionCase.XmlDocSig = "" then
-                            uci.UnionCase.XmlDocSig <- XmlDocSigOfUnionCase "" uci.Name (tcref.CompiledRepresentationForTyrepNamed.FullName)
+                            uci.UnionCase.XmlDocSig <- XmlDocSigOfUnionCase "" uci.Name (tcref.CompiledRepresentationForNamedType.FullName)
                         Some (libfile, uci.UnionCase.XmlDocSig)
             | Item.ExnCase(ecr) ->
                 match (libFileOfEntityRef ecr) with
@@ -1160,7 +1175,7 @@ module internal ItemDescriptions =
                 | None -> None
                 | Some(libfile) -> 
                     if rfinfo.RecdField.XmlDocSig = "" then
-                        rfinfo.RecdField.XmlDocSig <- XmlDocSigOfField "" rfinfo.Name (tcref.CompiledRepresentationForTyrepNamed.FullName)
+                        rfinfo.RecdField.XmlDocSig <- XmlDocSigOfField "" rfinfo.Name (tcref.CompiledRepresentationForNamedType.FullName)
                     Some (libfile, rfinfo.RecdField.XmlDocSig)            
             | Item.NewDef _ -> None
             | Item.ILField(ILFieldInfo(tinfo, fdef)) -> 
@@ -1424,9 +1439,8 @@ module internal ItemDescriptions =
         match d with
         | Item.Value v ->            
             let os = StringBuilder()
-            bprintf os "%a%a" 
-                (NicePrint.outputQualifiedValSpec denv) v.Deref 
-                (OutputFullTypeName pubpath_of_vref fullDisplayTextOfValRef) v;
+            NicePrint.outputQualifiedValSpec denv os v.Deref 
+            OutputFullTypeName pubpath_of_vref fullDisplayTextOfValRef os v;
 
             // adjust the type in case this is the 'this' pointer stored in a reference cell
             let ty = StripSelfRefCell(g, v.BaseOrThisInfo, v.Type) 
@@ -1442,17 +1456,18 @@ module internal ItemDescriptions =
             let rty = generalizedTyconRef ucr.TyconRef
             let recd = uc.RecdFields 
             let ty = if isNil recd then rty else (mkTupledTy g (recd |> List.map (fun rfld -> rfld.FormalType))) --> rty 
-            bprintf os "%s %a.%s: %a"  (FSComp.SR.typeInfoUnionCase())
-                (NicePrint.outputTyconRef denv) ucr.TyconRef
-                (DecompileOpName uc.Id.idText) 
-                (NicePrint.outputTy denv) ty;
+            bprintf os "%s " (FSComp.SR.typeInfoUnionCase())
+            NicePrint.outputTyconRef denv os ucr.TyconRef
+            bprintf os ".%s: " (DecompileOpName uc.Id.idText) 
+            NicePrint.outputTy denv os ty;
 
             let xml = GetXmlComment (if (tyconRefUsesLocalXmlDoc g.compilingFslib ucr.TyconRef) then uc.XmlDoc else XmlDoc [||]) infoReader m d 
             DataTipElement(os.ToString(), xml)
         // Active pattern tag inside the declaration (result)             
         | Item.ActivePatternResult(APInfo(_, items), ty, idx, _) ->
             let os = StringBuilder()
-            bprintf os "%s %s: %a" (FSComp.SR.typeInfoActivePatternResult()) (List.nth items idx) (NicePrint.outputTy denv) ty
+            bprintf os "%s %s: " (FSComp.SR.typeInfoActivePatternResult()) (List.nth items idx) 
+            NicePrint.outputTy denv os ty
             DataTipElement(os.ToString(), GetXmlComment (XmlDoc [||]) infoReader m d)
         // Active pattern tags 
         // XmlDoc is never emitted to xml doc files for these
@@ -1464,18 +1479,18 @@ module internal ItemDescriptions =
             let _,tau = v.TypeScheme
             let _, ptau, _cxs = PrettyTypes.PrettifyTypes1 denv.g tau
 
-            bprintf os "%s %s: %a%a" (FSComp.SR.typeInfoActiveRecognizer())
+            bprintf os "%s %s: " (FSComp.SR.typeInfoActiveRecognizer())
                 apref.Name
-                (NicePrint.outputTy denv) ptau 
-                (OutputFullTypeName pubpath_of_vref fullDisplayTextOfValRef) v
+            NicePrint.outputTy denv os ptau 
+            OutputFullTypeName pubpath_of_vref fullDisplayTextOfValRef os v
 
             let xml = GetXmlComment v.XmlDoc infoReader m d 
             DataTipElement(os.ToString(), xml)
         // F# exception names
         | Item.ExnCase(ecref: TyconRef) -> 
             let os = StringBuilder()
-            bprintf os "%a%a" (NicePrint.outputExnDef denv) ecref.Deref
-              (OutputFullTypeName pubpath_of_tcref fullDisplayTextOfExnRef) ecref;
+            NicePrint.outputExnDef denv os ecref.Deref
+            OutputFullTypeName pubpath_of_tcref fullDisplayTextOfExnRef os ecref;
             
             let xml = GetXmlComment (if (tyconRefUsesLocalXmlDoc g.compilingFslib ecref) then ecref.XmlDoc else XmlDoc [||]) infoReader m d 
             DataTipElement(os.ToString(), xml)
@@ -1484,10 +1499,9 @@ module internal ItemDescriptions =
             let os = StringBuilder()
             let f = rfinfo.RecdField
             let _, ty, _cxs = PrettyTypes.PrettifyTypes1 g rfinfo.FieldType
-            bprintf os "%a.%s: %a"  
-                (NicePrint.outputTyconRef denv) rfinfo.TyconRef
-                (DecompileOpName f.Name) 
-                (NicePrint.outputTy denv) ty;
+            NicePrint.outputTyconRef denv os rfinfo.TyconRef
+            bprintf os ".%s: "  (DecompileOpName f.Name) 
+            NicePrint.outputTy denv os ty;
             match rfinfo.LiteralValue with 
             | None -> ()
             | Some lit -> 
@@ -1504,7 +1518,9 @@ module internal ItemDescriptions =
         // .NET fields
         | Item.ILField(finfo) ->
             let os = StringBuilder()
-            bprintf os "%s %a.%s" (FSComp.SR.typeInfoField()) (NicePrint.outputILTypeRef denv) finfo.ILTypeRef finfo.FieldName;
+            bprintf os "%s " (FSComp.SR.typeInfoField()) 
+            NicePrint.outputILTypeRef denv os finfo.ILTypeRef;
+            bprintf os ".%s" finfo.FieldName;
             match finfo.LiteralValue with 
             | None -> ()
             | Some v -> 
@@ -1517,8 +1533,10 @@ module internal ItemDescriptions =
             let os = StringBuilder()
             let rty = PropTypOfEventInfo infoReader m AccessibleFromSomewhere einfo
             let _,rty, _cxs = PrettyTypes.PrettifyTypes1 g rty
-            bprintf os "%s %a.%s: %a" (FSComp.SR.typeInfoEvent()) (NicePrint.outputILTypeRef denv) ilEventInfo.TypeRef einfo.EventName
-              (NicePrint.outputTy denv) rty
+            bprintf os "%s " (FSComp.SR.typeInfoEvent()) 
+            NicePrint.outputILTypeRef denv os ilEventInfo.TypeRef 
+            bprintf os ".%s: " einfo.EventName 
+            NicePrint.outputTy denv os rty
             DataTipElement(os.ToString(), GetXmlComment (XmlDoc [||]) infoReader m d)
 
         // F# and .NET properties
@@ -1528,10 +1546,10 @@ module internal ItemDescriptions =
             let rty = pinfo.PropertyType(amap,m) 
             let _, rty, _cxs= PrettyTypes.PrettifyTypes1 g rty
             let rty = if pinfo.IsIndexer then mkTupledTy g (List.map snd (pinfo.ParamNamesAndTypes(amap, m))) --> rty else  rty 
-            bprintf os "%s %a.%s: %a" (FSComp.SR.typeInfoProperty())
-                (NicePrint.outputTyconRef denv) (tcrefOfAppTy g pinfo.EnclosingType)
-                pinfo.PropertyName  
-                (NicePrint.outputTy denv) rty
+            bprintf os "%s " (FSComp.SR.typeInfoProperty())
+            NicePrint.outputTyconRef denv os (tcrefOfAppTy g pinfo.EnclosingType)
+            bprintf os ".%s: " pinfo.PropertyName  
+            NicePrint.outputTy denv os rty
 
             let xml = GetXmlComment (if (pinfo.IsInThisAssembly infoReader.g.compilingFslib) then pinfo.XmlDoc else XmlDoc [||]) infoReader m d 
 
@@ -1546,7 +1564,7 @@ module internal ItemDescriptions =
         | Item.FakeInterfaceCtor typ ->
            let os = StringBuilder()
            let _, typ, _cxs = PrettyTypes.PrettifyTypes1 g typ
-           bprintf os "%a" (NicePrint.outputTyconRef denv) (tcrefOfAppTy g typ)
+           NicePrint.outputTyconRef denv os (tcrefOfAppTy g typ)
            DataTipElement(os.ToString(), GetXmlComment (XmlDoc [||]) infoReader m d)
         
         // The 'fake' representation of constructors of .NET delegate types
@@ -1554,13 +1572,16 @@ module internal ItemDescriptions =
            let os = StringBuilder()
            let _, delty, _cxs = PrettyTypes.PrettifyTypes1 g delty
            let _, _, _, fty = GetSigOfFunctionForDelegate infoReader delty m AccessibleFromSomewhere
-           bprintf os "%a(%a)" (NicePrint.outputTyconRef denv) (tcrefOfAppTy g delty) (NicePrint.outputTy denv) fty;
+           NicePrint.outputTyconRef denv os (tcrefOfAppTy g delty) 
+           bprintf os "(" 
+           NicePrint.outputTy denv os fty;
+           bprintf os ")" 
            DataTipElement(os.ToString(), GetXmlComment (XmlDoc [||]) infoReader m d)
 
         // Types.
         | Item.Types(_,((TType_app(tcref,_) as typ):: _)) -> 
             let os = StringBuilder()
-            bprintf os "%a" (NicePrint.outputTycon denv) tcref.Deref;
+            NicePrint.outputTycon denv os tcref.Deref;
             OutputFullTypeName pubpath_of_tcref fullDisplayTextOfTyconRef os tcref;
             OutputUsefulTypeInfo infoReader m denv os typ;
 
@@ -1616,12 +1637,15 @@ module internal ItemDescriptions =
               let dtau,rtau = destFunTy g tau
               let ptausL,tpcsL = NicePrint.typesAndConstraintsL denv [dtau;rtau]
               let _,prtauL = List.frontAndBack ptausL
-              bprintf os ": %a %a" bufferL prtauL bufferL tpcsL
+              bprintf os ": "
+              bufferL os prtauL 
+              bprintf os " "
+              bufferL os tpcsL
             else
               bufferL os (NicePrint.topTypAndConstraintsL denv [] tau) 
         | Item.UnionCase(ucr) -> 
             let rty = generalizedTyconRef ucr.TyconRef
-            bprintf os "%a" (NicePrint.outputTy denv) rty
+            NicePrint.outputTy denv os rty
         | Item.ActivePatternCase(apref) -> 
             let v = apref.ActivePatternVal
             let _, tau = v.TypeScheme
@@ -1631,7 +1655,7 @@ module internal ItemDescriptions =
             let aparity = apnames.Length
             
             let rty = if aparity <= 1 then res else List.nth (argsOfAppTy g res) apref.CaseIndex
-            bprintf os "%a" (NicePrint.outputTy denv) rty
+            NicePrint.outputTy denv os rty
         | Item.ExnCase _ -> 
             bufferL os (NicePrint.topTypAndConstraintsL denv [] g.exn_ty) 
         | Item.RecdField(rfinfo) ->
@@ -1706,7 +1730,7 @@ module internal ItemDescriptions =
             -> None
 
         | Item.ModuleOrNamespaces(modref :: _) -> 
-                    modref.Deref.CompiledRepresentationForTyrepNamed.FullName |> Some
+                    modref.Deref.CompiledRepresentationForNamedType.FullName |> Some
         | Item.ModuleOrNamespaces [] -> None // Pathological case of the above
 
         | Item.Property(_,(pinfo :: _)) -> 
@@ -1977,7 +2001,7 @@ type Param =
       Description: string }
 
 /// Format parameters for Intellisense completion
-module internal Params = 
+module (* internal *) Params = 
     let param_of_typL tyL =
         { Name= "";
           Display =  Layout.showL tyL;
@@ -2063,7 +2087,7 @@ module internal Params =
 
 /// A single method for Intellisense completion
 [<NoEquality; NoComparison>]
-type internal Method = 
+type Method = 
     { Description: DataTipText; 
       Type: string;
       Parameters: Param array }
@@ -2155,7 +2179,7 @@ type FindDeclResult =
 /// (Depending on the kind of the items, we may stop processing or continue to find better items)
 [<RequireQualifiedAccess>]
 [<NoEquality; NoComparison>]
-type internal NameResResult = 
+type NameResResult = 
     | Members of (Item list * DisplayEnv * range)
     | Cancel of DisplayEnv * range
     | Empty
@@ -2736,13 +2760,16 @@ type Scope(/// Information corresponding to miscellaneous command-line options (
                           | _ -> FindDeclResult.IdNotFound
                       | _        -> FindDeclResult.IdNotFound
 
+#if SILVERLIGHT
+                  resultInFile
+#else
                   if forceFsiGeneration
                       then generateFsi ()
-                      else if Internal.Utilities.FileSystem.File.SafeExists filename
+                      else if File.SafeExists filename
                               then resultInFile
                               else generateFsi ()
+#endif
       | _                -> FindDeclResult.IdNotFound
-
     member scope.GetDeclarationLocation (line:int)(lineStr:string)(idx:int)(names: Names)(isDecl:bool) : FindDeclResult = scope.GetDeclarationLocationInternal false line lineStr idx names None isDecl
 
 //----------------------------------------------------------------------------
@@ -2798,7 +2825,7 @@ type NavigationItems(declarations:TopLevelDeclaration[]) =
 //----------------------------------------------------------------------------
 
 [<NoEquality; NoComparison>]
-type internal UntypedParseResults = 
+type UntypedParseResults = 
   { // Error infos
     Errors : ErrorInfo array
     // Untyped AST
@@ -2811,7 +2838,7 @@ type internal UntypedParseResults =
 
 /// 
 [<Sealed>]
-type internal UntypedParseInfo(parsed:UntypedParseResults, syncop:(unit -> unit) -> unit) = 
+type UntypedParseInfo(parsed:UntypedParseResults, syncop:(unit -> unit) -> unit) = 
 
     let union_ranges_checked r1 r2 = if r1 = range.Zero then r2 elif r2 = range.Zero then r1 else unionRanges r1 r2
     
@@ -3284,7 +3311,7 @@ type internal UntypedParseInfo(parsed:UntypedParseResults, syncop:(unit -> unit)
 // ParseSource builds all the information necessary to report errors, match braces and build scopes 
 //--------------------------------------------------------------------------
 
-module internal Parser = 
+module (* internal *) Parser = 
 
     //----------------------------------------------------------------------------
     // Error handling for parsing & type checking
@@ -3756,7 +3783,7 @@ type TypeCheckInfo(scope: Scope, fsiGens : (string -> string) -> string -> FsiGe
     member info.GetDeclarationLocation (p, lineStr, names, tokenTag, flag) = info.GetDeclarationLocationInternal false (p, lineStr, names, tokenTag, flag)
 
 /// Information about the compilation environment    
-module internal CompilerEnvironment =
+module (* internal *) CompilerEnvironment =
     /// These are the names of assemblies that should be referenced for .fs, .ml, .fsi, .mli files that
     /// are not asscociated with a project
     let DefaultReferencesForOrphanSources = DefaultBasicReferencesForOutOfProjectSources
@@ -3774,8 +3801,13 @@ module internal CompilerEnvironment =
     let CreateTcConfig(projectDir,commandLineArgs,useScriptResolutionRules:bool) =  
         let defaultFSharpBinariesDir = 
             match Internal.Utilities.FSharpEnvironment.BinFolderOfDefaultFSharpCompiler with 
-                  Some(dir)->dir 
-                | None -> System.Environment.GetEnvironmentVariable("mFSharp_BinDir")     
+                | Some(dir)->dir 
+                | None -> 
+#if SILVERLIGHT
+                    ""
+#else
+                    System.Environment.GetEnvironmentVariable("mFSharp_BinDir")     
+#endif
     
         let tcConfigB = Build.TcConfigBuilder.CreateNew(defaultFSharpBinariesDir, true (* optimize for memory *), projectDir) 
         // The following uses more memory but means we don't take read-exclusions on the DLLs we reference 
@@ -3826,14 +3858,18 @@ module internal CompilerEnvironment =
         PhasedError.IsSubcategoryOfCompile(subcategory)
 
 /// Information about the debugging environment
-module internal DebuggerEnvironment =
+module (* internal *) DebuggerEnvironment =
     /// Return the language ID, which is the expression evaluator id that the
     /// debugger will use.
     let GetLanguageID() =
+#if SILVERLIGHT
+        System.Guid(0xAB4F38C9, 0xB6E6s, 0x43bas, 0xBEuy, 0x3Buy, 0x58uy, 0x08uy, 0x0Buy, 0x2Cuy, 0xCCuy, 0xE3uy)
+#else
         System.Guid(0xAB4F38C9u, 0xB6E6us, 0x43baus, 0xBEuy, 0x3Buy, 0x58uy, 0x08uy, 0x0Buy, 0x2Cuy, 0xCCuy, 0xE3uy)
+#endif
         
 [<Sealed>]
-type internal TypeCheckResults(errors: ErrorInfo array,
+type TypeCheckResults(errors: ErrorInfo array,
                                scope: TypeCheckInfo option,
                                untypedInfo : UntypedParseInfo) =
     member pr.Errors = errors
@@ -3841,16 +3877,16 @@ type internal TypeCheckResults(errors: ErrorInfo array,
     member pr.UntypedParse = untypedInfo
     
 [<NoComparison>]
-type internal TypeCheckAnswer =
+type TypeCheckAnswer =
     | NoAntecedant
     | Aborted
     | TypeCheckSucceeded of TypeCheckResults   
         
 /// This file has become eligible to be re-typechecked.
-type internal FileTypeCheckStateIsDirty = string -> unit
+type FileTypeCheckStateIsDirty = string -> unit
         
 // Identical to _VSFILECHANGEFLAGS in vsshell.idl
-type internal DependencyChangeCode =
+type DependencyChangeCode =
     | NoChange = 0x00000000
     | FileChanged = 0x00000001
     | TimeChanged = 0x00000002
@@ -3860,7 +3896,7 @@ type internal DependencyChangeCode =
 
 /// Callback that indicates whether a requested result has become obsolete.    
 [<NoComparison;NoEquality>]
-type internal IsResultObsolete = 
+type IsResultObsolete = 
     | IsResultObsolete of (unit->bool)
         
 type BackgroundCompiler(fileTypeCheckStateIsDirty:FileTypeCheckStateIsDirty) =
@@ -3912,10 +3948,7 @@ type BackgroundCompiler(fileTypeCheckStateIsDirty:FileTypeCheckStateIsDirty) =
                                            errorLogger,
                                            (fun (e:exn)->raise e))
                                  
-        Trace.PrintLine("IncrementalBuild", fun () -> sprintf "CreateIncrementalBuilder: %A" dependencyFiles)
-#if DEBUG
-        dependencyFiles.Files |> List.iter (fun df -> System.Diagnostics.Debug.Assert(System.IO.Path.IsPathRooted(df.Filename), sprintf "dependency file was not absolute: '%s'" df.Filename))
-#endif
+        //Trace.PrintLine("IncrementalBuild", fun () -> sprintf "CreateIncrementalBuilder: %A" dependencyFiles)
         (tcConfig, builder, dependencyFiles, errorScope.ErrorsAndWarnings)
 
     /// Cache of builds keyed by options.        
@@ -3926,7 +3959,7 @@ type BackgroundCompiler(fileTypeCheckStateIsDirty:FileTypeCheckStateIsDirty) =
 
     /// See if the build cache needs to be invalidated. Return true if there was an invalidation.
     let InvalidateBuildCacheEntry(options) = 
-        use t = Trace.Call("ChangeEvents","InvalidateBuildCacheEntry", fun _ -> sprintf "Received notification to invalidate build for options: %A" options)
+        //use t = Trace.Call("ChangeEvents","InvalidateBuildCacheEntry", fun _ -> sprintf "Received notification to invalidate build for options: %A" options)
         match buildCache.GetAvailable(options) with
         | None -> ()
         | Some(_, _, _, _) ->
@@ -4114,11 +4147,11 @@ type BackgroundCompiler(fileTypeCheckStateIsDirty:FileTypeCheckStateIsDirty) =
         reactor.SyncOp TypeCheckSourceOp
         Option.get !result
 
-    member bc.GetCheckOptionsFromScriptRoot(filename,source) = 
+    member bc.GetCheckOptionsFromScriptRoot(filename,source (* ,otherFlags *) ) = 
         let result = ref None
         let GetCheckOptionsFromScriptRootOp () =
             let fas = LoadClosure.FindFromSource(filename, source, (*editing*)true,InteractiveOrCompile.ChooseByFileExtension, new Lexhelp.LexResourceManager())
-            let otherFlags = ["--noframework"; "--warn:3"] 
+            let otherFlags = ["--noframework"; "--warn:3"] (* @ otherFlags *) 
             let references = fas.References |> List.map (fun r->"-r:" + fst r)
             let nowarns = fas.NoWarns |> List.map (fun (code,_)->"--nowarn:" + code)
             let allFlags = otherFlags @ references @ nowarns 
@@ -4152,7 +4185,7 @@ type BackgroundCompiler(fileTypeCheckStateIsDirty:FileTypeCheckStateIsDirty) =
 
 [<Sealed>]
 [<AutoSerializable(false)>]
-type internal InteractiveChecker(fileTypeCheckStateIsDirty) =
+type InteractiveChecker(fileTypeCheckStateIsDirty) =
     let backgroundCompiler = BackgroundCompiler(fileTypeCheckStateIsDirty)
     static let mutable foregroundParseCount = 0
     static let mutable foregroundTypeCheckCount = 0
@@ -4240,8 +4273,8 @@ type internal InteractiveChecker(fileTypeCheckStateIsDirty) =
             answer
             
     /// For a given script file, get the CheckOptions implied by the #load closure
-    member ic.GetCheckOptionsFromScriptRoot(filename : string, source : string) :  CheckOptions = 
-        backgroundCompiler.GetCheckOptionsFromScriptRoot(filename,source)
+    member ic.GetCheckOptionsFromScriptRoot(filename: string, source: string (* , otherFlags: string list *) ) :  CheckOptions = 
+        backgroundCompiler.GetCheckOptionsFromScriptRoot(filename,source (* ,otherFlags *) )
         
     /// Begin background parsing the given project.
     member ic.StartBackgroundCompile(options) = backgroundCompiler.StartBuilding(options) 
@@ -4257,7 +4290,7 @@ type internal InteractiveChecker(fileTypeCheckStateIsDirty) =
 //INDEX: FsiIntelisense
 //----------------------------------------------------------------------------
 
-module internal FsiIntelisense =
+module (* internal *) FsiIntelisense =
 
     let rec getLineIndex (text:string,offset) =
         let crIndex = text.IndexOf("\n",StringComparison.Ordinal)
@@ -4291,7 +4324,7 @@ module internal FsiIntelisense =
               results
           | _       -> [| |]
           
-module internal PrettyNaming =
+module (* internal *) PrettyNaming =
     let IsIdentifierPartCharacter     = Microsoft.FSharp.Compiler.PrettyNaming.IsIdentifierPartCharacter
     let IsLongIdentifierPartCharacter = Microsoft.FSharp.Compiler.PrettyNaming.IsLongIdentifierPartCharacter
     let GetLongNameFromString         = Microsoft.FSharp.Compiler.PrettyNaming.SplitNamesForFsiGenerationPath
@@ -4306,7 +4339,7 @@ open Microsoft.FSharp.Compiler.Env
 open Microsoft.FSharp.Compiler.Tastops 
 open System.Text
 
-type internal typDumper(dumpTarget:Microsoft.FSharp.Compiler.Tast.TType) =
+type typDumper(dumpTarget:Microsoft.FSharp.Compiler.Tast.TType) =
     override self.ToString() = 
         match !global_g with
         | Some(g) -> 

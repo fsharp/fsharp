@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2010 Microsoft Corporation. 
+// Copyright (c) 2002-2011 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -20,14 +20,14 @@ open Microsoft.FSharp.Compiler.Range
 open System.Collections.Generic
 
 /// Represents encoded information for the end-of-line continutation of lexing
-type internal LexState = int64
+type (* internal *) LexState = int64
 
 /// A line/column pair
-type internal Position = int * int
+type (* internal *) Position = int * int
 /// A start-position/end-position pair
-type internal Range = Position * Position
+type (* internal *) Range = Position * Position
 
-type internal TokenColorKind =
+type TokenColorKind =
     | Default = 0
     | Text = 0
     | Keyword = 1
@@ -40,7 +40,7 @@ type internal TokenColorKind =
     | Number = 9
     | Operator = 10
     
-type internal TriggerClass =
+type TriggerClass =
     | None         = 0x00000000
     | MemberSelect = 0x00000001
     | MatchBraces  = 0x00000002
@@ -50,7 +50,7 @@ type internal TriggerClass =
     | ParamNext    = 0x00000020
     | ParamEnd     = 0x00000040    
     
-type internal TokenCharKind = 
+type TokenCharKind = 
     | Default     = 0x00000000
     | Text        = 0x00000000
     | Keyword     = 0x00000001
@@ -64,7 +64,7 @@ type internal TokenCharKind =
     | Comment     = 0x0000000A    
     
 /// Information about a particular token from the tokenizer
-type internal TokenInformation = {
+type TokenInformation = {
     /// Left column of the token.
     LeftColumn:int;
     /// Right column of the token.
@@ -77,25 +77,26 @@ type internal TokenInformation = {
     /// Provides additional information about the token
     TokenName:string }
 
-type internal Severity = Warning | Error
+type Severity = Warning | Error
 
-type internal ErrorInfo = {
-    StartLine:int
+type ErrorInfo = 
+  { StartLine:int
     EndLine:int
     StartColumn:int
     EndColumn:int
     Severity:Severity
     Message:string
     Subcategory:string }
+  static member internal CreateFromException : ErrorLogger.PhasedError * bool * bool * range -> ErrorInfo
 
 /// Describe a comment as either a block of text or a file+signature reference into an intellidoc file.
-type internal XmlComment =
+type (* internal *) XmlComment =
     | XmlCommentNone
     | XmlCommentText of string
     | XmlCommentSignature of (*File and Signature*) string * string
 
 /// A single data tip display element
-type internal DataTipElement = 
+type (* internal *) DataTipElement = 
     | DataTipElementNone
     /// A single type, method, etc with comment.
     | DataTipElement of (* text *) string * XmlComment
@@ -105,39 +106,39 @@ type internal DataTipElement =
     | DataTipElementCompositionError of string
 
 /// Information for building a data tip box.
-type internal DataTipText = 
+type (* internal *) DataTipText = 
     /// A list of data tip elements to display.
     | DataTipText of DataTipElement list  
     
 [<Sealed>]
-type internal Declaration =
+type (* internal *) Declaration =
     member Name : string
     member DescriptionText : DataTipText
     member Glyph : int
     
 [<Sealed>]
-type internal DeclarationSet =
+type (* internal *) DeclarationSet =
     member Items : Declaration array
     
-type internal Param = 
+type (* internal *) Param = 
     { Name: string;
       Display: string;
       Description: string }
 
 [<NoEquality; NoComparison>]
-type internal Method = 
+type (* internal *) Method = 
     { Description : DataTipText;
       Type: string;
       Parameters: Param array }
 
 [<Sealed>]
-type internal MethodOverloads = 
+type (* internal *) MethodOverloads = 
     member Name: string;
     member Methods: Method array 
 
 
 
-type internal DeclarationItemKind =
+type (* internal *) DeclarationItemKind =
 |   NamespaceDecl
 |   ModuleFileDecl
 |   ExnDecl
@@ -151,7 +152,7 @@ type internal DeclarationItemKind =
 
 /// Represents an item to be displayed in the navigation bar
 [<Sealed>]
-type internal DeclarationItem = 
+type (* internal *) DeclarationItem = 
     member Name : string
     member UniqueName : string
     member Glyph : int
@@ -163,7 +164,7 @@ type internal DeclarationItem =
 /// Represents top-level declarations (that should be in the type drop-down)
 /// with nested declarations (that can be shown in the member drop-down)
 [<NoEquality; NoComparison>]
-type internal TopLevelDeclaration = 
+type (* internal *) TopLevelDeclaration = 
     { Declaration : DeclarationItem
       Nested : DeclarationItem[] }
       
@@ -171,11 +172,11 @@ type internal TopLevelDeclaration =
 /// all the members and currently selected indices. First level correspond to
 /// types & modules and second level are methods etc.
 [<Sealed>]
-type internal NavigationItems =
+type (* internal *) NavigationItems =
     member Declarations : TopLevelDeclaration[]
     
 [<NoEquality; NoComparison>]
-type internal FindDeclResult = 
+type (* internal *) FindDeclResult = 
     ///  no identifier at this locn 
     | IdNotFound    
     /// no decl info in this buffer at the moment 
@@ -185,12 +186,12 @@ type internal FindDeclResult =
     /// found declaration but source file doesn't exist; try to generate an .fsi
     | NeedToGenerate of (*filename of .dll*) string * (*name-fixing function*)(string -> string) * (*fully-qualified identifier to goto*)(string list)
      
-type internal Names = string list 
-type internal NamesWithResidue = Names * string 
+type (* internal *) Names = string list 
+type (* internal *) NamesWithResidue = Names * string 
 
 [<Sealed>]
 /// A handle to type information gleaned from typechecking the file. 
-type internal TypeCheckInfo  =
+type (* internal *) TypeCheckInfo  =
     /// Resolve the names at the given location to a set of declarations
     member GetDeclarations                : Position * string * NamesWithResidue * (*tokentag:*)int -> DeclarationSet
     /// Resolve the names at the given location to give a data tip 
@@ -202,18 +203,18 @@ type internal TypeCheckInfo  =
     /// Resolve the names at the given location to the declaration location of the corresponding construct
     member GetDeclarationLocation         : Position * string * Names * (*tokentag:*)int * bool -> FindDeclResult
     /// A version of `GetDeclarationLocation` augmented with the option (via the `bool`) parameter to force .fsi generation (even if source exists); this is primarily for testing
-    member GetDeclarationLocationInternal : bool -> Position * string * Names * (*tokentag:*)int * bool -> FindDeclResult
+    member internal GetDeclarationLocationInternal : bool -> Position * string * Names * (*tokentag:*)int * bool -> FindDeclResult
 
 [<Sealed>]
 /// A handle to the results of TypeCheckSource
-type internal TypeCheckResults =
+type (* internal *) TypeCheckResults =
     /// The errors returned by parsing a source file
     member Errors : ErrorInfo array
     /// A handle to type information gleaned from typechecking the file. 
     member TypeCheckInfo: TypeCheckInfo option
 
 [<Sealed>]
-type internal UntypedParseInfo = 
+type (* internal *) UntypedParseInfo = 
     /// Name of the file for which this information were created
     member FileName                       : string
     /// Get declaraed items and the selected item at the specified location
@@ -226,9 +227,9 @@ type internal UntypedParseInfo =
 /// This type represents results obtained from parsing, before the type checking is performed
 /// It can be used for populating navigation information and for running the 
 /// 'TypeCheckSource' method to get the full information.
-type internal UntypedParseResults
+type (* internal *) UntypedParseResults
 
-type internal CheckOptions = 
+type (* internal *) CheckOptions = 
     { 
       ProjectFileName: string;  // JAF: Can this reduce to just project directory? No, because there may be two projects in the same directory.
       ProjectFileNames: string array;
@@ -245,7 +246,7 @@ type internal CheckOptions =
           
 /// Tokenizer for a source file. Holds some expensive-to-compute resources at the scope of the file.
 [<Sealed>]
-type internal SourceTokenizer =
+type (* internal *) SourceTokenizer =
     new : string list * string -> SourceTokenizer
     member CreateLineTokenizer : string -> LineTokenizer
     
@@ -256,12 +257,12 @@ type internal SourceTokenizer =
 ///
 /// A new lexState is also returned.  An IDE-plugin should in general cache the lexState 
 /// values for each line of the edited code.
-and [<Sealed>] internal LineTokenizer =
+and [<Sealed>] (* internal *) LineTokenizer =
     member StartNewLine : unit -> unit 
     member ScanToken : LexState -> Option<TokenInformation> * LexState
     
 /// Information about the compilation environment    
-module internal CompilerEnvironment =
+module (* internal *) CompilerEnvironment =
     /// These are the names of assemblies that should be referenced for .fs, .ml, .fsi, .mli files that
     /// are not asscociated with a project.
     val DefaultReferencesForOrphanSources : string list
@@ -271,16 +272,16 @@ module internal CompilerEnvironment =
     val IsCheckerSupportedSubcategory : string -> bool
 
 /// Information about the debugging environment
-module internal DebuggerEnvironment =
+module (* internal *) DebuggerEnvironment =
     /// Return the language ID, which is the expression evaluator id that the
     /// debugger will use.
     val GetLanguageID : unit -> System.Guid
     
 /// This file has become eligible to be re-typechecked.
-type internal FileTypeCheckStateIsDirty = string -> unit
+type (* internal *) FileTypeCheckStateIsDirty = string -> unit
         
 /// Identical to _VSFILECHANGEFLAGS in vsshell.idl
-type internal DependencyChangeCode =
+type (* internal *) DependencyChangeCode =
     | NoChange = 0x0
     | FileChanged = 0x00000001
     | TimeChanged = 0x00000002
@@ -289,19 +290,19 @@ type internal DependencyChangeCode =
     
 /// Callback that indicates whether a requested result has become obsolete.    
 [<NoComparison;NoEquality>]
-type internal IsResultObsolete = 
+type (* internal *) IsResultObsolete = 
     | IsResultObsolete of (unit->bool)
 
 /// The result of calling TypeCheckResult including the possibility of abort and background compiler not caught up.
 [<NoComparison>]
-type internal TypeCheckAnswer =
+type (* internal *) TypeCheckAnswer =
     | NoAntecedant
     | Aborted // because result was obsolete
     | TypeCheckSucceeded of TypeCheckResults    
 
 [<Sealed>]
 [<AutoSerializable(false)>]      
-type internal InteractiveChecker =
+type (* internal *) InteractiveChecker =
     /// Create an instance of an InteractiveChecker.  Currently resources are not reclaimed.
     static member Create : FileTypeCheckStateIsDirty -> InteractiveChecker
     /// Parse a source code file, returning information about brace matching in the file
@@ -318,7 +319,7 @@ type internal InteractiveChecker =
     /// Not quite quick enough to call from UI thread (as with all operations in this API), so best to
     /// call this asynchronously via a background thread.
     ///
-    member UntypedParse : source: string * filename : string * options: CheckOptions -> UntypedParseInfo        
+    member UntypedParse : filename: string *  source: string * options: CheckOptions -> UntypedParseInfo        
 
     /// Typecheck a source code file, returning a handle to the results of the parse including
     /// the reconstructed types in the file.
@@ -339,7 +340,7 @@ type internal InteractiveChecker =
     ///
     /// Used to build the CheckOptions to provide for a script. The CheckOptions describes a "project".
     /// The #load, #r settings etc. are an implicit description of a project.
-    member GetCheckOptionsFromScriptRoot : filename : string * source : string -> CheckOptions
+    member GetCheckOptionsFromScriptRoot : filename: string * source: string -> CheckOptions
         
     /// For QuickSearch index - not used by VS2008/VS2010
     member GetSlotsCount : options : CheckOptions -> int
@@ -400,7 +401,7 @@ module internal TestHooks =
 module internal TestExpose =     
     val TokenInfo                                    : Parser.token -> (TokenColorKind * TokenCharKind * TriggerClass) 
 
-module internal PrettyNaming =
+module (* internal *) PrettyNaming =
     val IsIdentifierPartCharacter     : (char -> bool)
     val IsLongIdentifierPartCharacter : (char -> bool)
     val GetLongNameFromString         : (string -> Names)
@@ -408,7 +409,7 @@ module internal PrettyNaming =
     val FormatAndOtherOverloadsString : (int -> string)
 
 /// Information about F# source file names
-module internal SourceFile =
+module (* internal *) SourceFile =
    /// Whether or not this file is compilable
    val IsCompilable : string -> bool
    /// Whether or not this file should be a single-file project
@@ -416,5 +417,5 @@ module internal SourceFile =
    /// Is a file generated by the language service?
    val IsFSharpLanguageServiceGenerated : string -> bool
 
-module internal Flags =
+module (* internal *) Flags =
     val init : unit -> unit

@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2010 Microsoft Corporation. 
+// Copyright (c) 2002-2011 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -988,6 +988,9 @@ type ILAttributeNamedArg = string * ILType * bool * ILAttribElem
 /// to ILAttribElem's as best as possible.  
 type ILAttribute =
     { Method: ILMethodSpec;  
+#if SILVERLIGHT
+      Arguments: ILAttribElem list * ILAttributeNamedArg list
+#endif
       Data: byte[] }
 
 [<NoEquality; NoComparison; Sealed>]
@@ -1615,6 +1618,7 @@ val ungenericizeTypeName: string -> string (* e.g. List`1 --> List *)
 type ILGlobals = 
     { mscorlibScopeRef: ILScopeRef
       mscorlibAssemblyName: string
+      noDebugData: bool; // REVIEW-HOST: this needs to be in cenv - I'm placing it here to make the shelveset smaller
       tref_Object: ILTypeRef
       tspec_Object: ILTypeSpec
       typ_Object: ILType
@@ -1683,10 +1687,13 @@ type ILGlobals =
       typ_StreamingContext: ILType
       tref_SecurityPermissionAttribute : ILTypeRef
       tspec_Exception: ILTypeSpec
-      typ_Exception: ILType }
+      typ_Exception: ILType 
+      mutable generatedAttribsCache: ILAttribute list 
+      mutable debuggerBrowsableNeverAttributeCache : ILAttribute option 
+      mutable debuggerTypeProxyAttributeCache : ILAttribute option }
 
 /// Build the table of commonly used references given a ILScopeRef for mscorlib. 
-val mkILGlobals : ILScopeRef -> string option -> ILGlobals
+val mkILGlobals : ILScopeRef -> string option -> bool -> ILGlobals
 
 
 /// When writing a binary the fake "toplevel" type definition (called <Module>)
@@ -2109,8 +2116,6 @@ val mkDebuggerHiddenAttribute             : ILGlobals -> ILAttribute
 val mkDebuggerDisplayAttribute            : ILGlobals -> string -> ILAttribute
 val mkDebuggerTypeProxyAttribute          : ILGlobals -> ILType -> ILAttribute
 val mkDebuggerBrowsableNeverAttribute     : ILGlobals -> ILAttribute
-val mkDebuggerBrowsableRootHiddenAttribute: ILGlobals -> ILAttribute
-val mkDebuggerBrowsableCollapsedAttribute : ILGlobals -> ILAttribute
 
 val addMethodGeneratedAttrs : ILGlobals -> ILMethodDef -> ILMethodDef
 val addPropertyGeneratedAttrs : ILGlobals -> ILPropertyDef -> ILPropertyDef

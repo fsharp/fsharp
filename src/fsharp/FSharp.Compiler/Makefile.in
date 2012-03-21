@@ -89,8 +89,6 @@ sources = \
 	../../ilx/pubclo.fs \
 	../../ilx/cu_erase.fsi \
 	../../ilx/cu_erase.fs \
-	../InternalFileSystemUtils.fsi \
-	../InternalFileSystemUtils.fs \
 	../unilex.fsi \
 	../unilex.fs \
 	../layout.fsi \

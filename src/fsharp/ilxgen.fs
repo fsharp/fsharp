@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2010 Microsoft Corporation. 
+// Copyright (c) 2002-2011 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -2329,6 +2329,9 @@ and GenApp cenv cgbuf eenv (f,fty,tyargs,args,m) sequel =
                   elif newobj then I_newobj (mspec, None) 
                   else I_call (isTailCall, mspec, None)
 
+#if SILVERLIGHT
+          begin
+#else
           // An F# multi dimension array type "int32[,]" should normally map to the ILDASM type "int32[0...,0...]", just like C#.
           //
           // However, System.Reflection.Emit has a nasty bug that means it can't emit calls to C# generic methods involving multi-dimensional arrays
@@ -2522,7 +2525,8 @@ and GenApp cenv cgbuf eenv (f,fty,tyargs,args,m) sequel =
 
                   EmitGetLocal cgbuf ilActualRetTy savedVal;
                   GenSequel cenv eenv.cloc cgbuf sequel) // end LocalScope
-          else   
+          else   begin
+#endif // SILVERLIGHT          
               // ok, now we're ready to generate 
               if isSuperInit || isSelfInit then 
                   CG.EmitInstrs cgbuf [ Push mspec.EnclosingType ] [ mkLdarg0 ] ;
@@ -2566,6 +2570,7 @@ and GenApp cenv cgbuf eenv (f,fty,tyargs,args,m) sequel =
                         | Choice2Of2 expr -> GenExpr cenv cgbuf eenv SPSuppress expr Continue)
                     GenIndirectCall cenv cgbuf eenv (actualRetTy,[],laterArgs,m) sequel)
                   
+          end                  
       | _ -> failwith "??"
       end
         
@@ -5555,7 +5560,7 @@ and CreatePermissionSets g (amap:Import.ImportMap) eenv (securityAttributes : At
     [for ((Attrib(tcref,_,actions,_,_,_)) as attr) in securityAttributes do
         let action = match actions with | [AttribInt32Arg act] -> act | _ -> failwith "internal error: unrecognized security action"
         let secaction = (List.assoc action (Lazy.force ILSecurityActionRevMap))
-        let tref = tcref.CompiledRepresentationForTyrepNamed
+        let tref = tcref.CompiledRepresentationForNamedType
         let ilattr = GenAttr amap g eenv attr
         let _, ilNamedArgs = 
             match ILThingDecodeILAttrib g tref (Some(tref.Scope)) (mkILCustomAttrs [ilattr]) with
@@ -5682,7 +5687,11 @@ and GenTopImpl cenv mgbuf mainInfoOpt eenv (TImplFile(qname, _, mexpr, hasExplic
     // Create the class to hold the initialization code and static fields for this file.  
     //     internal static class $<StartupCode...> {}
     // Put it at the end since that gives an approximation of dependency order (to aid FSI.EXE's code generator - see FSharp 1.0 5548)
+#if SILVERLIGHT
+    GenTypeDefForCompLoc (cenv, eenv, mgbuf, initClassCompLoc, false, [], initClassTrigger, false, (*atEnd=*)true); 
+#else	
     GenTypeDefForCompLoc (cenv, eenv, mgbuf, initClassCompLoc, true, [], initClassTrigger, false, (*atEnd=*)true); 
+#endif	
     
     // lazyInitInfo is an accumulator of functions which add the forced initialization of the storage module to
     //    - mutable fields in public modules
@@ -6621,7 +6630,11 @@ let GenerateCode cenv eenv (TAssembly fileImpls) (assemAttribs,moduleAttribs) =
     let eenv = { eenv with cloc = CompLocForFragment cenv.fragName cenv.viewCcu }
     
     // Generate the PrivateImplementationDetails type
+#if SILVERLIGHT
+    GenTypeDefForCompLoc (cenv, eenv, mgbuf, CompLocForPrivateImplementationDetails eenv.cloc, false, [], ILTypeInit.BeforeField, true, (* atEnd= *) true);
+#else	
     GenTypeDefForCompLoc (cenv, eenv, mgbuf, CompLocForPrivateImplementationDetails eenv.cloc, true, [], ILTypeInit.BeforeField, true, (* atEnd= *) true);
+#endif
 
     // Generate the whole assembly
     CodegenAssembly cenv eenv mgbuf fileImpls;

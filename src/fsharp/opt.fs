@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2010 Microsoft Corporation. 
+// Copyright (c) 2002-2011 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -40,10 +40,11 @@ open Microsoft.FSharp.Compiler.Tastops.DebugPrint
 open Microsoft.FSharp.Compiler.Env
 open Microsoft.FSharp.Compiler.Lib
 open Microsoft.FSharp.Compiler.Layout
+open Microsoft.FSharp.Compiler.TypeChecker
 open Microsoft.FSharp.Compiler.Typrelns
 open Microsoft.FSharp.Compiler.Infos
 
-
+open System.Collections.Generic
 
 let verboseOptimizationInfo = 
 #if BUILDING_PROTO
@@ -320,7 +321,8 @@ type cenv =
       optimizing: bool;
       scope: CcuThunk; 
       localInternalVals: System.Collections.Generic.Dictionary<Stamp,ValInfo> 
-      settings: OptimizationSettings;
+      settings: OptimizationSettings
+      casApplied : Dictionary<Stamp,bool>;
       emitTailcalls: bool }
 
 
@@ -2225,9 +2227,38 @@ and TryInlineApplication cenv env (_f0',finfo) (tyargs: TType list,args: Expr li
               if verboseOptimizations then dprintf "Not inlining lambda near %a because size = %d\n" outputRange m size; 
               false
             else true)))) ->
+        let isBaseCall =  args.Length > 0 &&          
+                              match args.[0] with
+                              | Expr.Val(vref,_,_) when vref.BaseOrThisInfo = BaseVal -> true
+                              | _ -> false
 
+        // Since Lazy`1 moved from FSharp.Core to mscorlib on .NET 4.0, inlining Lazy values from 2.0 will
+        // confuse the optimizer if the assembly is referenced on 4.0, since there will be no value to tie back
+        // to FSharp.Core                              
+        let isValFromLazyExtensions =
+            if cenv.g.compilingFslib then
+                false
+            else
+                match finfo.Info with
+                | ValValue(vref,_) ->
+                    match vref.ApparentParent with
+                    | Parent(tcr) when (tyconRefEq cenv.g cenv.g.lazy_tcr_canon tcr) ->
+                            match tcr.CompiledRepresentation with
+                            | TyrepNamed(iltr,_,_) -> iltr.Scope.AssemblyRef.Name = "FSharp.Core"
+                            | _ -> false
+                    | _ -> false
+                | _ -> false                                          
+                              
+        let isSecureMethod =
+          match finfo.Info with
+          |  ValValue(vref,_) ->
+                vref.Attribs |> List.exists (fun a -> (IsSecurityAttribute cenv.g cenv.amap cenv.casApplied a m) || (IsSecurityCriticalAttribute cenv.g a))
+          | _ -> false                              
+
+        if isBaseCall || isSecureMethod || isValFromLazyExtensions then None
+        else
+        
         if verboseOptimizations then dprintf "Inlining lambda near %a\n"  outputRange m;
-  (* ----------       printf "Inlining lambda near %a = %s\n"  outputRange m (showL (exprL f2));  (* JAMES: *) ----------*)
         let f2' = remarkExpr m (copyExpr cenv.g CloneAllAndMarkExprValsAsCompilerGenerated f2)
         if verboseOptimizations then dprintf "--- TryInlineApplication, optimizing arguments\n";
 
@@ -2826,6 +2857,7 @@ let OptimizeImplFile(settings,ccu,tcGlobals,importMap,optEnv,isIncrementalFragme
           amap=importMap;
           optimizing=true;
           localInternalVals=new System.Collections.Generic.Dictionary<Stamp,ValInfo>(10000);
+          casApplied=new Dictionary<Stamp,bool>();
           emitTailcalls=emitTailcalls }
     OptimizeImplFileInternal cenv optEnv isIncrementalFragment mimpls 
 

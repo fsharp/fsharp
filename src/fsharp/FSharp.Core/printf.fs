@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2010 Microsoft Corporation. 
+// Copyright (c) 2002-2011 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -474,7 +474,7 @@ module PrintfImpl =
             formatString outputChar info width s true;
             i+1,args
         | 's',nobj::args -> formatString outputChar info width (unbox nobj) false; i+1,args
-        | 'c',nobj::args -> outputChar (unbox nobj); i+1,args
+        | 'c',nobj::args -> formatString outputChar info width (stringOfChar (unbox nobj)) false; i+1,args
         | 'b',nobj::args -> formatString outputChar info width (if (unbox nobj) then "true" else "false") false; i+1,args
         | 'O',xobj::args -> formatString outputChar info width (match xobj with null -> "<null>" | _ -> xobj.ToString()) false; i+1,args
         | 'A',xobj::args -> 
@@ -562,7 +562,13 @@ module Printf =
     type BuilderFormat<'T>     = BuilderFormat<'T,unit>
     type StringFormat<'T>      = StringFormat<'T,string>
     type TextWriterFormat<'T>  = TextWriterFormat<'T,unit>
+    
+    let outWriter = ref System.Console.Out
+    let errorWriter = ref System.Console.Error
 
+    let setWriter (out : System.IO.TextWriter) = outWriter := out
+    let setError  (error : System.IO.TextWriter) = errorWriter := error
+    
     [<CompiledName("PrintFormatToStringThen")>]
     let ksprintf (f : string -> 'd) (fp : StringFormat<'a,'d>)  = 
         let init () = 
@@ -604,15 +610,15 @@ module Printf =
     let fprintfn (os: TextWriter) fmt  = kfprintf (fun _ -> os.WriteLine()) os fmt 
 
     [<CompiledName("PrintFormat")>]
-    let printf fmt = fprintf System.Console.Out fmt
+    let printf fmt = fprintf (!outWriter) fmt
 
     [<CompiledName("PrintFormatToError")>]
-    let eprintf fmt = fprintf System.Console.Error fmt
+    let eprintf fmt = fprintf (!errorWriter) fmt
 
     [<CompiledName("PrintFormatLine")>]
-    let printfn fmt = fprintfn System.Console.Out fmt
+    let printfn fmt = fprintfn (!outWriter) fmt
 
     [<CompiledName("PrintFormatLineToError")>]
-    let eprintfn fmt = fprintfn System.Console.Error fmt
+    let eprintfn fmt = fprintfn (!errorWriter) fmt
 
 

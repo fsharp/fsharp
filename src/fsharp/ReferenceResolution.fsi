@@ -14,6 +14,14 @@ module internal MSBuildResolver =
         | Path of string
         | Unknown
     
+    /// Whether the resolve should follow compile-time rules or runtime rules.                      
+    type ResolutionEnvironment = 
+        | CompileTimeLike 
+        | RuntimeLike      // Don't allow stubbed-out reference assemblies
+        | DesigntimeLike 
+
+#if SILVERLIGHT
+#else
     /// Information about a resolved file.
     type ResolvedFile = {
             /// Item specification
@@ -52,13 +60,6 @@ module internal MSBuildResolver =
     type ErrorWarningCallbackSig = 
         ((*code:*)string->(*message*)string->unit)
 
-    /// Whether the resolve should follow compile-time rules or runtime rules.                      
-    type ResolutionEnvironment = 
-        | CompileTimeLike 
-        | RuntimeLike      // Don't allow stubbed-out reference assemblies
-        | DesigntimeLike 
-        
-
     val Resolve :
                 resolutionEnvironment: ResolutionEnvironment *
                 references:(string*(*baggage*)string)[] * 
@@ -75,3 +76,4 @@ module internal MSBuildResolver =
                 logmessage:(string->unit) *
                 logwarning:ErrorWarningCallbackSig *
                 logerror:ErrorWarningCallbackSig -> ResolutionResults
+#endif

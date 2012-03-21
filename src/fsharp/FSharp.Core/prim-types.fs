@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2010 Microsoft Corporation. 
+// Copyright (c) 2002-2011 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -3725,6 +3725,13 @@ namespace Microsoft.FSharp.Core
 
         let inline castToString (x:'T) = (# "" x : string #)  // internal
 
+#if FX_NO_CHAR_PARSE
+        // replace System.Char.Parse
+        let inline charParse (s: string) =
+            if s = null then raise (System.ArgumentNullException())
+            elif s.Length = 1 then s.[0]
+            else raise (System.FormatException "String must be exactly one character long.")
+#endif
 
         // let rec (@) x y = match x with [] -> y | (h::t) -> h :: (t @ y)
         let (@) l1 l2 = 
@@ -4097,7 +4104,7 @@ namespace Microsoft.FSharp.Core
         let inline char (x: ^T) = 
             (^T : (static member op_Explicit: ^T -> char) (x))
 #if FX_NO_CHAR_PARSE
-             when ^T : string     = (castToString x).[0]
+             when ^T : string     = (charParse (castToString x))
 #else
              when ^T : string     = (System.Char.Parse(castToString x))
 #endif
@@ -4350,7 +4357,7 @@ namespace Microsoft.FSharp.Core
             let inline char (x: ^T) = 
                 (^T : (static member op_Explicit: ^T -> char) (x))
 #if FX_NO_CHAR_PARSE
-                 when ^T : string     = (castToString x).[0]
+                 when ^T : string     = (charParse (castToString x))
 #else
                  when ^T : string     = (System.Char.Parse(castToString x))
 #endif

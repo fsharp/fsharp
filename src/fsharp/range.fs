@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2010 Microsoft Corporation. 
+// Copyright (c) 2002-2011 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -153,9 +153,17 @@ let posOrder   = Order.orderOn (fun (p:pos) -> p.Line, p.Column) (Pair.order (In
 let rangeOrder = Order.orderOn (fun (r:range) -> r.FileName, r.Start) (Pair.order (String.order,posOrder))
 
 let outputPos   (os:TextWriter) (m:pos)   = fprintf os "(%d,%d)" m.Line m.Column
-let outputRange (os:TextWriter) (m:range) = fprintf os "%s%a-%a" m.FileName outputPos m.Start outputPos m.End
+let outputRange (os:TextWriter) (m:range) = 
+    fprintf os "%s" m.FileName 
+    outputPos os m.Start 
+    fprintf os "-" 
+    outputPos os m.End
 let boutputPos   os (m:pos)   = bprintf os "(%d,%d)" m.Line m.Column
-let boutputRange os (m:range) = bprintf os "%s%a-%a" m.FileName boutputPos m.Start boutputPos m.End
+let boutputRange os (m:range) = 
+    bprintf os "%s" m.FileName
+    boutputPos os m.Start 
+    bprintf os "-" 
+    boutputPos os m.End
     
 let posGt (p1:pos) (p2:pos) = (p1.Line > p2.Line || (p1.Line = p2.Line && p1.Column > p2.Column))
 let posEq (p1:pos) (p2:pos) = (p1.Line = p2.Line &&  p1.Column = p2.Column)

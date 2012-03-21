@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2010 Microsoft Corporation. 
+// Copyright (c) 2002-2011 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -341,6 +341,20 @@ type ILAssemblyRef(data)  =
               assemRefLocale=locale; } 
 
     static member FromAssembly(assembly:System.Reflection.Assembly) =
+// SILVERLIGHT-TODO: Needs to account for empty versions, public keys    
+#if SILVERLIGHT
+        let fullName = assembly.ToString()
+        let components = fullName.Split([|','|])
+        // name, version, culture, public key token
+        let nm = components.[0]
+        let v = System.Version(components.[1].Split([|'='|]).[1])
+        let version : ILVersionInfo option = Some((uint16 v.Major,uint16 v.Minor,uint16 v.Build,uint16 v.Revision))
+        let keyString = components.[3].Split([|'='|]).[1]
+        let keyBytes = Bytes.stringAsUtf8NullTerminated keyString
+        let key = Some(PublicKeyToken(keyBytes.[0..keyBytes.Length-2])) // remove null terminator
+        ILAssemblyRef.Create(nm,None,key,false,version,None)
+        
+#else
         let aname = assembly.GetName()
         let locale = None
         //match aname.CultureInfo with 
@@ -361,6 +375,7 @@ type ILAssemblyRef(data)  =
            | v -> Some (uint16 v.Major,uint16 v.Minor,uint16 v.Build,uint16 v.Revision)
 
         ILAssemblyRef.Create(aname.Name,None,publicKey,false,version,locale)
+#endif
 
     member aref.QualifiedName = 
         let b = new System.Text.StringBuilder(100)
@@ -757,6 +772,9 @@ type ILAttribElem =
 type ILAttributeNamedArg =  (string * ILType * bool * ILAttribElem)
 type ILAttribute = 
     { Method: ILMethodSpec;
+#if SILVERLIGHT
+      Arguments: ILAttribElem list * ILAttributeNamedArg list
+#endif
       Data: byte[] }
 
 [<NoEquality; NoComparison>]
@@ -1829,9 +1847,6 @@ let mkILFieldRef(tref,nm,ty) = { EnclosingTypeRef=tref; Name=nm; Type=ty}
 
 let mkILFieldSpec (tref,ty) = { FieldRef= tref; EnclosingType=ty }
 
-let mkILFieldSpec_in_tspec (tspec:ILTypeSpec,boxity,nm,ty) =
-  mkILFieldSpec (mkILFieldRef (tspec.TypeRef,nm,ty), mkILTy boxity tspec)
-    
 let mkILFieldSpecInTy (typ:ILType,nm,fty) = 
   mkILFieldSpec (mkILFieldRef (typ.TypeRef,nm,fty), typ)
     
@@ -2243,6 +2258,7 @@ let tname_RuntimeFieldHandle = "System.RuntimeFieldHandle"
 type ILGlobals = 
     { mscorlibScopeRef: ILScopeRef;
       mscorlibAssemblyName: string;
+      noDebugData: bool;
       tref_Object: ILTypeRef 
       ; tspec_Object: ILTypeSpec
       ; typ_Object: ILType
@@ -2311,7 +2327,10 @@ type ILGlobals =
       ; typ_StreamingContext: ILType
       ; tref_SecurityPermissionAttribute: ILTypeRef
       ; tspec_Exception: ILTypeSpec
-      ; typ_Exception: ILType }
+      ; typ_Exception: ILType
+      ; mutable generatedAttribsCache: ILAttribute list 
+      ; mutable debuggerBrowsableNeverAttributeCache : ILAttribute option
+      ; mutable debuggerTypeProxyAttributeCache : ILAttribute option }
     override x.ToString() = "<ILGlobals>"
 
 let mkNormalCall mspec = I_call (Normalcall, mspec, None)
@@ -2323,7 +2342,7 @@ let ldarg_1 = I_ldarg 1us
 let tname_CompilerGeneratedAttribute = "System.Runtime.CompilerServices.CompilerGeneratedAttribute"
 let tname_DebuggableAttribute = "System.Diagnostics.DebuggableAttribute"
 
-let mkILGlobals mscorlibScopeRef mscorlib_assembly_name_option =
+let mkILGlobals mscorlibScopeRef mscorlib_assembly_name_option noDebugData =
   let mscorlibAssemblyName =
     match mscorlib_assembly_name_option with
       | Some name -> name 
@@ -2473,8 +2492,9 @@ let mkILGlobals mscorlibScopeRef mscorlib_assembly_name_option =
   let tref_RuntimeFieldHandle = mkILTyRef (mscorlibScopeRef,tname_RuntimeFieldHandle)
   let tspec_RuntimeFieldHandle = mkILTySpec(tref_RuntimeFieldHandle,emptyILGenericArgs)
   let typ_RuntimeFieldHandle = ILType.Value tspec_RuntimeFieldHandle
-  {   mscorlibScopeRef            =mscorlibScopeRef
-    ; mscorlibAssemblyName     =mscorlibAssemblyName
+  {   mscorlibScopeRef           =mscorlibScopeRef
+    ; mscorlibAssemblyName       =mscorlibAssemblyName
+    ; noDebugData                =noDebugData 
     ; tref_Object                =tref_Object                  
     ; tspec_Object               =tspec_Object                 
     ; typ_Object                 =typ_Object                   
@@ -2544,7 +2564,10 @@ let mkILGlobals mscorlibScopeRef mscorlib_assembly_name_option =
     ; typ_StreamingContext=typ_StreamingContext
     ; tref_SecurityPermissionAttribute=tref_SecurityPermissionAttribute
     ; tspec_Exception            =tspec_Exception              
-    ; typ_Exception              =typ_Exception                 }
+    ; typ_Exception              =typ_Exception
+    ; generatedAttribsCache = []
+    ; debuggerBrowsableNeverAttributeCache = None                 
+    ; debuggerTypeProxyAttributeCache = None                 }
 
         
 (* NOTE: ecma_ prefix refers to the standard "mscorlib" *)
@@ -2552,7 +2575,7 @@ let ecmaPublicKey = PublicKeyToken (Bytes.ofInt32Array [|0xde; 0xad; 0xbe; 0xef;
 
 let ecmaMscorlibScopeRef = ILScopeRef.Assembly (ILAssemblyRef.Create("mscorlib", None, Some ecmaPublicKey, true, None, None))
 
-let ecmaILGlobals = mkILGlobals ecmaMscorlibScopeRef None
+let ecmaILGlobals = mkILGlobals ecmaMscorlibScopeRef None false
    
 let mkInitializeArrayMethSpec ilg = 
   mkILNonGenericStaticMethSpecInTy(mkILNonGenericBoxedTy(mkILTyRef(ilg.mscorlibScopeRef,"System.Runtime.CompilerServices.RuntimeHelpers")),"InitializeArray", [ilg.typ_Array;ilg.typ_RuntimeFieldHandle], ILType.Void)
@@ -3859,7 +3882,11 @@ let sigptr_get_intarray n (bytes:byte[]) sigptr =
 
 let sigptr_get_string n bytes sigptr = 
     let intarray,sigptr = sigptr_get_intarray n bytes sigptr
+#if SILVERLIGHT
+    System.Text.Encoding.UTF8.GetString(intarray , 0, intarray.Length), sigptr
+#else    
     System.Text.Encoding.UTF8.GetString intarray , sigptr
+#endif    
    
 let sigptr_get_z_i32 bytes sigptr = 
     let b0,sigptr = sigptr_get_byte bytes sigptr
@@ -4084,6 +4111,11 @@ let encodeCustomAttrNamedArg ilg (nm, ty, prop, elem) =
       yield! encodeCustomAttrValue ilg ty elem |]
 
 let mkILCustomAttribMethRef (ilg: ILGlobals) (mspec:ILMethodSpec, fixedArgs: list<_>, namedArgs: list<_>) = 
+#if SILVERLIGHT
+    { Method = mspec;
+      Arguments = fixedArgs, namedArgs
+      Data = [||] }
+#else
     let argtys = mspec.MethodRef.ArgTypes
     let args = 
       [| yield! [| 0x01uy; 0x00uy; |]
@@ -4095,6 +4127,7 @@ let mkILCustomAttribMethRef (ilg: ILGlobals) (mspec:ILMethodSpec, fixedArgs: lis
 
     { Method = mspec;
       Data = args }
+#endif
 
 let mkILCustomAttribute ilg (tref,argtys,argvs,propvs) = 
     mkILCustomAttribMethRef ilg (mkILNonGenericCtorMethSpec (tref,argtys),argvs,propvs)
@@ -4125,21 +4158,42 @@ let typ_DebuggerBrowsableState ilg =
     ILType.Value (mkILTySpec(tref_DebuggerBrowsableState,emptyILGenericArgs))
 
 let mkCompilerGeneratedAttribute   ilg = mkILCustomAttribute ilg (tref_CompilerGeneratedAttribute ilg,[],[],[])
+let mkDebuggerNonUserCodeAttribute ilg = mkILCustomAttribute ilg (tref_DebuggerNonUserCodeAttribute ilg,[],[],[])
 let mkDebuggerHiddenAttribute ilg = mkILCustomAttribute ilg (tref_DebuggerHiddenAttribute ilg,[],[],[])
 let mkDebuggerDisplayAttribute ilg s = mkILCustomAttribute ilg (tref_DebuggerDisplayAttribute ilg,[ilg.typ_String],[ILAttribElem.String (Some s)],[])
-let mkDebuggerTypeProxyAttribute ilg (ty:ILType) = mkILCustomAttribute ilg (tref_DebuggerTypeProxyAttribute ilg,[ilg.typ_Type],[ILAttribElem.TypeRef (Some ty.TypeRef)],[])
+let mkDebuggerTypeProxyAttribute ilg (ty:ILType) = 
+    match ilg.debuggerTypeProxyAttributeCache with 
+    | None -> 
+        let res = mkILCustomAttribute ilg (tref_DebuggerTypeProxyAttribute ilg,[ilg.typ_Type],[ILAttribElem.TypeRef (Some ty.TypeRef)],[])
+        ilg.debuggerTypeProxyAttributeCache <- Some res
+        res
+    | Some res -> res
+
 let mkDebuggerBrowsableAttribute ilg n = mkILCustomAttribute ilg (tref_DebuggerBrowsableAttribute ilg,[typ_DebuggerBrowsableState ilg],[ILAttribElem.Int32 n],[])
-let mkDebuggerBrowsableNeverAttribute ilg = mkDebuggerBrowsableAttribute  ilg 0
-let mkDebuggerBrowsableCollapsedAttribute ilg = mkDebuggerBrowsableAttribute  ilg 2
-let mkDebuggerBrowsableRootHiddenAttribute ilg = mkDebuggerBrowsableAttribute  ilg 3
-let mkDebuggerNonUserCodeAttribute ilg = mkILCustomAttribute ilg (tref_DebuggerNonUserCodeAttribute ilg,[],[],[])
+let mkDebuggerBrowsableNeverAttribute ilg = 
+    match ilg.debuggerBrowsableNeverAttributeCache with 
+    | None -> 
+        let res = mkDebuggerBrowsableAttribute  ilg 0
+        ilg.debuggerBrowsableNeverAttributeCache <- Some res
+        res
+    | Some res -> res
 let mkDebuggerStepThroughAttribute ilg = mkILCustomAttribute ilg (tref_DebuggerStepThroughAttribute ilg,[],[],[])
 let mkDebuggableAttribute ilg (jitTracking, jitOptimizerDisabled) = 
     mkILCustomAttribute ilg (tref_DebuggableAttribute ilg,[ilg.typ_Bool;ilg.typ_Bool], [ILAttribElem.Bool jitTracking; ILAttribElem.Bool jitOptimizerDisabled],[])
 
 
 // Bug 2129. Requests attributes to be added to compiler generated methods 
-let add_generated_attrs ilg (attrs: ILAttributes) = mkILCustomAttrs (attrs.AsList @ [mkCompilerGeneratedAttribute ilg;mkDebuggerNonUserCodeAttribute ilg])
+let add_generated_attrs ilg (attrs: ILAttributes) = 
+    let attribs = 
+       match ilg.generatedAttribsCache with 
+       | [] -> 
+           let res = [ if not ilg.noDebugData then 
+                          yield mkCompilerGeneratedAttribute ilg
+                          yield mkDebuggerNonUserCodeAttribute ilg]
+           ilg.generatedAttribsCache <- res
+           res
+       | res -> res
+    mkILCustomAttrs (attrs.AsList @ attribs)
 
 let addMethodGeneratedAttrs ilg (mdef:ILMethodDef)   = {mdef with CustomAttrs   = add_generated_attrs ilg mdef.CustomAttrs}
 let addPropertyGeneratedAttrs ilg (pdef:ILPropertyDef) = {pdef with CustomAttrs = add_generated_attrs ilg pdef.CustomAttrs}
@@ -4548,9 +4602,14 @@ let parseILVersion (vstr : string) =
         vstr <- System.String.Join(".",versionComponents) ;
         
     let version = System.Version(vstr)
-    let zero16 n = if n < 0s then 0us else uint16(n)
     let zero32 n = if n < 0 then 0us else uint16(n)
-    (zero32 version.Major, zero32 version.Minor, zero32 version.Build, zero16 version.MinorRevision);;
+    // since the minor revision will be -1 if none is specified, we need to truncate to 0 to not break existing code
+#if SILVERLIGHT
+    let minorRevision = if versionComponents.Length < 4 then 0us else uint16(version.Revision)
+#else
+    let minorRevision = if versionComponents.Length < 4 then 0us else uint16(version.MinorRevision)
+#endif    
+    (zero32 version.Major, zero32 version.Minor, zero32 version.Build, minorRevision);;
 
 
 let compareILVersions (a1,a2,a3,a4) ((b1,b2,b3,b4) : ILVersionInfo) = 

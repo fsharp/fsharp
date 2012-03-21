@@ -2,7 +2,7 @@
 {
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2010 Microsoft Corporation. 
+// Copyright (c) 2002-2011 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -32,27 +32,6 @@ let lexeme (lexbuf : LexBuffer<char>) = new System.String(lexbuf.Lexeme)
 let unexpectedChar lexbuf =
   dprintf "Unexpected character '%s'" (lexeme lexbuf);
   raise Parsing.RecoverableParseError ;;
-
-let unquote n m (s: string) =
-   String.sub s n (s.Length - (n+m));;
-
-// -------------------------------------------------------------------- 
-// STRING LITERALS 
-// -------------------------------------------------------------------- 
-
-//++GLOBAL MUTABLE STATE
-let stringBuffer = System.Text.StringBuilder 256
-let resetStringBuffer () = stringBuffer.Remove(0,stringBuffer.Length) |> ignore
-let storeStringChar (c:char) = stringBuffer.Append c |> ignore
-let getStoredString () = stringBuffer.ToString()
-
-let escape c = 
-  match c with 
-  | 'n' -> '\n'
-  | 'r' -> '\r'
-  | 'b' -> '\b'
-  | 't' -> '\t'
-  | c   -> c
 
 // -------------------------------------------------------------------- 
 // Keywords

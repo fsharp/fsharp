@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2010 Microsoft Corporation. 
+// Copyright (c) 2002-2011 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -619,7 +619,7 @@ type FSharpType =
         Impl.checkExnType(exceptionType,bindingFlags);
         Impl.fieldPropsOfRecordType (exceptionType,bindingFlags) 
 
-type DynamicFunction<'T1,'T2>() =
+type public DynamicFunction<'T1,'T2>() =
     inherit FSharpFunc<obj -> obj, obj>()
     override x.Invoke(impl: obj -> obj) : obj = 
         box<('T1 -> 'T2)> (fun inp -> unbox<'T2>(impl (box<'T1>(inp))))

@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2010 Microsoft Corporation. 
+// Copyright (c) 2002-2011 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -104,7 +104,7 @@ let usingLexbufForParsing (lexbuf:UnicodeLexing.Lexbuf,filename) f =
 // Functions to manipulate lexer transient state
 //-----------------------------------------------------------------------
 
-let defaultStringFinisher = (fun _endm _b s -> STRING (Encoding.Unicode.GetString s)) 
+let defaultStringFinisher = (fun _endm _b s -> STRING (Encoding.Unicode.GetString(s,0,s.Length))) 
 
 let callStringFinisher fin (buf: ByteBuffer) endm b = fin endm b (buf.Close())
 
@@ -167,7 +167,7 @@ let unicodeGraphLong (s:string) =
     else 
       (* A surrogate pair - see http://www.unicode.org/unicode/uni2book/ch03.pdf, section 3.7 *)
       Some (uint16 (0xD800 + ((high * 0x10000 + low - 0x10000) / 0x400))),
-      uint16 (0xDF30 + ((high * 0x10000 + low - 0x10000) % 0x400))
+      uint16 (0xDC00 + ((high * 0x10000 + low - 0x10000) % 0x400))
 
 let escape c = 
     match c with
@@ -334,7 +334,7 @@ module Keywords =
                 let dirname  = if filename = stdinMockFilename then
                                    System.IO.Directory.GetCurrentDirectory()
                                else
-                                   filename |> Internal.Utilities.FileSystem.Path.SafeGetFullPath (* asserts that path is already absolute *)
+                                   filename |> System.IO.Path.SafeGetFullPath (* asserts that path is already absolute *)
                                             |> System.IO.Path.GetDirectoryName
                 KEYWORD_STRING dirname
             | "__SOURCE_FILE__" -> 

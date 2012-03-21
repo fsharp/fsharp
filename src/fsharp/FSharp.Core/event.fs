@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2010 Microsoft Corporation. 
+// Copyright (c) 2002-2011 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -50,38 +50,63 @@ namespace Microsoft.FSharp.Control
     type EventDelegee<'Args>(observer: System.IObserver<'Args>) =
         member x.Invoke(sender:obj, args: 'Args) = observer.OnNext args
 
+    type EventWrapper<'Delegate,'Args> = delegate of 'Delegate * obj * 'Args -> unit
+
     [<CompiledName("FSharpEvent`2")>]
     type Event<'Delegate,'Args when 'Delegate : delegate<'Args,unit> and 'Delegate :> System.Delegate >() = 
-        let mutable multicast : System.Delegate = null
-        
+        let mutable multicast : 'Delegate = Unchecked.defaultof<_>     
+
+#if FX_NO_DELEGATE_CREATE_DELEGATE_FROM_STATIC_METHOD
+#else
         static let argTypes = 
             let instanceBindingFlags = BindingFlags.Instance ||| BindingFlags.Public ||| BindingFlags.NonPublic ||| BindingFlags.DeclaredOnly
             let mi = typeof<'Delegate>.GetMethod("Invoke",instanceBindingFlags)
             mi.GetParameters() |> (fun arr -> arr.[1..]) |> Array.map (fun p -> p.ParameterType)
 
+        // For the one-argument case, use an optimization that allows a fast call. 
+        // CreateDelegate creates a delegate that is fast to invoke.
+        static let invoker = 
+            if argTypes.Length = 1 then 
+                (System.Delegate.CreateDelegate(typeof<EventWrapper<'Delegate,'Args>>, typeof<'Delegate>.GetMethod("Invoke")) :?> EventWrapper<'Delegate,'Args>)
+            else
+                null
+#endif
+
+        // For the multi-arg case, use a slower DynamicInvoke.
         static let invokeInfo =
             let instanceBindingFlags = BindingFlags.Instance ||| BindingFlags.Public ||| BindingFlags.NonPublic ||| BindingFlags.DeclaredOnly
             typeof<EventDelegee<'Args>>.GetMethod("Invoke",instanceBindingFlags)
         
         member x.Trigger(sender:obj,args:'Args) = 
-            match multicast with 
+            match box multicast with 
             | null -> ()
-            | d -> 
-                if argTypes.Length = 1 then 
-                    d.DynamicInvoke([| sender; box args |]) |> ignore
-                else
-                    d.DynamicInvoke(Array.append [| sender |] (Microsoft.FSharp.Reflection.FSharpValue.GetTupleFields(box args))) |> ignore
+            | _ -> 
+#if FX_NO_DELEGATE_CREATE_DELEGATE_FROM_STATIC_METHOD
+#else
+                match invoker with 
+                | null ->  
+#endif
+                    let args = Array.append [| sender |] (Microsoft.FSharp.Reflection.FSharpValue.GetTupleFields(box args))
+                    multicast.DynamicInvoke(args) |> ignore
+#if FX_NO_DELEGATE_CREATE_DELEGATE_FROM_STATIC_METHOD
+#else
+                | _ -> 
+                    // For the one-argument case, use an optimization that allows a fast call. 
+                    // CreateDelegate creates a delegate that is fast to invoke.
+                    invoker.Invoke(multicast, sender, args) |> ignore
+#endif
         
-        member x.Publish = 
-            // Note, we implement each interface explicitly to workaround a WP7 bug
+        member x.Publish =
+            // Note, we implement each interface explicitly: this works around a bug in the CLR 
+            // implementation on CompactFramework 3.7, used on Windows Phone 7
             { new obj() with
                   member x.ToString() = "<published event>"
               interface IEvent<'Delegate,'Args> 
               interface IDelegateEvent<'Delegate> with 
                 member e.AddHandler(d) =
-                    multicast <- System.Delegate.Combine(multicast, d)
+                    multicast <- System.Delegate.Combine(multicast, d) :?> 'Delegate 
                 member e.RemoveHandler(d) = 
-                    multicast <- System.Delegate.Remove(multicast, d) 
+                    multicast <- System.Delegate.Remove(multicast, d)  :?> 'Delegate 
               interface System.IObservable<'Args> with 
                 member e.Subscribe(observer) = 
                    let obj = new EventDelegee<'Args>(observer)
@@ -102,8 +127,9 @@ namespace Microsoft.FSharp.Control
             match multicast with 
             | None -> ()
             | Some d -> d.Invoke(null,arg) |> ignore
-        member x.Publish = 
-            // Note, we implement each interface explicitly to workaround a WP7 bug
+        member x.Publish =
+            // Note, we implement each interface explicitly: this works around a bug in the CLR 
+            // implementation on CompactFramework 3.7, used on Windows Phone 7
             { new obj() with
                   member x.ToString() = "<published event>"
               interface IEvent<'T> 
@@ -118,5 +144,3 @@ namespace Microsoft.FSharp.Control
                    (e :?> IEvent<_,_>).AddHandler(h)
                    { new System.IDisposable with 
                         member x.Dispose() = (e :?> IEvent<_,_>).RemoveHandler(h) } }
-
-
