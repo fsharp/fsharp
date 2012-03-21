@@ -29,14 +29,14 @@ AC_ARG_WITH([gacdir],
 
 if test "x$with_gacdir" = "xno"; then
 	MONODIR=`pkg-config --variable=libdir mono`/mono
-	if ! test -e $MONODIR/2.0/mscorlib.dll; then
+	if ! test -e $MONODIR/4.0/mscorlib.dll; then
 		MONODIR=`pkg-config --variable=prefix mono`/lib/mono
 	fi
 else
 	MONODIR=$(cd "$with_gacdir/.." && pwd)
 fi
 
-if ! test -e $MONODIR/2.0/mscorlib.dll; then
+if ! test -e $MONODIR/4.0/mscorlib.dll; then
 	AC_ERROR(Couldn't find the mono gac directory or mscorlib.dll in the usual places. Set --with-gacdir=<path>)
 fi
 AC_SUBST(MONODIR)
