@@ -59,12 +59,15 @@ DEFINES_2_0 = \
 	--define:FX_FSLIB_STRUCTURAL_EQUALITY \
 	--define:FX_FSLIB_IOBSERVABLE \
 	--define:FX_FSLIB_TUPLE \
-	--define:FX_FSLIB_LAZY
+	--define:FX_FSLIB_LAZY \
+	--define:FX_NO_CANCELLATIONTOKEN_CLASSES \
+	--define:FX_NO_TASK
 
 DEFINES_4_0 = \
 	$(DEFINES_GENERAL) \
 	$(DEFINES_DEBUG) \
-	--define:FX_ATLEAST_40
+	--define:FX_ATLEAST_40 \
+	--define:BE_SECURITY_TRANSPARENT
 
 REFERENCES_2_0 = \
 	-r:$(monolibdir)Microsoft.Build.Engine.dll \

@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2010 Microsoft Corporation. 
+// Copyright (c) 2002-2011 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -70,7 +70,7 @@ let ErrorLoggerThatQuitsAfterMaxErrors (tcConfigB:TcConfigBuilder) =
     { new ErrorLogger with 
            member x.ErrorSink(err) = 
                 if !errors >= tcConfigB.maxErrors then 
-                    DoWithErrorColor true (fun () -> Printf.eprintfn "%s" (FSCstrings.SR.fscTooManyErrors())) ; 
+                    DoWithErrorColor true (fun () -> Printf.eprintfn "%s" (FSComp.SR.fscTooManyErrors())) ; 
                     exiter.Exit 1
 
                 DoWithErrorColor false (fun () -> 
@@ -161,7 +161,7 @@ module XmlDocWriter =
             for uc in tc.UnionCasesAsList do
                 if (hasDoc uc.XmlDoc) then uc.XmlDocSig <- XmlDocSigOfUnionCase ptext uc.Id.idText tc.CompiledName
             for rf in tc.AllFieldsAsList do
-                if (hasDoc rf.XmlDoc) then rf.XmlDocSig <- XmlDocSigOfField ptext rf.Id.idText tc.CompiledRepresentationForTyrepNamed.Name
+                if (hasDoc rf.XmlDoc) then rf.XmlDocSig <- XmlDocSigOfField ptext rf.Id.idText tc.CompiledRepresentationForNamedType.Name
 
         let doModuleMemberSig path (m:ModuleOrNamespace) = m.XmlDocSig <- XmlDocSigOfSubModul path
         (* moduleSpec - recurses *)
@@ -172,14 +172,14 @@ module XmlDocWriter =
                 match path with 
                 | None -> Some ""
                 | Some "" -> Some mspec.LogicalName
-                | Some p -> Some (p^"."^mspec.LogicalName)
+                | Some p -> Some (p+"."+mspec.LogicalName)
             let ptext = match path with None -> "" | Some t -> t
             if mspec.IsModule then doModuleMemberSig ptext mspec;
             let vals = 
                 mtype.AllValsAndMembers
                 |> Seq.toList
                 |> List.filter (fun x  -> not x.IsCompilerGenerated) 
-                |> List.filter (fun x -> x.MemberInfo.IsNone)
+                |> List.filter (fun x -> x.MemberInfo.IsNone || x.IsExtensionMember)
             List.iter (doModuleSig  path)  mtype.ModuleAndNamespaceDefinitions;
             List.iter (doTyconSig  ptext) mtype.ExceptionDefinitions;
             List.iter (doValSig    ptext) vals;
@@ -189,7 +189,7 @@ module XmlDocWriter =
 
     let writeXmlDoc (assemblyName,generatedCcu:CcuThunk,xmlfile) =
         if not (Filename.hasSuffixCaseInsensitive "xml" xmlfile ) then 
-            error(Error(FSCstrings.SR.docfileNoXmlSuffix(), Range.rangeStartup));
+            error(Error(FSComp.SR.docfileNoXmlSuffix(), Range.rangeStartup));
         (* the xmlDocSigOf* functions encode type into string to be used in "id" *)
         let members = ref []
         let addMember id xmlDoc = 
@@ -217,7 +217,7 @@ module XmlDocWriter =
                 mtype.AllValsAndMembers
                 |> Seq.toList
                 |> List.filter (fun x  -> not x.IsCompilerGenerated) 
-                |> List.filter (fun x -> x.MemberInfo.IsNone)
+                |> List.filter (fun x -> x.MemberInfo.IsNone || x.IsExtensionMember)
             List.iter doModule mtype.ModuleAndNamespaceDefinitions;
             List.iter doTycon mtype.ExceptionDefinitions;
             List.iter doVal vals;
@@ -243,11 +243,15 @@ module XmlDocWriter =
 // cmd line - option state
 //----------------------------------------------------------------------------
 
+#if SILVERLIGHT
+let defaultFSharpBinariesDir = "."
+#else
 let getModuleFileName() = 
     Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory,
                            System.AppDomain.CurrentDomain.FriendlyName)  
 
 let defaultFSharpBinariesDir = Filename.directoryName (getModuleFileName())
+#endif
 
 
 let outpath outfile extn =
@@ -257,7 +261,7 @@ let outpath outfile extn =
 
 let TypeCheck (tcConfig,tcImports,tcGlobals,errorLogger:ErrorLogger,assemblyName,niceNameGen,tcEnv0,inputs) =
     try 
-        if isNil inputs then error(Error(FSCstrings.SR.fscNoImplementationFiles(),Range.rangeStartup));
+        if isNil inputs then error(Error(FSComp.SR.fscNoImplementationFiles(),Range.rangeStartup));
         let ccuName = assemblyName
         let tcInitialState = TypecheckInitialState (rangeStartup,ccuName,tcConfig,tcGlobals,niceNameGen,tcEnv0)
         TypecheckClosedInputSet ((fun () -> errorLogger.ErrorCount = 0),tcConfig,tcImports,tcGlobals,None,tcInitialState,inputs,false)
@@ -285,7 +289,7 @@ let EncodeInterfaceData(tcConfig:TcConfig,tcGlobals,exportRemapping,generatedCcu
         let resource = WriteSignatureData (tcConfig,tcGlobals,exportRemapping,generatedCcu,outfile)
         if verbose then dprintf "Generated interface data attribute!\n";
         if tcConfig.useOptimizationDataFile || tcGlobals.compilingFslib then 
-            let sigDataFileName = (Filename.chopExtension outfile)^".sigdata"
+            let sigDataFileName = (Filename.chopExtension outfile)+".sigdata"
             File.WriteAllBytes(sigDataFileName,resource.Bytes);
         let sigAttr = mkSignatureDataVersionAttr tcGlobals (IL.parseILVersion Internal.Utilities.FSharpEnvironment.FSharpBinaryMetadataFormatRevision) 
         // The resource gets written to a file for FSharp.Core
@@ -312,11 +316,13 @@ let EncodeOptimizationData(tcGlobals,tcConfig,outfile,exportRemapping,data) =
     if GenerateOptimizationData tcConfig then 
         let data = map2Of2 (Opt.RemapLazyModulInfo tcGlobals exportRemapping) data
         if verbose then dprintn "Generating optimization data attribute...";
+        // REVIEW: Need a better test
         if tcConfig.useOptimizationDataFile || tcGlobals.compilingFslib then 
             let ccu,modulInfo = data
             let bytes = Pickle.pickleObjWithDanglingCcus outfile tcGlobals ccu Opt.p_LazyModuleInfo modulInfo
-            let optDataFileName = (Filename.chopExtension outfile)^".optdata"
+            let optDataFileName = (Filename.chopExtension outfile)+".optdata"
             File.WriteAllBytes(optDataFileName,bytes);
+        // As with the sigdata file, the optdata gets written to a file for FSharp.Core and FSharp.Compiler.Silverlight
         if tcGlobals.compilingFslib then 
             []
         else
@@ -548,7 +554,7 @@ module AttributeHelpers =
         | Some versionString ->
              try Some(IL.parseILVersion versionString)
              with e -> 
-                 warning(Error(FSCstrings.SR.fscBadAssemblyVersion(versionString),Range.rangeStartup));
+                 warning(Error(FSComp.SR.fscBadAssemblyVersion(versionString),Range.rangeStartup));
                  None
         | _ -> None
 
@@ -630,10 +636,11 @@ module MainModuleBuilder =
             let flags =  match AttributeHelpers.TryFindIntAttribute tcGlobals "System.Reflection.AssemblyFlagsAttribute" topAttrs.assemblyAttrs with | Some(f) -> f | _ -> 0x0
             
             // You're only allowed to set a locale if the assembly is a library
-            if locale <> None && tcConfig.target <> Dll then
-              error(Error(FSCstrings.SR.fscAssemblyCultureAttributeError(),rangeCmdArgs))
-            let buildingPre40 = match tcGlobals.sysCcu.ILScopeRef.AssemblyRef.Version with | Some(major,_,_,_) when major < 4us -> true | _ -> false
-            let exportedTypesList = if (tcConfig.compilingFslib && not(buildingPre40)) then (List.append (createMscorlibExportList tcGlobals) (createSystemNumericsExportList tcGlobals)) else []
+            if (locale <> None && locale.Value <> "") && tcConfig.target <> Dll then
+              error(Error(FSComp.SR.fscAssemblyCultureAttributeError(),rangeCmdArgs))
+
+            // Add the type forwarders for the .NET 4.0 FSharp.Core.dll
+            let exportedTypesList = if (tcConfig.compilingFslib && tcConfig.compilingFslib40) then (List.append (createMscorlibExportList tcGlobals) (createSystemNumericsExportList tcGlobals)) else []
             
             mkILSimpleModule assemblyName (fsharpModuleName tcConfig.target assemblyName) (tcConfig.target = Dll || tcConfig.target = Module) ilTypeDefs hashAlg locale flags (mkILExportedTypes exportedTypesList) metadataVersion
 
@@ -665,7 +672,7 @@ module MainModuleBuilder =
                   
         let quotDataResources = 
                 codegenResults.quotationResourceBytes |> List.map (fun bytes -> 
-                    { Name=QuotationPickler.pickledDefinitionsResourceNameBase^string(newUnique());
+                    { Name=QuotationPickler.pickledDefinitionsResourceNameBase+string(newUnique());
                       Location = ILResourceLocation.Local (fun () -> bytes);
                       Access= ILResourceAccess.Public;
                       CustomAttrs = emptyILCustomAttrs }) 
@@ -676,8 +683,11 @@ module MainModuleBuilder =
                  let name,bytes,pub = 
                      let lower = String.lowercase file
                      if List.exists (Filename.checkSuffix lower) [".resx"]  then
+#if SILVERLIGHT
+                         failwith "resx files not supported as legacy compiler inputs"
+#else
                          let file = tcConfig.ResolveSourceFile(rangeStartup,file)
-                         let outfile = (file |> Filename.chopExtension) ^ ".resources"
+                         let outfile = (file |> Filename.chopExtension) + ".resources"
                          
                          let readResX(f:string) = 
                              use rsxr = new System.Resources.ResXResourceReader(f)
@@ -691,14 +701,15 @@ module MainModuleBuilder =
                          writeResources(readResX(file),outfile);
                          let file,name,pub = TcConfigBuilder.SplitCommandLineResourceInfo outfile
                          let file = tcConfig.ResolveSourceFile(rangeStartup,file)
-                         let bytes = File.ReadAllBytes file
+                         let bytes = File.ReadAllBytesShim file
                          File.Delete outfile;
                          name,bytes,pub
+#endif
                      else
 
                          let file,name,pub = TcConfigBuilder.SplitCommandLineResourceInfo file
                          let file = tcConfig.ResolveSourceFile(rangeStartup,file)
-                         let bytes = File.ReadAllBytes file
+                         let bytes = File.ReadAllBytesShim file
                          name,bytes,pub
                  yield { Name=name; 
                          Location=ILResourceLocation.Local (fun () -> bytes); 
@@ -711,7 +722,7 @@ module MainModuleBuilder =
               for ri in tcConfig.linkResources do 
                  let file,name,pub = TcConfigBuilder.SplitCommandLineResourceInfo ri
                  yield { Name=name; 
-                         Location=ILResourceLocation.File(ILModuleRef.Create(name=file, hasMetadata=false, hash=Some (sha1HashBytes (File.ReadAllBytes file))), 0);
+                         Location=ILResourceLocation.File(ILModuleRef.Create(name=file, hasMetadata=false, hash=Some (sha1HashBytes (File.ReadAllBytesShim file))), 0);
                          Access=pub; 
                          CustomAttrs=emptyILCustomAttrs } ]
 
@@ -806,28 +817,38 @@ module MainModuleBuilder =
           
         // a user cannot specify both win32res and win32manifest        
         if not(tcConfig.win32manifest = "") && not(tcConfig.win32res = "") then
-            error(Error(FSCstrings.SR.fscTwoResourceManifests(),rangeCmdArgs));
+            error(Error(FSComp.SR.fscTwoResourceManifests(),rangeCmdArgs));
                       
         let win32Manifest =
+#if SILVERLIGHT
+           ""
+#else
+
+
            if not(tcConfig.win32manifest = "") then
                tcConfig.win32manifest
            elif not(tcConfig.includewin32manifest) || not(tcConfig.win32res = "") || runningOnMono then // don't embed a manifest if a native resource is being included
                ""
            else
                match Build.highestInstalledNetFrameworkVersionMajorMinor() with
-               | _,_,_,"v3.5" -> System.Runtime.InteropServices.RuntimeEnvironment.GetRuntimeDirectory() ^ @"..\v3.5\default.win32manifest"
-               | _,_,_,"v4.0" -> System.Runtime.InteropServices.RuntimeEnvironment.GetRuntimeDirectory() ^ @"default.win32manifest"
+               | _,_,_,"v3.5" -> System.Runtime.InteropServices.RuntimeEnvironment.GetRuntimeDirectory() + @"..\v3.5\default.win32manifest"
+               | _,_,_,"v4.0" -> System.Runtime.InteropServices.RuntimeEnvironment.GetRuntimeDirectory() + @"default.win32manifest"
                | _,_,_,_ -> "" // only have default manifests for 3.5 and 4.0               
+#endif
         
         let nativeResources = 
+#if SILVERLIGHT
+            []
+#else
             [ for av in assemblyVersionResources do
                   yield Lazy.CreateFromValue av
               if not(tcConfig.win32res = "") then
-                  yield Lazy.CreateFromValue (File.ReadAllBytes tcConfig.win32res) 
+                  yield Lazy.CreateFromValue (File.ReadAllBytesShim tcConfig.win32res) 
               if tcConfig.includewin32manifest && not(win32Manifest = "") && not(runningOnMono) then
                   yield  Lazy.CreateFromValue [|   yield! ResFileFormat.ResFileHeader() 
-                                                   yield! (ManifestResourceFormat.VS_MANIFEST_RESOURCE((File.ReadAllBytes win32Manifest), tcConfig.target = Dll))|]]
+                                                   yield! (ManifestResourceFormat.VS_MANIFEST_RESOURCE((File.ReadAllBytesShim win32Manifest), tcConfig.target = Dll))|]]
 
+#endif
 
         // Add attributes, version number, resources etc. 
         {mainModule with 
@@ -864,13 +885,13 @@ module StaticLinker =
         else
 
             match dependentModules |> List.tryPick (function (Some ccu,_) when ccu.UsesQuotations -> Some ccu | _ -> None)  with
-            | Some ccu -> error(Error(FSCstrings.SR.fscQuotationLiteralsStaticLinking(ccu.AssemblyName),rangeStartup));
+            | Some ccu -> error(Error(FSComp.SR.fscQuotationLiteralsStaticLinking(ccu.AssemblyName),rangeStartup));
             | None -> ()
                 
             if dependentModules |> List.exists (fun (_,x) -> not x.IsDLL)  then 
-                error(Error(FSCstrings.SR.fscStaticLinkingNoEXE(),rangeStartup))
+                error(Error(FSComp.SR.fscStaticLinkingNoEXE(),rangeStartup))
             if dependentModules |> List.exists (fun (_,x) -> not x.IsILOnly)  then 
-                error(Error(FSCstrings.SR.fscStaticLinkingNoMixedDLL(),rangeStartup))
+                error(Error(FSComp.SR.fscStaticLinkingNoMixedDLL(),rangeStartup))
             let dependentModules  = dependentModules |> List.map snd
             let assems = 
                 dependentModules 
@@ -896,7 +917,7 @@ module StaticLinker =
                     optDataResources,others
                 let rresources,others = 
                     let rresources,others = List.partition IsReflectedDefinitionsResource others
-                    let rresources = rresources |> List.mapi (fun i r -> {r with Name = QuotationPickler.pickledDefinitionsResourceNameBase^string (i+1)})
+                    let rresources = rresources |> List.mapi (fun i r -> {r with Name = QuotationPickler.pickledDefinitionsResourceNameBase+string (i+1)})
                     rresources,others
                 if verbose then dprintf "#intfDataResources = %d, #optDataResources = %d, #rresources = %d\n" intfDataResources.Length optDataResources.Length rresources.Length;
                 intfDataResources@optDataResources@rresources@others
@@ -926,8 +947,12 @@ module StaticLinker =
 
     #if DEBUG
     let PrintModule outfile x = 
+#if SILVERLIGHT
+        ()
+#else
         use os = File.CreateText(outfile) :> TextWriter
         ILAsciiWriter.output_module os x  
+#endif
     #endif
 
     // Compute a static linker. This only captures tcImports (a large data structure) if
@@ -936,13 +961,13 @@ module StaticLinker =
     let StaticLink (tcConfig:TcConfig, tcImports:TcImports,ilGlobals:ILGlobals) = 
 
       let estAssemblies = []
-      if tcConfig.compilingFslib && tcConfig.compilingFslibPre40.IsSome then 
+      if tcConfig.compilingFslib && tcConfig.compilingFslib20.IsSome then 
           (fun (ilxMainModule,_) -> 
-              let mscorlib40 = tcConfig.compilingFslibPre40.Value // + @"\..\.NET Framework 4.0 Pre Beta\mscorlib.dll"
+              let mscorlib40 = tcConfig.compilingFslib20.Value // + @"\..\.NET Framework 4.0 Pre Beta\mscorlib.dll"
               
               let ilBinaryReader = 
                   let opts = { ILBinaryReader.defaults with 
-                                  ilGlobals=mkILGlobals ILScopeRef.Local (Some tcConfig.mscorlibAssemblyName) ;
+                                  ilGlobals=IL.mkILGlobals ILScopeRef.Local (Some tcConfig.mscorlibAssemblyName) tcConfig.noDebugData;
                                   optimizeForMemory=tcConfig.optimizeForMemory;
                                   pdbPath = None; } 
                   ILBinaryReader.OpenILModuleReader mscorlib40 opts
@@ -1034,7 +1059,7 @@ module StaticLinker =
                                             if ilAssemRef.Name = GetFSharpCoreLibraryName() then 
                                                 IL.emptyILRefs 
                                             elif not modul.IsILOnly then 
-                                                warning(Error(FSCstrings.SR.fscIgnoringMixedWhenLinking ilAssemRef.Name,rangeStartup))
+                                                warning(Error(FSComp.SR.fscIgnoringMixedWhenLinking ilAssemRef.Name,rangeStartup))
                                                 IL.emptyILRefs 
                                             else
                                                 { AssemblyReferences = dllInfo.ILAssemblyRefs; 
@@ -1052,7 +1077,7 @@ module StaticLinker =
                                         remaining := refs.AssemblyReferences @ !remaining;
 
                                     | None -> 
-                                        warning(Error(FSCstrings.SR.fscAssumeStaticLinkContainsNoDependencies(ilAssemRef.Name),rangeStartup)); 
+                                        warning(Error(FSComp.SR.fscAssumeStaticLinkContainsNoDependencies(ilAssemRef.Name),rangeStartup)); 
                                         depModuleTable.[ilAssemRef.Name] <- dummyEntry ilAssemRef.Name
                         done;
                     end;
@@ -1072,7 +1097,7 @@ module StaticLinker =
                           for n in tcConfig.extraStaticLinkRoots  do
                               match depModuleTable.TryFind n with 
                               | Some x -> yield x
-                              | None -> error(Error(FSCstrings.SR.fscAssemblyNotFoundInDependencySet(n),rangeStartup)); 
+                              | None -> error(Error(FSComp.SR.fscAssemblyNotFoundInDependencySet(n),rangeStartup)); 
                         ]
                               
                     let remaining = ref roots
@@ -1080,7 +1105,7 @@ module StaticLinker =
                         let n = List.head !remaining
                         remaining := List.tail !remaining;
                         if not (n.visited) then 
-                            if verbose then dprintn ("Module "^n.name^" depends on "^GetFSharpCoreLibraryName());
+                            if verbose then dprintn ("Module "+n.name+" depends on "+GetFSharpCoreLibraryName());
                             n.visited <- true;
                             remaining := n.edges @ !remaining
                             yield (n.ccu, n.data);  ]
@@ -1155,13 +1180,14 @@ module FileWriter =
                                   Some (ILBinaryWriter.ILStrongNameSigner.OpenKeyPairFile s) 
                                with e -> 
                                    // Note:: don't use errorR here since we really want to fail and not produce a binary
-                                   error(Error(FSCstrings.SR.fscKeyFileCouldNotBeOpened(s),rangeCmdArgs))
+                                   error(Error(FSComp.SR.fscKeyFileCouldNotBeOpened(s),rangeCmdArgs))
                          end;
                        fixupOverlappingSequencePoints = false; 
                        dumpDebugInfo =tcConfig.dumpDebugInfo } 
                   ilxMainModule
+                  tcConfig.noDebugData
             with Failure msg -> 
-                error(Error(FSCstrings.SR.fscProblemWritingBinary(outfile,msg), rangeCmdArgs))
+                error(Error(FSComp.SR.fscProblemWritingBinary(outfile,msg), rangeCmdArgs))
         with e -> 
             errorRecoveryNoRange e; 
             exiter.Exit 1 
@@ -1190,7 +1216,7 @@ let ValidateKeySigningAttributes (tcConfig : TcConfig) tcGlobals topAttrs =
         match delaySignAttrib with 
         | Some delaysign -> 
           if tcConfig.delaysign then
-            warning(Error(FSCstrings.SR.fscDelaySignWarning(),rangeCmdArgs)) ;
+            warning(Error(FSComp.SR.fscDelaySignWarning(),rangeCmdArgs)) ;
             tcConfig.delaysign
           else
             delaysign
@@ -1202,7 +1228,7 @@ let ValidateKeySigningAttributes (tcConfig : TcConfig) tcGlobals topAttrs =
         match signerAttrib with
         | Some signer -> 
             if tcConfig.signer.IsSome && tcConfig.signer <> Some signer then
-                warning(Error(FSCstrings.SR.fscKeyFileWarning(),rangeCmdArgs)) ;
+                warning(Error(FSComp.SR.fscKeyFileWarning(),rangeCmdArgs)) ;
                 tcConfig.signer
             else
                 Some signer
@@ -1214,7 +1240,7 @@ let ValidateKeySigningAttributes (tcConfig : TcConfig) tcGlobals topAttrs =
         match containerAttrib with 
         | Some container -> 
             if tcConfig.container.IsSome && tcConfig.container <> Some container then
-              warning(Error(FSCstrings.SR.fscKeyNameWarning(),rangeCmdArgs)) ;
+              warning(Error(FSComp.SR.fscKeyNameWarning(),rangeCmdArgs)) ;
               tcConfig.container
             else
               Some container
@@ -1242,8 +1268,8 @@ type DelayAndForwardErrorLogger() =
            if isError then errorLogger.ErrorSink(e) else errorLogger.WarnSink(e)
        // Clear errors just reported. Keep errors count.
        delayed.Clear()
-   member x.ForwardDelayedErrorsAndWarnings(tcConfigB:TcConfigBuilder) = 
-       let errorLogger = ErrorLoggerInitial(tcConfigB)
+   member x.ForwardDelayedErrorsAndWarnings(tcConfigB:TcConfigBuilder,errorLoggerOpt) = 
+       let errorLogger = match errorLoggerOpt with None -> ErrorLoggerInitial(tcConfigB) | Some e -> e
        x.ForwardDelayedErrorsAndWarnings(errorLogger)
    member x.ErrorCount = !errors           
 
@@ -1288,10 +1314,13 @@ let AdjustForScriptCompile(tcConfigB:TcConfigBuilder,commandLineSourceFiles,lexR
 [<NoEquality; NoComparison>]
 type Args<'a> = Args  of 'a
 
-let main1(argv,bannerAlreadyPrinted) =
+let main1(argv,bannerAlreadyPrinted,errorLoggerOpt) =
 
-    // See Bug 735819 
     let lcidFromCodePage = 
+#if SILVERLIGHT
+        None
+#else
+    // See Bug 735819 
         if (System.Console.OutputEncoding.CodePage <> 65001) &&
            (System.Console.OutputEncoding.CodePage <> System.Threading.Thread.CurrentThread.CurrentUICulture.TextInfo.OEMCodePage) &&
            (System.Console.OutputEncoding.CodePage <> System.Threading.Thread.CurrentThread.CurrentUICulture.TextInfo.ANSICodePage) then
@@ -1299,8 +1328,13 @@ let main1(argv,bannerAlreadyPrinted) =
                 Some(1033)
         else
             None
+#endif
 
-    let tcConfigB = Build.TcConfigBuilder.CreateNew(defaultFSharpBinariesDir, false,Directory.GetCurrentDirectory())
+#if SILVERLIGHT
+    let tcConfigB = Build.TcConfigBuilder.CreateNew(defaultFSharpBinariesDir, false, ".")
+#else
+    let tcConfigB = Build.TcConfigBuilder.CreateNew(defaultFSharpBinariesDir, false, Directory.GetCurrentDirectory())
+#endif
     // Preset: --optimize+ -g --tailcalls+ (see 4505)
     SetOptimizeSwitch tcConfigB On
     SetDebugSwitch    tcConfigB None Off
@@ -1332,6 +1366,8 @@ let main1(argv,bannerAlreadyPrinted) =
           ParseCompilerOptions collect (GetCoreFscCompilerOptions tcConfigB) (List.tail (PostProcessCompilerArgs abbrevArgs argv));
           let inputFiles = List.rev !inputFilesRef
 
+#if SILVERLIGHT
+#else
           // Check if we have a codepage from the console
           match tcConfigB.lcid with
           | Some _ -> ()
@@ -1345,12 +1381,13 @@ let main1(argv,bannerAlreadyPrinted) =
               let prev = System.Console.OutputEncoding
               System.Console.OutputEncoding <- Encoding.UTF8
               System.AppDomain.CurrentDomain.ProcessExit.Add(fun _ -> System.Console.OutputEncoding <- prev)
+#endif
 
           (* step - get dll references *)
           let dllFiles,sourceFiles = List.partition Filename.isDll inputFiles
           match dllFiles with
           | [] -> ()
-          | h::_ -> errorR (Error(FSCstrings.SR.fscReferenceOnCommandLine(h),rangeStartup)) 
+          | h::_ -> errorR (Error(FSComp.SR.fscReferenceOnCommandLine(h),rangeStartup)) 
 
           dllFiles |> List.iter (fun f->tcConfigB.AddReferencedAssemblyByPath(rangeStartup,f))
           
@@ -1360,7 +1397,7 @@ let main1(argv,bannerAlreadyPrinted) =
       with 
           e -> 
             errorRecovery e rangeStartup
-            delayForFlagsLogger.ForwardDelayedErrorsAndWarnings(tcConfigB)
+            delayForFlagsLogger.ForwardDelayedErrorsAndWarnings(tcConfigB, errorLoggerOpt)
             exiter.Exit 1 
       
     tcConfigB.conditionalCompilationDefines <- "COMPILED" :: tcConfigB.conditionalCompilationDefines 
@@ -1374,12 +1411,12 @@ let main1(argv,bannerAlreadyPrinted) =
             tcConfigB.DecideNames sourceFiles 
         with e ->
             errorRecovery e rangeStartup
-            delayForFlagsLogger.ForwardDelayedErrorsAndWarnings(tcConfigB)
+            delayForFlagsLogger.ForwardDelayedErrorsAndWarnings(tcConfigB, errorLoggerOpt)
             exiter.Exit 1 
                     
     // DecideNames may give "no inputs" error. Abort on error at this point. bug://3911
     if delayForFlagsLogger.ErrorCount > 0 then 
-        delayForFlagsLogger.ForwardDelayedErrorsAndWarnings(tcConfigB)
+        delayForFlagsLogger.ForwardDelayedErrorsAndWarnings(tcConfigB, errorLoggerOpt)
         exiter.Exit 1
     
     // If there's a problem building TcConfig, abort    
@@ -1387,10 +1424,10 @@ let main1(argv,bannerAlreadyPrinted) =
         try
             TcConfig.Create(tcConfigB,validate=false)
         with e ->
-            delayForFlagsLogger.ForwardDelayedErrorsAndWarnings(tcConfigB)
+            delayForFlagsLogger.ForwardDelayedErrorsAndWarnings(tcConfigB, errorLoggerOpt)
             exiter.Exit 1
     
-    let errorLogger = ErrorLoggerThatQuitsAfterMaxErrors tcConfigB
+    let errorLogger = match errorLoggerOpt with None -> ErrorLoggerThatQuitsAfterMaxErrors tcConfigB | Some e -> e
 
     // Install the global error logger and never remove it. This logger does have all command-line flags considered.
     let _unwindEL_2 = PushErrorLoggerPhaseUntilUnwind (fun _ -> errorLogger)
@@ -1495,7 +1532,7 @@ let main1(argv,bannerAlreadyPrinted) =
         | Some v -> 
            match tcConfig.version with 
            | VersionNone -> Some v
-           | _ -> warning(Error(FSCstrings.SR.fscAssemblyVersionAttributeIgnored(),Range.rangeStartup)); None
+           | _ -> warning(Error(FSComp.SR.fscAssemblyVersionAttributeIgnored(),Range.rangeStartup)); None
         | _ -> None
 
     // write interface, xmldoc
@@ -1565,7 +1602,7 @@ let main2(Args(tcConfig,tcImports,frameworkTcImports : TcImports,tcGlobals,error
                                    yield! bytes
                                | _ -> 
                                    failwith "unreachable: expected a local resource" |]
-            let sigDataFileName = (Filename.chopExtension outfile)^".fsdata"
+            let sigDataFileName = (Filename.chopExtension outfile)+".fsdata"
             File.WriteAllBytes(sigDataFileName,bytes)
             [], []
         else
@@ -1576,19 +1613,27 @@ let main2(Args(tcConfig,tcImports,frameworkTcImports : TcImports,tcGlobals,error
     // data structures involved here are so large we can't take the risk.
     Args(tcConfig,tcImports,tcGlobals,errorLogger,generatedCcu,outfile,optimizedImpls,topAttrs,importMap,pdbfile,assemblyName, (sigDataAttributes, sigDataResources), generatedOptData,assemVerFromAttrib,signingInfo,metadataVersion)
 
+let mutable tcImportsCapture = None
+let mutable dynamicAssemblyCreator = None
 let main2b(Args(tcConfig:TcConfig,tcImports,tcGlobals,errorLogger,generatedCcu:CcuThunk,outfile,optimizedImpls,topAttrs,importMap,pdbfile,assemblyName,idata,generatedOptData,assemVerFromAttrib,signingInfo,metadataVersion)) = 
   
+    match tcImportsCapture with 
+    | None -> ()
+    | Some f -> f tcImports
     // Compute a static linker. 
     let ilGlobals = tcGlobals.ilg
     if tcConfig.standalone && generatedCcu.UsesQuotations then 
-        error(Error(FSCstrings.SR.fscQuotationLiteralsStaticLinking0(),rangeStartup));
+        error(Error(FSComp.SR.fscQuotationLiteralsStaticLinking0(),rangeStartup));
     let staticLinker = StaticLinker.StaticLink (tcConfig,tcImports,ilGlobals)
 
     ReportTime tcConfig "TAST -> ILX";
     use unwindBuildPhase = PushThreadBuildPhaseUntilUnwind  (BuildPhase.IlxGen)
     let ilxGenEnv = IlxgenEnvInit (tcConfig,tcImports,tcGlobals,generatedCcu)
 
-    let codegenResults = GenerateIlxCode (IlWriteBackend,false, false, false, tcGlobals, tcConfig,importMap, topAttrs, optimizedImpls, generatedCcu, generatedCcu.AssemblyName, ilxGenEnv)
+    let codegenResults = 
+        match dynamicAssemblyCreator with
+        | None -> GenerateIlxCode (IlWriteBackend, false, false, false, tcGlobals, tcConfig,importMap, topAttrs, optimizedImpls, generatedCcu, generatedCcu.AssemblyName, ilxGenEnv)
+        | Some _ -> GenerateIlxCode (IlReflectBackend, true, false, runningOnMono, tcGlobals, tcConfig,importMap, topAttrs, optimizedImpls, generatedCcu, generatedCcu.AssemblyName, ilxGenEnv)
     let securityAttrs,topAssemblyAttrs = topAttrs.assemblyAttrs |> List.partition (fun a -> Ilxgen.IsSecurityAttribute tcGlobals (tcImports.GetImportMap()) a rangeStartup)
     // remove any security attributes from the top-level assembly attribute list
     let topAttrs = {topAttrs with assemblyAttrs=topAssemblyAttrs}
@@ -1633,8 +1678,11 @@ let main3(Args(tcConfig,errorLogger:ErrorLogger,staticLinker,ilGlobals,ilxMainMo
 let main4(Args(tcConfig,errorLogger,ilGlobals,ilxMainModule,outfile,pdbfile,signingInfo)) = 
     ReportTime tcConfig "Write .NET Binary";
     use unwindBuildPhase = PushThreadBuildPhaseUntilUnwind (BuildPhase.Output)    
-    let pdbfile = pdbfile |> Option.map Path.GetFullPath
-    FileWriter.EmitIL (tcConfig,ilGlobals,errorLogger,outfile,pdbfile,ilxMainModule,signingInfo); 
+    let pdbfile = pdbfile |> Option.map Path.GetFullPathShim
+
+    match dynamicAssemblyCreator with 
+    | None -> FileWriter.EmitIL (tcConfig,ilGlobals,errorLogger,outfile,pdbfile,ilxMainModule,signingInfo); 
+    | Some da -> da (tcConfig,ilGlobals,errorLogger,outfile,pdbfile,ilxMainModule,signingInfo); 
 
     ReportTime tcConfig "Write Stats File";
     FileWriter.WriteStatsFile (tcConfig,outfile);
@@ -1643,8 +1691,31 @@ let main4(Args(tcConfig,errorLogger,ilGlobals,ilxMainModule,outfile,pdbfile,sign
     ReportTime tcConfig "Exiting"
 
 
-let mainCompile (argv,bannerAlreadyPrinted) = main1 (argv,bannerAlreadyPrinted) |> main2 |> main2b |> main2c |> main3 |> main4
+let mainCompile (argv,bannerAlreadyPrinted,errorLoggerOpt) = main1 (argv,bannerAlreadyPrinted,errorLoggerOpt) |> main2 |> main2b |> main2c |> main3 |> main4
 
+/// Collect the output from the stdout and stderr streams, character by character,
+/// recording the console color used along the way.
+type OutputCollector() = 
+    let output = ResizeArray()
+    let outWriter isOut = 
+        { new TextWriter() with 
+              member x.Write(c:char) = 
+                  lock output (fun () -> 
+#if SILVERLIGHT
+                      output.Add (isOut, None ,c)) 
+#else
+                      output.Add (isOut, (try Some System.Console.ForegroundColor with _ -> None) ,c)) 
+#endif
+              member x.Encoding = Encoding.UTF8 }
+#if FX_ATLEAST_SILVERLIGHT_50
+#else
+    do System.Console.SetOut (outWriter true)
+    do System.Console.SetError (outWriter false)
+#endif
+    member x.GetTextAndClear() = lock output (fun () -> let res = output.ToArray() in output.Clear(); res)
+
+#if SILVERLIGHT
+#else
 /// Implement the optional resident compilation service
 module FSharpResidentCompiler = 
 
@@ -1654,18 +1725,6 @@ module FSharpResidentCompiler =
     open System.Runtime.Remoting
     open System.Runtime.Remoting.Lifetime
 
-    /// Collect the output from the stdout and stderr streams, character by character,
-    /// recording the console color used along the way.
-    type private OutputCollector() = 
-        let output = ResizeArray()
-        let outWriter isOut = 
-            { new TextWriter() with 
-                 member x.Write(c:char) = lock output (fun () -> output.Add (isOut, (try Some System.Console.ForegroundColor with _ -> None) ,c)) 
-                 member x.Encoding = Encoding.UTF8 }
-        do System.Console.SetOut (outWriter true)
-        do System.Console.SetError (outWriter false)
-        member x.GetTextAndClear() = lock output (fun () -> let res = output.ToArray() in output.Clear(); res)
-
     /// The compilation server, which runs in the server process. Accessed by clients using .NET remoting.
     type FSharpCompilationServer()  =
         inherit MarshalByRefObject()  
@@ -1674,13 +1733,17 @@ module FSharpResidentCompiler =
             match System.Environment.OSVersion.Platform with 
             | PlatformID.Win32NT | PlatformID.Win32S | PlatformID.Win32Windows | PlatformID.WinCE -> true
             | _  -> false
-
+        // The channel/socket name is qualified by the user name (and domain on windows) plus a hash of information
+        // about the CLR, F# and F# compiler versions. We use different base channel names on mono and CLR as a
+        // CLR remoting process can't talk to a mono server
+        static let runtimeHash = hash (runningOnMono, 
+                                       typedefof<obj>.Assembly.Location, 
+                                       typedefof<list<_>>.Assembly.Location,
+                                       typedefof<FSharpCompilationServer>.Assembly.Location)
         // The channel/socket name is qualified by the user name (and domain on windows)
         static let domainName = if onWindows then Environment.GetEnvironmentVariable "USERDOMAIN" else ""
         static let userName = Environment.GetEnvironmentVariable (if onWindows then "USERNAME" else "USER") 
-        // Use different base channel names on mono and CLR as a CLR remoting process can't talk
-        // to a mono server
-        static let baseChannelName = if runningOnMono then "FSCChannelMono" else "FSCChannel"
+        static let baseChannelName = "FSCChannel" + string runtimeHash
         static let channelName = baseChannelName + "_" +  domainName + "_" + userName
         static let serverName = if runningOnMono then "FSCServerMono" else "FSCSever"
         static let mutable serverExists = true
@@ -1697,7 +1760,7 @@ module FSharpResidentCompiler =
                 let exitCode = 
                     try 
                         Environment.CurrentDirectory <- pwd
-                        mainCompile (argv, true); 
+                        mainCompile (argv, true, None); 
                         if !progress then printfn "server: finished compilation request, argv = %A" argv
                         0
                     with e -> 
@@ -1760,14 +1823,14 @@ module FSharpResidentCompiler =
                   // Add 0x00000180 (UserReadWriteExecute) to the access permissions on Unix
                   monoUnixFileInfo.InvokeMember("set_FileAccessPermissions", (BindingFlags.InvokeMethod ||| BindingFlags.Instance ||| BindingFlags.Public), null, fileEntry, [| box 0x00000180 |],System.Globalization.CultureInfo.InvariantCulture) |> ignore
 #if DEBUG
-                  printfn "server: good, set permissions on socket name '%s'"  socketName
+                  if !progress then printfn "server: good, set permissions on socket name '%s'"  socketName
                   let fileEntry = monoUnixFileInfo.InvokeMember("GetFileSystemEntry", (BindingFlags.InvokeMethod ||| BindingFlags.Static ||| BindingFlags.Public), null, null, [| box socketName |],System.Globalization.CultureInfo.InvariantCulture)
                   let currPermissions = monoUnixFileInfo.InvokeMember("get_FileAccessPermissions", (BindingFlags.InvokeMethod ||| BindingFlags.Instance ||| BindingFlags.Public), null, fileEntry, [| |],System.Globalization.CultureInfo.InvariantCulture) |> unbox<int>
                   if !progress then printfn "server: currPermissions = '%o' (octal)"  currPermissions
 #endif
               with e -> 
 #if DEBUG
-                  printfn "server: failed to set permissions on socket, perhaps on windows? Is is not needed there."  
+                  if !progress then printfn "server: failed to set permissions on socket, perhaps on windows? Is is not needed there."  
 #endif
                   ()
                   // Fail silently
@@ -1791,27 +1854,25 @@ module FSharpResidentCompiler =
                     if !progress then printfn "client: connected to existing service"
                     Some client
                 with _ ->
-                    let procInfo = 
+                    let shellName = 
                         if runningOnMono then
-                            let shellName, useShellExecute = 
-                                match System.Environment.GetEnvironmentVariable("FSC_MONO") with 
-                                | null -> 
-                                    if onWindows then 
-                                        Path.Combine(Path.GetDirectoryName (typeof<Object>.Assembly.Location), @"..\..\..\bin\mono.exe"), false
-                                    else
-                                        "mono", true
-                                | path -> path, false
+                        // e.g. "C:\Program Files\Mono-2.6.1\lib\mono\2.0\mscorlib.dll" --> "C:\Program Files\Mono-2.6.1\bin\mono.exe"
+                        // e.g. /opt/mono-2.10/lib/mono/2.0/mscorlib.dll --> /opt/mono-2.10/bin/mono
+                            Path.Combine(Path.Combine(Path.Combine(Path.Combine(Path.Combine(Path.GetDirectoryName (typeof<Object>.Assembly.Location), ".."), ".."), ".."), "bin"), (if onWindows then "mono.exe" else "mono"))
+                        else
+                            typeof<FSharpCompilationServer>.Assembly.Location
+                    let args = 
+                        if runningOnMono then 
+                            typeof<FSharpCompilationServer>.Assembly.Location + " /server"
                                      
-                            // e.g. "C:\Program Files\Mono-2.6.1\lib\mono\2.0\mscorlib.dll" --> "C:\Program Files\Mono-2.6.1\bin\mono.exe"
-                            ProcessStartInfo(FileName = shellName,
-                                             Arguments = typeof<FSharpCompilationServer>.Assembly.Location + " /server",
-                                             CreateNoWindow = true,
-                                             UseShellExecute = useShellExecute)
-                         else
-                            ProcessStartInfo(FileName=typeof<FSharpCompilationServer>.Assembly.Location,
-                                             Arguments = "/server",
-                                             CreateNoWindow = true,
-                                             UseShellExecute = false)
+                        else 
+                            "/server"
+
+                    let procInfo = 
+                        ProcessStartInfo(FileName = shellName,
+                                         Arguments = args,
+                                         CreateNoWindow = true,
+                                         UseShellExecute = not onWindows)
 
                     let cmdProcess = new Process(StartInfo=procInfo)
 
@@ -1850,7 +1911,7 @@ module FSharpResidentCompiler =
                         try client.Compile (pwd, argv) 
                         with e -> 
                            printfn "server error: %s" (e.ToString())
-                           raise (Error (FSCstrings.SR.fscRemotingError(), rangeStartup))
+                           raise (Error (FSComp.SR.fscRemotingError(), rangeStartup))
                         
                     if !progress then printfn "client: returned from client.Compile(%A), res = %d" argv exitCode
                     use holder = 
@@ -1892,7 +1953,7 @@ let main argv =
         match exitCodeOpt with 
         | Some exitCode -> exitCode
         | None -> 
-            mainCompile (argv, true)
+            mainCompile (argv, true, None)
             0
 
     elif runningOnMono && argv |> Array.exists  (fun x -> x = "/server" || x = "--server") then 
@@ -1902,5 +1963,6 @@ let main argv =
         0
         
     else
-        mainCompile (argv, false);
+        mainCompile (argv, false, None);
         0 
+#endif

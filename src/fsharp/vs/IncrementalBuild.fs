@@ -249,8 +249,11 @@ module internal IncrementalBuild =
                             
     /// Action timing
     module Time =     
+#if SILVERLIGHT
+        let Action<'T> taskname slot func : 'T =  func()
+#else
         let sw = new Stopwatch()
-        let Action<'T> taskname slot func : 'T= 
+        let Action<'T> taskname slot func : 'T = 
             if Trace.ShouldLog("IncrementalBuildWorkUnits") then 
                 let slotMessage = 
                     if slot= -1 then sprintf "%s" taskname
@@ -280,6 +283,7 @@ module internal IncrementalBuild =
                                                             spanGC.[min 2 maxGen])
                 result
             else func()            
+#endif
         
     /// Result of a particular action over the bound build tree
     [<NoEquality; NoComparison>]
@@ -948,7 +952,6 @@ module internal FsiGeneration =
     module Tc = Microsoft.FSharp.Compiler.TypeChecker
 
     open Microsoft.FSharp.Compiler.AbstractIL.Diagnostics 
-    open Internal.Utilities.Debug
 
     module Renderer =
       open Microsoft.FSharp.Compiler.Layout
@@ -1000,11 +1003,15 @@ module internal FsiGeneration =
     /// Compute a probably-safe directory where .fsi's can be generated without
     /// interfering with user files. We'll create a well-known-named directory
     /// in the system-reported temp path.
+#if SILVERLIGHT
+    let PathForGeneratedVisualStudioFSharpTempFiles = ""
+#else
     let PathForGeneratedVisualStudioFSharpTempFiles =
         let p = Path.Combine (Path.GetTempPath (), "MicrosoftVisualStudioFSharpTemporaryFiles")
         if not (Directory.Exists p)
            then Directory.CreateDirectory p |> ignore
         p
+#endif
 
     /// For an assembly stored in `<fullpath-to>\<name>.dll`, generate the .fsi
     /// into `<project-path>\<name>.temp.fsi`
@@ -1034,7 +1041,7 @@ module internal FsiGeneration =
 
       let fixedName = nameFixer s
       match Map.tryFind fixedName !gotoCache with
-      | Some (Some (outName, _, _) as res) when Internal.Utilities.FileSystem.File.SafeExists outName -> res
+      | Some (Some (outName, _, _) as res) when File.SafeExists outName -> res
       | Some None                                                   -> None
       | _                                                           -> 
          let res =
@@ -1055,7 +1062,7 @@ module internal FsiGeneration =
              match relevantCcus with
              | []      -> None
              | c :: cs -> 
-                if Internal.Utilities.FileSystem.File.SafeExists outName
+                if File.SafeExists outName
                    then File.SetAttributes (outName, FileAttributes.Temporary)
                         File.Delete outName
 
@@ -1096,7 +1103,6 @@ module internal IncrementalFSharpBuild =
     module Tc = Microsoft.FSharp.Compiler.TypeChecker
 
     open Microsoft.FSharp.Compiler.AbstractIL.Diagnostics 
-    open Internal.Utilities.Debug
 
     // This type is designed to be a lightweight way to instrument the most recent filenames that the
     // IncrementalBuilder did a parse/typecheck of, so we can more easily unittest/debug the 
@@ -1177,9 +1183,13 @@ module internal IncrementalFSharpBuild =
     /// to enable other requests to be serviced. Yielding means returning a continuation function
     /// (via an Eventually<_> value of case NotYetDone) that can be called as the next piece of work. 
     let maxTimeShareMilliseconds = 
+#if SILVERLIGHT
+        50L
+#else
         match System.Environment.GetEnvironmentVariable("mFSharp_MaxTimeShare") with 
         | null | "" -> 50L
         | s -> int64 s
+#endif
 
       
     /// Global service state
@@ -1294,11 +1304,11 @@ module internal IncrementalFSharpBuild =
             (sourceFiles,flags) ||> List.map2 (fun (m,nm) flag -> (m,nm,flag))
         
         // Get the original referenced assembly names
-        System.Diagnostics.Debug.Assert(not((sprintf "%A" nonFrameworkResolutions).Contains("System.dll")),sprintf "Did not expect a system import here. %A" nonFrameworkResolutions)
+        // System.Diagnostics.Debug.Assert(not((sprintf "%A" nonFrameworkResolutions).Contains("System.dll")),sprintf "Did not expect a system import here. %A" nonFrameworkResolutions)
         
         /// Get the timestamp of the given file name.
         let StampFilename (_m:range, filename:string, _isLastCompiland:bool) =
-            File.GetLastWriteTime(filename)
+            File.GetLastWriteTimeShim(filename)
                             
         /// Parse the given files and return the given inputs. This function is expected to be
         /// able to be called with a subset of sourceFiles and return the corresponding subset of
@@ -1327,8 +1337,8 @@ module internal IncrementalFSharpBuild =
                          |> List.map(fun r ->
                             let originaltimestamp = 
                                 try 
-                                    if Internal.Utilities.FileSystem.File.SafeExists(r.resolvedPath) then
-                                        let result = File.GetLastWriteTime(r.resolvedPath)
+                                    if File.SafeExists(r.resolvedPath) then
+                                        let result = File.GetLastWriteTimeShim(r.resolvedPath)
                                         Trace.Print("FSharpBackgroundBuildVerbose", fun _ -> sprintf "Found referenced assembly '%s'.\n" r.resolvedPath)
                                         result
                                     else
@@ -1349,8 +1359,8 @@ module internal IncrementalFSharpBuild =
             use s = sDisposable
             let timestamp = 
                 try
-                    if Internal.Utilities.FileSystem.File.SafeExists(filename) then
-                        let ts = File.GetLastWriteTime(filename)
+                    if File.SafeExists(filename) then
+                        let ts = File.GetLastWriteTimeShim(filename)
                         if ts<>originaltimestamp then 
                             Trace.PrintLine("FSharpBackgroundBuildVerbose", fun _ -> sprintf "Noticing change in timestamp of file %s from %A to %A" filename originaltimestamp ts)
                         else    
@@ -1461,7 +1471,7 @@ module internal IncrementalFSharpBuild =
             sourceFiles  |> List.map (fun (_,f,_) -> {Filename =  f ; ExistenceDependency = true; IncrementalBuildDependency = true })               
         let fileDependencies = List.concat [unresolvedFileDependencies;resolvedFileDependencies;sourceFileDependencies]
 #if DEBUG
-        resolvedFileDependencies |> List.iter (fun x -> System.Diagnostics.Debug.Assert(System.IO.Path.IsPathRooted(x.Filename), sprintf "file dependency should be absolute path: '%s'" x.Filename))
+        resolvedFileDependencies |> List.iter (fun x -> System.Diagnostics.Debug.Assert(System.IO.Path.IsPathRootedShim(x.Filename), sprintf "file dependency should be absolute path: '%s'" x.Filename))
 #endif        
         
         // ---------------------------------------------------------------------------------------------            
@@ -1528,7 +1538,7 @@ module internal IncrementalFSharpBuild =
         let CompareFileNames (_,f1,_) (_,f2,_) = 
             let result = 
                    System.String.Compare(f1,f2,StringComparison.CurrentCultureIgnoreCase)=0
-                || System.String.Compare(Path.GetFullPath(f1),Path.GetFullPath(f2),StringComparison.CurrentCultureIgnoreCase)=0
+                || System.String.Compare(Path.GetFullPathShim(f1),Path.GetFullPathShim(f2),StringComparison.CurrentCultureIgnoreCase)=0
             result
         GetSlotByInput("Filenames",(rangeStartup,filename,false),build,CompareFileNames)
         

@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2010 Microsoft Corporation. 
+// Copyright (c) 2002-2011 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -1038,12 +1038,14 @@ val mkCons : TcGlobals -> TType -> Expr -> Expr -> Expr
 //------------------------------------------------------------------------- 
 
 val mkSeq  : SequencePointInfoForSeq -> range -> Expr -> Expr -> Expr
-val mkCompGenSeq  : range -> Expr -> Expr -> Expr
+val mkCompGenSequential  : range -> Expr -> Expr -> Expr
 val mkSeqList : SequencePointInfoForSeq -> TcGlobals -> range -> Exprs -> Expr   
 val mkRecordExpr : TcGlobals -> RecordConstructionInfo * TyconRef * TypeInst * RecdFieldRef list * Exprs * range -> Expr
 val mkUnbox : TType -> Expr -> range -> Expr
+val mkBox : TType -> Expr -> range -> Expr
 val mkIsInst : TType -> Expr -> range -> Expr
 val mkNull : range -> TType -> Expr
+val mkNullTest : TcGlobals -> range -> Expr -> Expr -> Expr -> Expr
 val mkNonNullTest : TcGlobals -> range -> Expr -> Expr
 val mkIsInstConditional : TcGlobals -> range -> TType -> Expr -> Val -> Expr -> Expr -> Expr
 val mkThrow   : range -> TType -> Expr -> Expr

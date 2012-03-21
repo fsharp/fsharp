@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2010 Microsoft Corporation. 
+// Copyright (c) 2002-2011 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -193,3 +193,67 @@ module ExtraTopLevelOperators =
     [<CompiledName("LazyPattern")>]
     let (|Lazy|) (x:Lazy<_>) = x.Force()
 
+#if EXTRAS_FOR_SILVERLIGHT_COMPILER
+namespace Microsoft.FSharp
+
+    open Microsoft.FSharp.Core
+    open Microsoft.FSharp.Core.Operators
+    open ExtraTopLevelOperators
+    open System
+    open System.Collections.Generic
+    open System.Threading
+
+    [<StructuralEquality; NoComparison>]
+    exception UserInterrupt
+
+    [<NoComparison>]
+    type Silverlight() =
+        static let threadsToKill = HashSet<int>()
+        static let mutable isNotEmpty = false
+        static let mutable emitChecks = false
+
+        static member EmitInterruptChecks with get() = emitChecks and set b = emitChecks <- b
+
+        static member InterruptThread(id) =
+            isNotEmpty <- true
+            threadsToKill.Add(id) |> ignore
+
+        static member ResumeThread(id) =
+            threadsToKill.Remove(id) |> ignore
+            isNotEmpty <- threadsToKill.Count > 0
+
+        static member CheckInterrupt() =
+            if isNotEmpty then
+                let id = Thread.CurrentThread.ManagedThreadId
+                if threadsToKill.Contains(id) then raise UserInterrupt
+
+        static member WriteLine() = printfn ""
+        static member WriteLine(value2: string) = printfn "%s" value2
+        static member WriteLine(value: obj) = printfn "%O" value
+        static member WriteLine(value3: int) = printfn "%d" value3
+        static member WriteLine(format: string, arg0: obj) =
+            printfn "%s" (String.Format(format, arg0))
+        static member WriteLine(format: string, arg0: obj, arg1:obj) =
+            printfn "%s" (String.Format(format, arg0, arg1))
+        static member WriteLine(format: string, arg0: obj, arg1:obj, arg2: obj) =
+            printfn "%s" (String.Format(format, arg0, arg1, arg2))
+        static member WriteLine(format: string, arg0: obj, arg1:obj, arg2: obj, arg3: obj) =
+            printfn "%s" (String.Format(format, arg0, arg1, arg2, arg3))
+        static member WriteLine(format: string, [<ParamArray>] arg: obj[]) =
+            printfn "%s" (String.Format(format, arg))
+
+        static member Write(value2: string) = printf "%s" value2
+        static member Write(value: obj) = printf "%O" value
+        static member Write(value3: int) = printf "%d" value3
+        static member Write(format: string, arg0: obj) =
+            printf "%s" (String.Format(format, arg0))
+        static member Write(format: string, arg0: obj, arg1:obj) =
+            printf "%s" (String.Format(format, arg0, arg1))
+        static member Write(format: string, arg0: obj, arg1:obj, arg2: obj) =
+            printf "%s" (String.Format(format, arg0, arg1, arg2))
+        static member Write(format: string, arg0: obj, arg1:obj, arg2: obj, arg3: obj) =
+            printf "%s" (String.Format(format, arg0, arg1, arg2, arg3))
+        static member Write(format: string, [<ParamArray>] arg: obj[]) =
+            printf "%s" (String.Format(format, arg))
+
+#endif

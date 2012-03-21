@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2010 Microsoft Corporation. 
+// Copyright (c) 2002-2011 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -627,7 +627,7 @@ type Entity =
                         | _ -> None 
                     TyrepNamed (ilTypeRef, boxity, ilTypeOpt))
 
-    member x.CompiledRepresentationForTyrepNamed =
+    member x.CompiledRepresentationForNamedType =
         match x.CompiledRepresentation with 
         | TyrepNamed(tref, _, _) -> tref
         | TyrepOpen _ -> invalidOp (FSComp.SR.tastTypeHasAssemblyCodeRepresentation(x.DisplayNameWithUnderscoreTypars))
@@ -1864,7 +1864,7 @@ and
 
 
     member x.CompiledRepresentation = x.Deref.CompiledRepresentation
-    member x.CompiledRepresentationForTyrepNamed = x.Deref.CompiledRepresentationForTyrepNamed
+    member x.CompiledRepresentationForNamedType = x.Deref.CompiledRepresentationForNamedType
     member x.LogicalName = x.Deref.LogicalName
     member x.CompiledName = x.Deref.CompiledName
     member x.DisplayName = x.Deref.DisplayName

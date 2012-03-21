@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2010 Microsoft Corporation. 
+// Copyright (c) 2002-2011 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -47,6 +47,83 @@ let report (oc:TextWriter) = !reportRef oc
 let checking = false  
 let logging = false
 let _ = if checking then dprintn "warning : Ilread.checking is on"
+
+// SILVERLIGHT-TODO: Test :)
+#if SILVERLIGHT
+
+// SILVERLIGHT-TODO: Use MemChannel instead
+module MemoryMapping = 
+
+    open System
+    open System.IO
+    open Microsoft.FSharp.NativeInterop
+
+    type HANDLE = nativeint
+    type ADDR   = nativeint
+    type SIZE_T = nativeint
+    
+    //type mmap = { bytes : byte [] ref ; start : nativeint }
+    
+let bytesToWord ((b0 : byte) , (b1 : byte)) = 
+    (int16)b0 ||| ((int16)b1 <<< 8)
+let bytesToDWord ((b0 : byte) , (b1 : byte) , (b2 : byte) , (b3 : byte)) =  
+    (int)b0 ||| ((int)b1 <<< 8) ||| ((int)b2 <<< 16) ||| ((int)b3 <<< 24)
+let bytesToQWord ((b0 : byte) , (b1 : byte) , (b2 : byte) , (b3 : byte) , (b4 : byte) , (b5 : byte) , (b6 : byte) , (b7 : byte)) =
+    (int64)b0 ||| ((int64)b1 <<< 8) ||| ((int64)b2 <<< 16) ||| ((int64)b3 <<< 24) ||| ((int64)b4 <<< 32) ||| ((int64)b5 <<< 40) ||| ((int64)b6 <<< 48) ||| ((int64)b7 <<< 56)
+    
+let dwToBytes n = [| (byte)(n &&& 0xff) ; (byte)((n >>> 8) &&& 0xff) ; (byte)((n >>> 16) &&& 0xff) ; (byte)((n >>> 24) &&& 0xff) |], 4
+let wToBytes (n : int16) = [| (byte)(n &&& 0xffs) ; (byte)((n >>> 8) &&& 0xffs) |], 2
+
+    
+type MemoryMappedFile(hMap: MemoryMapping.HANDLE, start:nativeint, bytes:byte[]) =
+    
+    let mutable bytes = bytes
+    member m.Bytes = bytes        
+    
+    // SILVERLIGHT-TODO: For now, can only read files from the XAP    
+    // SILVERLIGHT-TODO: Dispose?
+    static member Create fileName  =
+        //printf "fileName = %s\n" fileName;
+        MemoryMappedFile(0n,0n,File.ReadAllBytesShim fileName)
+        
+    member m.derefByte (p:nativeint) =
+        m.Bytes.[(int)p]       
+        
+    member m.Addr (i:int) : nativeint = 
+       start + nativeint i
+
+    member m.ReadByte i = 
+        m.derefByte (m.Addr i)
+
+    member m.ReadBytes i len = 
+        let res = Bytes.zeroCreate len
+        Bytes.blit (m.Bytes) i res 0 len
+        res
+      
+    member m.ReadInt32 i =
+         bytesToDWord (((m.Bytes).[i]), ((m.Bytes).[i+1]), ((m.Bytes).[i+2]), ((m.Bytes).[i+3]))
+        //NativePtr.read (NativePtr.ofNativeInt<int32> (addr m i)) 
+
+    member m.ReadUInt16 i = 
+        bytesToWord (((m.Bytes).[i]), ((m.Bytes).[i+1])) |> uint16
+        //NativePtr.read (NativePtr.ofNativeInt<uint16> (addr m i)) |> uint16
+
+    member m.Close() = 
+        bytes <- Array.empty<byte>
+
+    member m.CountUtf8String i = 
+        let start = m.Addr i  
+        let mutable p = start 
+        while m.ReadByte ((int)p) <> 0uy do
+            p <- p + 1n
+        int (p - start) 
+
+    member m.ReadUTF8String i = 
+        let n = m.CountUtf8String i
+        let bytes = m.ReadBytes i n
+        System.Text.Encoding.UTF8.GetString(bytes,0,bytes.Length)
+
+#else
 
 /// Read file from memory mapped files
 module MemoryMapping = 
@@ -153,6 +230,7 @@ type MemoryMappedFile(hMap: MemoryMapping.HANDLE, start:nativeint) =
         let n = m.CountUtf8String i
         new System.String(NativePtr.ofNativeInt (m.Addr i), 0, n, System.Text.Encoding.UTF8)
 
+#endif // SILVERLIGHT
 
 type MMapChannel = 
     { mutable mmPos: int;
@@ -196,7 +274,7 @@ type MemChannel =
       mcBlocks: byte[] }
 
     static member OpenIn f = 
-        let mcBlocks = System.IO.File.ReadAllBytes f
+        let mcBlocks = System.IO.File.ReadAllBytesShim f
         { mcPos = 0; mcBlocks = mcBlocks }
 
     member mc.InputByte() = 
@@ -332,7 +410,7 @@ let seekReadUTF8String is addr =
     | _ -> 
       let n = countUtf8String is 0
       let bytes = seekReadBytes is addr (n)
-      System.Text.Encoding.UTF8.GetString bytes
+      System.Text.Encoding.UTF8.GetString (bytes, 0, bytes.Length)
 
 let readBlob is = 
     let len = readCompressedUInt32 is
@@ -344,7 +422,8 @@ let seekReadBlob is addr =
     
 let readUserString is = 
     let len = readCompressedUInt32 is
-    System.Text.Encoding.Unicode.GetString (readBytes is (len - 1))
+    let bytes = readBytes is (len - 1)
+    System.Text.Encoding.Unicode.GetString(bytes, 0, bytes.Length)
     
 let seekReadUserString is addr = 
     seek is addr;
@@ -512,7 +591,7 @@ let sigptrGetBytes n (bytes:byte[]) sigptr =
 
 let sigptrGetString n bytes sigptr = 
     let bytearray,sigptr = sigptrGetBytes n bytes sigptr
-    System.Text.Encoding.UTF8.GetString bytearray,sigptr
+    (System.Text.Encoding.UTF8.GetString(bytearray, 0, bytearray.Length)),sigptr
    
 
 // -------------------------------------------------------------------- 
@@ -1555,6 +1634,9 @@ let readBlobHeapAsDouble ctxt vidx = fst (sigptrGetDouble (readBlobHeap ctxt vid
 // ----------------------------------------------------------------------*)
 
 
+#if SILVERLIGHT
+let readNativeResources _ctxt = [] 
+#else  
 let readNativeResources ctxt = 
     let nativeResources = 
         if ctxt.nativeResourcesSize = 0x0 || ctxt.nativeResourcesAddr = 0x0 then 
@@ -1564,6 +1646,7 @@ let readNativeResources ctxt =
                      unlinkResource ctxt.nativeResourcesAddr linkedResource)) ]
     nativeResources
    
+#endif   
 let dataEndPoints ctxtH = 
     lazy
         let ctxt = getHole ctxtH
@@ -2598,6 +2681,9 @@ and seekReadCustomAttr ctxt (TaggedIndex(cat,idx),b) =
 and seekReadCustomAttrUncached ctxtH (CustomAttrIdx (cat,idx,valIdx)) = 
     let ctxt = getHole ctxtH
     { Method=seekReadCustomAttrType ctxt (TaggedIndex(cat,idx));
+    #if SILVERLIGHT
+      Arguments = [], []
+    #endif
       Data=
         match readBlobHeapOption ctxt valIdx with
         | Some bytes -> bytes
@@ -2628,7 +2714,10 @@ and seekReadConstant ctxt idx =
                                       (fun (_,key,_) -> key), 
                                       hcCompare idx,isSorted ctxt TableNames.Constant,(fun (kind,_,v) -> kind,v))
   match kind with 
-  | x when x = uint16 et_STRING -> ILFieldInit.String (System.Text.Encoding.Unicode.GetString (readBlobHeap ctxt vidx))  
+  | x when x = uint16 et_STRING -> 
+    let blobHeap = readBlobHeap ctxt vidx
+    let s = System.Text.Encoding.Unicode.GetString(blobHeap, 0, blobHeap.Length)
+    ILFieldInit.String (s)  
   | x when x = uint16 et_BOOLEAN -> ILFieldInit.Bool (readBlobHeapAsBool ctxt vidx) 
   | x when x = uint16 et_CHAR -> ILFieldInit.Char (readBlobHeapAsUInt16 ctxt vidx) 
   | x when x = uint16 et_I1 -> ILFieldInit.Int8 (readBlobHeapAsSByte ctxt vidx) 
@@ -2959,6 +3048,10 @@ and seekReadMethodRVA ctxt (idx,nm,_internalcall,noinline,numtypars) rva =
        //    -- an overall range for the method 
        //    -- the sequence points for the method 
        let localPdbInfos, methRangePdbInfo, seqpoints = 
+#if SILVERLIGHT
+            ignore idx
+            [], None, []
+#else            
            match ctxt.pdb with 
            | None -> 
                [], None, []
@@ -3016,6 +3109,7 @@ and seekReadMethodRVA ctxt (idx,nm,_internalcall,noinline,numtypars) rva =
                    // "* Warning: PDB info for method "+nm+" could not be read and will be ignored: "+e.Message
                    [],None,[]
          
+#endif // SILVERLIGHT       
        
        let baseRVA = ctxt.anyV2P("method rva",rva)
        // ": reading body of method "+nm+" at rva "+string rva+", phys "+string baseRVA
@@ -3315,6 +3409,9 @@ and seekReadTopExportedTypes ctxt () =
            List.rev !res)
          
 let getPdbReader opts infile =  
+#if SILVERLIGHT
+    None
+#else         
     match opts.pdbPath with 
     | None -> None
     | Some pdbpath ->
@@ -3334,6 +3431,7 @@ let getPdbReader opts infile =
               let docfun url = if tab.ContainsKey url then tab.[url] else failwith ("Document with URL "+url+" not found in list of documents in the PDB file")
               Some (pdbr, docfun)
           with e -> dprintn ("* Warning: PDB file could not be read and will be ignored: "+e.Message); None         
+#endif
       
 //-----------------------------------------------------------------------
 // Crack the binary headers, build a reader context and return the lazy
@@ -3985,10 +4083,9 @@ let rec genOpenBinaryReader infile is opts =
                  countGenericParamConstraint = countGenericParamConstraint;              
                  countMethodSpec             = countMethodSpec;  } 
     ctxtH := Some ctxt;
-     
-    let ilModule = seekReadModule ctxt (subsys,ilOnly,only32,only64,platform,isDll, alignVirt,alignPhys,imageBaseReal,System.Text.Encoding.UTF8.GetString ilMetadataVersion) 1
-    let ilAssemblyRefs = lazy [ for i in 1 .. getNumRows TableNames.AssemblyRef do yield seekReadAssemblyRef ctxt i ]
-    
+    let mdstr = System.Text.Encoding.UTF8.GetString(ilMetadataVersion, 0, ilMetadataVersion.Length)
+    let ilModule = seekReadModule ctxt (subsys,ilOnly,only32,only64,platform,isDll, alignVirt,alignPhys,imageBaseReal,mdstr) 1
+    let ilAssemblyRefs = lazy [ for i in 1 .. getNumRows (TableNames.AssemblyRef) do yield seekReadAssemblyRef ctxt i ]
     ilModule,ilAssemblyRefs,pdb
   
 let CloseILModuleReader x = x.dispose()
@@ -4012,7 +4109,8 @@ let OpenILModuleReader infile opts =
             | Some (pdbr,_) -> pdbReadClose pdbr
             | None -> ()) }
     with :? System.DllNotFoundException ->
-        let is = new BinaryReader(new FileStream(infile,FileMode.Open,FileAccess.Read,FileShare.Read,0x1000,false))
+        let stream = System.IO.File.NewFileStreamShim infile
+        let is = new BinaryReader(stream)
         let cell = ref (Some is)
         let modul,ilAssemblyRefs,pdb = genOpenBinaryReader infile (Chan (infile,cell)) opts
         { modul = modul; 
@@ -4032,7 +4130,7 @@ let ilModuleReaderCache =
 let OpenILModuleReaderAfterReadingAllBytes infile opts = 
     // Use GetDirectoryName and GetFileName to pseudo-normalize the paths.
     let key,succeeded = 
-        try (Path.GetFullPath(infile), File.GetLastWriteTime(infile)), true
+        try (Path.GetFullPathShim(infile), File.GetLastWriteTimeShim(infile)), true
         with e -> 
             System.Diagnostics.Debug.Assert(false, "Failed to compute key in OpenILModuleReaderAfterReadingAllBytes cache. Falling back to uncached.") 
             ("",System.DateTime.Now), false

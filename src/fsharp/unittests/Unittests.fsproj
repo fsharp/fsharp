@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <!--
-# Copyright (c) 2002-2010 Microsoft Corporation. 
+# Copyright (c) 2002-2011 Microsoft Corporation. 
 #
 # This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 # copy of the license can be found in the License.html file at the root of this distribution. 
@@ -62,7 +62,7 @@
     <Reference Include="Microsoft.Build.Utilities" />
     <Reference Include="Microsoft.Build.Utilities.v3.5" />
     <Reference Include="nunit.framework" />
-    <Reference Include="System.Net" Condition="'$(TargetFramework)' == 'Silverlight\2.0' OR '$(TargetFramework)' == 'Silverlight\3.0' OR '$(TargetFramework)' == 'WindowsPhone7\Silverlight\4.0'" />
+    <Reference Include="System.Net" Condition="'$(TargetFramework)' == 'Silverlight\2.0' OR '$(TargetFramework)' == 'Silverlight\3.0' OR '$(TargetFramework)' == 'WindowsPhone7\Silverlight\4.0' OR '$(TargetFramework)' == 'Silverlight\4.0' OR '$(TargetFramework)' == 'Silverlight\5.0' " />
     <ProjectReference Include="..\Fsc\Fsc.fsproj">
       <Name>Fsc</Name>
       <Project>{C94C257C-3C0A-4858-B5D8-D746498D1F08}</Project>

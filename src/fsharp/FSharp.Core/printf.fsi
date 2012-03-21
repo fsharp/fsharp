@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2010 Microsoft Corporation. 
+// Copyright (c) 2002-2011 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -71,6 +71,7 @@ type Format<'Printer,'State,'Residue,'Result,'Tuple> = PrintfFormat<'Printer,'St
 ///  <c>
 ///     %b:         bool, formatted as "true" or "false"
 ///     %s:         string, formatted as its unescaped contents
+///     %c:         character literal
 ///     %d, %i:     any basic integer type formatted as a decimal integer, signed if the basic integer type is signed.
 ///     %u:         any basic integer type formatted as an unsigned decimal integer
 ///     %x, %X, %o: any basic integer type formatted as an unsigned hexadecimal 
@@ -258,3 +259,6 @@ module Printf =
     /// <returns>The arguments of the formatter.</returns>
     [<CompiledName("PrintFormatToStringThenFail")>]
     val failwithf: format:StringFormat<'T,'Result> -> 'T
+    
+    val setWriter: System.IO.TextWriter -> unit
+    val setError:  System.IO.TextWriter -> unit

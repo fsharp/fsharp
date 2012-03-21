@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <!--
-# Copyright (c) 2002-2010 Microsoft Corporation. 
+# Copyright (c) 2002-2011 Microsoft Corporation. 
 #
 # This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 # copy of the license can be found in the License.html file at the root of this distribution. 
@@ -55,7 +55,7 @@
       <Name>nunit.framework</Name>
       <AssemblyName>nunit.framework.dll</AssemblyName>
     </Reference>
-    <Reference Include="NUnitFramework" Condition="'$(TargetFramework)' == 'Silverlight\2.0'  OR '$(TargetFramework)' == 'Silverlight\3.0' OR '$(TargetFramework)' == 'Silverlight\4.0' OR '$(TargetFramework)' == 'WindowsPhone7\Silverlight\4.0'">
+    <Reference Include="NUnitFramework" Condition="'$(TargetFramework)' == 'Silverlight\2.0'  OR '$(TargetFramework)' == 'Silverlight\3.0' OR '$(TargetFramework)' == 'Silverlight\4.0' OR '$(TargetFramework)' == 'Silverlight\5.0' OR '$(TargetFramework)' == 'WindowsPhone7\Silverlight\4.0'">
       <Name>NUnitFramework</Name>
       <AssemblyName>NUnitFramework.dll</AssemblyName>
       <HintPath>$(FSharpSourcesRoot)\..\tools\nunit.Silverlight\NUnitFramework.dll</HintPath>
@@ -69,7 +69,7 @@
     <!-- BigInteger is in System.Numerics on .NET 4.0 -->
     <Reference Include="System.Numerics" Condition="'$(TargetFramework)' == 'cli\4.0'" />
     <!-- WebClient and WebRequest are in System.Net on Silverlight 2.0-4.0 -->
-    <Reference Include="System.Net" Condition="'$(TargetFramework)' == 'Silverlight\2.0' OR '$(TargetFramework)' == 'Silverlight\3.0' OR '$(TargetFramework)' == 'Silverlight\4.0' OR '$(TargetFramework)' == 'WindowsPhone7\Silverlight\4.0'"/>
+    <Reference Include="System.Net" Condition="'$(TargetFramework)' == 'Silverlight\2.0' OR '$(TargetFramework)' == 'Silverlight\3.0' OR '$(TargetFramework)' == 'Silverlight\4.0' OR '$(TargetFramework)' == 'Silverlight\5.0' OR '$(TargetFramework)' == 'WindowsPhone7\Silverlight\4.0'"/>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="LibraryTestFx.fs" />

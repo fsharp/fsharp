@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2010 Microsoft Corporation. 
+// Copyright (c) 2002-2011 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -17,8 +17,15 @@
 /// The implementation of the functions can be found in ilsupp-*.fs
 
 module internal Microsoft.FSharp.Compiler.AbstractIL.Internal.Support
+type PdbReader
+type PdbWriter
+val pdbReadClose: PdbReader -> unit
+val pdbInitialize : string -> string -> PdbWriter
+val absilWriteGetTimeStamp: unit -> int32
 
 
+#if SILVERLIGHT
+#else
 open System
 open System.Runtime.InteropServices
 open System.Diagnostics.SymbolStore
@@ -56,7 +63,6 @@ val linkNativeResources: unlinkedResources:byte[] list ->  rva:int32 -> PEFileTy
 val unlinkResource: int32 -> byte[] -> byte[]
 
 /// PDB reader and associated types
-type PdbReader
 type PdbDocument
 type PdbMethod
 type PdbVariable
@@ -107,7 +113,6 @@ val clrVersion: unit -> string
 // PDB writer.
 //---------------------------------------------------------------------
 
-type PdbWriter
 type PdbDocumentWriter
 
 type idd =
@@ -137,7 +142,6 @@ val pdbGetDebugInfo: PdbWriter -> idd
 // Misc writing support
 //---------------------------------------------------------------------
 
-val absilWriteGetTimeStamp: unit -> int32
 
 //---------------------------------------------------------------------
 // Strong name signing
@@ -155,3 +159,4 @@ val signerCloseKeyContainer: keyContainerName -> unit
 val signerSignatureSize: pubkey -> int 
 val signerSignFileWithKeyPair: string -> keyPair -> unit 
 val signerSignFileWithKeyContainer: string -> keyContainerName -> unit 
+#endif

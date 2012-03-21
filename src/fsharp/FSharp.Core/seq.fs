@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2010 Microsoft Corporation. 
+// Copyright (c) 2002-2011 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -149,7 +149,12 @@ namespace Microsoft.FSharp.Collections
                            true
                         else 
                            false
-                     member this.Dispose() = e1.Dispose(); e2.Dispose()
+                     member this.Dispose() = 
+                        try 
+                            e1.Dispose() 
+                        finally
+                            e2.Dispose()
+
               }
 
 
@@ -265,7 +270,7 @@ namespace Microsoft.FSharp.Collections
           let start() = if not !started then (started := true) 
 
           let dispose() = readAndClear state |> Option.iter closef
-          let finish() = (dispose(); curr := None) 
+          let finish() = (try dispose() finally curr := None)
           {  new IEnumerator<'U> with 
                  member x.Current = getCurr()
              interface IEnumerator with 
@@ -329,8 +334,13 @@ namespace Microsoft.FSharp.Collections
                 member x.Current = (e :> IEnumerator).Current
                 member x.MoveNext() = e.MoveNext()
                 member x.Reset() = noReset()
-            interface System.IDisposable with
-                member x.Dispose() = f(); e.Dispose()  }
+            interface IDisposable with
+                member x.Dispose() = 
+                    try
+                        e.Dispose()  
+                    finally
+                        f()
+          }
 
     // Use generators for some implementations of IEnumerables.
     //
@@ -617,19 +627,33 @@ namespace Microsoft.FSharp.Core.CompilerServices
 
             member x.Finish() = 
                 finished <- true
-                match currInnerEnum with 
-                | null -> ()
-                | _ -> 
-                    currInnerEnum.Dispose()
-                    currInnerEnum <- null
-                match outerEnum with 
-                | null -> ()
-                | _ -> 
-                    outerEnum.Dispose()
-                    outerEnum <- null
-                for f in compensations do
-                   f()
-                compensations <- []
+                try
+                    match currInnerEnum with 
+                    | null -> ()
+                    | _ -> 
+                        try
+                            currInnerEnum.Dispose()
+                        finally
+                            currInnerEnum <- null
+                finally
+                    try
+                        match outerEnum with 
+                        | null -> ()
+                        | _ -> 
+                            try
+                                outerEnum.Dispose()
+                            finally
+                                outerEnum <- null
+                    finally
+                        let rec iter comps =
+                            match comps with
+                            |   [] -> ()
+                            |   h::t ->
+                                    try h() finally iter t
+                        try
+                            compensations |> List.rev |> iter
+                        finally
+                            compensations <- []
                 
             member x.GetCurrent() = 
                 IEnumerator.check started;
@@ -763,7 +787,7 @@ namespace Microsoft.FSharp.Core.CompilerServices
                            { new GeneratedSequenceBase<'T>() with 
                                  member x.GetFreshEnumerator() = e
                                  member x.GenerateNext(_) = if e.MoveNext() then 1 else 0 
-                                 member x.Close() = e.Dispose(); active.Close()
+                                 member x.Close() = try e.Dispose() finally active.Close()
                                  member x.CheckClose = true
                                  member x.LastGenerated = e.Current }
                  redirect <- true
