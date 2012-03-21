@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2010 Microsoft Corporation. 
+// Copyright (c) 2002-2011 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -18,6 +18,7 @@ module internal Microsoft.FSharp.Compiler.UnicodeLexing
 
 open Internal.Utilities
 open System.IO 
+open Microsoft.FSharp.Compiler.AbstractIL.Internal.Library 
 
 open Internal.Utilities.Text.Lexing
 
@@ -52,11 +53,16 @@ let UnicodeFileAsLexbuf (filename,codePage : int option, retryLocked:bool) :  Le
     let rec getSource retryNumber =
       try 
         // Use the .NET functionality to auto-detect the unicode encoding
-        use stream = Internal.Utilities.FileSystem.File.SafeNewFileStream(filename,FileMode.Open,FileAccess.Read,FileShare.ReadWrite) 
+        use stream = System.IO.File.NewFileStreamShim(filename) 
         use reader = 
             match codePage with 
             | None -> new  StreamReader(stream,true)
+// SILVERLIGHT-TODO: Bug?
+#if SILVERLIGHT
+            | Some n -> new  StreamReader(stream,System.Text.Encoding.GetEncoding(n.ToString()))             
+#else            
             | Some n -> new  StreamReader(stream,System.Text.Encoding.GetEncoding(n)) 
+#endif            
         reader.ReadToEnd()
       with 
           // We can get here if the file is locked--like when VS is saving a file--we don't have direct

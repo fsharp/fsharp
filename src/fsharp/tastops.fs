@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2010 Microsoft Corporation. 
+// Copyright (c) 2002-2011 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -4063,6 +4063,38 @@ end
 // DEBUG layout
 //---------------------------------------------------------------------------
 
+#if SILVERLIGHT
+
+module DebugPrint = 
+    let valRefL (x : ValRef) = wordL (string x)
+    let unionCaseRefL (x : UnionCaseRef) = wordL (string x)
+    let intL (x : int) = wordL (string x)
+    let valL (x : Val) = wordL (string x)
+    let typarL (x : Typar) = wordL (string x)
+    let typarDeclL (x : Typar) = wordL (string x)
+    let typarsL (x : Typars) = wordL (string x)
+    let typeL (x : TType) = wordL (string x)
+    let slotSigL (x : SlotSig) = wordL (string x)
+    let entityTypeL (x : ModuleOrNamespaceType) = wordL (string x)
+    let entityL (x : ModuleOrNamespace) = wordL (string x)
+    let typeOfValL (x : Val) = wordL (string x)
+    let bindingL (x : Binding) = wordL (string x)
+    let exprL (x : Expr) = wordL (string x)
+    let decisionTreeL (x : DecisionTree) = wordL (string x)    
+    let tyconL (x : Tycon) = wordL (string x)
+    let implFileL  (x : TypedImplFile) = wordL (string x)
+    let assemblyL  (x : TypedAssembly) = wordL (string x)
+    let vspecAtBindL (x : Val) = wordL (string x)
+    let recdFieldRefL (x : RecdFieldRef) = wordL (string x)
+    let traitL (x : TraitConstraintInfo) = wordL (string x)
+    let layout_ranges = ref false
+    let showType (t : TType) = string t
+    let showExpr (e : Expr) = string e
+    let mdefL (mdef : ModuleOrNamespaceExpr) = wordL (string mdef)
+    let layoutRanges = ref false
+
+#else
+
 module DebugPrint = begin
     open Microsoft.FSharp.Compiler.Layout
     open PrettyTypes
@@ -4679,6 +4711,29 @@ module DebugPrint = begin
 
 end
 
+let valRefL    x = DebugPrint.valRefL x
+let unionCaseRefL   x = DebugPrint.unionCaseRefL x
+let intL     x = DebugPrint.intL x
+let valL   x = DebugPrint.valL x
+let typarL   x = DebugPrint.typarL x
+let typarDeclL   x = DebugPrint.typarDeclL x
+let typarsL   x = DebugPrint.typarDeclsL x
+let typeL    x = DebugPrint.typeL x
+let slotSigL x = DebugPrint.slotSigL x
+let entityTypeL   x = DebugPrint.entityTypeL x
+let entityL   x = DebugPrint.entityL x
+let typeOfValL x = DebugPrint.typeOfValL x
+let bindingL    x = DebugPrint. bindingL x
+let exprL    x = DebugPrint.exprL x
+let decisionTreeL    x = DebugPrint.decisionTreeL x
+let tyconL    x = DebugPrint.tyconL x
+let implFileL  x = DebugPrint.implFileL x
+let assemblyL  x = DebugPrint.assemblyL x
+let vspecAtBindL x = DebugPrint.vspecAtBindL x
+let recdFieldRefL x = DebugPrint.recdFieldRefL x
+let traitL x = DebugPrint.auxTraitL SimplifyTypes.typeSimplificationInfo0 x
+#endif // SILVERLIGHT
+
 
 //--------------------------------------------------------------------------
 // Helpers related to type checking modules & namespaces
@@ -4884,7 +4939,7 @@ and accValRemapFromModuleOrNamespaceBind g aenv msigty (ModuleOrNamespaceBinding
 and accValRemapFromModuleOrNamespaceDefs g aenv msigty mdefs acc = List.foldBack (accValRemapFromModuleOrNamespace g aenv msigty) mdefs acc
 
 let ComputeRemappingFromImplementationToSignature g mdef msigty =  
-    if verbose then dprintf "ComputeRemappingFromImplementationToSignature,\nmdefs = %s\nmsigty=%s\n" (showL(DebugPrint.mdefL mdef)) (showL(DebugPrint.entityTypeL msigty));
+    //if verbose then dprintf "ComputeRemappingFromImplementationToSignature,\nmdefs = %s\nmsigty=%s\n" (showL(DebugPrint.mdefL mdef)) (showL(DebugPrint.entityTypeL msigty));
     let ((mrpi,_) as entityRemap) = accEntityRemapFromModuleOrNamespace msigty mdef (SignatureRepackageInfo.Empty, SignatureHidingInfo.Empty) 
     let aenv = mrpi.ImplToSigMapping
     
@@ -6874,7 +6929,7 @@ let mkIObserverType g ty1 = TType_app (g.tcref_IObserver, [ty1])
 let mkRefCellContentsRef g  = mkRecdFieldRef g.refcell_tcr_canon "contents"
 
 let mkSeq spSeq m e1 e2 = Expr.Seq(e1,e2,NormalSeq,spSeq,m)
-let mkCompGenSeq m e1 e2 = mkSeq SuppressSequencePointOnExprOfSequential m e1 e2
+let mkCompGenSequential m e1 e2 = mkSeq SuppressSequencePointOnExprOfSequential m e1 e2
 let rec mkSeqList spSeq g m es = 
     match es with 
     | [e] -> e 
@@ -7012,6 +7067,7 @@ let box = IL.I_box (mkILTyvarTy 0us)
 let isinst = IL.I_isinst (mkILTyvarTy 0us)
 let unbox = IL.I_unbox_any (mkILTyvarTy 0us)
 let mkUnbox ty e m = mkAsmExpr ([ unbox ], [ty],[e], [ ty ], m)
+let mkBox ty e m = mkAsmExpr ([box],[],[e],[ty],m)
 let mkIsInst ty e m = mkAsmExpr ([ isinst ], [ty],[e], [ ty ], m)
 
 let mspec_Object_GetHashCode     ilg = IL.mkILNonGenericInstanceMethSpecInTy(ilg.typ_Object,"GetHashCode",[],ilg.typ_int32)
@@ -8113,6 +8169,13 @@ let mkIsInstConditional g m tgty vinpe v e2 e3 =
 //    1. The compilation of array patterns in the pattern match compiler
 //    2. The compilation of string patterns in the pattern match compiler
 
+let mkNullTest g m e1 e2 e3 =
+        let mbuilder = new MatchBuilder(NoSequencePointAtInvisibleBinding,m)
+        let tg2 = mbuilder.AddResultTarget(e2,SuppressSequencePointAtTarget)
+        let tg3 = mbuilder.AddResultTarget(e3,SuppressSequencePointAtTarget)            
+        let dtree = TDSwitch(e1, [TCase(Test.IsNull,tg3)],Some tg2,m)
+        let expr = mbuilder.Close(dtree,m,tyOfExpr g e2)
+        expr         
 let mkNonNullTest g m e = mkAsmExpr ([ IL.AI_ldnull ; IL.AI_cgt_un  ],[],  [e],[g.bool_ty],m)
 let mkNonNullCond g m ty e1 e2 e3 = mkCond NoSequencePointAtStickyBinding SuppressSequencePointAtTarget m ty (mkNonNullTest g m e1) e2 e3
 let mkIfThen g m e1 e2 = mkCond NoSequencePointAtStickyBinding SuppressSequencePointAtTarget m g.unit_ty e1 e2 (mkUnit g m)

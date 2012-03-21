@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2010 Microsoft Corporation. 
+// Copyright (c) 2002-2011 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -1029,9 +1029,12 @@ let ImmediateExtensionMethInfosOfTypeInScope (infoReader:InfoReader) (eExtension
                     | None -> None
                     | Some(membInfo) -> TrySelectMemberVal g optFilter typ (Some pri) membInfo vref
                 | ILExtMem (actualParent,md,pri) when (match optFilter with None -> true | Some(nm) -> nm = md.Name) ->
-                    // 'typ' is the logical parent 
-                    let tinfo = ILTypeInfo.FromType g typ
-                    Some(mkILMethInfo infoReader.amap m tinfo (Some(actualParent)) (Some pri) md)
+                    if isILAppTy g typ then
+                        // 'typ' is the logical parent 
+                        let tinfo = ILTypeInfo.FromType g typ
+                        Some(mkILMethInfo infoReader.amap m tinfo (Some(actualParent)) (Some pri) md)
+                    else
+                        error(Error(FSComp.SR.nrNoNonFSharpExtensionMembersOnFSharpTypes(),m))                                        
                 | _ -> 
                     None) 
     else []
@@ -1071,12 +1074,12 @@ let CoreDisplayName(pinfo:PropInfo) =
     | FSProp _ -> failwith "unexpected (property must have either getter or setter)"
     | ILProp(_,ILPropInfo(_,def))  -> def.Name
 
-let DecodeFSharpEvent (pinfos:PropInfo list) ad g (ncenv:NameResolver) m typ    =
+let DecodeFSharpEvent (pinfos:PropInfo list) ad g (ncenv:NameResolver) m =
     match pinfos with 
     | [pinfo] when pinfo.IsFSharpEventProperty -> 
         let nm = CoreDisplayName(pinfo)
-        let minfos1 = GetImmediateIntrinsicMethInfosOfType (Some("add_"+nm),ad) g ncenv.amap m typ 
-        let minfos2 = GetImmediateIntrinsicMethInfosOfType (Some("remove_"+nm),ad) g ncenv.amap m typ 
+        let minfos1 = GetImmediateIntrinsicMethInfosOfType (Some("add_"+nm),ad) g ncenv.amap m pinfo.EnclosingType 
+        let minfos2 = GetImmediateIntrinsicMethInfosOfType (Some("remove_"+nm),ad) g ncenv.amap m pinfo.EnclosingType
         match  minfos1,minfos2 with 
         | [FSMeth(_,_,addValRef,_)],[FSMeth(_,_,removeValRef,_)] -> 
             // FOUND PROPERTY-AS-EVENT AND CORRESPONDING ADD/REMOVE METHODS
@@ -1113,7 +1116,7 @@ let rec ResolveLongIdentInTypePrim (ncenv:NameResolver) nenv lookupKind (resInfo
                 match TryFindIntrinsicNamedItemOfType ncenv.InfoReader (nm,ad) findFlag m typ with
                 | Some (PropertyItem psets) when (match lookupKind with Expr  -> true | _ -> false) -> 
                     let pinfos = psets |> ExcludeHiddenOfPropInfos g ncenv.amap m
-                    match DecodeFSharpEvent pinfos ad g ncenv m typ with
+                    match DecodeFSharpEvent pinfos ad g ncenv m with
                     | Some(x) ->  success (resInfo, x, rest)
                     | None->  raze (UndefinedName (depth,FSComp.SR.undefinedNameFieldConstructorOrMember, id,[]))
                 | Some(MethodItem msets) when (match lookupKind with Expr  -> true | _ -> false) -> 
@@ -1980,7 +1983,7 @@ let ResolveCompletionsInType (ncenv: NameResolver) nenv m ad statics typ =
 
     let pinfoItems = 
         pinfos
-        |> List.map (fun pinfo -> DecodeFSharpEvent [pinfo] ad g ncenv m typ)
+        |> List.map (fun pinfo -> DecodeFSharpEvent [pinfo] ad g ncenv m)
         |> List.filter (fun pinfo->pinfo.IsSome)
         |> List.map (fun pinfo->pinfo.Value)
 

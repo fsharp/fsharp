@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2010 Microsoft Corporation. 
+// Copyright (c) 2002-2011 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -782,7 +782,7 @@ module SignatureConformance = begin
                 errorR(RequiredButNotSpecified(denv,implModRef,"value",(fun os -> 
                    (* In the case of missing members show the full required enclosing type and signature *)
                    if fx.IsMember then 
-                       Printf.bprintf os "%a" (NicePrint.outputQualifiedValSpec denv) fx
+                       NicePrint.outputQualifiedValSpec denv os fx
                    else
                        Printf.bprintf os "%s" fx.DisplayName),m))
             (implModType.AllValsAndMembersByLogicalNameUncached, signModType.AllValsAndMembersByLogicalNameUncached)
@@ -858,7 +858,7 @@ module SignatureConformance = begin
                     errorR(RequiredButNotSpecified(denv,implModRef,"value",(fun os -> 
                        // In the case of missing members show the full required enclosing type and signature 
                        if isSome fx.MemberInfo then 
-                           Printf.bprintf os "%a" (NicePrint.outputQualifiedValSpec denv) fx
+                           NicePrint.outputQualifiedValSpec denv os fx
                        else
                            Printf.bprintf os "%s" fx.DisplayName),m)); false)
                 (fun _ _ -> true) 

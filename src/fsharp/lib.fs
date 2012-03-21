@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2010 Microsoft Corporation. 
+// Copyright (c) 2002-2011 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -27,8 +27,13 @@ let verbose = false
 let progress = ref false 
 let tracking = ref false // intended to be a general hook to control diagnostic output when tracking down bugs
 
-let condition s = 
-    try (System.Environment.GetEnvironmentVariable(s) <> null) with _ -> false
+let condition _s = 
+#if SILVERLIGHT
+    false
+#else    
+    try (System.Environment.GetEnvironmentVariable(_s) <> null) with _ -> false
+#endif    
+    
 
 //-------------------------------------------------------------------------
 // Library: bits
@@ -58,14 +63,17 @@ module List =
 
 module Filename = 
     let fullpath cwd nm = 
-        let p = if Path.IsPathRooted(nm) then nm else Path.Combine(cwd,nm)
-        try Path.GetFullPath(p) with 
+        let p = if Path.IsPathRootedShim(nm) then nm else Path.Combine(cwd,nm)
+#if SILVERLIGHT
+        p
+#else
+        try Path.GetFullPathShim(p) with 
         | :? System.ArgumentException 
         | :? System.ArgumentNullException 
         | :? System.NotSupportedException 
         | :? System.IO.PathTooLongException 
         | :? System.Security.SecurityException -> p
-
+#endif
     let hasSuffixCaseInsensitive suffix filename = (* case-insensitive *)
       Filename.checkSuffix (String.lowercase filename) (String.lowercase suffix)
 
