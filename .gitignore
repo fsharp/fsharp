@@ -8,7 +8,9 @@ autom4te.cache
 config.log
 config.make
 config.status
-
+Proto/
+Release/
+obj/
 
 /src/fsharp/FSharp.Compiler-proto/illex.fs
 /src/fsharp/FSharp.Compiler-proto/ilpars.fs
