@@ -2996,19 +2996,23 @@ type TcAssemblyResolutions(results : AssemblyResolution list, unresolved : Unres
 
           if tcConfig.framework then 
               for s in DefaultBasicReferencesForOutOfProjectSources do 
+#if SILVERLIGHT
                   yield AssemblyReference(rangeStartup,s)
+#else
+                  yield AssemblyReference(rangeStartup,s+".dll")
+#endif
 
           if tcConfig.framework || tcConfig.addVersionSpecificFrameworkReferences then 
               // For out-of-project context, then always reference some extra DLLs on .NET 4.0, but not Silverlight 5.0
               if tcConfig.MscorlibMajorVersion >= 4 && not (tcConfig.MscorlibMinorVersion = 0 && tcConfig.MscorlibRevisionVersion = 5)   then 
                   for s in DefaultBasicReferencesForOutOfProjectSources40 do 
-                      yield AssemblyReference(rangeStartup,s+".dll") 
+                      yield AssemblyReference(rangeStartup,s+".dll")
 
           if tcConfig.useFsiAuxLib then 
 #if SILVERLIGHT          
               let name = GetFsiLibraryName() //Path.Combine(tcConfig.fsharpBinariesDir, GetFsiLibraryName())
 #else
-              let name = Path.Combine(tcConfig.fsharpBinariesDir, GetFsiLibraryName()^".dll")
+              let name = Path.Combine(tcConfig.fsharpBinariesDir, GetFsiLibraryName()+".dll")
 #endif              
               yield AssemblyReference(rangeStartup,name) 
           yield! tcConfig.referencedDLLs ]
