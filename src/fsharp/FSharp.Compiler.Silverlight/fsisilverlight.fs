@@ -98,7 +98,7 @@ type TypeCheckResults internal (results:Microsoft.FSharp.Compiler.SourceCodeServ
 
 type public SimpleSourceCodeServices() =
 
-    let filename = "example.fsx"
+    let filename = System.IO.Directory.GetCurrentDirectory() + "\\example.fsx"
     let tokenizer = SourceTokenizer([], filename)
     let checker = InteractiveChecker.Create(fun _ -> ())
     let fileversion = 0
@@ -129,11 +129,17 @@ type public SimpleSourceCodeServices() =
 
     /// For errors, quick info, goto-definition, declaration list intellisense, method overload intellisense
     member x.TypeCheckSource (source:string, otherFlags: string[]) = 
-        begin 
+#if SILVERLIGHT
+        begin
             use file =  new System.IO.StreamWriter(System.IO.IsolatedStorage.IsolatedStorageFile.GetUserStoreForApplication().CreateFile(filename))
             file.Write source
         end;
-        //let options = checker.GetCheckOptionsFromScriptRoot(filename, source, otherFlags)
+#else
+        begin
+            use file = new System.IO.StreamWriter(System.IO.File.Create(filename))
+            file.Write source
+        end;
+#endif
         let options = { ProjectFileName="console.fsproj"; ProjectFileNames=[| filename |]; ProjectOptions=otherFlags; IsIncompleteTypeCheckEnvironment=false; UseScriptResolutionRules=true }
         checker.StartBackgroundCompile options;
         // wait for the antecedent to appear

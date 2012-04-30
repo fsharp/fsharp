@@ -8,4 +8,19 @@ autom4te.cache
 config.log
 config.make
 config.status
+Proto/
+Release/
+obj/
 
+/src/fsharp/FSharp.Compiler-proto/illex.fs
+/src/fsharp/FSharp.Compiler-proto/ilpars.fs
+/src/fsharp/FSharp.Compiler-proto/ilpars.fsi
+/src/fsharp/FSharp.Compiler-proto/lex.fs
+/src/fsharp/FSharp.Compiler-proto/pars.fs
+/src/fsharp/FSharp.Compiler-proto/pars.fsi
+/src/fsharp/FSharp.Compiler/illex.fs
+/src/fsharp/FSharp.Compiler/ilpars.fs
+/src/fsharp/FSharp.Compiler/ilpars.fsi
+/src/fsharp/FSharp.Compiler/lex.fs
+/src/fsharp/FSharp.Compiler/pars.fs
+/src/fsharp/FSharp.Compiler/pars.fsi
