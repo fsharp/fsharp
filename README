@@ -22,6 +22,5 @@ your own via the --with-bootstrap option.
 
 ======= BUILDING =======
 
-To build, run autoreconf to generate a configure script, then run configure and make in
-the usual way.
+To build, run ./autogen.sh, then make in the usual way.
 
