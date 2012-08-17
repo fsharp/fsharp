@@ -13,8 +13,7 @@ F# original powerpack sources are available from http://fsharppowerpack.codeplex
 
 ======= REQUIREMENTS =======
 
-Requires mono trunk, after September 23 - this is due to missing IStructuralComparable.CompareTo
-implementations, which F# requires and which were commited on 2010-09-23 on commit a57254256
+Requires mono 2.9 or higher.
 
 Requires bootstrapping libraries, tools and f# compiler. The lib/bootstrap/X.0 directories contain
 mono-built libraries, compiler and tools that can be used to bootstrap a build. You can also supply
