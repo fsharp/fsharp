@@ -7,6 +7,14 @@ AC_INIT([fsharp], [0.1], [avidigal@novell.com])
 # Checks for programs.
 AC_PROG_MAKE_SET
 
+AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
+if test "x$PKG_CONFIG" = "xno"; then
+        AC_MSG_ERROR([You need to install pkg-config])
+fi
+
+PKG_CHECK_MODULES([MONO], [mono >= 2.9])
+
+
 # Checks for libraries.
 
 # Checks for header files.
