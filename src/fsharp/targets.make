@@ -1,5 +1,9 @@
 SOURCES := $(patsubst $(srcdir)$(tmpdir)%,$(tmpdir)%,$(patsubst %,$(srcdir)%,$(sources)))
 
+# taken from FSharpSource.targets file:
+LKG_VERSION := 2.0.50726.900
+REPLACE_ARGS := {LkgVersion} $(LKG_VERSION) {BuildSuffix} "" {FSharpTargetsDir} unused
+
 .PHONY: install install-bin install-bin-2 install-bin-4 install-lib
 
 all: do-4-0 do-2-0
@@ -48,7 +52,7 @@ do-2-0: $(objdir) $(objdir)$(TARGET_2_0) $(objdir)$(TARGET_4_0) $(objdir)$(TARGE
 		then sn -R $(outdir)$(ASSEMBLY) $(srcdir)../../../mono.snk; \
 	fi
 	@if test -e Microsoft.FSharp.targets; then \
-		cp Microsoft.FSharp.targets $(outdir); \
+		mono subst.exe $(REPLACE_ARGS) Microsoft.FSharp.targets > $(outdir)Microsoft.FSharp.targets; \
 	fi
 
 do-4-0: DEFINES += $(DEFINES_4_0)
@@ -72,7 +76,7 @@ do-4-0: $(objdir) $(objdir)$(TARGET_2_0) $(objdir)$(TARGET_4_0) $(objdir)$(TARGE
 		then sn -R $(outdir)$(ASSEMBLY) $(srcdir)../../../mono.snk; \
 	fi
 	@if test -e Microsoft.FSharp.targets; then \
-		cp Microsoft.FSharp.targets $(outdir); \
+		mono subst.exe $(REPLACE_ARGS) Microsoft.FSharp.targets > $(outdir)Microsoft.FSharp.targets; \
 	fi
 
 install-lib-2: TARGET := $(TARGET_2_0)
@@ -98,7 +102,10 @@ install-lib-2 install-lib-4:
 		$(INSTALL_LIB) $(outdir)$(NAME).optdata $(DESTDIR)/$(libdir)mono/gac/$(NAME)/$(VERSION)__$(TOKEN); \
 		ln -fs ../gac/$(NAME)/$(VERSION)__$(TOKEN)/$(NAME).optdata $(DESTDIR)/$(libdir)mono/$(TARGET)/; \
 	fi
+	ln -fs $(DESTDIR)/$(libdir)mono/$(TARGET)/$(ASSEMBLY) $(DESTDIR)/$(libdir)mono/Microsoft\ F#/v$(TARGET)/$(ASSEMBLY)
 	$(INSTALL_LIB) $(outdir)Microsoft.FSharp.targets $(DESTDIR)/$(libdir)mono/$(TARGET)/;
+	mkdir -p $(DESTDIR)/$(libdir)mono/Microsoft\ F#/v$(TARGET)/
+	ln -fs $(DESTDIR)/$(libdir)mono/$(TARGET)/Microsoft.FSharp.targets $(DESTDIR)/$(libdir)mono/Microsoft\ F#/v$(TARGET)/Microsoft.FSharp.Targets
 
 install-bin-2 install-bin-4:
 	sed -e 's,[@]DIR[@],$(libdir)mono/$(TARGET),g' -e 's,[@]TOOL[@],$(ASSEMBLY),g' < $(topdir)launcher.in > $(outdir)$(subst fs,fsharp,$(NAME))$(VERSION)
@@ -107,6 +114,11 @@ install-bin-2 install-bin-4:
 	@mkdir -p $(DESTDIR)/$(bindir)
 	$(INSTALL_LIB) $(outdir)$(ASSEMBLY) $(DESTDIR)$(libdir)mono/$(TARGET)
 	$(INSTALL_BIN) $(outdir)$(subst fs,fsharp,$(NAME))$(VERSION) $(DESTDIR)/$(bindir)
+
+install-bin-4-5: install-bin-4
+	@if test -e $(DESTDIR)$(libdir)mono/4.5/; then \
+		ln -fs $(DESTDIR)$(libdir)mono/4.0/$(ASSEMBLY) $(DESTDIR)$(libdir)mono/4.5/$(ASSEMBLY); \
+	fi
 
 $(objdir) $(objdir)$(TARGET_2_0) $(objdir)$(TARGET_4_0):
 	mkdir -p $@
