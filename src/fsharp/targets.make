@@ -1,5 +1,9 @@
 SOURCES := $(patsubst $(srcdir)$(tmpdir)%,$(tmpdir)%,$(patsubst %,$(srcdir)%,$(sources)))
 
+# taken from FSharpSource.targets file:
+LKG_VERSION := 2.0.50726.900
+REPLACE_ARGS := {LkgVersion} $(LKG_VERSION) {BuildSuffix} "" {FSharpTargetsDir} unused
+
 .PHONY: install install-bin install-bin-2 install-bin-4 install-lib
 
 all: do-4-0 do-2-0
@@ -48,7 +52,7 @@ do-2-0: $(objdir) $(objdir)$(TARGET_2_0) $(objdir)$(TARGET_4_0) $(objdir)$(TARGE
 		then sn -R $(outdir)$(ASSEMBLY) $(srcdir)../../../mono.snk; \
 	fi
 	@if test -e Microsoft.FSharp.targets; then \
-		cp Microsoft.FSharp.targets $(outdir); \
+		mono subst.exe $(REPLACE_ARGS) Microsoft.FSharp.targets > $(outdir)Microsoft.FSharp.targets; \
 	fi
 
 do-4-0: DEFINES += $(DEFINES_4_0)
@@ -72,7 +76,7 @@ do-4-0: $(objdir) $(objdir)$(TARGET_2_0) $(objdir)$(TARGET_4_0) $(objdir)$(TARGE
 		then sn -R $(outdir)$(ASSEMBLY) $(srcdir)../../../mono.snk; \
 	fi
 	@if test -e Microsoft.FSharp.targets; then \
-		cp Microsoft.FSharp.targets $(outdir); \
+		mono subst.exe $(REPLACE_ARGS) Microsoft.FSharp.targets > $(outdir)Microsoft.FSharp.targets; \
 	fi
 
 install-lib-2: TARGET := $(TARGET_2_0)
