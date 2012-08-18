@@ -115,6 +115,11 @@ install-bin-2 install-bin-4:
 	$(INSTALL_LIB) $(outdir)$(ASSEMBLY) $(DESTDIR)$(libdir)mono/$(TARGET)
 	$(INSTALL_BIN) $(outdir)$(subst fs,fsharp,$(NAME))$(VERSION) $(DESTDIR)/$(bindir)
 
+install-bin-4-5: install-bin-4
+	@if test -e $(DESTDIR)$(libdir)mono/4.5/; then \
+		ln -fs $(DESTDIR)$(libdir)mono/4.0/$(ASSEMBLY) $(DESTDIR)$(libdir)mono/4.5/$(ASSEMBLY); \
+	fi
+
 $(objdir) $(objdir)$(TARGET_2_0) $(objdir)$(TARGET_4_0):
 	mkdir -p $@
 
