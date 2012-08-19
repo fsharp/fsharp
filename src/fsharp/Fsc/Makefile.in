@@ -33,5 +33,5 @@ $(tmpdir)FSCstrings.resources: $(srcdir)../FSCstrings.txt
 
 include $(topdir)/src/fsharp/targets.make
 
-install: install-bin-2 install-bin-4
+install: install-bin-2 install-bin-4 install-bin-4-5
 
