@@ -107,6 +107,13 @@ install-lib-2 install-lib-4:
 	$(INSTALL_LIB) $(outdir)Microsoft.FSharp.targets $(DESTDIR)/$(libdir)mono/$(TARGET)/;
 	ln -fs $(DESTDIR)/$(libdir)mono/$(TARGET)/Microsoft.FSharp.targets $(DESTDIR)/$(libdir)mono/Microsoft\ F#/v$(TARGET)/Microsoft.FSharp.Targets
 
+install-lib-4-5: install-lib-4
+	@if test -e $(DESTDIR)$(libdir)mono/4.5/; then \
+		ln -fs $(DESTDIR)$(libdir)mono/4.0/$(ASSEMBLY) $(DESTDIR)$(libdir)mono/4.5/$(ASSEMBLY); \
+		ln -fs $(DESTDIR)$(libdir)mono/4.0/$(NAME).sigdata $(DESTDIR)$(libdir)mono/4.5/$(NAME).sigdata; \
+		ln -fs $(DESTDIR)$(libdir)mono/4.0/$(NAME).optdata $(DESTDIR)$(libdir)mono/4.5/$(NAME).optdata; \
+	fi
+
 install-bin-2 install-bin-4:
 	sed -e 's,[@]DIR[@],$(libdir)mono/$(TARGET),g' -e 's,[@]TOOL[@],$(ASSEMBLY),g' < $(topdir)launcher.in > $(outdir)$(subst fs,fsharp,$(NAME))$(VERSION)
 	chmod +x $(outdir)$(subst fs,fsharp,$(NAME))$(VERSION)
