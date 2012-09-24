@@ -14,6 +14,12 @@ fi
 
 PKG_CHECK_MODULES([MONO], [mono >= 2.9])
 
+PKG_CHECK_MODULES([MONO_2_12],
+	[mono >= 2.11.5], HAVE_MONO_2_12_OR_HIGHER=yes, HAVE_MONO_2_12_OR_HIGHER=no)
+
+if test "x$HAVE_MONO_2_12_OR_HIGHER" = "xno" ; then
+	AC_MSG_WARN([Mono 2.11.5 or higher is recommended, for better MSBuild (xbuild) compatibility])
+fi
 
 # Checks for libraries.
 
@@ -67,3 +73,7 @@ src/fsharp/FSharp.Compiler.Server.Shared/Makefile
 src/fsharp/fsi/Makefile
 ])
 AC_OUTPUT
+
+if ! test -e $prefix/bin/mono; then
+	AC_WARN($prefix/bin/mono not found: it is recommended to use the same install prefix where mono is installed)
+fi
