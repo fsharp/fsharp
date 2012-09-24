@@ -79,5 +79,5 @@ $(tmpdir)FSCore.resources: $(srcdir)FSCore.resx
 
 include $(topdir)/src/fsharp/targets.make
 
-install: install-lib-2 install-lib-4
+install: install-lib-2 install-lib-4 install-lib-4-5
 
