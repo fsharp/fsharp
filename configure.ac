@@ -75,5 +75,5 @@ src/fsharp/fsi/Makefile
 AC_OUTPUT
 
 if ! test -e $prefix/bin/mono; then
-	AC_WARN($prefix/bin/mono not found: it is recommended to use the same install prefix where mono is insalled)
+	AC_WARN($prefix/bin/mono not found: it is recommended to use the same install prefix where mono is installed)
 fi
