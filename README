@@ -1,25 +1,24 @@
-This is the F# compiler and core library for Mono, based on the F# Powerpack code drop
-under the OSS approved Apache 2.0 license.
+This is the open source F# compiler and core library. It uses the Apache 2.0 license.
 
-The build follows the cli\2.0 and cli\4.0 configuration on the original *.fsproj files included in
-the F# Powerpack code drop, in terms of flags and defines.
+The "master" branch is for the latest version of F#, currently F# 3.0
 
-To bootstrap the compiler, binaries built on VS2010 are used, as the official binaries
-fail to build due to a possible tail call bug on Mono.
+The "2.0" branch is for F# 3.0.
 
-This build is based on F# Powerpack r54075
-
-F# original powerpack sources are available from http://fsharppowerpack.codeplex.com/
+To bootstrap the compiler, binaries built from an earlier version of this project are used.
 
 ======= REQUIREMENTS =======
 
 Requires mono 2.9 or higher.
 
-Requires bootstrapping libraries, tools and f# compiler. The lib/bootstrap/X.0 directories contain
-mono-built libraries, compiler and tools that can be used to bootstrap a build. You can also supply
-your own via the --with-bootstrap option.
-
 ======= BUILDING =======
 
 To build, run ./autogen.sh, then make in the usual way.
+
+======= NOTES =======
+
+Uses bootstrapping libraries, tools and f# compiler. The lib/bootstrap/X.0 directories contain
+mono-built libraries, compiler and tools that can be used to bootstrap a build. You can also supply
+your own via the --with-bootstrap option.
+
+F# original powerpack sources are available from http://fsharppowerpack.codeplex.com/
 
