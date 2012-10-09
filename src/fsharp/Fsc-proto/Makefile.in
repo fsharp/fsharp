@@ -14,7 +14,8 @@ FLAGS += --target:exe
 DEFINES += \
 	--define:BUILDING_PROTO \
 	--define:BUILDING_WITH_LKG \
-	--define:COMPILER
+	--define:COMPILER \
+    --define:NO_STRONG_NAMES
 
 REFERENCES += \
 	-r:$(bootstrapdir)FSharp.Core.dll \
