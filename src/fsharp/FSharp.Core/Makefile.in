@@ -13,7 +13,7 @@ FLAGS_2_0 += \
 	--compiling-fslib \
     --nowarn:75,1204 \
     --target:library \
-    --compiling-fslib-20:$(monolibdir)mscorlib.dll \
+    --compiling-fslib-20:$(monolibdir)../4.0/mscorlib.dll \
     --extraoptimizationloops:1 
 
 FLAGS_4_0 += \
@@ -22,6 +22,9 @@ FLAGS_4_0 += \
     --nowarn:75,1204 \
     --target:library \
     --compiling-fslib-40 \
+    --define:BE_SECURITY_TRANSPARENT \
+    --define:QUERIES_IN_FSLIB \
+    --define:PUT_TYPE_PROVIDERS_IN_FSCORE \
     --extraoptimizationloops:1 
 
 DEFINES += \

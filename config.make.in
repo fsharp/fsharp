@@ -74,10 +74,7 @@ DEFINES_4_0 = \
     --define:FX_NO_BIGINT_CULTURE_PARSE \
     --define:FX_ATLEAST_40 \
     --define:FX_ATLEAST_35 \
-    --define:QUERIES_IN_FSLIB \
-    --define:PUT_TYPE_PROVIDERS_IN_FSCORE \
-    --define:FX_ATLEAST_LINQ \
-	--define:BE_SECURITY_TRANSPARENT
+    --define:FX_ATLEAST_LINQ
 
 REFERENCES_2_0 = \
 	-r:$(monolibdir)Microsoft.Build.Engine.dll \
