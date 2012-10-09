@@ -15,8 +15,10 @@ FLAGS += \
 DEFINES += \
 	--define:COMPILER \
 	--define:INCLUDE_METADATA_READER \
-	--define:INCLUDE_METADATA_WRITER \
-    --define:EXTENSIONTYPING
+	--define:INCLUDE_METADATA_WRITER
+
+DEFINES_4_0= \
+        --define:EXTENSIONTYPING
 
 REFERENCES += \
 	-r:$(outdir)FSharp.Core.dll \

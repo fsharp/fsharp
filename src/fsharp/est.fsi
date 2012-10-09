@@ -13,6 +13,8 @@
 
 namespace Microsoft.FSharp.Compiler
 
+#if EXTENSIONTYPING
+
 module internal ExtensionTyping =
 
     open System
@@ -359,3 +361,5 @@ module internal ExtensionTyping =
         static member CreateNew : unit -> ProvidedAssemblyStaticLinkingMap
 
     val IsGeneratedTypeDirectReference         : Tainted<ProvidedType> * range -> bool
+
+#endif
