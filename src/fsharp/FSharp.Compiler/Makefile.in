@@ -21,7 +21,10 @@ DEFINES += \
 
 REFERENCES += \
 	-r:$(outdir)FSharp.Core.dll \
-	-r:Mono.Security.dll
+	-r:Mono.Security.dll \
+    -r:$(monolibdir)System.Runtime.Remoting.dll \
+    -r:$(monolibdir)System.Windows.Forms.dll
+
 
 sources = \
 	$(tmpdir)FSComp.fs \

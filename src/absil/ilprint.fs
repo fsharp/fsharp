@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2011 Microsoft Corporation. 
+// Copyright (c) 2002-2012 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -26,8 +26,6 @@ open System.Text
 open System.IO
 
 #if DEBUG
-let tailcall_via_ldftn = ref false
-let call_via_ldftn = ref false
 let pretty () = true
 
 // -------------------------------------------------------------------- 
@@ -40,8 +38,8 @@ let tyvar_generator =
   fun n -> 
     incr i; n^string !i
 
-(* Carry an environment because the way we print method variables *)
-(* depends on the gparams of the current scope. *)
+// Carry an environment because the way we print method variables 
+// depends on the gparams of the current scope. 
 type ppenv = 
     { ppenvClassFormals: int;
       ppenvMethodFormals: int }
@@ -102,10 +100,14 @@ let output_sqstring os s =
   done;
   output_char os '\''
 
-let output_list sep f os a =
-  if List.length a > 0 then 
-      f os (List.head a);
-      List.iter (fun x -> output_string os sep; f os x) (List.tail a)
+let output_seq sep f os (a:seq<_>) =
+  use e = a.GetEnumerator()
+  if e.MoveNext() then 
+      f os e.Current;
+      while e.MoveNext() do
+          output_string os sep; 
+          f os e.Current
+
 let output_parens f os a = output_string os "("; f os a; output_string os ")"
 let output_angled f os a = output_string os "<"; f os a; output_string os ">"
 let output_bracks f os a = output_string os "["; f os a; output_string os "]"
@@ -114,9 +116,7 @@ let output_id os n = output_sqstring os n
 
 let output_label os n = output_string os n
 
-(* let output_data_label os ((l,_): DataLabel) = output_string os l *)
-
-let output_lid os lid = output_list "." output_string os lid
+let output_lid os lid = output_seq "." output_string os lid
 let string_of_type_name (_,n) = n
 
 let output_byte os i = 
@@ -127,7 +127,6 @@ let output_bytes os (bytes:byte[]) =
   for i = 0 to bytes.Length - 1 do
     output_byte os (Bytes.get bytes i);
     output_string os " "
-  done
 
 
 let bits_of_float32 (x:float32) = System.BitConverter.ToInt32(System.BitConverter.GetBytes(x),0)
@@ -153,7 +152,7 @@ let rec goutput_scoref _env os = function
 
 and goutput_type_name_ref env os (scoref,enc,n) = 
   goutput_scoref env os scoref;
-  output_list "/" output_sqstring os (enc@[n])
+  output_seq "/" output_sqstring os (enc@[n])
 and goutput_tref env os (x:ILTypeRef) = 
   goutput_type_name_ref env os (x.Scope,x.Enclosing,x.Name)
 
@@ -161,8 +160,8 @@ and goutput_typ env os ty =
   match ty with 
   | ILType.Boxed tr ->  goutput_tspec env os tr
   | ILType.TypeVar tv ->  
-      (* Special rule to print method type variables in Generic EE preferred form *)
-      (* when an environment is available to help us do this. *)
+      // Special rule to print method type variables in Generic EE preferred form 
+      // when an environment is available to help us do this. 
       let cgparams = env.ppenvClassFormals 
       let mgparams = env.ppenvMethodFormals 
       if int tv < cgparams then 
@@ -208,7 +207,7 @@ and goutput_typ env os ty =
       output_string os "method ";
       goutput_typ env os csig.ReturnType;
       output_string os " *(";
-      output_list "," (goutput_typ env) os csig.ArgTypes;
+      output_seq "," (goutput_typ env) os csig.ArgTypes;
       output_string os ")"
   | _ -> output_string os "NaT"
   
@@ -226,11 +225,10 @@ and goutput_typ_with_shortened_class_syntax env os = function
   | typ2 -> goutput_typ env os typ2
 
 and goutput_gactuals env os inst = 
-  if inst = [] then () 
+  if inst.Length = 0 then () 
   else  
     output_string os "<";
-    goutput_gactual env os (List.head inst);
-    List.iter (fun x -> output_string os ", "; goutput_gactual env os x) (List.tail inst);
+    output_seq ", " (goutput_gactual env)  os inst
     output_string os ">";
 
 and goutput_gactual env os ty = goutput_typ env os ty
@@ -244,7 +242,7 @@ and goutput_tspec env os tspec =
 and output_arr_bounds os = function 
   | bounds when bounds = ILArrayShape.SingleDimensional -> ()
   | ILArrayShape l ->
-      output_list "," 
+      output_seq "," 
           (fun os -> function
             | (None,None)  -> output_string os ""
             | (None,Some sz) -> 
@@ -292,15 +290,15 @@ and goutput_permission _env os p =
       output_bytes os b ;
       output_string os ")" ;
   
-and goutput_security_decls env os (ps: ILPermissions) =  output_list " " (goutput_permission env)  os ps.AsList
+and goutput_security_decls env os (ps: ILPermissions) =  output_seq " " (goutput_permission env)  os ps.AsList
 
 and goutput_gparam env os (gf: ILGenericParameterDef) =  
   output_string os (tyvar_generator gf.Name);
-  output_parens (output_list "," (goutput_typ env)) os gf.Constraints
+  output_parens (output_seq "," (goutput_typ env)) os gf.Constraints
 
 and goutput_gparams env os b = 
   if nonNil b then 
-     output_string os "<"; output_list "," (goutput_gparam env) os b;  output_string os ">"; () 
+     output_string os "<"; output_seq "," (goutput_gparam env) os b;  output_string os ">"; () 
 
 and output_bcc os bcc =
   output_string os  
@@ -338,22 +336,22 @@ and goutput_callsig env os (csig:ILCallingSignature) =
   output_callconv os csig.CallingConv;
   output_string os " ";
   goutput_typ env os csig.ReturnType;
-  output_parens (output_list "," (goutput_typ env)) os csig.ArgTypes
+  output_parens (output_seq "," (goutput_typ env)) os csig.ArgTypes
 
 and goutput_mref env os (mref:ILMethodRef) =
   output_callconv os mref.CallingConv;
   output_string os " ";
   goutput_typ_with_shortened_class_syntax env os mref.ReturnType;
   output_string os " ";
-  (* no quotes for ".ctor" *)
+  // no quotes for ".ctor" 
   let name = mref.Name 
   if name = ".ctor" || name = ".cctor" then output_string os name else output_id os name; 
-  output_parens (output_list "," (goutput_typ env)) os mref.ArgTypes
+  output_parens (output_seq "," (goutput_typ env)) os mref.ArgTypes
 
 and goutput_mspec env os (mspec:ILMethodSpec) = 
   let fenv = 
     ppenv_enter_method mspec.GenericArity
-      (ppenv_enter_tdef (mkILFormalTypars mspec.EnclosingType.GenericArgs) env) 
+      (ppenv_enter_tdef (mkILFormalTyparsRaw mspec.EnclosingType.GenericArgs) env) 
   output_callconv os mspec.CallingConv;
   output_string os " ";
   goutput_typ fenv os mspec.FormalReturnType;
@@ -363,7 +361,7 @@ and goutput_mspec env os (mspec:ILMethodSpec) =
   let name = mspec.Name 
   if name = ".ctor" || name = ".cctor" then output_string os name else output_id os name; 
   goutput_gactuals env os mspec.GenericArgs;
-  output_parens (output_list "," (goutput_typ fenv)) os mspec.FormalArgTypes;
+  output_parens (output_seq "," (goutput_typ fenv)) os mspec.FormalArgTypes;
 
 and goutput_vararg_mspec env os (mspec, varargs) =
    match varargs with 
@@ -371,7 +369,7 @@ and goutput_vararg_mspec env os (mspec, varargs) =
    | Some varargs' -> 
        let fenv = 
          ppenv_enter_method mspec.GenericArity
-           (ppenv_enter_tdef (mkILFormalTypars mspec.EnclosingType.GenericArgs) env) 
+           (ppenv_enter_tdef (mkILFormalTyparsRaw mspec.EnclosingType.GenericArgs) env) 
        output_callconv os mspec.CallingConv;
        output_string os " ";
        goutput_typ fenv os mspec.FormalReturnType;
@@ -381,27 +379,26 @@ and goutput_vararg_mspec env os (mspec, varargs) =
        if name = ".ctor" || name = ".cctor" then output_string os name else output_id os name
        goutput_gactuals env os mspec.GenericArgs;
        output_string os "(";
-       output_list "," (goutput_typ fenv) os mspec.FormalArgTypes;
+       output_seq "," (goutput_typ fenv) os mspec.FormalArgTypes;
        output_string os ",...,";
-       output_list "," (goutput_typ fenv) os varargs';
+       output_seq "," (goutput_typ fenv) os varargs';
        output_string os ")";
 
-and goutput_vararg_sig env os (csig:ILCallingSignature,varargs) =
+and goutput_vararg_sig env os (csig:ILCallingSignature,varargs:ILVarArgs) =
    match varargs with 
    | None -> goutput_callsig env os csig; ()
    | Some varargs' -> 
        goutput_typ env os csig.ReturnType; 
        output_string os " (";
        let argtys = csig.ArgTypes 
-       if argtys <> [] then
-           goutput_typ env os (List.head argtys);
-           List.iter (fun ty -> output_string os ","; goutput_typ env os ty) (List.tail argtys);
+       if argtys.Length <> 0 then
+           output_seq ", " (goutput_typ env)  os argtys
        output_string os ",...,"; 
-       output_list "," (goutput_typ env) os varargs';
+       output_seq "," (goutput_typ env) os varargs';
        output_string os ")"; 
 
 and goutput_fspec env os (x:ILFieldSpec) =
-  let fenv = ppenv_enter_tdef (mkILFormalTypars x.EnclosingType.GenericArgs) env 
+  let fenv = ppenv_enter_tdef (mkILFormalTyparsRaw x.EnclosingType.GenericArgs) env 
   goutput_typ fenv os x.FormalType;
   output_string os " ";
   goutput_dlocref env os x.EnclosingType;
@@ -452,29 +449,16 @@ let output_option f os = function None -> () | Some x -> f os x
     
 let goutput_alternative_ref env os (alt: IlxUnionAlternative) = 
   output_id os alt.Name; 
-  alt.FieldDefs |> Array.toList |> output_parens (output_list "," (fun os fdef -> goutput_typ env os fdef.Type)) os 
+  alt.FieldDefs |> Array.toList |> output_parens (output_seq "," (fun os fdef -> goutput_typ env os fdef.Type)) os 
 
 let goutput_curef env os (IlxUnionRef(tref,alts,_,_)) =
   output_string os " .classunion import ";
   goutput_tref env os tref;
-  output_parens (output_list "," (goutput_alternative_ref env)) os (Array.toList alts)
+  output_parens (output_seq "," (goutput_alternative_ref env)) os (Array.toList alts)
     
 let goutput_cuspec env os (IlxUnionSpec(IlxUnionRef(tref,_,_,_),i)) =
   output_string os "class /* classunion */ ";
   goutput_tref env os  tref;
-  goutput_gactuals env os i
-
-let goutput_cloref env os (IlxClosureRef(tref,_,fvs)) =
-  output_string os " .closure import ";
-  goutput_tref env os tref;
-  output_parens (output_list "," (fun os fv -> goutput_typ env os fv.fvType)) os fvs;
-  output_string os "{ /* closure-ref */ }"
-    
-let goutput_clospec env os (IlxClosureSpec(IlxClosureRef(tref,_,_) as cloref,i) as _clospec) =
-  output_string os "class /* closure */ ";
-  goutput_cloref env os cloref;
-
-  goutput_tref env os tref;
   goutput_gactuals env os i
 
 let output_basic_type os x = 
@@ -577,13 +561,13 @@ let goutput_param env os (l: ILParameter) =
     | Some n -> goutput_typ env os l.Type; output_string os " "; output_sqstring os n
 
 let goutput_params env os ps = 
-  output_parens (output_list "," (goutput_param env)) os ps
+  output_parens (output_seq "," (goutput_param env)) os ps
 
 let goutput_freevar env os l = 
   goutput_typ env os l.fvType; output_string os " "; output_sqstring os l.fvName 
 
 let goutput_freevars env os ps = 
-  output_parens (output_list "," (goutput_freevar env)) os ps
+  output_parens (output_seq "," (goutput_freevar env)) os ps
 
 let output_source os (s:ILSourceMarker) = 
   if s.Document.File <> "" then 
@@ -668,7 +652,7 @@ let rec goutput_instr env os inst =
       output_string os "stind.";
       output_basic_type os dt 
   | I_stloc u16 -> output_string os "stloc"; output_short_u16 os u16
-  | I_switch (l,_dflt) -> output_string os "switch "; output_parens (output_list "," output_code_label) os l
+  | I_switch (l,_dflt) -> output_string os "switch "; output_parens (output_seq "," output_code_label) os l
   | I_callvirt  (tl,mspec,varargs) -> 
       output_tailness os tl;
       output_string os "callvirt ";
@@ -715,8 +699,8 @@ let rec goutput_instr env os inst =
       output_string os "ldstr "; 
       output_string os s
   | I_newobj  (mspec,varargs) -> 
-      (* newobj: IL has a special rule that the CC is always implicitly "instance" and need *)
-      (* not be mentioned explicitly *)
+      // newobj: IL has a special rule that the CC is always implicitly "instance" and need 
+      // not be mentioned explicitly 
       output_string os "newobj "; 
       goutput_vararg_mspec env os (mspec,varargs)
   | I_stelem    dt      -> output_string os "stelem."; output_basic_type os dt 
@@ -731,7 +715,7 @@ let rec goutput_instr env os inst =
         goutput_dlocref env os (mkILArrTy(typ,shape));
         output_string os ".ctor";
         let rank = shape.Rank 
-        output_parens (output_list "," (goutput_typ env)) os (Array.toList (Array.create ( rank) ecmaILGlobals.typ_int32))
+        output_parens (output_seq "," (goutput_typ env)) os (Array.toList (Array.create ( rank) ecmaILGlobals.typ_int32))
   | I_stelem_any (shape,dt)     -> 
       if shape = ILArrayShape.SingleDimensional then 
         output_string os "stelem.any "; goutput_typ env os dt 
@@ -740,7 +724,7 @@ let rec goutput_instr env os inst =
         goutput_dlocref env os (mkILArrTy(dt,shape));
         output_string os "Set";
         let rank = shape.Rank 
-        output_parens (output_list "," (goutput_typ env)) os (Array.toList (Array.create ( rank) ecmaILGlobals.typ_int32) @ [dt])
+        output_parens (output_seq "," (goutput_typ env)) os (Array.toList (Array.create ( rank) ecmaILGlobals.typ_int32) @ [dt])
   | I_ldelem_any (shape,tok) -> 
       if shape = ILArrayShape.SingleDimensional then 
         output_string os "ldelem.any "; goutput_typ env os tok 
@@ -751,8 +735,8 @@ let rec goutput_instr env os inst =
         goutput_dlocref env os (mkILArrTy(tok,shape));
         output_string os "Get";
         let rank = shape.Rank 
-        output_parens (output_list "," (goutput_typ env)) os (Array.toList (Array.create ( rank) ecmaILGlobals.typ_int32))
-  | I_ldelema   (ro,shape,tok)  -> 
+        output_parens (output_seq "," (goutput_typ env)) os (Array.toList (Array.create ( rank) ecmaILGlobals.typ_int32))
+  | I_ldelema   (ro,_,shape,tok)  -> 
       if ro = ReadonlyAddress then output_string os "readonly. ";
       if shape = ILArrayShape.SingleDimensional then 
         output_string os "ldelema "; goutput_typ env os tok 
@@ -763,7 +747,7 @@ let rec goutput_instr env os inst =
         goutput_dlocref env os (mkILArrTy(tok,shape));
         output_string os "Address";
         let rank = shape.Rank 
-        output_parens (output_list "," (goutput_typ env)) os (Array.toList (Array.create ( rank) ecmaILGlobals.typ_int32))
+        output_parens (output_seq "," (goutput_typ env)) os (Array.toList (Array.create ( rank) ecmaILGlobals.typ_int32))
       
   | I_box       tok     -> output_string os "box "; goutput_typ env os tok
   | I_unbox     tok     -> output_string os "unbox "; goutput_typ env os tok
@@ -832,21 +816,7 @@ let rec goutput_instr env os inst =
           output_string os " ";  
           goutput_cuspec env os ty;
           output_string os ",";  
-          output_parens (output_list "," (fun os (x,y) -> output_int os x;  output_string os ",";  output_code_label os y)) os l
-      |  (EI_ldenv n) -> output_string os "ldenv ";  output_int os n
-      |  (EI_stenv n) -> output_string os "stenv ";  output_int os n
-      |  (EI_ldenva n) -> output_string os "ldenva ";  output_int os n
-      |  (EI_newclo clospec) -> output_string os "newclo "; goutput_clospec env os clospec
-      |  (EI_isclo clospec) -> output_string os "isclo "; goutput_clospec env os clospec
-      |  (EI_stclofld (clospec,n)) -> output_string os "stclofld "; goutput_clospec env os clospec;  output_string os " "; output_int os n
-      |  (EI_castclo clospec) -> output_string os "castclo "; goutput_clospec env os clospec
-      |  (EI_callclo (tl,clospec,apps)) ->  
-          output_tailness os tl; 
-          output_string os "callclo "; 
-          goutput_clospec env os clospec;
-          output_string os ", "; 
-          goutput_apps env os apps;
-          output_after_tailcall os tl;
+          output_parens (output_seq "," (fun os (x,y) -> output_int os x;  output_string os ",";  output_code_label os y)) os l
       |  (EI_callfunc (tl,cs)) -> 
           output_tailness os tl; 
           output_string os "callfunc "; 
@@ -858,9 +828,8 @@ let rec goutput_instr env os inst =
 
 let goutput_ilmbody env os il =
   if il.IsZeroInit then output_string os " .zeroinit\n";
-  (* Add one to .maxstack if doing "calli" testing . *)
   output_string os " .maxstack ";
-  output_i32 os (if !tailcall_via_ldftn || !call_via_ldftn then il.MaxStack+1 else il.MaxStack);
+  output_i32 os il.MaxStack;
   output_string os "\n";
   let output_susp os susp = 
     match susp with
@@ -871,13 +840,12 @@ let goutput_ilmbody env os il =
     match susp with
     | Some s when s <> lab -> output_susp os susp
     | _ -> () 
-  if il.Locals <> [] then 
+  if il.Locals.Length  <> 0 then 
     output_string os " .locals(";
-    goutput_local env os (List.head il.Locals); 
-    List.iter (fun l -> output_string os ",\n"; goutput_local env os l) (List.tail il.Locals); 
+    output_seq ",\n " (goutput_local env)  os il.Locals
     output_string os ")\n"
   
-  (* Print the code by left-to-right traversal *)
+  // Print the code by left-to-right traversal 
   let rec goutput_block env os (susp,block) = 
     match block with 
     | ILBasicBlock bb ->  
@@ -1014,6 +982,7 @@ let goutput_mdef env os md =
   if md.IsSynchronized then output_string os "synchronized ";
   if md.IsMustRun then output_string os "/* mustrun */ ";
   if md.IsPreserveSig then output_string os "preservesig ";
+  if md.IsNoInline then output_string os "noinlining ";
   (goutput_mbody is_entrypoint menv) os md;
   output_string os "\n"
 
@@ -1030,12 +999,12 @@ let goutput_superclass env os = function
 let goutput_superinterfaces env os imp =
   if imp = [] then () else
   output_string os "implements ";
-  output_list "," (goutput_typ_with_shortened_class_syntax env) os imp
+  output_seq "," (goutput_typ_with_shortened_class_syntax env) os imp
 
-let goutput_implements env os imp =
-  if imp = [] then () else
+let goutput_implements env os (imp:ILTypes) =
+  if imp.Length = 0 then () else
   output_string os "implements ";
-  output_list "," (goutput_typ_with_shortened_class_syntax env) os imp
+  output_seq "," (goutput_typ_with_shortened_class_syntax env) os imp
 
 let the = function Some x -> x  | None -> failwith "the"
 
@@ -1109,7 +1078,8 @@ let rec goutput_tdef (enc) env contents os cd =
         match cd.tdKind with 
         | ILTypeDefKind.Other e when isIlxExtTypeDefKind e ->
             match destIlxExtTypeDefKind e with 
-            | IlxTypeDefKind.Closure cloinfo ->  goutput_freevars env os cloinfo.cloFreeVars
+            | IlxTypeDefKind.Closure _cloinfo ->  
+                () //goutput_freevars env os cloinfo.cloFreeVars
             | _ -> ()
         | _ -> ()
       else 
@@ -1263,7 +1233,7 @@ let goutput_module_manifest env os modul =
   output_string os " .imagebase "; output_i32 os modul.ImageBase;
   output_string os " .file alignment "; output_i32 os modul.PhysicalAlignment;
   output_string os " .subsystem "; output_i32 os modul.SubSystemFlags;
-  output_string os " .corflags "; output_i32 os ((if modul.IsILOnly then 0x0001 else 0) ||| (if modul.Is32Bit then 0x0002 else 0));
+  output_string os " .corflags "; output_i32 os ((if modul.IsILOnly then 0x0001 else 0) ||| (if modul.Is32Bit then 0x0002 else 0) ||| (if modul.Is32BitPreferred then 0x00020003 else 0));
   List.iter (fun r -> goutput_resource env os r) modul.Resources.AsList;
   output_string os "\n";
   (output_option (goutput_manifest env)) os modul.Manifest

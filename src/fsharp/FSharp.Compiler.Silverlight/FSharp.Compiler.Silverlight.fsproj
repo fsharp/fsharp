@@ -2,23 +2,29 @@
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <FSharpSourcesRoot>..\..</FSharpSourcesRoot>
-    <TargetFramework Condition="'$(TargetFramework)' == ''">Silverlight\5.0\Compiler</TargetFramework>
+    <TargetFramework Condition="'$(TargetFramework)' == ''">sl5-compiler</TargetFramework>
   </PropertyGroup>
-  <Import Project="$(FSharpSourcesRoot)\FSharpTeam.Settings.targets" Condition=" Exists('$(FSharpSourcesRoot)\FSharpTeam.targets') " />
-  <Import Project="$(FSharpSourcesRoot)\FSharpSource.Settings.targets" Condition=" !Exists('$(FSharpSourcesRoot)\FSharpTeam.targets') " />
+  <Import Project="$(FSharpSourcesRoot)\FSharpSource.Settings.targets" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform>AnyCPU</Platform>
     <OutputType>Library</OutputType>
     <AssemblyName>FSharp.Compiler.Silverlight</AssemblyName>
-    <DefineConstants>SILVERLIGHT;FX_NO_CULTURE_INFO_ARGS;INTERNALIZED_POWER_PACK;COMPILER;INCLUDE_METADATA_READER;INCLUDE_METADATA_WRITER;EXTENSIBLE_DUMPER;$(DefineConstants)</DefineConstants>
+    <DefineConstants>EXTENSIONTYPING</DefineConstants>
+    <DefineConstants>$(DefineConstants);SILVERLIGHT</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_CULTURE_INFO_ARGS</DefineConstants>
+    <DefineConstants>$(DefineConstants);INTERNALIZED_POWER_PACK</DefineConstants>
+    <DefineConstants>$(DefineConstants);COMPILER</DefineConstants>
+    <DefineConstants>$(DefineConstants);NO_PDB_READER</DefineConstants>
+    <DefineConstants>$(DefineConstants);NO_PDB_WRITER</DefineConstants>
+    <DefineConstants>$(DefineConstants);NO_INLINE_IL_PARSER</DefineConstants>
+    <DefineConstants>$(DefineConstants);INCLUDE_METADATA_READER</DefineConstants>
+    <DefineConstants>$(DefineConstants);INCLUDE_METADATA_WRITER</DefineConstants>
+    <DefineConstants>$(DefineConstants);EXTENSIBLE_DUMPER</DefineConstants>
     <NoWarn>$(NoWarn);44;62;9;1203</NoWarn>
     <ProjectGuid>{a90a57be-c2bd-4cb9-87dc-c0d18820ff6b}</ProjectGuid>
     <AllowCrossTargeting>true</AllowCrossTargeting>
     <BaseAddress>0x06800000</BaseAddress>
-    <TargetFrameworkIdentifier Condition="'$(TargetFramework)' == ''">Silverlight</TargetFrameworkIdentifier>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
-    <SilverlightVersion Condition="'$(TargetFramework)' == ''">v4.0</SilverlightVersion>
     <OtherFlags>$(OtherFlags) /warnon:1182 --nodebugdata</OtherFlags>
   </PropertyGroup>
   <ItemGroup>
@@ -89,17 +95,17 @@
     <Compile Include="..\..\utils\TaggedCollections.fs">
       <Link>TaggedCollections.fs</Link>
     </Compile>
-    <Compile Include="..\..\utils\filename.fsi">
-      <Link>filename.fsi</Link>
-    </Compile>
-    <Compile Include="..\..\utils\filename.fs">
-      <Link>filename.fs</Link>
-    </Compile>
     <Compile Include="..\FlatList.fs">
       <Link>FlatList.fs</Link>
     </Compile>
     <Compile Include="..\..\absil\illib.fs">
       <Link>illib.fs</Link>
+    </Compile>
+    <Compile Include="..\..\utils\filename.fsi">
+      <Link>filename.fsi</Link>
+    </Compile>
+    <Compile Include="..\..\utils\filename.fs">
+      <Link>filename.fs</Link>
     </Compile>
     <Compile Include="..\..\absil\zmap.fsi">
       <Link>zmap.fsi</Link>
@@ -167,6 +173,12 @@
     <Compile Include="..\ErrorLogger.fs">
       <Link>ErrorLogger.fs</Link>
     </Compile>
+    <Compile Include="..\tainted.fsi">
+      <Link>tainted.fsi</Link>
+    </Compile>
+    <Compile Include="..\tainted.fs">
+      <Link>tainted.fs</Link>
+    </Compile>
     <Compile Include="..\InternalCollections.fsi">
       <Link>InternalCollections.fsi</Link>
     </Compile>
@@ -209,6 +221,12 @@
     <Compile Include="..\..\ilx\cu_erase.fs">
       <Link>cu_erase.fs</Link>
     </Compile>
+    <Compile Include="..\InternalFileSystemUtils.fsi">
+      <Link>InternalFileSystemUtils.fsi</Link>
+    </Compile>
+    <Compile Include="..\InternalFileSystemUtils.fs">
+      <Link>InternalFileSystemUtils.fs</Link>
+    </Compile>
     <Compile Include="..\unilex.fsi">
       <Link>unilex.fsi</Link>
     </Compile>
@@ -223,6 +241,12 @@
     </Compile>
     <Compile Include="..\ast.fs">
       <Link>ast.fs</Link>
+    </Compile>
+    <Compile Include="..\est.fsi">
+      <Link>est.fsi</Link>
+    </Compile>
+    <Compile Include="..\est.fs">
+      <Link>est.fs</Link>
     </Compile>
     <Compile Include="pars.fs" />
     <Compile Include="..\lexhelp.fsi">
@@ -270,6 +294,9 @@
     </Compile>
     <Compile Include="..\infos.fs">
       <Link>infos.fs</Link>
+    </Compile>
+    <Compile Include="..\NicePrint.fs">
+      <Link>NicePrint.fs</Link>
     </Compile>
     <Compile Include="..\augment.fsi">
       <Link>augment.fsi</Link>
@@ -358,6 +385,9 @@
     <Compile Include="..\ilxgen.fs">
       <Link>ilxgen.fs</Link>
     </Compile>
+    <Compile Include="..\TraceCall.fsi">
+      <Link>TraceCall.fsi</Link>
+    </Compile>
     <Compile Include="..\TraceCall.fs">
       <Link>TraceCall.fs</Link>
     </Compile>
@@ -382,29 +412,79 @@
     <FsSrGen Include="..\fsi\FSIstrings.txt">
       <Link>FSIstrings.txt</Link>
     </FsSrGen>
-    <Compile Include="..\vs\IncrementalBuild.fsi" />
-    <Compile Include="..\vs\IncrementalBuild.fs" />
-    <Compile Include="..\vs\Reactor.fsi" />
-    <Compile Include="..\vs\Reactor.fs" />
-    <Compile Include="..\fsc.fs" />
-    <Compile Include="..\vs\service.fsi" />
-    <Compile Include="..\vs\service.fs" />
+    <Compile Include="..\vs\IncrementalBuild.fsi">
+      <Link>IncrementalBuild.fsi</Link>
+    </Compile>
+    <Compile Include="..\vs\IncrementalBuild.fs">
+      <Link>IncrementalBuild.fs</Link>
+    </Compile>
+    <Compile Include="..\fsc.fs">
+      <Link>fsc.fs</Link>
+    </Compile>
+    <Compile Include="..\vs\Reactor.fsi">
+      <Link>Reactor.fsi</Link>
+    </Compile>
+    <Compile Include="..\vs\Reactor.fs">
+      <Link>Reactor.fs</Link>
+    </Compile>
+    <Compile Include="..\vs\ServiceLexing.fsi">
+      <Link>ServiceLexing.fsi</Link>
+    </Compile>
+    <Compile Include="..\vs\ServiceLexing.fs">
+      <Link>ServiceLexing.fs</Link>
+    </Compile>
+    <Compile Include="..\vs\ServiceConstants.fs">
+      <Link>ServiceConstants.fs</Link>
+    </Compile>
+    <Compile Include="..\vs\ServiceParseTreeWalk.fs">
+      <Link>ServiceParseTreeWalk.fs</Link>
+    </Compile>
+    <Compile Include="..\vs\ServiceNavigation.fsi">
+      <Link>ServiceNavigation.fsi</Link>
+    </Compile>
+    <Compile Include="..\vs\ServiceNavigation.fs">
+      <Link>ServiceNavigation.fs</Link>
+    </Compile>
+    <Compile Include="..\vs\ServiceParamInfoLocations.fsi">
+      <Link>ServiceParamInfoLocations.fsi</Link>
+    </Compile>
+    <Compile Include="..\vs\ServiceParamInfoLocations.fs">
+      <Link>ServiceParamInfoLocations.fs</Link>
+    </Compile>
+    <Compile Include="..\vs\ServiceUntypedParse.fsi">
+      <Link>ServiceUntypedParse.fsi</Link>
+    </Compile>
+    <Compile Include="..\vs\ServiceUntypedParse.fs">
+      <Link>ServiceUntypedParse.fs</Link>
+    </Compile>
+    <Compile Include="..\vs\ServiceDeclarations.fsi">
+      <Link>ServiceDeclarations.fsi</Link>
+    </Compile>
+    <Compile Include="..\vs\ServiceDeclarations.fs">
+      <Link>ServiceDeclarations.fs</Link>
+    </Compile>
+    <Compile Include="..\vs\service.fsi">
+      <Link>service.fsi</Link>
+    </Compile>
+    <Compile Include="..\vs\service.fs">
+      <Link>service.fs</Link>
+    </Compile>
     <Compile Include="..\fsi\fsi.fs">
       <Link>fsi.fs</Link>
     </Compile>
-    <Compile Include="fsisilverlight.fs">
-      <Link>fsisilverlight.fs</Link>
+    <Compile Include="..\vs\SimpleServices.fs">
+      <Link>SimpleServices.fs</Link>
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="mscorlib" />
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Windows" />
     <ProjectReference Include="$(FSharpSourcesRoot)\fsharp\FSharp.Core\FSharp.Core.fsproj">
       <Project>{5ed79cd6-eda7-4052-972a-053d3e8391b6}</Project>
       <Name>FSharp.Core</Name>
     </ProjectReference>
+    <Reference Include="mscorlib" />
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Windows" />
   </ItemGroup>
   <Import Project="$(FSharpSourcesRoot)\FSharpTeam.targets" Condition=" Exists('$(FSharpSourcesRoot)\FSharpTeam.targets') " />
   <Import Project="$(FSharpSourcesRoot)\FSharpSource.targets" Condition=" !Exists('$(FSharpSourcesRoot)\FSharpTeam.targets') " />

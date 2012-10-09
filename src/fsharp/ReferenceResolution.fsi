@@ -1,3 +1,14 @@
+namespace Viz
+
+/// This type exists to have a concrete 'Target' type for a DebuggerVisualizerAttribute.
+/// Ideally it would be out in its own assembly, but then the compiler would need to take a dependency on that assembly, so instead we 
+/// pragmatically just shove this into the compiler assembly itself.
+type internal Visualizable =
+    new : obj -> Visualizable
+    member Data : obj
+    /// assuming this assembly is already in the debuggee process, then Viz.Visualiable.Make(foo) in the Watch window will make a visualizer for foo
+    static member Make : obj -> Visualizable
+
 namespace Microsoft.FSharp.Compiler
 
 module internal MSBuildResolver = 
@@ -22,6 +33,9 @@ module internal MSBuildResolver =
 
 #if SILVERLIGHT
 #else
+
+    val DotNetFrameworkReferenceAssembliesRootDirectory : string
+
     /// Information about a resolved file.
     type ResolvedFile = {
             /// Item specification
@@ -59,6 +73,7 @@ module internal MSBuildResolver =
     /// Callback for errors and warnings.
     type ErrorWarningCallbackSig = 
         ((*code:*)string->(*message*)string->unit)
+
 
     val Resolve :
                 resolutionEnvironment: ResolutionEnvironment *

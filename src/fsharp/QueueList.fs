@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2011 Microsoft Corporation. 
+// Copyright (c) 2002-2012 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -37,6 +37,8 @@ type internal QueueList<'T>(firstElementsIn: FlatList<'T>, lastElementsRevIn:  '
     static member Empty : QueueList<'T> = empty
     new (xs:FlatList<'T>) = QueueList(xs,[],0)
     
+    member x.ToFlatList() = if push then firstElements else FlatList.append firstElements (FlatList.ofList (lastElements()))
+
     member internal x.FirstElements = firstElements
     member internal x.LastElements = lastElements()
 
@@ -44,12 +46,9 @@ type internal QueueList<'T>(firstElementsIn: FlatList<'T>, lastElementsRevIn:  '
     member x.AppendOne(y) = QueueList(firstElements, y :: lastElementsRev, numLastElements+1)
     member x.Append(ys:seq<_>) = QueueList(firstElements, (List.rev (Seq.toList ys) @ lastElementsRev), numLastElements+1)
     
-    /// Note this operation is O(n) anyway, so executing lastElements() here is OK
+    /// Note this operation is O(n) anyway, so executing ToFlatList() here is OK
     interface IEnumerable<'T> with 
-        member x.GetEnumerator() : IEnumerator<'T> = 
-           if push then (firstElements :> IEnumerable<_>).GetEnumerator()
-           else (seq { yield! firstElements 
-                       yield! lastElements() }).GetEnumerator()
+        member x.GetEnumerator() : IEnumerator<'T> = (x.ToFlatList() :> IEnumerable<_>).GetEnumerator()
     interface IEnumerable with 
         member x.GetEnumerator() : IEnumerator = ((x :> IEnumerable<'T>).GetEnumerator() :> IEnumerator)
 

@@ -481,7 +481,8 @@ type ArrayModule2() =
         // string array
         let strArr = [|"Lists"; "are"; "a"; "commonly"; "used"; "data"; "structure"|]    
         Array.sortInPlaceBy (fun (x:string) -> x.Length)  strArr 
-        if strArr <> [| "a"; "are";"data"; "used";"Lists"; "commonly";"structure"|]     then Assert.Fail()
+        // note: Array.sortInPlaceBy is not stable, so we allow 2 results.
+        if strArr <> [| "a"; "are";"data"; "used";"Lists"; "commonly";"structure"|] && strArr <> [| "a"; "are"; "used"; "data"; "Lists"; "commonly";"structure"|]    then Assert.Fail()
         
         // empty array
         let emptyArr:int[] = [| |]

@@ -1,6 +1,5 @@
 //----------------------------------------------------------------------------
-//
-// Copyright (c) 2002-2011 Microsoft Corporation. 
+// Copyright (c) 2002-2012 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -183,7 +182,22 @@ module internal Microsoft.FSharp.Compiler.PrettyNaming
     let opNameCons = CompileOpName "::"
     let opNameNil = CompileOpName "[]"
     let opNameEquals = CompileOpName "="
+    let opNameEqualsNullable = CompileOpName "=?"
+    let opNameNullableEquals = CompileOpName "?="
+    let opNameNullableEqualsNullable = CompileOpName "?=?"
 
+
+    /// The characters that are allowed to be the first character of an identifier.
+    let IsIdentifierFirstCharacter c =
+        let cat = System.Char.GetUnicodeCategory(c)
+        c='_' ||
+        (    cat = UnicodeCategory.UppercaseLetter // Letters
+          || cat = UnicodeCategory.LowercaseLetter 
+          || cat = UnicodeCategory.TitlecaseLetter
+          || cat = UnicodeCategory.ModifierLetter
+          || cat = UnicodeCategory.OtherLetter
+          || cat = UnicodeCategory.LetterNumber 
+        )
 
     /// The characters that are allowed to be in an identifier.
     let IsIdentifierPartCharacter c =
@@ -207,19 +221,18 @@ module internal Microsoft.FSharp.Compiler.PrettyNaming
 
     let IsValidPrefixOperatorUse s = 
         match s with 
-        | "+" | "-" | "+." | "-." | "%" | "%%" | "&" | "&&" -> true
+        | "?+" | "?-" | "+" | "-" | "+." | "-." | "%" | "%%" | "&" | "&&" -> true
         | _ -> s.[0] = '!' || (s.[0] = '~' && String.forall (fun c -> c = s.[0]) s)
     
     let IsValidPrefixOperatorDefinitionName s = 
         match s with 
-        | "~+" | "~-" | "~+." | "~-." | "~%" | "~%%" | "~&" | "~&&" -> true
-        | "?<-" -> true // this comes through as a PREFIX_OP at a definition site. Let it through as a definition, not a use
+        | "~?+" | "~?-" | "~+" | "~-" | "~+." | "~-." | "~%" | "~%%" | "~&" | "~&&" -> true
         | _ -> (s.[0] = '!' && s <> "!=") || (s.[0] = '~' && String.forall (fun c -> c = s.[0]) s)
         
     let IsPrefixOperator s = 
         let s = DecompileOpName s
         match s with 
-        | "~+" | "~-" | "~+." | "~-." | "~%" | "~%%" | "~&" | "~&&" -> true
+        | "~?+" | "~?-" | "~+" | "~-" | "~+." | "~-." | "~%" | "~%%" | "~&" | "~&&" -> true
         | _ -> (s.[0] = '!' && s <> "!=")  || (s.[0] = '~' && String.forall (fun c -> c = s.[0]) s)
 
     let IsTernaryOperator s = 
@@ -233,12 +246,13 @@ module internal Microsoft.FSharp.Compiler.PrettyNaming
         //------
         // This function recognises these "infix operator" names.
         let s = DecompileOpName s
-        let skipIgnoredChars = s.TrimStart([| '.' |])
+        let skipIgnoredChars = s.TrimStart('.', '?')
         let afterSkipStartsWith prefix   = skipIgnoredChars.StartsWith(prefix,System.StringComparison.Ordinal)
         let afterSkipStarts     prefixes = List.exists afterSkipStartsWith prefixes
         // The following conditions follow the declExpr infix clauses. The test corresponds to the lexer definition for the token.
         s = ":=" ||                                    // COLON_EQUALS
         afterSkipStartsWith "|" ||                     // BAR_BAR, INFIX_BAR_OP
+        (* REVIEW: OR is deadcode, now called BAR? *)  // OR
         afterSkipStartsWith "&"  ||                    // AMP, AMP_AMP, INFIX_AMP_OP
         afterSkipStarts ["=";"!=";"<";">";"$"] ||      // EQUALS, INFIX_COMPARE_OP, LESS, GREATER
         s = "$" ||                                     // DOLLAR
@@ -257,9 +271,10 @@ module internal Microsoft.FSharp.Compiler.PrettyNaming
         else Other
 
     let private compilerGeneratedMarker = "@"
+    let private compilerGeneratedMarkerChar = '@'
     
     let IsCompilerGeneratedName (nm:string) =
-        nm.Contains(compilerGeneratedMarker) 
+        nm.IndexOf compilerGeneratedMarkerChar <> -1
         
     let CompilerGeneratedName nm =
         if IsCompilerGeneratedName nm then nm else nm+compilerGeneratedMarker
@@ -270,7 +285,7 @@ module internal Microsoft.FSharp.Compiler.PrettyNaming
             | n -> name.[0..n-1]
 
     let CompilerGeneratedNameSuffix (basicName:string) suffix =
-        basicName^compilerGeneratedMarker^suffix
+        basicName+compilerGeneratedMarker+suffix
 
 
     //-------------------------------------------------------------------------
@@ -345,28 +360,38 @@ module internal Microsoft.FSharp.Compiler.PrettyNaming
         let nm = DecompileOpName nm
         if IsOpName nm then "( "^nm^" )" else nm 
 
-    /// Used when generating the paths used by FSI file generation
-    let SplitNamesForFsiGenerationPath (s : string) : string list = 
+    let SplitNamesForILPath (s : string) : string list = 
         if s.StartsWith("``",System.StringComparison.Ordinal) && s.EndsWith("``",System.StringComparison.Ordinal) && s.Length > 4 then [s.Substring(2, s.Length-4)] // identifier is enclosed in `` .. ``, so it is only a single element (this is very approximate)
         else s.Split [| '.' ; '`' |] |> Array.toList      // '.' chops members / namespaces / modules; '`' chops generic parameters for .NET types
         
-    /// Used when generating the paths used by FSI file generation
-    let JoinNamesForFsiGenerationPath (ns : string list) : string = String.concat "." ns
+    // Return a string array delimited by the given separator.
+    // Note that a quoted string is not going to be mangled into pieces. 
+    let private splitAroundQuotation (text:string) (separator:char) =
+        let text' = text.ToCharArray()
+        let length = text'.Length
+        let isNotQuotedQuotation n = n > 0 && text'.[n-1] <> '\\'
+        let rec split (i, cur, group, insideQuotation) =        
+            if i>=length then List.rev (cur::group) else
+            match text'.[i], insideQuotation with
+            // split when seeing a separator
+            | c, false when c = separator -> split (i+1, "", cur::group, false)
+            // keep reading if a separator is inside quotation
+            | c, true when c = separator -> split (i+1, cur+(System.Char.ToString c), group, true)
+            // open or close quotation 
+            | '\"', _ when isNotQuotedQuotation i -> split (i+1, cur+"\"", group, not insideQuotation) 
+            // keep reading
+            | c, _ -> split (i+1, cur+(System.Char.ToString c), group, insideQuotation)
+        split (0, "", [], false) |> Array.ofList
 
-    /// Used when generating the paths used by FSI file generation
-    let ChopUnshowableInFsiGenerationPath (ns : string list) : string list =
-        let showable s =
-            match s with
-            | "static" -> false
-            | _        -> s |> String.forall (fun x -> x >= '0' && x <= '9') |> not // this is safe because a stretch composed solely of digits doesn't constitute an identifier
+    // Return a string array delimited by the given separator up to the maximum number.
+    // Note that a quoted string is not going to be mangled into pieces.
+    let private splitAroundQuotationWithCount (text:string) (separator:char) (count:int)=
+        if count <= 1 then [| text |] else
+        let mangledText  = splitAroundQuotation text separator
+        match mangledText.Length > count with
+        | true -> Array.append (mangledText.[0..(count-2)]) ([| mangledText.[(count-1)..] |> String.concat (System.Char.ToString separator) |])
+        | false -> mangledText
 
-        let rec loop =
-          function []                            -> []
-                 | x :: _  as xs when showable x -> xs
-                 | _ :: xs                       -> loop xs
-        ns |> List.rev |> loop |> List.rev
-
-    
     let FSharpModuleSuffix = "Module"
 
     let MangledGlobalName = "`global`"
@@ -409,3 +434,44 @@ module internal Microsoft.FSharp.Compiler.PrettyNaming
         else 
             None
     
+    let private mangleStaticStringArg (nm:string,v:string) = 
+        nm + "=" + "\"" + v.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\""
+
+    let private tryDemangleStaticStringArg (mangledText:string) = 
+        let pieces = splitAroundQuotationWithCount mangledText '=' 2
+        if pieces.Length <> 2 then None else
+        let nm = pieces.[0]
+        let v = pieces.[1]
+        if v.Length >= 2 then 
+            Some(nm,v.[1..v.Length-2].Replace("\\\\","\\").Replace("\\\"","\""))
+        else
+            Some(nm,v)
+
+    // Demangle the static parameters
+    exception InvalidMangledStaticArg of string
+
+    let demangleProvidedTypeName (typeLogicalName:string) = 
+        if typeLogicalName.Contains "," then 
+            let pieces = splitAroundQuotation typeLogicalName ',' 
+            if pieces.[1..] |> Array.forall (fun x -> tryDemangleStaticStringArg x |> Option.isSome) then
+                let argNamesAndValues = 
+                    pieces.[1..] |> Array.map (fun piece -> 
+                        match tryDemangleStaticStringArg piece with 
+                        | None -> raise (InvalidMangledStaticArg piece)
+                        | Some v -> v)
+                pieces.[0], argNamesAndValues
+            else 
+                typeLogicalName, [| |]
+        else 
+            typeLogicalName, [| |]
+
+    let mangleProvidedTypeName (typeLogicalName,nonDefaultArgs) = 
+        let nonDefaultArgsText = 
+            nonDefaultArgs
+            |> Array.map mangleStaticStringArg
+            |> String.concat ","
+        typeLogicalName+","+nonDefaultArgsText
+
+    //let testDemangleStaticStringArg() = 
+    //   for x in [ ""; "\""; "\"\""; "a"; "\\"; "\\\\"; "\\\""; "_"; "\"\"" ] do 
+    //      if demangleStaticStringArg (mangleStaticStringArg x) <> x then printfn "failed for <<%s>>" x

@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2011 Microsoft Corporation. 
+// Copyright (c) 2002-2012 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -11,10 +11,11 @@
 //----------------------------------------------------------------------------
 
 
-module internal Microsoft.FSharp.Compiler.AbstractIL.Internal.Library 
+module (* internal *) Microsoft.FSharp.Compiler.AbstractIL.Internal.Library 
 #nowarn "1178" // The struct, record or union type 'internal_instr_extension' is not structurally comparable because the type
 
 
+open System
 open System.Collections
 open System.Collections.Generic
 open Internal.Utilities
@@ -40,10 +41,9 @@ let (===) x y = LanguagePrimitives.PhysicalEquality x y
 //------------------------------------------------------------------------
 
 let foldOn p f z x = f z (p x)
-let maxOn f x1 x2 = if f x1 > f x2 then x1 else x2
-
 
 let notFound() = raise (KeyNotFoundException())
+
 module Order = 
     let orderBy (p : 'T -> 'U) = 
         { new IComparer<'T> with member __.Compare(x,xx) = compare (p x) (p xx) }
@@ -79,6 +79,10 @@ module Array =
         let rec loop i = (i >= len1) || (f arr1.[i] arr2.[i] && loop (i+1))
         loop 0
 
+    let lengthsEqAndForall2 p l1 l2 = 
+        Array.length l1 = Array.length l2 &&
+        Array.forall2 p l1 l2
+
     let mapFold f s l = 
         let mutable acc = s
         let n = Array.length l
@@ -90,6 +94,7 @@ module Array =
         res, acc
 
 
+    // REVIEW: systematically eliminate fmap/mapFold duplication. 
     // They only differ by the tuple returned by the function.
     let fmap f s l = 
         let mutable acc = s
@@ -155,6 +160,7 @@ module Option =
         | None -> dflt 
         | Some x -> x
 
+    // REVIEW: systematically eliminate fmap/mapFold duplication
     let fmap f z l = 
         match l with 
         | None   -> z,None
@@ -166,11 +172,6 @@ module Option =
         | None -> z 
         | Some x -> f z x
 
-
-let (+??) opt dflt = match opt with None -> dflt() | Some _ -> opt
-let (+?) opt dflt = match opt with None -> dflt() | Some x -> x
-
-let the = function None -> failwith "the"  | Some x -> x
 
 module List = 
 
@@ -282,11 +283,12 @@ module List =
         | [], [], [] -> ()
         | _ -> failwith "iter3"
 
-    /// warning: not tail recursive 
-    let rec takeUntil p l = 
-      match l with
-      | []    -> [],[]
-      | x::xs -> if p x then [],l else let a,b = takeUntil p xs in x::a,b
+    let takeUntil p l =
+        let rec loop acc l =
+            match l with
+            | [] -> List.rev acc,[]
+            | x::xs -> if p x then List.rev acc, l else loop (x::acc) xs
+        loop [] l
 
     let order (eltOrder: IComparer<'T>) =
         { new IComparer<list<'T>> with 
@@ -302,6 +304,8 @@ module List =
 
 
     let rec last l = match l with [] -> failwith "last" | [h] -> h | _::t -> last t
+    module FrontAndBack = 
+        let (|NonEmpty|Empty|) l = match l with [] -> Empty | _ -> NonEmpty(frontAndBack l)
 
     let replicate x n = 
         Array.toList (Array.create x n)
@@ -388,6 +392,7 @@ module List =
                  fmapA f z xs (x::acc)
                  
     // note: must be tail-recursive 
+    // REVIEW: systematically eliminate fmap/mapFold duplication
     let fmap f z l = fmapA f z l []
 
     let collect2 f xs ys = List.concat (List.map2 f xs ys)
@@ -534,6 +539,7 @@ module FlatList =
             let  arr,acc = Array.mapFold f acc x.array
             FlatList(arr),acc
 
+    // REVIEW: systematically eliminate fmap/mapFold duplication
     let fmap f acc (x:FlatList<_>) = 
         match x.array with
         | null -> 
@@ -547,6 +553,8 @@ module FlatList =
 #else
 
 module FlatList =
+    let toArray xs = List.toArray xs
+    let choose f xs = List.choose f xs
     let order eltOrder = List.order eltOrder 
     let mapq f (x:FlatList<_>) = List.mapq f x
     let mapFold f acc (x:FlatList<_>) =  List.mapFold f acc x
@@ -596,11 +604,29 @@ module Eventually =
 
     let force e = Option.get (forceWhile (fun () -> true) e)
         
-
+    /// Keep running the computation bit by bit until a time limit is reached.
 #if SILVERLIGHT
-    let repeatedlyProgressUntilDoneOrTimeShareOver _timeShareInMilliseconds _runner e = 
-        Done (force e)
+    // There is no Stopwatch on Silverlight, so use DateTime.Now. I'm not sure of the pros and cons of this.
+    // An alternative is just to always force the computation all the way to the end.
+    //let repeatedlyProgressUntilDoneOrTimeShareOver _timeShareInMilliseconds runner e = 
+    //    Done (runner (fun () -> force e))
+    let repeatedlyProgressUntilDoneOrTimeShareOver (timeShareInMilliseconds:int64) runner e = 
+        let rec runTimeShare e = 
+          runner (fun () -> 
+            let sw = System.DateTime.Now
+            let rec loop e = 
+                match e with 
+                | Done _ -> e
+                | NotYetDone (work) -> 
+                    let ts = System.DateTime.Now - sw 
+                    if ts.TotalMilliseconds > float timeShareInMilliseconds then 
+                        NotYetDone(fun () -> runTimeShare e) 
+                    else 
+                        loop(work())
+            loop e)
+        runTimeShare e
 #else    
+    /// The runner gets called each time the computation is restarted
     let repeatedlyProgressUntilDoneOrTimeShareOver timeShareInMilliseconds runner e = 
         let sw = new System.Diagnostics.Stopwatch() 
         let rec runTimeShare e = 
@@ -610,7 +636,7 @@ module Eventually =
             let rec loop(e) = 
                 match e with 
                 | Done _ -> e
-                | NotYetDone (work) -> 
+                | NotYetDone work -> 
                     if sw.ElapsedMilliseconds > timeShareInMilliseconds then 
                         sw.Stop();
                         NotYetDone(fun () -> runTimeShare e) 
@@ -648,7 +674,7 @@ module Eventually =
                              | Exception e -> raise e)
 
     let tryWith e handler =    
-        catch e 
+        catch e
         |> bind (function Result v -> Done v | Exception e -> handler e)
     
 type EventuallyBuilder() = 
@@ -658,7 +684,6 @@ type EventuallyBuilder() =
     member x.Combine(e1,e2) = e1 |> Eventually.bind (fun () -> e2)
     member x.TryWith(e,handler) = Eventually.tryWith e handler
     member x.TryFinally(e,compensation) =  Eventually.tryFinally e compensation
-    //member x.Using(resource:System.IDisposable,e) = Eventually.tryFinally (e resource)  resource.Dispose
     member x.Delay(f) = Eventually.delay f
     member x.Zero() = Eventually.Done ()
 
@@ -790,60 +815,694 @@ module Tables =
             else
                 res <- f x; t.[x] <- res;  res
 
+//-------------------------------------------------------------------------
+// Library: Name maps
+//------------------------------------------------------------------------
+
+type NameMap<'T> = Map<string,'T>
+type NameMultiMap<'T> = NameMap<'T list>
+type MultiMap<'T,'U when 'T : comparison> = Map<'T,'U list>
+
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module NameMap = 
+
+    let empty = Map.empty
+    let range m = List.rev (Map.foldBack (fun _ x sofar -> x :: sofar) m [])
+    let foldBack f (m:NameMap<'T>) z = Map.foldBack f m z
+    let forall f m = Map.foldBack (fun x y sofar -> sofar && f x y) m true
+    let exists f m = Map.foldBack (fun x y sofar -> sofar || f x y) m false
+    let ofKeyedList f l = List.foldBack (fun x acc -> Map.add (f x) x acc) l Map.empty
+    let ofList l : NameMap<'T> = Map.ofList l
+    let ofFlatList (l:FlatList<_>) : NameMap<'T> = FlatList.toMap l
+    let toList (l: NameMap<'T>) = Map.toList l
+    let layer (m1 : NameMap<'T>) m2 = Map.foldBack Map.add m1 m2
+
+    (* not a very useful function - only called in one place - should be changed *)
+    let layerAdditive addf m1 m2 = 
+      Map.foldBack (fun x y sofar -> Map.add x (addf (Map.tryFindMulti x sofar) y) sofar) m1 m2
+
+    // Union entries by identical key, using the provided function to union sets of values
+    let union unionf (ms: NameMap<_> seq) = 
+        seq { for m in ms do yield! m } 
+           |> Seq.groupBy (fun (KeyValue(k,_v)) -> k) 
+           |> Seq.map (fun (k,es) -> (k,unionf (Seq.map (fun (KeyValue(_k,v)) -> v) es))) 
+           |> Map.ofSeq
+
+    (* For every entry in m2 find an entry in m1 and fold *)
+    let subfold2 errf f m1 m2 acc =
+        Map.foldBack (fun n x2 acc -> try f n (Map.find n m1) x2 acc with :? KeyNotFoundException -> errf n x2) m2 acc
+
+    let suball2 errf p m1 m2 = subfold2 errf (fun _ x1 x2 acc -> p x1 x2 && acc) m1 m2 true
+
+    let mapFold f s (l: NameMap<'T>) = 
+        Map.foldBack (fun x y (l',s') -> let y',s'' = f s' x y in Map.add x y' l',s'') l (Map.empty,s)
+
+    let foldBackRange f (l: NameMap<'T>) acc = Map.foldBack (fun _ y acc -> f y acc) l acc
+
+    let filterRange f (l: NameMap<'T>) = Map.foldBack (fun x y acc -> if f y then Map.add x y acc else acc) l Map.empty
+
+    let mapFilter f (l: NameMap<'T>) = Map.foldBack (fun x y acc -> match f y with None -> acc | Some y' -> Map.add x y' acc) l Map.empty
+
+    let map f (l : NameMap<'T>) = Map.map (fun _ x -> f x) l
+
+    let iter f (l : NameMap<'T>) = Map.iter (fun _k v -> f v) l
+
+    let iteri f (l : NameMap<'T>) = Map.iter f l
+
+    let mapi f (l : NameMap<'T>) = Map.map f l
+
+    let partition f (l : NameMap<'T>) = Map.filter (fun _ x-> f x) l, Map.filter (fun _ x -> not (f x)) l
+
+    let mem v (m: NameMap<'T>) = Map.containsKey v m
+
+    let find v (m: NameMap<'T>) = Map.find v m
+
+    let tryFind v (m: NameMap<'T>) = Map.tryFind v m 
+
+    let add v x (m: NameMap<'T>) = Map.add v x m
+
+    let isEmpty (m: NameMap<'T>) = (Map.isEmpty  m)
+
+    let existsInRange p m =  Map.foldBack (fun _ y acc -> acc || p y) m false 
+
+    let tryFindInRange p m = 
+        Map.foldBack (fun _ y acc -> 
+             match acc with 
+             | None -> if p y then Some y else None 
+             | _ -> acc) m None 
+
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module NameMultiMap = 
+    let existsInRange f (m: NameMultiMap<'T>) = NameMap.exists (fun _ l -> List.exists f l) m
+    let find v (m: NameMultiMap<'T>) = match Map.tryFind v m with None -> [] | Some r -> r
+    let add v x (m: NameMultiMap<'T>) = NameMap.add v (x :: find v m) m
+    let range (m: NameMultiMap<'T>) = Map.foldBack (fun _ x sofar -> x @ sofar) m []
+    let rangeReversingEachBucket (m: NameMultiMap<'T>) = Map.foldBack (fun _ x sofar -> List.rev x @ sofar) m []
+    
+    let chooseRange f (m: NameMultiMap<'T>) = Map.foldBack (fun _ x sofar -> List.choose f x @ sofar) m []
+    let map f (m: NameMultiMap<'T>) = NameMap.map (List.map f) m 
+    let empty : NameMultiMap<'T> = Map.empty
+    let initBy f xs : NameMultiMap<'T> = xs |> Seq.groupBy f |> Seq.map (fun (k,v) -> (k,List.ofSeq v)) |> Map.ofSeq 
+    let ofList (xs: (string * 'T) list) : NameMultiMap<'T> = xs |> Seq.groupBy fst |> Seq.map (fun (k,v) -> (k,List.ofSeq (Seq.map snd v))) |> Map.ofSeq 
+
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module MultiMap = 
+    let existsInRange f (m: MultiMap<_,_>) = Map.exists (fun _ l -> List.exists f l) m
+    let find v (m: MultiMap<_,_>) = match Map.tryFind v m with None -> [] | Some r -> r
+    let add v x (m: MultiMap<_,_>) = Map.add v (x :: find v m) m
+    let range (m: MultiMap<_,_>) = Map.foldBack (fun _ x sofar -> x @ sofar) m []
+    //let chooseRange f (m: MultiMap<_,_>) = Map.foldBack (fun _ x sofar -> List.choose f x @ sofar) m []
+    let empty : MultiMap<_,_> = Map.empty
+    let initBy f xs : MultiMap<_,_> = xs |> Seq.groupBy f |> Seq.map (fun (k,v) -> (k,List.ofSeq v)) |> Map.ofSeq 
+
+#if LAYERED_MAPS
+/// State of immutable map collection, converted to a dictionary on first lookup.
+[<RequireQualifiedAccess>]
+type LayeredMapState<'Key,'Value when 'Key : equality and 'Key : comparison> = 
+   /// Collapsible(entries, size)
+   | Collapsible of list<seq<KeyValuePair<'Key,'Value>>> * int
+   /// Collapsed(frontMap, backingDict)
+   | Collapsed of (Map<'Key,'Value> * Dictionary<'Key,'Value>)   
+
+/// Immutable map collection, with explicit flattening to a backing dictionary 
+///
+/// A layered map is still an immutable map containing a "front" 
+/// F# Map, but the layered map collapses its entries to a "backing"
+/// dictionary at specific "add-and-collapse" points. 
+///
+/// For maps built from multiple "add-and-collapse" operations,
+/// the process of building the collapsed maps is coalesced.
+[<Sealed>]
+type LayeredMap<'Key,'Value when 'Key : equality and 'Key : comparison>(state:LayeredMapState<'Key,'Value>) =
+    let mutable state = state
+    static let empty = LayeredMap<'Key,'Value>(LayeredMapState.Collapsible ([],0))
+
+    let entries() = 
+        match state with 
+        | LayeredMapState.Collapsible (el,n) -> (el,n)
+        | LayeredMapState.Collapsed (m,d) ->  [(m :> seq<_>); (d :> seq<_>)], m.Count + d.Count
+
+    let markAsCollapsible() = 
+        match state with 
+        | LayeredMapState.Collapsible _ -> ()
+        | LayeredMapState.Collapsed _ -> state <- LayeredMapState.Collapsible (entries())
+
+    let collapse() = 
+        match state with 
+        | LayeredMapState.Collapsible (el, n) -> 
+            let d = Dictionary<_,_>(n)
+            for e in List.rev el do
+               for (KeyValue(k,v)) in e do
+                  d.[k] <- v
+            let p = (Map.empty, d)
+            state <- LayeredMapState.Collapsed p
+            p
+        | LayeredMapState.Collapsed p  -> p
+
+    let dict() = 
+        markAsCollapsible()
+        let (_,dict) = collapse() 
+        dict
+    
+    static member Empty : LayeredMap<'Key,'Value> = empty
+
+    member x.TryGetValue (key,res:byref<'Value>) = 
+        let (m,d) = collapse() 
+        match m.TryFind key with 
+        | None -> d.TryGetValue (key,&res)
+        | Some r -> res <- r; true
+
+    member x.ContainsKey k = 
+        let (map,dict) = collapse() 
+        map.ContainsKey k || dict.ContainsKey k
+
+    member x.Item 
+     with get key = 
+        // collapse on first lookup
+        let (map,dict) = collapse() 
+        match map.TryFind key with 
+        | None -> 
+            let mutable res = Unchecked.defaultof<_>
+            if dict.TryGetValue (key, &res) then res 
+            else raise <| KeyNotFoundException("the key was not found in the LayerdNameMap")
+        | Some v -> v
+
+    member x.TryFind key =
+        let (map,dict) = collapse() 
+        match map.TryFind key with 
+        | None -> 
+            let mutable res = Unchecked.defaultof<_>
+            if dict.TryGetValue (key, &res) then Some res else None
+        | res -> res
+        
+    member x.Values = dict().Values
+
+    member x.Elements = dict() |> Seq.readonly
+
+    member x.Add (key, value) = 
+        match state with 
+        | LayeredMapState.Collapsible (el,n) -> LayeredMap<_,_>(LayeredMapState.Collapsible ((([| KeyValuePair(key,value) |] :> seq<_>) :: el), n + 1))
+        | LayeredMapState.Collapsed (map,dict) -> LayeredMap (LayeredMapState.Collapsed (map.Add (key,value), dict))
+
+    member x.AddAndMarkAsCollapsible (kvs: _[])   =
+        let el,n = entries()
+        LayeredMap<_,_>(LayeredMapState.Collapsible (((kvs :> seq<_>) :: el), n + kvs.Length))
+        
+    member x.MarkAsCollapsible ()  =
+        markAsCollapsible() 
+        x
+#endif
+
+#if LAYERED_MULTI_MAP
+/// State of immutable map collection, converted to a dictionary on first lookup.
+[<RequireQualifiedAccess>]
+type LayeredMultiMapState<'Key,'Value when 'Key : equality and 'Key : comparison> = 
+   /// Collapsible(entries, size)
+   | Collapsible of list<seq<KeyValuePair<'Key,'Value list>>> * int
+   /// Collapsed(frontMap, backingDict)
+   | Collapsed of (MultiMap<'Key,'Value> * Dictionary<'Key,'Value list>)   
+
+/// Immutable map collection, with explicit flattening to a backing dictionary 
+[<Sealed>]
+type LayeredMultiMap<'Key,'Value when 'Key : equality and 'Key : comparison>(state:LayeredMultiMapState<'Key,'Value>) = 
+
+    let mutable state = state
+    static let empty = LayeredMultiMap<'Key,'Value>(LayeredMultiMapState.Collapsible ([],0))
+
+    let entries() = 
+        match state with 
+        | LayeredMultiMapState.Collapsible (el,n) -> (el,n)
+        | LayeredMultiMapState.Collapsed (m,d) ->  [(m :> seq<_>); (d :> seq<_>)], m.Count + d.Count
+
+    let markAsCollapsible() = 
+        match state with 
+        | LayeredMultiMapState.Collapsible _ -> ()
+        | LayeredMultiMapState.Collapsed _ -> state <- LayeredMultiMapState.Collapsible (entries())
+
+    let collapse() = 
+        match state with 
+        | LayeredMultiMapState.Collapsible (el, n) -> 
+            let d = Dictionary<_,_>(n)
+            for e in List.rev el do
+               for (KeyValue(k,vs)) in e do
+                  for v in List.rev vs do 
+                      let prev = 
+                         let mutable res = Unchecked.defaultof<'Value list>
+                         let ok = d.TryGetValue(k,&res)
+                         if ok then res else []
+                      d.[k] <- v::prev
+            let p = (MultiMap.empty, d)
+            state <- LayeredMultiMapState.Collapsed p
+            p
+        | LayeredMultiMapState.Collapsed p  -> p
+
+    let dict() = 
+        markAsCollapsible()
+        let (_,dict) = collapse() 
+        dict
+    
+    static member Empty : LayeredMultiMap<'Key,'Value> = empty
+
+    member x.TryGetValue (key,res:byref<'Value list>) = 
+        let (m,d) = collapse() 
+        match m.TryFind key with 
+        | None -> d.TryGetValue (key,&res)
+        | Some res1 -> 
+            let mutable res2 = Unchecked.defaultof<'Value list>
+            let ok = d.TryGetValue (key,&res2) 
+            if ok then res <- (res1@res2); true
+            else res <- res1; true
+
+    member x.ContainsKey k = 
+        let (map,dict) = collapse() 
+        map.ContainsKey k || dict.ContainsKey k
+
+    member x.Item 
+     with get key = 
+        let mutable res = Unchecked.defaultof<_>
+        if x.TryGetValue (key, &res) then res 
+        else [] 
+
+    member x.TryFind key =
+        let mutable res = Unchecked.defaultof<_>
+        if x.TryGetValue (key, &res) then Some res 
+        else None
+        
+    member x.Values = dict().Values |> Seq.concat
+
+    member x.Add (key, value) = 
+        match state with 
+        | LayeredMultiMapState.Collapsible (el,n) -> LayeredMultiMap<_,_>(LayeredMultiMapState.Collapsible ((([| KeyValuePair(key,[value]) |] :> seq<_>) :: el), n + 1))
+        | LayeredMultiMapState.Collapsed (map,dict) -> LayeredMultiMap (LayeredMultiMapState.Collapsed (MultiMap.add key value map, dict))
+
+    member x.AddAndMarkAsCollapsible (kvs: _[])   =
+        let el,n = entries()
+        LayeredMultiMap<_,_>(LayeredMultiMapState.Collapsible ((([| for KeyValue(k,v) in kvs -> KeyValuePair(k,[v]) |] :> seq<_>) :: el), n + kvs.Length))
+        
+    member x.MarkAsCollapsible ()  =
+        markAsCollapsible() 
+        x
+
+#endif
+//#if NEW_LAYERED_MAP
+
+/// Immutable map collection, with explicit flattening to a backing dictionary 
+///
+/// A layered map is still an immutable map containing a "front" 
+/// F# Map, but the layered map collapses its treeMap to a "backing"
+/// dictionary at specific "add-and-tryCollapseToDictAndNothingElse" points. 
+///
+/// For maps built from multiple "add-and-tryCollapseToDictAndNothingElse" operations,
+/// the process of building the collapsed maps is coalesced.
+type LayeredMap<'Key,'Value when 'Key : equality and 'Key : comparison>
+                (// The queue of operations to build the full map, empty except during bulk-add operations
+                 xqueue: list<Choice<KeyValuePair<'Key,'Value>[], 
+                                     ('Key * ('Value option -> 'Value))>>, 
+                 // The existing backing tree map (which is looked up in preference to the dictionary)
+                 xentries: Map<'Key,'Value>, 
+                 // The existing backing dictionary (which may be null)
+                 xdict: Dictionary<'Key,'Value>) =
+    static let empty = LayeredMap<'Key,'Value>([], Map.empty, null)
+    let mutable state = (xqueue,xentries,xdict)
+
+    let tryCollapseToDictAndNothingElse force = 
+        let (bulkQueue,treeMap,fastDict) = state 
+        if not bulkQueue.IsEmpty || force then
+            // bulkQueue.Length + 
+            let d = Dictionary<_,_>(treeMap.Count + (match fastDict with null -> 0 | _ -> fastDict.Count))
+            begin
+                match fastDict with 
+                | null -> ()
+                | _ -> 
+                    for (KeyValue(k,v)) in fastDict do
+                      d.[k] <- v
+            end
+            treeMap |> Map.iter (fun k v -> d.[k] <- v)
+            for kvsOrModify in List.rev bulkQueue do 
+              match kvsOrModify with 
+              | Choice1Of2 kvs -> 
+                  for (KeyValue(k,v)) in kvs do
+                    d.[k] <- v
+              | Choice2Of2 (k,updatef) -> 
+                  let mutable prev = Unchecked.defaultof<_>
+                  let n = updatef (if d.TryGetValue(k,&prev) then Some prev else None)
+                  d.[k] <- n
+
+            state <- ([], Map.empty, d)
+            d
+        elif treeMap.IsEmpty then fastDict 
+        else null
+
+    static member Empty : LayeredMap<'Key,'Value> = empty
+
+    member x.TryGetValue (key,res:byref<'Value>) = 
+        match tryCollapseToDictAndNothingElse false with
+        | null ->
+            let (_,treeMap,fastDict) = state 
+            match treeMap.TryFind key with 
+            | None -> 
+                match fastDict with 
+                | null -> false
+                | _ -> fastDict.TryGetValue (key,&res)
+            | Some r -> res <- r; true
+        | fastDict -> 
+            //printfn "collapsed"
+            match fastDict with 
+            | null -> false
+            | _ -> fastDict.TryGetValue (key, &res)
+
+    member x.ContainsKey key = 
+        let mutable res = Unchecked.defaultof<_>
+        x.TryGetValue(key, &res)
+
+    member x.Item 
+      with get key = 
+        let mutable res = Unchecked.defaultof<_>
+        let ok = x.TryGetValue(key, &res)
+        if ok then res 
+        else raise <| KeyNotFoundException("the key was not found in the LayerdNameMap")
+
+    member x.TryFind key =
+        let mutable res = Unchecked.defaultof<_>
+        let ok = x.TryGetValue(key, &res)
+        if ok then Some res  else None
+        
+    member x.Values = (tryCollapseToDictAndNothingElse true).Values
+
+    member x.Elements = (tryCollapseToDictAndNothingElse true) |> Seq.readonly
+
+
+    member x.Add (key, value) = 
+        let (bulkQueue,treeMap,fastDict) = state 
+        if bulkQueue.IsEmpty then 
+            let treeMap = treeMap.Add (key, value)
+            LayeredMap(bulkQueue, treeMap, fastDict)
+        else 
+            // There are elements in the bulk queue, squash them down (mutating map "x"),
+            // then use a one-element treemap
+            let newFastDict = tryCollapseToDictAndNothingElse false
+            match newFastDict with
+            | null -> failwith "unreachable, bulkQueue was non empty, newFastDict should not be null"
+            | _ -> LayeredMap([], Map.empty.Add(key,value), newFastDict)
+
+    member x.AddAndMarkAsCollapsible (kvs: _[])   =
+        if kvs.Length = 0 then x else
+        let (bulkQueue,treeMap,fastDict) = state 
+        let state = (Choice1Of2 kvs::bulkQueue,treeMap,fastDict)
+        LayeredMap state
+        
+    /// Push an item that transforms a possible existing entry. This is used for the bulk updates
+    /// in nameres.fs, where, for each type we push during an "open", we must combine the
+    /// type with any existing entries for types in the eUnqualifiedItems table. 
+    member x.LinearTryModifyThenLaterFlatten (key, f: 'Value option -> 'Value) =
+        let (bulkQueue,treeMap,fastDict) = state 
+        let state = (Choice2Of2 (key,f)::bulkQueue,treeMap,fastDict)
+        LayeredMap state
+        
+
+    member x.MarkAsCollapsible ()  = //x.AddAndMarkAsCollapsible [| |] 
+        let (bulkQueue,treeMap,fastDict) = state 
+        let state = (Choice1Of2 [| |]::bulkQueue,treeMap,fastDict)
+        LayeredMap state
+
+
+//#endif
+
+//#if NEW_LAYERED_MULTI_MAP
+type LayeredMultiMap<'Key,'Value when 'Key : equality and 'Key : comparison>
+                (xqueue: list<KeyValuePair<'Key,'Value>[]>, 
+                  xentries: Map<'Key,'Value list>, 
+                  xdict: Dictionary<'Key,'Value list>) =
+    static let empty = LayeredMultiMap<'Key,'Value>([], Map.empty, null)
+    let mutable state = (xqueue,xentries,xdict)
+
+    let tryCollapseToDictAndNothingElse force = 
+        let (bulkQueue,treeMap,fastDict) = state 
+        if not bulkQueue.IsEmpty || force then
+            // bulkQueue.Length + 
+            let d = Dictionary<_,_>(treeMap.Count + (match fastDict with null -> 0 | _ -> fastDict.Count))
+            begin
+                match fastDict with 
+                | null -> ()
+                | _ -> 
+                    for (KeyValue(k,vs)) in fastDict do
+                      d.[k] <- vs
+            end
+            treeMap |> Map.iter (fun k vs -> 
+              let mutable prev = Unchecked.defaultof<_>
+              if d.TryGetValue(k,&prev) then 
+                    d.[k] <- vs@prev
+              else
+                    d.[k] <- vs)
+            //printfn "collapsing, bulkQueue = %A" bulkQueue
+            for kvs in List.rev bulkQueue do 
+              //printfn "collapsing, bulkQueue.i] = %A" bulkQueue.[i]
+              for (KeyValue(k,v)) in kvs do
+                  let mutable prev = Unchecked.defaultof<_>
+                  if d.TryGetValue(k,&prev) then 
+                        d.[k] <- (v::prev)
+                  else
+                        d.[k] <- [v]
+            state <- ([], Map.empty, d)
+            d
+        elif treeMap.IsEmpty then fastDict 
+        else null
+
+    static member Empty : LayeredMultiMap<'Key,'Value> = empty
+
+    member x.TryGetValue (key,res:byref<'Value list>) = 
+        match tryCollapseToDictAndNothingElse false with
+        | null ->
+            let (_,treeMap,fastDict) = state 
+            match treeMap.TryFind key with 
+            | None -> 
+                match fastDict with 
+                | null -> false
+                | _ -> fastDict.TryGetValue (key,&res)
+            | Some r -> 
+                match fastDict with 
+                | null -> 
+                    res <- r
+                    true
+                | _ -> 
+                    let mutable res2 = Unchecked.defaultof<_>
+                    if fastDict.TryGetValue (key,&res2) then 
+                        res <- r@res2
+                    else
+                        res <- r
+                    true
+        | fastDict -> 
+            //printfn "collapsed"
+            match fastDict with 
+            | null -> false
+            | _ -> fastDict.TryGetValue (key, &res)
+
+    member x.ContainsKey key = 
+        let mutable res = Unchecked.defaultof<_>
+        x.TryGetValue(key, &res)
+
+    member x.Item 
+      with get key = 
+        let mutable res = Unchecked.defaultof<_>
+        let ok = x.TryGetValue(key, &res)
+        if ok then res else []
+
+    member x.TryFind key =
+        let mutable res = Unchecked.defaultof<_>
+        let ok = x.TryGetValue(key, &res)
+        if ok then Some res  else None
+
+    member x.Values = (tryCollapseToDictAndNothingElse true).Values |> Seq.concat
+
+    member x.Elements = (tryCollapseToDictAndNothingElse true) |> Seq.readonly
+
+    member x.Add (key, value) = 
+        let (bulkQueue,treeMap,fastDict) = state 
+        if bulkQueue.IsEmpty then 
+            let prev = match treeMap.TryFind key with None -> [] | Some vs -> vs
+            let treeMap = treeMap.Add (key, value::prev)
+            LayeredMultiMap(bulkQueue, treeMap, fastDict)
+        else 
+            // There are elements in the bulk queue, squash them down (mutating map "x"),
+            // then use a one-element treemap
+            let newFastDict = tryCollapseToDictAndNothingElse false
+            match newFastDict with
+            | null -> failwith "unreachable, bulkQueue was non empty, newFastDict should not be null"
+            | _ -> LayeredMultiMap([], Map.empty.Add(key,[value]), newFastDict)
+
+    member x.AddAndMarkAsCollapsible (kvs: _[])   =
+        if kvs.Length = 0 then x else
+        let (bulkQueue,treeMap,fastDict) = state 
+        let state = (kvs::bulkQueue,treeMap,fastDict)
+        LayeredMultiMap state
+        
+    member x.MarkAsCollapsible ()  = //x.AddAndMarkAsCollapsible [| |] 
+        let (bulkQueue,treeMap,fastDict) = state 
+        let state = ([| |]::bulkQueue,treeMap,fastDict)
+        LayeredMultiMap state
+
+//#endif
+
+#if NO_LAYERED_MAP
+type LayeredMap<'Key,'Value  when 'Key : comparison> = Map<'Key,'Value>
+
+type Map<'Key,'Value when 'Key : comparison> with
+    static member Empty : Map<'Key,'Value> = Map.empty
+
+    member m.TryGetValue (key,res:byref<'Value>) = 
+        match m.TryFind key with 
+        | None -> false
+        | Some r -> res <- r; true
+
+    member x.Values = [ for (KeyValue(_,v)) in x -> v ]
+    member x.Elements = [ for kvp in x -> kvp ]
+    member x.AddAndMarkAsCollapsible (kvs: _[])   = (x,kvs) ||> Array.fold (fun x (KeyValue(k,v)) -> x.Add(k,v))
+    member x.LinearTryModifyThenLaterFlatten (key, f: 'Value option -> 'Value) = x.Add (key, f (x.TryFind key))
+
+    member x.MarkAsCollapsible ()  = x
+
+//#endif
+
+
+//#if NO_LAYERED_MULTI_MAP
+/// Immutable map collection, with explicit flattening to a backing dictionary 
+[<Sealed>]
+type LayeredMultiMap<'Key,'Value when 'Key : equality and 'Key : comparison>(contents : Map<'Key,'Value list>) = 
+    static let empty : LayeredMultiMap<'Key,'Value> = LayeredMultiMap Map.empty
+    member x.Add (k,v) = LayeredMultiMap(contents.Add(k,v :: x.[k]))
+    member x.Item with get k = match contents.TryFind k with None -> [] | Some l -> l
+    member x.AddAndMarkAsCollapsible (kvs: _[])  = 
+        let x = (x,kvs) ||> Array.fold (fun x (KeyValue(k,v)) -> x.Add(k,v))
+        x.MarkAsCollapsible()
+    member x.MarkAsCollapsible() = x //LayeredMultiMap(contents)
+    member x.TryFind k = contents.TryFind k
+    member x.Values = [ for (KeyValue(_,v)) in contents -> v ] |> Seq.concat
+    static member Empty : LayeredMultiMap<'Key,'Value> = empty
+    
+#endif
+
 [<AutoOpen>]
 module Shim =
-#if SILVERLIGHT
-    open System.IO.IsolatedStorage
-    open System.Windows
 
-    type System.IO.File with 
-        static member NewFileStreamShim (fileName:string) = 
-            match Application.GetResourceStream(System.Uri(fileName,System.UriKind.Relative)) with 
-            | null -> IsolatedStorageFile.GetUserStoreForApplication().OpenFile(fileName, System.IO.FileMode.Open) :> System.IO.Stream
-            | resStream -> resStream.Stream
-
-        static member ReadAllBytesShim (fileName:string) = 
-            use stream = System.IO.File.NewFileStreamShim fileName
+    open System.IO
+    [<AbstractClass>]
+    type FileSystem() = 
+        abstract ReadAllBytesShim: fileName:string -> byte[] 
+        default this.ReadAllBytesShim (fileName:string) = 
+            use stream = this.FileStreamReadShim fileName
             let len = stream.Length
             let buf = Array.zeroCreate<byte> (int len)
             stream.Read(buf, 0, (int len)) |> ignore                                            
             buf
-    type System.IO.Path with 
-        static member GetFullPathShim (fileName:string) = fileName
-        static member IsPathRootedShim (pathName:string) = true
-        static member SafeGetFullPath (fileName:string) = fileName
 
-    type System.IO.File with 
-        static member GetLastWriteTimeShim (fileName:string) = 
-            match Application.GetResourceStream(System.Uri(fileName,System.UriKind.Relative)) with 
-            | null -> IsolatedStorageFile.GetUserStoreForApplication().GetLastAccessTime(fileName).LocalDateTime
-            | _resStream -> System.DateTime.Today.Date
-        static member SafeExists (fileName:string) = 
-            match Application.GetResourceStream(System.Uri(fileName,System.UriKind.Relative)) with 
-            | null -> IsolatedStorageFile.GetUserStoreForApplication().FileExists fileName
-            | resStream -> resStream.Stream <> null
-#else
-    open System.IO
-    type System.IO.File with 
-        static member ReadAllBytesShim (fileName:string) = File.ReadAllBytes fileName
-        static member NewFileStreamShim (fileName:string) = 
-            new FileStream(fileName,FileMode.Open,FileAccess.Read,FileShare.ReadWrite) 
-
-    type System.IO.Path with 
-        static member GetFullPathShim (fileName:string) = System.IO.Path.GetFullPath fileName
-        /// Take in a Windows filename with an absolute path, and return the same filename
+        abstract FileStreamReadShim: fileName:string -> System.IO.Stream
+        abstract FileStreamCreateShim: fileName:string -> System.IO.Stream
+        abstract GetFullPathShim: fileName:string -> string
+        /// Take in a filename with an absolute path, and return the same filename
         /// but canonicalized with respect to extra path separators (e.g. C:\\\\foo.txt) 
         /// and '..' portions
-        static member SafeGetFullPath (fileName:string) = 
-            System.Diagnostics.Debug.Assert(Path.IsPathRooted(fileName), sprintf "SafeGetFullPath: '%s' is not absolute" fileName)
-            Path.GetFullPath fileName
+        abstract SafeGetFullPath: fileName:string -> string
+        abstract IsPathRootedShim: path:string -> bool
 
-        static member IsPathRootedShim (path:string) = Path.IsPathRooted path
+        abstract IsInvalidFilename: filename:string -> bool
+        abstract GetTempPathShim : unit -> string
+        abstract GetLastWriteTimeShim: fileName:string -> System.DateTime
+        abstract SafeExists: fileName:string -> bool
+        abstract FileDelete: fileName:string -> unit
+        abstract AssemblyLoadFrom: fileName:string -> System.Reflection.Assembly 
+        abstract AssemblyLoad: assemblyName:System.Reflection.AssemblyName -> System.Reflection.Assembly 
 
-    type System.IO.File with 
-        static member GetLastWriteTimeShim (fileName:string) = File.GetLastWriteTime fileName
-        static member SafeExists (fileName:string) =
-            System.Diagnostics.Debug.Assert(Path.IsPathRooted(fileName), sprintf "SafeExists: '%s' is not absolute" fileName)       
-            File.Exists fileName
+#if SILVERLIGHT
+        default this.AssemblyLoadFrom(fileName:string) = 
+              let load() = 
+                  let assemblyPart = System.Windows.AssemblyPart()
+                  let assemblyStream = this.FileStreamReadShim(fileName)
+                  assemblyPart.Load(assemblyStream)
+              if System.Windows.Deployment.Current.Dispatcher.CheckAccess() then 
+                  load() 
+              else
+                  let resultTask = System.Threading.Tasks.TaskCompletionSource<System.Reflection.Assembly>()
+                  System.Windows.Deployment.Current.Dispatcher.BeginInvoke(Action(fun () -> resultTask.SetResult (load()))) |> ignore
+                  resultTask.Task.Result
+
+        default this.AssemblyLoad(assemblyName:System.Reflection.AssemblyName) = 
+            try 
+               System.Reflection.Assembly.Load(assemblyName.FullName)
+            with e -> 
+                this.AssemblyLoadFrom(assemblyName.Name + ".dll")
+#else
+        default this.AssemblyLoadFrom(fileName:string) = System.Reflection.Assembly.LoadFrom fileName
+        default this.AssemblyLoad(assemblyName:System.Reflection.AssemblyName) = System.Reflection.Assembly.Load assemblyName
+#endif
+
+
+#if SILVERLIGHT
+    open System.IO.IsolatedStorage
+    open System.Windows
+    open System
+
+    let mutable FileSystem = 
+        { new FileSystem() with 
+            member __.FileStreamReadShim (fileName:string) = 
+                match Application.GetResourceStream(System.Uri(fileName,System.UriKind.Relative)) with 
+                | null -> IsolatedStorageFile.GetUserStoreForApplication().OpenFile(fileName, System.IO.FileMode.Open) :> System.IO.Stream 
+                | resStream -> resStream.Stream
+
+            member __.FileStreamCreateShim (fileName:string) = 
+                System.IO.IsolatedStorage.IsolatedStorageFile.GetUserStoreForApplication().CreateFile(fileName) :> Stream
+
+            member __.GetFullPathShim (fileName:string) = fileName
+            member __.IsPathRootedShim (pathName:string) = true
+            member __.SafeGetFullPath (fileName:string) = fileName
+            member __.IsInvalidFilename(filename:string) = 
+                String.IsNullOrEmpty(filename) || filename.IndexOfAny(System.IO.Path.GetInvalidPathChars()) <> -1
+
+            member __.GetTempPathShim() = "." 
+
+            member __.GetLastWriteTimeShim (fileName:string) = 
+                match Application.GetResourceStream(System.Uri(fileName,System.UriKind.Relative)) with 
+                | null -> IsolatedStorageFile.GetUserStoreForApplication().GetLastAccessTime(fileName).LocalDateTime
+                | _resStream -> System.DateTime.Today.Date
+            member __.SafeExists (fileName:string) = 
+                match Application.GetResourceStream(System.Uri(fileName,System.UriKind.Relative)) with 
+                | null -> IsolatedStorageFile.GetUserStoreForApplication().FileExists fileName
+                | resStream -> resStream.Stream <> null
+            member __.FileDelete (fileName:string) = 
+                match Application.GetResourceStream(System.Uri(fileName,System.UriKind.Relative)) with 
+                | null -> IsolatedStorageFile.GetUserStoreForApplication().DeleteFile fileName
+                | _resStream -> ()
+            
+          }
+#else
+
+    let mutable FileSystem = 
+        { new FileSystem() with 
+            override __.ReadAllBytesShim (fileName:string) = File.ReadAllBytes fileName
+            member __.FileStreamReadShim (fileName:string) = new FileStream(fileName,FileMode.Open,FileAccess.Read,FileShare.ReadWrite)  :> Stream
+            member __.FileStreamCreateShim (fileName:string) = new FileStream(fileName,FileMode.Create,FileAccess.Write,FileShare.Read ,0x1000,false) :> Stream
+            member __.GetFullPathShim (fileName:string) = System.IO.Path.GetFullPath fileName
+            member __.SafeGetFullPath (fileName:string) = 
+                //System.Diagnostics.Debug.Assert(Path.IsPathRooted(fileName), sprintf "SafeGetFullPath: '%s' is not absolute" fileName)
+                Path.GetFullPath fileName
+
+            member __.IsPathRootedShim (path:string) = Path.IsPathRooted path
+
+            member __.IsInvalidFilename(filename:string) = 
+                String.IsNullOrEmpty(filename) || filename.IndexOfAny(Path.GetInvalidFileNameChars()) <> -1
+
+            member __.GetTempPathShim() = System.IO.Path.GetTempPath()
+
+            member __.GetLastWriteTimeShim (fileName:string) = File.GetLastWriteTime fileName
+            member __.SafeExists (fileName:string) = System.IO.File.Exists fileName 
+            member __.FileDelete (fileName:string) = System.IO.File.Delete fileName }
+
 #endif        
+
+    type System.Text.Encoding with 
+        static member GetEncodingShim(n:int) = 
+#if SILVERLIGHT
+                System.Text.Encoding.GetEncoding(n.ToString())
+#else                
+                System.Text.Encoding.GetEncoding(n)
+#endif                
 

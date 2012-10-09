@@ -1,6 +1,6 @@
+
 //----------------------------------------------------------------------------
-//
-// Copyright (c) 2002-2011 Microsoft Corporation. 
+// Copyright (c) 2002-2012 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -17,7 +17,6 @@ namespace System
     
     /// <summary>Represents one or more errors that occur during application execution.</summary>
     [<Class>]
-    [<AllowNullLiteral>] 
     type AggregateException =
         inherit Exception
         /// <summary>Gets a read-only collection of the <c>Exception</c> instances that caused
@@ -25,6 +24,7 @@ namespace System
         member InnerExceptions : System.Collections.ObjectModel.ReadOnlyCollection<exn>
     
 namespace System.Threading
+    open System
     open Microsoft.FSharp.Core
     /// <summary>Represents a registration to a Cancellation token source.</summary>
     type [<Struct>] 
@@ -48,7 +48,7 @@ namespace System.Threading
             static member (<>) : registration1: CancellationTokenRegistration * registration2: CancellationTokenRegistration -> bool
             /// <summary>Frees resources associated with the registration.</summary>
             member Dispose : unit -> unit
-            interface System.IDisposable
+            interface IDisposable
     
     /// <summary>Represents a capability to detect cancellation of an operation.</summary>
     and [<Struct>] 
@@ -61,7 +61,7 @@ namespace System.Threading
             /// <param name="action">The action to associate with the token.</param>
             /// <param name="state">The state associated with the action.</param>
             /// <returns>The created registration object.</returns>
-            member Register : action: System.Action<obj> * state: obj -> CancellationTokenRegistration            
+            member Register : action: Action<obj> * state: obj -> CancellationTokenRegistration            
             /// <summary>Equality comparison against another token.</summary>
             /// <param name="token">The target for comparison.</param>
             /// <returns>True if the two tokens are equal.</returns>
@@ -96,7 +96,7 @@ namespace System.Threading
             static member CreateLinkedTokenSource : token1: CancellationToken * token2: CancellationToken -> CancellationTokenSource
             /// <summary>Discards resources associated with this capability.</summary>
             member Dispose : unit -> unit
-            interface System.IDisposable
+            interface IDisposable
 #endif            
 
 namespace Microsoft.FSharp.Control
@@ -177,13 +177,14 @@ namespace Microsoft.FSharp.Control
 
 #if FX_NO_TASK
 #else
-        /// Executes a computation in the thread pool. Returns a <c>System.Threading.Tasks.Task</c> that will be completed
-        /// in the corresponding state once the computation terminates (produces the result, throws exception or gets canceled)
+        /// <summary>Executes a computation in the thread pool.</summary>
+        /// <remarks>If no cancellation token is provided then the default cancellation token is used.</remarks>
+        /// <returns>A <c>System.Threading.Tasks.Task</c> that will be completed
+        /// in the corresponding state once the computation terminates (produces the result, throws exception or gets canceled)</returns>
         ///        
-        /// If no cancellation token is provided then the default cancellation token is used.
         static member StartAsTask : computation:Async<'T> * ?taskCreationOptions:TaskCreationOptions * ?cancellationToken:CancellationToken -> Task<'T>
 
-        /// Creates an asynchronous computation which starts the given computation as a <c>System.Threading.Tasks.Task</c>
+        /// <summary>Creates an asynchronous computation which starts the given computation as a <c>System.Threading.Tasks.Task</c></summary>
         static member StartChildAsTask : computation:Async<'T> * ?taskCreationOptions:TaskCreationOptions -> Async<Task<'T>>
 #endif
     
@@ -712,7 +713,8 @@ namespace Microsoft.FSharp.Control
 
     /// <summary>A module of extension members providing asynchronous operations for some basic Web operations.</summary>
     [<AutoOpen>]
-    module WebExtensions = begin
+    module WebExtensions = 
+     begin
 
 #if FX_NO_WEB_REQUESTS
 #else
@@ -733,7 +735,7 @@ namespace Microsoft.FSharp.Control
             member AsyncDownloadString : address:System.Uri -> Async<string>
 #endif
 
-    end
+     end
     
     
     [<Sealed>]

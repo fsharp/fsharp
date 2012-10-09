@@ -21,7 +21,10 @@ DEFINES += \
 
 REFERENCES += \
 	-r:$(bootstrapdir)FSharp.Core.dll \
-	-r:Mono.Security.dll
+	-r:Mono.Security.dll \
+    -r:$(monolibdir)System.Runtime.Remoting.dll \
+    -r:$(monolibdir)System.Windows.Forms.dll
+
 
 sources = \
 	$(tmpdir)FSComp.fs \
@@ -40,10 +43,10 @@ sources = \
 	../../utils/HashMultiMap.fs \
 	../../utils/TaggedCollections.fsi \
 	../../utils/TaggedCollections.fs \
+    ../FlatList.fs \
+    ../../absil/illib.fs \
 	../../utils/filename.fsi \
 	../../utils/filename.fs \
-	../FlatList.fs \
-	../../absil/illib.fs \
 	../../absil/zmap.fsi \
 	../../absil/zmap.fs \
 	../../absil/zset.fsi \
@@ -86,6 +89,8 @@ sources = \
 	../../ilx/pubclo.fsi \
 	../../ilx/pubclo.fs \
 	../../ilx/cu_erase.fs \
+    ../InternalFileSystemUtils.fsi \
+    ../InternalFileSystemUtils.fs \
 	../unilex.fsi \
 	../unilex.fs \
 	../layout.fsi \
@@ -108,6 +113,7 @@ sources = \
 	../import.fsi \
 	../import.fs \
 	../infos.fs \
+    ../NicePrint.fs \
 	../augment.fsi \
 	../augment.fs \
 	../typrelns.fs \
@@ -143,11 +149,12 @@ sources = \
 	../fscopts.fsi \
 	../fscopts.fs \
 	../vs/IncrementalBuild.fsi \
-	../vs/IncrementalBuild.fs
+    ../vs/IncrementalBuild.fs \
+    ../fsc.fs
 
 RESOURCES= \
 	$(tmpdir)FSStrings.resources \
-	$(tmpdir)FSComp.resources
+    $(tmpdir)FSComp.resources
 
 $(tmpdir)FSComp.resources: $(srcdir)../FSComp.txt
 	mono --debug $(FSSRGEN) $< $(@:.resources=.fs) $(@:.resources=.resx)

@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2011 Microsoft Corporation. 
+// Copyright (c) 2002-2012 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -56,8 +56,12 @@ namespace Microsoft.FSharp.Collections
         [<CompiledName("ZeroCreateBased")>]
         let zeroCreateBased (b1:int) (b2:int) (n1:int) (n2:int) = 
             if (b1 = 0 && b2 = 0) then 
-                // Note: this overload is available on Compact Framework and Silverlight
+#if FX_ATLEAST_PORTABLE
+                zeroCreate n1 n2
+#else                
+                // Note: this overload is available on Compact Framework and Silverlight, but not Portable
                 (System.Array.CreateInstance(typeof<'T>, [|n1;n2|]) :?> 'T[,])
+#endif                
             else
 #if FX_NO_BASED_ARRAYS
                 raise (new System.NotSupportedException(SR.GetString(SR.nonZeroBasedDisallowed)))

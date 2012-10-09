@@ -1,6 +1,5 @@
 //----------------------------------------------------------------------------
-//
-// Copyright (c) 2002-2011 Microsoft Corporation. 
+// Copyright (c) 2002-2012 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -24,6 +23,10 @@ type internal IParseState =
     member InputEndPosition: int -> Position 
     /// Get the start position for the terminal or non-terminal at a given index matched by the production
     member InputStartPosition: int -> Position 
+    /// Get the start of the range of positions matched by the production
+    member ResultStartPosition: Position
+    /// Get the end of the range of positions matched by the production
+    member ResultEndPosition: Position 
     /// Get the full range of positions matched by the production
     member ResultRange: Position * Position
     /// Get the value produced by the terminal or non-terminal at the given position

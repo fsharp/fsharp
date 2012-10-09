@@ -1,6 +1,5 @@
 //----------------------------------------------------------------------------
-//
-// Copyright (c) 2002-2011 Microsoft Corporation. 
+// Copyright (c) 2002-2012 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -9,6 +8,7 @@
 //
 // You must not remove this notice, or any other, from this software.
 //----------------------------------------------------------------------------
+
 
 
 namespace  Internal.Utilities.Text.Parsing
@@ -27,6 +27,8 @@ type internal IParseState(ruleStartPoss:Position[],ruleEndPoss:Position[],lhsPos
     member p.InputRange n = ruleStartPoss.[n-1], ruleEndPoss.[n-1]; 
     member p.InputStartPosition n = ruleStartPoss.[n-1]
     member p.InputEndPosition n = ruleEndPoss.[n-1]; 
+    member p.ResultStartPosition    = lhsPos.[0]
+    member p.ResultEndPosition    = lhsPos.[1];  
     member p.GetInput n    = ruleValues.[n-1];        
     member p.ResultRange    = (lhsPos.[0], lhsPos.[1]);  
     member p.RaiseError()  = raise RecoverableParseError  (* NOTE: this binding tests the fairly complex logic associated with an object expression implementing a generic abstract method *)
@@ -132,40 +134,61 @@ module internal Implementation =
     // Read the tables written by FSYACC.  
 
     type AssocTable(elemTab:uint16[], offsetTab:uint16[]) =
-        let cache = new Dictionary<_,_>(2000)
+#if OLD_CACHE
+        let cache = new Dictionary<int,int>(2000)
+#else
+        let cacheSize = 7919 // the 1000'th prime
+        // Use a simpler hash table with faster lookup, but only one
+        // hash bucket per key.
+        let cache = Array.zeroCreate<int> (cacheSize * 2)
+#endif
 
-        member t.readAssoc (minElemNum,maxElemNum,defaultValueOfAssoc,keyToFind) =     
+        member t.ReadAssoc (minElemNum,maxElemNum,defaultValueOfAssoc,keyToFind) =     
             // do a binary chop on the table 
             let elemNumber : int = (minElemNum+maxElemNum)/2
             if elemNumber = maxElemNum 
             then defaultValueOfAssoc
             else 
                 let x = int elemTab.[elemNumber*2]
-                if keyToFind = x then 
-                    int elemTab.[elemNumber*2+1]
-                elif keyToFind < x then t.readAssoc (minElemNum ,elemNumber,defaultValueOfAssoc,keyToFind)
-                else                    t.readAssoc (elemNumber+1,maxElemNum,defaultValueOfAssoc,keyToFind)
+                if keyToFind = x then int elemTab.[elemNumber*2+1]
+                elif keyToFind < x then t.ReadAssoc (minElemNum ,elemNumber,defaultValueOfAssoc,keyToFind)
+                else                    t.ReadAssoc (elemNumber+1,maxElemNum,defaultValueOfAssoc,keyToFind)
 
-        member t.Read(rowNumber ,keyToFind) =
-        
+        member t.Read(rowNumber,keyToFind) =
+
             // First check the sparse lookaside table
-            // Performance note: without this lookaside table the binary chop in readAssoc
+            // Performance note: without this lookaside table the binary chop in ReadAssoc
             // takes up around 10% of of parsing time 
             // for parsing intensive samples such as the bootstrapped F# compiler.
             //
             // Note: using a .NET Dictionary for this int -> int table looks like it could be sub-optimal.
             // Some other better sparse lookup table may be better.
-            let mutable res = 0 
+            assert (rowNumber < 0x10000)
+            assert (keyToFind < 0x10000)
             let cacheKey = (rowNumber <<< 16) ||| keyToFind
+#if OLD_CACHE
+            let mutable res = 0 
             let ok = cache.TryGetValue(cacheKey, &res) 
             if ok then res 
             else
+#else
+            let cacheIdx = int32 (uint32 cacheKey % uint32 cacheSize)
+            let cacheKey2 = cache.[cacheIdx*2]
+            let v = cache.[cacheIdx*2+1]
+            if cacheKey = cacheKey2 then v 
+            else
+#endif
                 let headOfTable = int offsetTab.[rowNumber]
                 let firstElemNumber = headOfTable + 1           
                 let numberOfElementsInAssoc = int elemTab.[headOfTable*2]
                 let defaultValueOfAssoc = int elemTab.[headOfTable*2+1]          
-                let res = t.readAssoc (firstElemNumber,(firstElemNumber+numberOfElementsInAssoc),defaultValueOfAssoc,keyToFind)
+                let res = t.ReadAssoc (firstElemNumber,firstElemNumber+numberOfElementsInAssoc,defaultValueOfAssoc,keyToFind)
+#if OLD_CACHE
                 cache.[cacheKey] <- res
+#else
+                cache.[cacheIdx*2] <- cacheKey
+                cache.[cacheIdx*2+1] <- res
+#endif
                 res
 
         // Read all entries in the association table
@@ -237,7 +260,7 @@ module internal Implementation =
 
 #if DEBUG
         let report haveLookahead lookaheadToken = 
-            if haveLookahead then sprintf "%A" lookaheadToken 
+            if haveLookahead then sprintf "%+A" lookaheadToken 
             else "[TBC]"
 #endif
 
@@ -400,7 +423,7 @@ module internal Implementation =
                     // Silently discard inputs and don't report errors 
                     // until three tokens in a row have been shifted 
 #if DEBUG
-                    if Flags.debug then printfn "error on token '%A' " (if haveLookahead then Some(lookaheadToken) else None);
+                    if Flags.debug then printfn "error on token '%s' " (report haveLookahead lookaheadToken);
 #endif
                     if errorSuppressionCountDown > 0 then 
                         // If we're in the end-of-file count down then we're very keen to 'Accept'.
@@ -417,7 +440,7 @@ module internal Implementation =
                             failwith "parse error: unexpected end of file"
                             
 #if DEBUG
-                        if Flags.debug then printfn "discarding token '%A' during error suppression" (if haveLookahead then Some(lookaheadToken) else None);
+                        if Flags.debug then printfn "discarding token '%s' during error suppression" (report haveLookahead lookaheadToken);
 #endif
                         // Discard the token
                         haveLookahead <- false

@@ -33,6 +33,55 @@ type SeqModule2() =
         
         
     [<Test>]
+    member this.Last() =
+             
+        let IntSeq =
+            seq { for i in 0 .. 9 do
+                    yield i }
+                    
+        if Seq.last IntSeq <> 9 then Assert.Fail()
+                 
+        // string Seq
+        let strSeq = seq ["first"; "second";  "third"]
+        if Seq.last strSeq <> "third" then Assert.Fail()
+         
+        // Empty Seq
+        let emptySeq = Seq.empty
+        CheckThrowsArgumentException ( fun() -> Seq.last emptySeq)
+      
+        // null Seq
+        let nullSeq:seq<'a> = null
+        CheckThrowsArgumentNullException (fun () ->Seq.last nullSeq) 
+        () 
+        
+    [<Test>]
+    member this.ExactlyOne() =
+             
+        let IntSeq =
+            seq { for i in 7 .. 7 do
+                    yield i }
+                    
+        if Seq.exactlyOne IntSeq <> 7 then Assert.Fail()
+                 
+        // string Seq
+        let strSeq = seq ["second"]
+        if Seq.exactlyOne strSeq <> "second" then Assert.Fail()
+         
+        // Empty Seq
+        let emptySeq = Seq.empty
+        CheckThrowsArgumentException ( fun() -> Seq.exactlyOne emptySeq)
+      
+        // non-singleton Seq
+        let emptySeq = Seq.empty
+        CheckThrowsArgumentException ( fun() -> Seq.exactlyOne [ 0 .. 1 ] |> ignore )
+      
+        // null Seq
+        let nullSeq:seq<'a> = null
+        CheckThrowsArgumentNullException (fun () ->Seq.exactlyOne nullSeq) 
+        () 
+        
+                
+    [<Test>]
     member this.Init() =
 
         let funcInt x = x
@@ -331,7 +380,8 @@ type SeqModule2() =
     member this.SingletonCollectWithException () =
         this.MapWithExceptionTester (fun f-> Seq.collect (f >> Seq.singleton))
 
-     
+#if FX_NO_LINQ
+#else     
     [<Test>]
     member this.SystemLinqSelectWithSideEffects () =
         this.MapWithSideEffectsTester (fun f s -> System.Linq.Enumerable.Select(s, Func<_,_>(f))) false
@@ -339,7 +389,7 @@ type SeqModule2() =
     [<Test>]
     member this.SystemLinqSelectWithException () =
         this.MapWithExceptionTester (fun f s -> System.Linq.Enumerable.Select(s, Func<_,_>(f)))
-
+#endif
         
     [<Test>]
     member this.MapiWithSideEffects () =
@@ -418,7 +468,9 @@ type SeqModule2() =
         let expectedint = seq {2..11}
         
         VerifySeqsEqual expectedint resultInt
-        
+
+#if FX_NO_CHAR_PARSE
+#else        
         // string Seq
         let funcStr (y:string) = y+"ist"
        
@@ -428,7 +480,7 @@ type SeqModule2() =
         let expectedSeq = seq ['L';'i';'s';'t']
         
         VerifySeqsEqual expectedSeq resultStr
-        
+#endif        
         // empty Seq
         let resultEpt = Seq.collect funcInt Seq.empty
         VerifySeqsEqual Seq.empty resultEpt

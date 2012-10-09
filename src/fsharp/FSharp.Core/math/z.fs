@@ -1,6 +1,5 @@
 //----------------------------------------------------------------------------
-//
-// Copyright (c) 2002-2011 Microsoft Corporation. 
+// Copyright (c) 2002-2012 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -13,8 +12,7 @@
 #nowarn "44" // This construct is deprecated. This function is for use by compiled F# code and should not be used directly
 namespace System.Numerics
 
-#if FX_ATLEAST_40
-#else
+#if FX_NO_BIGINT
     open Microsoft.FSharp.Collections
     open Microsoft.FSharp.Core
     open Microsoft.FSharp.Core.Operators
@@ -283,9 +281,7 @@ namespace Microsoft.FSharp.Core
     open Microsoft.FSharp.Core.LanguagePrimitives.IntrinsicOperators
     open System.Numerics
 
-#if FX_ATLEAST_40
-    // No need for FxCop suppressions on Dev10
-#else
+#if FX_NO_BIGINT
     // FxCop suppressions
     [<assembly: SuppressMessage("Microsoft.Usage", "CA2225:OperatorOverloadsHaveNamedAlternates", Scope="member", Target="System.Numerics.BigInteger.#op_Addition(System.Numerics.BigInteger,System.Numerics.BigInteger)")>]
     [<assembly: SuppressMessage("Microsoft.Usage", "CA2225:OperatorOverloadsHaveNamedAlternates", Scope="member", Target="System.Numerics.BigInteger.#op_Division(System.Numerics.BigInteger,System.Numerics.BigInteger)")>]
@@ -306,28 +302,15 @@ namespace Microsoft.FSharp.Core
 
         module NumericLiteralI = 
 
-#if FX_ATLEAST_40            
-            let numTy = System.Reflection.Assembly.Load("System.Numerics, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089").GetType("System.Numerics.BigInteger")
-#else
-            let numTy = typeof<BigInteger>
-#endif      
-            let meth64 = numTy.GetConstructor([|typeof<int64>|])
-#if FX_ATLEAST_40            
-            let methString = numTy.GetMethod("Parse",[|typeof<string>; typeof<System.Globalization.NumberStyles>; typeof<System.IFormatProvider> |])
-#else
-            let methString = numTy.GetMethod("Parse",[|typeof<string>|])
-#endif            
-
             let tab64 = new System.Collections.Generic.Dictionary<int64,obj>()
             let tabParse = new System.Collections.Generic.Dictionary<string,obj>()
-            
             
             let FromInt64Dynamic (x64:int64) : obj = 
                 lock tab64 (fun () -> 
                     let mutable res = Unchecked.defaultof<_> 
                     let ok = tab64.TryGetValue(x64,&res)
                     if ok then res else 
-                    res <- meth64.Invoke [| box x64 |] 
+                    res <- BigInteger(x64)
                     tab64.[x64] <- res
                     res)                 
 
@@ -335,25 +318,6 @@ namespace Microsoft.FSharp.Core
 
             let inline isOX s = not (System.String.IsNullOrEmpty(s)) && s.Length > 2 && s.[0] = '0' && s.[1] = 'x'
             
-            let FromStringDynamic (s:string) : obj = 
-                lock tabParse (fun () -> 
-                    let mutable res = Unchecked.defaultof<_> 
-                    let ok = tabParse.TryGetValue(s,&res)
-                    if ok then res else 
-                    res <-  
-#if FX_ATLEAST_40                    
-// Note - no longer used, since we use .NET 4.0 BigInteger instead
-                       if isOX s then 
-                           methString.Invoke(null,[| box s; box NumberStyles.AllowHexSpecifier; box CultureInfo.InvariantCulture |] )
-                       else
-                           methString.Invoke(null,[| box s; box NumberStyles.AllowLeadingSign; box CultureInfo.InvariantCulture |] )
-#else
-                        methString.Invoke(null, [| box s |])
-#endif                           
-                           
-                    tabParse.[s] <- res
-                    res)
-                    
             let FromZero () : 'T = 
                 (get32 0 :?> 'T)
                 when 'T : BigInteger = BigInteger.Zero 
@@ -377,26 +341,65 @@ namespace Microsoft.FSharp.Core
                 if ok then 
                     res 
                 else 
+#if FSHARP_CORE_PORTABLE 
+                    // SL5 (and therefore Portable Profile47) does not have Parse, so make our own simple implementation
+                    let parse(s : string) =
+                        // ws* sign? digits+ ws*
+                        let mutable i = 0
+                        // leading whitespace
+                        while i < s.Length && System.Char.IsWhiteSpace(s.[i]) do
+                            i <- i + 1
+                        if i = s.Length then
+                            raise <| new System.ArgumentException()
+                        // optional sign
+                        let mutable isNegative = false
+                        if s.[i] = '+' then
+                            i <- i + 1
+                        elif s.[i] = '-' then
+                            isNegative <- true
+                            i <- i + 1
+                        if i = s.Length then
+                            raise <| new System.ArgumentException()
+                        // digits
+                        let startDigits = i
+                        while i < s.Length && System.Char.IsDigit(s.[i]) do
+                            i <- i + 1
+                        let endDigits = i
+                        let len = endDigits - startDigits
+                        if len = 0 then
+                            raise <| new System.ArgumentException()
+                        // trailing whitespace
+                        while i < s.Length && System.Char.IsWhiteSpace(s.[i]) do
+                            i <- i + 1
+                        if i <> s.Length then
+                            raise <| new System.ArgumentException()
+                        // text is now valid, parse it
+                        let mutable r = new System.Numerics.BigInteger(int(s.[startDigits]) - int('0'))
+                        let ten = new System.Numerics.BigInteger(10)
+                        for j in startDigits+1 .. endDigits-1 do
+                            r <- r * ten
+                            r <- r + new System.Numerics.BigInteger(int(s.[j]) - int('0'))
+                        if isNegative then
+                            r <- new System.Numerics.BigInteger(0) - r
+                        r
+                    let v = parse s
+#else
                     let v = 
-#if FX_ATLEAST_40
-                       if  isOX s then
-#if MONO
-                          BigInteger.Parse (s.[2..])
+#if FX_NO_BIGINT
+                       BigInteger.Parse s
 #else
+                       if  isOX s then 
                           BigInteger.Parse (s.[2..],NumberStyles.AllowHexSpecifier,CultureInfo.InvariantCulture)
-#endif
                        else
-#if MONO
-                          BigInteger.Parse s
-#else
                           BigInteger.Parse (s,NumberStyles.AllowLeadingSign,CultureInfo.InvariantCulture)
 #endif
-#else
-                       BigInteger.Parse s
 #endif
                     res <-  v
                     tabParse.[s] <- res
                     res)
+
+            let FromStringDynamic (s:string) : obj = 
+                getParse s
                 
             let FromString (s:string) : 'T = 
                 (FromStringDynamic s :?> 'T)

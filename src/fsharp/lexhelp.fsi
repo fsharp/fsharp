@@ -1,6 +1,5 @@
 //----------------------------------------------------------------------------
-//
-// Copyright (c) 2002-2011 Microsoft Corporation. 
+// Copyright (c) 2002-2012 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -38,18 +37,16 @@ type LightSyntaxStatus =
 [<Sealed>]
 type LexResourceManager =
     new : unit -> LexResourceManager
-    member InternString : s:string -> string
 
 type lexargs =
   { defines: string list;
     ifdefStack: LexerIfdefStack;
     resourceManager: LexResourceManager;
-    getSourceDirectory: unit -> string;
     lightSyntaxStatus: LightSyntaxStatus;
     errorLogger: ErrorLogger}
 
 val resetLexbufPos : string -> UnicodeLexing.Lexbuf -> unit
-val mkLexargs : (unit -> string) * 'a * string list * LightSyntaxStatus * LexResourceManager * LexerIfdefStack * ErrorLogger -> lexargs
+val mkLexargs : 'a * string list * LightSyntaxStatus * LexResourceManager * LexerIfdefStack * ErrorLogger -> lexargs
 val reusingLexbufForParsing : UnicodeLexing.Lexbuf -> (unit -> 'a) -> 'a 
 
 val internal usingLexbufForParsing : UnicodeLexing.Lexbuf * string -> (UnicodeLexing.Lexbuf -> 'a) -> 'a
@@ -76,5 +73,5 @@ module Keywords =
     val internal KeywordOrIdentifierToken : lexargs -> UnicodeLexing.Lexbuf -> string -> Parser.token
     val internal IdentifierToken : lexargs -> UnicodeLexing.Lexbuf -> string -> Parser.token
     val internal QuoteIdentifierIfNeeded : string -> string
-    val internal permitFsharpKeywords : bool ref
+    val mutable internal permitFsharpKeywords : bool 
     val keywordNames : string list

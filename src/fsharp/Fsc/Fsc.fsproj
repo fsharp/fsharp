@@ -2,10 +2,10 @@
 <!--
 # Copyright (c) 2002-2011 Microsoft Corporation. 
 #
-# This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
-# copy of the license can be found in the License.html file at the root of this distribution. 
-# By using this source code in any fashion, you are agreeing to be bound 
-# by the terms of the Apache License, Version 2.0.
+# 
+# 
+# 
+#
 #
 # You must not remove this notice, or any other, from this software.
 -->
@@ -25,15 +25,12 @@
     <OutputType>Exe</OutputType>
     <NoWarn>$(NoWarn);62;44</NoWarn>
     <AssemblyName>fsc</AssemblyName>
-    <DefineConstants>COMPILER;$(DefineConstants)</DefineConstants>
+    <DefineConstants>EXTENSIONTYPING;COMPILER;$(DefineConstants)</DefineConstants>
     <AllowCrossTargeting>true</AllowCrossTargeting>
-    <TargetFrameworkVersion Condition="'$(TargetFramework)'=='cli\2.0' or '$(TargetFramework)'=='mono\2.0'">v2.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion Condition="'$(TargetFramework)'=='net20' or '$(TargetFramework)'=='mono20'">v2.0</TargetFrameworkVersion>
     <OtherFlags>$(OtherFlags) --warnon:1182</OtherFlags>
   </PropertyGroup>
   <ItemGroup>
-    <FsSrGen Include="..\FSCstrings.txt">
-      <Link>FSCstrings.txt</Link>
-    </FsSrGen>
     <Compile Include="..\..\assemblyinfo\assemblyinfo.fsc.exe.fs">
       <Link>assemblyinfo.fsc.exe.fs</Link>
     </Compile>

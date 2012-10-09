@@ -3,6 +3,7 @@
 namespace FSharp.Core.Unittests.FSharp_Core.FSharp.Core        
 open System                           
 open NUnit.Framework
+open FSharp.Core.Unittests.LibraryTestFx
 
 module UInt8 =
     let MinValue = Byte.MinValue
@@ -633,4 +634,400 @@ type IntConversionsGenerated() =
        Assert.AreEqual (sourceMaxValue, unativeint UInt64.MaxValue)
     else
        Assert.AreEqual (this.UnativeintMaxValue, unativeint UInt64.MaxValue)
+  
+  [<Test>]
+  member this.``Checked.sbyte.m1.To.byte`` () =
+    let i : sbyte = -1y
+    CheckThrowsExn<OverflowException>(fun () -> Checked.byte i |> ignore)
+  
+  [<Test>]
+  member this.``Checked.int16.m1.To.byte`` () =
+    let i : int16 = -1s
+    CheckThrowsExn<OverflowException>(fun () -> Checked.byte i |> ignore)
+  
+  [<Test>]
+  member this.``Checked.int32.m1.To.byte`` () =
+    let i : int32 = -1l
+    CheckThrowsExn<OverflowException>(fun () -> Checked.byte i |> ignore)
+  
+  [<Test>]
+  member this.``Checked.int64.m1.To.byte`` () =
+    let i : int64 = -1L
+    CheckThrowsExn<OverflowException>(fun () -> Checked.byte i |> ignore)
+  
+  [<Test>]
+  member this.``Checked.sbyte.m1.To.uint16`` () =
+    let i : sbyte = -1y
+    CheckThrowsExn<OverflowException>(fun () -> Checked.uint16 i |> ignore)
+  
+  [<Test>]
+  member this.``Checked.int16.m1.To.uint16`` () =
+    let i : int16 = -1s
+    CheckThrowsExn<OverflowException>(fun () -> Checked.uint16 i |> ignore)
+  
+  [<Test>]
+  member this.``Checked.int32.m1.To.uint16`` () =
+    let i : int32 = -1l
+    CheckThrowsExn<OverflowException>(fun () -> Checked.uint16 i |> ignore)
+  
+  [<Test>]
+  member this.``Checked.int64.m1.To.uint16`` () =
+    let i : int64 = -1L
+    CheckThrowsExn<OverflowException>(fun () -> Checked.uint16 i |> ignore)
+  
+  [<Test>]
+  member this.``Checked.sbyte.m1.To.uint32`` () =
+    let i : sbyte = -1y
+    CheckThrowsExn<OverflowException>(fun () -> Checked.uint32 i |> ignore)
+  
+  [<Test>]
+  member this.``Checked.int16.m1.To.uint32`` () =
+    let i : int16 = -1s
+    CheckThrowsExn<OverflowException>(fun () -> Checked.uint32 i |> ignore)
+  
+  [<Test>]
+  member this.``Checked.int32.m1.To.uint32`` () =
+    let i : int32 = -1l
+    CheckThrowsExn<OverflowException>(fun () -> Checked.uint32 i |> ignore)
+  
+  [<Test>]
+  member this.``Checked.int64.m1.To.uint32`` () =
+    let i : int64 = -1L
+    CheckThrowsExn<OverflowException>(fun () -> Checked.uint32 i |> ignore)
+  
+  [<Test>]
+  member this.``Checked.sbyte.m1.To.uint64`` () =
+    let i : sbyte = -1y
+    CheckThrowsExn<OverflowException>(fun () -> Checked.uint64 i |> ignore)
+  
+  [<Test>]
+  member this.``Checked.int16.m1.To.uint64`` () =
+    let i : int16 = -1s
+    CheckThrowsExn<OverflowException>(fun () -> Checked.uint64 i |> ignore)
+  
+  [<Test>]
+  member this.``Checked.int32.m1.To.uint64`` () =
+    let i : int32 = -1l
+    CheckThrowsExn<OverflowException>(fun () -> Checked.uint64 i |> ignore)
+  
+  [<Test>]
+  member this.``Checked.int64.m1.To.uint64`` () =
+    let i : int64 = -1L
+    CheckThrowsExn<OverflowException>(fun () -> Checked.uint64 i |> ignore)
+  
+  [<Test>]
+  member this.``Checked.sbyte.m1.To.sbyte`` () =
+    let minus1 : sbyte = -1y
+    let i : sbyte = -1y
+    Assert.AreEqual (minus1, Checked.sbyte i)
+  
+  [<Test>]
+  member this.``Checked.int16.m1.To.sbyte`` () =
+    let minus1 : sbyte = -1y
+    let i : int16 = -1s
+    Assert.AreEqual (minus1, Checked.sbyte i)
+  
+  [<Test>]
+  member this.``Checked.int32.m1.To.sbyte`` () =
+    let minus1 : sbyte = -1y
+    let i : int32 = -1l
+    Assert.AreEqual (minus1, Checked.sbyte i)
+  
+  [<Test>]
+  member this.``Checked.int64.m1.To.sbyte`` () =
+    let minus1 : sbyte = -1y
+    let i : int64 = -1L
+    Assert.AreEqual (minus1, Checked.sbyte i)
+  
+  [<Test>]
+  member this.``Checked.sbyte.m1.To.int16`` () =
+    let minus1 : int16 = -1s
+    let i : sbyte = -1y
+    Assert.AreEqual (minus1, Checked.int16 i)
+  
+  [<Test>]
+  member this.``Checked.int16.m1.To.int16`` () =
+    let minus1 : int16 = -1s
+    let i : int16 = -1s
+    Assert.AreEqual (minus1, Checked.int16 i)
+  
+  [<Test>]
+  member this.``Checked.int32.m1.To.int16`` () =
+    let minus1 : int16 = -1s
+    let i : int32 = -1l
+    Assert.AreEqual (minus1, Checked.int16 i)
+  
+  [<Test>]
+  member this.``Checked.int64.m1.To.int16`` () =
+    let minus1 : int16 = -1s
+    let i : int64 = -1L
+    Assert.AreEqual (minus1, Checked.int16 i)
+  
+  [<Test>]
+  member this.``Checked.sbyte.m1.To.int32`` () =
+    let minus1 : int32 = -1l
+    let i : sbyte = -1y
+    Assert.AreEqual (minus1, Checked.int32 i)
+  
+  [<Test>]
+  member this.``Checked.int16.m1.To.int32`` () =
+    let minus1 : int32 = -1l
+    let i : int16 = -1s
+    Assert.AreEqual (minus1, Checked.int32 i)
+  
+  [<Test>]
+  member this.``Checked.int32.m1.To.int32`` () =
+    let minus1 : int32 = -1l
+    let i : int32 = -1l
+    Assert.AreEqual (minus1, Checked.int32 i)
+  
+  [<Test>]
+  member this.``Checked.int64.m1.To.int32`` () =
+    let minus1 : int32 = -1l
+    let i : int64 = -1L
+    Assert.AreEqual (minus1, Checked.int32 i)
+  
+  [<Test>]
+  member this.``Checked.sbyte.m1.To.int64`` () =
+    let minus1 : int64 = -1L
+    let i : sbyte = -1y
+    Assert.AreEqual (minus1, Checked.int64 i)
+  
+  [<Test>]
+  member this.``Checked.int16.m1.To.int64`` () =
+    let minus1 : int64 = -1L
+    let i : int16 = -1s
+    Assert.AreEqual (minus1, Checked.int64 i)
+  
+  [<Test>]
+  member this.``Checked.int32.m1.To.int64`` () =
+    let minus1 : int64 = -1L
+    let i : int32 = -1l
+    Assert.AreEqual (minus1, Checked.int64 i)
+  
+  [<Test>]
+  member this.``Checked.int64.m1.To.int64`` () =
+    let minus1 : int64 = -1L
+    let i : int64 = -1L
+    Assert.AreEqual (minus1, Checked.int64 i)
+  
+  [<Test>]
+  member this.``Checked.byte.MaxValue.To.int16`` () =
+    let sourceMaxValue : int16 = 0xFFs
+    Assert.AreEqual (sourceMaxValue, Checked.int16 Byte.MaxValue)
+  
+  [<Test>]
+  member this.``Checked.byte.MaxValue.To.uint16`` () =
+    let sourceMaxValue : uint16 = 0xFFus
+    Assert.AreEqual (sourceMaxValue, Checked.uint16 Byte.MaxValue)
+  
+  [<Test>]
+  member this.``Checked.byte.MaxValue.To.int32`` () =
+    let sourceMaxValue : int32 = 0xFFl
+    Assert.AreEqual (sourceMaxValue, Checked.int32 Byte.MaxValue)
+  
+  [<Test>]
+  member this.``Checked.uint16.MaxValue.To.int32`` () =
+    let sourceMaxValue : int32 = 0xFFFFl
+    Assert.AreEqual (sourceMaxValue, Checked.int32 UInt16.MaxValue)
+  
+  [<Test>]
+  member this.``Checked.byte.MaxValue.To.uint32`` () =
+    let sourceMaxValue : uint32 = 0xFFul
+    Assert.AreEqual (sourceMaxValue, Checked.uint32 Byte.MaxValue)
+  
+  [<Test>]
+  member this.``Checked.uint16.MaxValue.To.uint32`` () =
+    let sourceMaxValue : uint32 = 0xFFFFul
+    Assert.AreEqual (sourceMaxValue, Checked.uint32 UInt16.MaxValue)
+  
+  [<Test>]
+  member this.``Checked.byte.MaxValue.To.int64`` () =
+    let sourceMaxValue : int64 = 0xFFL
+    Assert.AreEqual (sourceMaxValue, Checked.int64 Byte.MaxValue)
+  
+  [<Test>]
+  member this.``Checked.uint16.MaxValue.To.int64`` () =
+    let sourceMaxValue : int64 = 0xFFFFL
+    Assert.AreEqual (sourceMaxValue, Checked.int64 UInt16.MaxValue)
+  
+  [<Test>]
+  member this.``Checked.uint32.MaxValue.To.int64`` () =
+    let sourceMaxValue : int64 = 0xFFFFFFFFL
+    Assert.AreEqual (sourceMaxValue, Checked.int64 UInt32.MaxValue)
+  
+  [<Test>]
+  member this.``Checked.byte.MaxValue.To.uint64`` () =
+    let sourceMaxValue : uint64 = 0xFFuL
+    Assert.AreEqual (sourceMaxValue, Checked.uint64 Byte.MaxValue)
+  
+  [<Test>]
+  member this.``Checked.uint16.MaxValue.To.uint64`` () =
+    let sourceMaxValue : uint64 = 0xFFFFuL
+    Assert.AreEqual (sourceMaxValue, Checked.uint64 UInt16.MaxValue)
+  
+  [<Test>]
+  member this.``Checked.uint32.MaxValue.To.uint64`` () =
+    let sourceMaxValue : uint64 = 0xFFFFFFFFuL
+    Assert.AreEqual (sourceMaxValue, Checked.uint64 UInt32.MaxValue)
+  
+  [<Test>]
+  member this.``Checked.byte.MaxValue.To.sbyte`` () =
+    CheckThrowsExn<OverflowException> (fun () -> Checked.sbyte Byte.MaxValue |> ignore)
+  
+  [<Test>]
+  member this.``Checked.uint16.MaxValue.To.sbyte`` () =
+    CheckThrowsExn<OverflowException> (fun () -> Checked.sbyte UInt16.MaxValue |> ignore)
+  
+  [<Test>]
+  member this.``Checked.uint32.MaxValue.To.sbyte`` () =
+    CheckThrowsExn<OverflowException> (fun () -> Checked.sbyte UInt32.MaxValue |> ignore)
+  
+  [<Test>]
+  member this.``Checked.uint64.MaxValue.To.sbyte`` () =
+    CheckThrowsExn<OverflowException> (fun () -> Checked.sbyte UInt64.MaxValue |> ignore)
+  
+  [<Test>]
+  member this.``Checked.uint16.MaxValue.To.int16`` () =
+    CheckThrowsExn<OverflowException> (fun () -> Checked.int16 UInt16.MaxValue |> ignore)
+  
+  [<Test>]
+  member this.``Checked.uint32.MaxValue.To.int16`` () =
+    CheckThrowsExn<OverflowException> (fun () -> Checked.int16 UInt32.MaxValue |> ignore)
+  
+  [<Test>]
+  member this.``Checked.uint64.MaxValue.To.int16`` () =
+    CheckThrowsExn<OverflowException> (fun () -> Checked.int16 UInt64.MaxValue |> ignore)
+  
+  [<Test>]
+  member this.``Checked.uint32.MaxValue.To.int32`` () =
+    CheckThrowsExn<OverflowException> (fun () -> Checked.int32 UInt32.MaxValue |> ignore)
+  
+  [<Test>]
+  member this.``Checked.uint64.MaxValue.To.int32`` () =
+    CheckThrowsExn<OverflowException> (fun () -> Checked.int32 UInt64.MaxValue |> ignore)
+  
+  [<Test>]
+  member this.``Checked.uint64.MaxValue.To.int64`` () =
+    CheckThrowsExn<OverflowException> (fun () -> Checked.int64 UInt64.MaxValue |> ignore)
+  
+  [<Test>]
+  member this.``Checked.uint16.MaxValue.To.byte`` () =
+    CheckThrowsExn<OverflowException> (fun () -> Checked.byte UInt16.MaxValue |> ignore)
+  
+  [<Test>]
+  member this.``Checked.uint32.MaxValue.To.byte`` () =
+    CheckThrowsExn<OverflowException> (fun () -> Checked.byte UInt32.MaxValue |> ignore)
+  
+  [<Test>]
+  member this.``Checked.uint64.MaxValue.To.byte`` () =
+    CheckThrowsExn<OverflowException> (fun () -> Checked.byte UInt64.MaxValue |> ignore)
+  
+  [<Test>]
+  member this.``Checked.uint32.MaxValue.To.uint16`` () =
+    CheckThrowsExn<OverflowException> (fun () -> Checked.uint16 UInt32.MaxValue |> ignore)
+  
+  [<Test>]
+  member this.``Checked.uint64.MaxValue.To.uint16`` () =
+    CheckThrowsExn<OverflowException> (fun () -> Checked.uint16 UInt64.MaxValue |> ignore)
+  
+  [<Test>]
+  member this.``Checked.uint64.MaxValue.To.uint32`` () =
+    CheckThrowsExn<OverflowException> (fun () -> Checked.uint32 UInt64.MaxValue |> ignore)
+  
+  [<Test>]
+  member this.``Checked.sbyte.m1.To.nativeint`` () =
+    Assert.AreEqual (-1n, Checked.nativeint -1y)
+  
+  [<Test>]
+  member this.``Checked.int16.m1.To.nativeint`` () =
+    Assert.AreEqual (-1n, Checked.nativeint -1s)
+  
+  [<Test>]
+  member this.``Checked.int32.m1.To.nativeint`` () =
+    Assert.AreEqual (-1n, Checked.nativeint -1l)
+  
+  [<Test>]
+  member this.``Checked.int64.m1.To.nativeint`` () =
+    Assert.AreEqual (-1n, Checked.nativeint -1L)
+  
+  [<Test>]
+  member this.``Checked.byte.MaxValue.To.nativeint`` () =
+    if sizeof<nativeint> > sizeof<byte> then
+       let sourceMaxValue : nativeint = 0xFFn
+       Assert.AreEqual (sourceMaxValue, Checked.nativeint Byte.MaxValue)
+    else
+       CheckThrowsExn<OverflowException> (fun () -> Checked.nativeint Byte.MaxValue |> ignore)
+  
+  [<Test>]
+  member this.``Checked.uint16.MaxValue.To.nativeint`` () =
+    if sizeof<nativeint> > sizeof<uint16> then
+       let sourceMaxValue : nativeint = 0xFFFFn
+       Assert.AreEqual (sourceMaxValue, Checked.nativeint UInt16.MaxValue)
+    else
+       CheckThrowsExn<OverflowException> (fun () -> Checked.nativeint UInt16.MaxValue |> ignore)
+  
+  [<Test>]
+  member this.``Checked.uint32.MaxValue.To.nativeint`` () =
+    if sizeof<nativeint> > sizeof<uint32> then
+       let sourceMaxValue : nativeint = 0xFFFFFFFFn
+       Assert.AreEqual (sourceMaxValue, Checked.nativeint UInt32.MaxValue)
+    else
+       CheckThrowsExn<OverflowException> (fun () -> Checked.nativeint UInt32.MaxValue |> ignore)
+  
+  [<Test>]
+  member this.``Checked.uint64.MaxValue.To.nativeint`` () =
+    if sizeof<nativeint> > sizeof<uint64> then
+       let sourceMaxValue : nativeint = 0xFFFFFFFFFFFFFFFFn
+       Assert.AreEqual (sourceMaxValue, Checked.nativeint UInt64.MaxValue)
+    else
+       CheckThrowsExn<OverflowException> (fun () -> Checked.nativeint UInt64.MaxValue |> ignore)
+  
+  [<Test>]
+  member this.``Checked.sbyte.m1.To.unativeint`` () =
+    CheckThrowsExn<OverflowException> (fun () -> Checked.unativeint -1y |> ignore)
+  
+  [<Test>]
+  member this.``Checked.int16.m1.To.unativeint`` () =
+    CheckThrowsExn<OverflowException> (fun () -> Checked.unativeint -1s |> ignore)
+  
+  [<Test>]
+  member this.``Checked.int32.m1.To.unativeint`` () =
+    CheckThrowsExn<OverflowException> (fun () -> Checked.unativeint -1l |> ignore)
+  
+  [<Test>]
+  member this.``Checked.int64.m1.To.unativeint`` () =
+    CheckThrowsExn<OverflowException> (fun () -> Checked.unativeint -1L |> ignore)
+  
+  [<Test>]
+  member this.``Checked.byte.MaxValue.To.unativeint`` () =
+    if sizeof<unativeint> >= sizeof<byte> then
+       let sourceMaxValue : unativeint = 0xFFun
+       Assert.AreEqual (sourceMaxValue, Checked.unativeint Byte.MaxValue)
+    else
+       CheckThrowsExn<OverflowException> (fun () -> Checked.unativeint Byte.MaxValue |> ignore)
+  
+  [<Test>]
+  member this.``Checked.uint16.MaxValue.To.unativeint`` () =
+    if sizeof<unativeint> >= sizeof<uint16> then
+       let sourceMaxValue : unativeint = 0xFFFFun
+       Assert.AreEqual (sourceMaxValue, Checked.unativeint UInt16.MaxValue)
+    else
+       CheckThrowsExn<OverflowException> (fun () -> Checked.unativeint UInt16.MaxValue |> ignore)
+  
+  [<Test>]
+  member this.``Checked.uint32.MaxValue.To.unativeint`` () =
+    if sizeof<unativeint> >= sizeof<uint32> then
+       let sourceMaxValue : unativeint = 0xFFFFFFFFun
+       Assert.AreEqual (sourceMaxValue, Checked.unativeint UInt32.MaxValue)
+    else
+       CheckThrowsExn<OverflowException> (fun () -> Checked.unativeint UInt32.MaxValue |> ignore)
+  
+  [<Test>]
+  member this.``Checked.uint64.MaxValue.To.unativeint`` () =
+    if sizeof<unativeint> >= sizeof<uint64> then
+       let sourceMaxValue : unativeint = 0xFFFFFFFFFFFFFFFFun
+       Assert.AreEqual (sourceMaxValue, Checked.unativeint UInt64.MaxValue)
+    else
+       CheckThrowsExn<OverflowException> (fun () -> Checked.unativeint UInt64.MaxValue |> ignore)
   

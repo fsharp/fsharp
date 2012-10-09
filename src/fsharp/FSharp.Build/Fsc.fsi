@@ -29,6 +29,7 @@ type Fsc = class
              member OutputAssembly : string with get,set
              member PdbFile : string with get,set
              member Platform : string with get,set
+             member Prefer32Bit : bool with get,set
              member VersionFile : string with get,set
              member References : Microsoft.Build.Framework.ITaskItem [] with get,set
              member ReferencePath : string with get,set
@@ -43,9 +44,12 @@ type Fsc = class
              member TreatWarningsAsErrors : bool with get,set
              member Utf8Output : bool with get,set
              member VisualStudioStyleErrors : bool with get,set
+             member ValidateTypeProviders : bool with get,set
              member LCID : string with get,set
              member WarningLevel : string with get,set
              member WarningsAsErrors : string with get,set
              member Win32ResourceFile : string with get,set
              member Win32ManifestFile : string with get,set
+             member SubsystemVersion : string with get,set
+             member HighEntropyVA : bool with get,set
            end

@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2011 Microsoft Corporation. 
+// Copyright (c) 2002-2012 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -15,8 +15,9 @@
 /// Runtime, e.g. between the SSCLI, Mono and the Microsoft CLR.
 ///
 /// The implementation of the functions can be found in ilsupp-*.fs
-
 module internal Microsoft.FSharp.Compiler.AbstractIL.Internal.Support
+
+
 type PdbReader
 type PdbWriter
 val pdbReadClose: PdbReader -> unit
@@ -36,21 +37,8 @@ open Microsoft.FSharp.Compiler.AbstractIL.IL
 
 type IStream = System.Runtime.InteropServices.ComTypes.IStream
 
-type ClrKind = 
-  | Microsoft (* all calls allowed *)
-  | Mono 
 
-/// Globally configure the Abstract IL toolset to use a particular
-/// set of auxiliary tools, e.g. debug writer, strong-name signer etc.
-/// 
-/// The configurations available will depend on the flags you've
-/// set when compiling the Abstract IL source code, or will depend
-/// on the particular binary release you are using.  For example,
-/// a typical Windows x86 binary release will support all Microsoft
-/// CLR implementations and the Rotor SSCLI implementation.
-val configure: ClrKind -> unit
-val currentConfiguration: unit -> ClrKind
-
+/// Takes the output file name and returns debug file name.
 val getDebugFileName: string -> string
 
 /// Unmanaged resource file linker - for native resources (not managed ones).
@@ -101,13 +89,6 @@ val pdbVariableGetName: PdbVariable -> string
 val pdbVariableGetSignature: PdbVariable -> byte[]
 val pdbVariableGetAddressAttributes: PdbVariable -> int32 (* kind *) * int32 (* addrField1 *)
 
-/// Access installation directory.  Not actually used by the core
-/// Abstract IL libraries but invariably useful to client programs
-/// when setting up paths etc.
-///
-/// This returns "." is a CLR installation cannot be detected.
-val clrInstallationDirectory: unit -> string
-val clrVersion: unit -> string
 
 //---------------------------------------------------------------------
 // PDB writer.
@@ -137,11 +118,6 @@ val pdbDefineLocalVariable: PdbWriter -> string -> byte[] -> int32 -> unit
 val pdbSetMethodRange: PdbWriter -> PdbDocumentWriter -> int -> int -> PdbDocumentWriter -> int -> int -> unit
 val pdbDefineSequencePoints: PdbWriter -> PdbDocumentWriter -> (int * int * int * int * int) array -> unit
 val pdbGetDebugInfo: PdbWriter -> idd
-
-//---------------------------------------------------------------------
-// Misc writing support
-//---------------------------------------------------------------------
-
 
 //---------------------------------------------------------------------
 // Strong name signing

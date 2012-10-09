@@ -1,6 +1,5 @@
 //----------------------------------------------------------------------------
-//
-// Copyright (c) 2002-2011 Microsoft Corporation. 
+// Copyright (c) 2002-2012 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -318,13 +317,13 @@ namespace Microsoft.FSharp.Collections
         /// <param name="array">The input array.</param>
         /// <returns>A set containing the elements of <c>array</c>.</returns>
         [<CompiledName("OfArray")>]
-        val ofArray: array:'T array -> Set<'T>
+        val ofArray: array:'T[] -> Set<'T>
 
         /// <summary>Builds an array that contains the elements of the set in order.</summary>
         /// <param name="set">The input set.</param>
         /// <returns>An ordered array of the elements of <c>set</c>.</returns>
         [<CompiledName("ToArray")>]
-        val toArray: set:Set<'T> -> 'T array
+        val toArray: set:Set<'T> -> 'T[]
 
         /// <summary>Returns an ordered view of the collection as an enumerable object.</summary>
         /// <param name="set">The input set.</param>

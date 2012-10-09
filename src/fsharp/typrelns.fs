@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2011 Microsoft Corporation. 
+// Copyright (c) 2002-2012 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -37,6 +37,9 @@ open Microsoft.FSharp.Compiler.Infos
 open Microsoft.FSharp.Compiler.PrettyNaming
 open Microsoft.FSharp.Compiler.Infos.AccessibilityLogic
 
+#if EXTENSIONTYPING
+open Microsoft.FSharp.Compiler.ExtensionTyping
+#endif
 
 //-------------------------------------------------------------------------
 // a :> b without coercion based on finalized (no type variable) types
@@ -62,7 +65,7 @@ let rec TypeDefinitelySubsumesTypeNoCoercion ndeep g amap m ty1 ty2 =
     match ty1,ty2 with 
     | TType_app (tc1,l1)  ,TType_app (tc2,l2) when tyconRefEq g tc1 tc2  ->  
         List.lengthsEqAndForall2 (typeEquiv g) l1 l2
-    | TType_ucase (tc1,l1)  ,TType_ucase (tc2,l2) when g.ucref_eq tc1 tc2  ->  
+    | TType_ucase (tc1,l1)  ,TType_ucase (tc2,l2) when g.unionCaseRefEq tc1 tc2  ->  
         List.lengthsEqAndForall2 (typeEquiv g) l1 l2
     | TType_tuple l1    ,TType_tuple l2     -> 
         List.lengthsEqAndForall2 (typeEquiv g) l1 l2 
@@ -75,17 +78,17 @@ let rec TypeDefinitelySubsumesTypeNoCoercion ndeep g amap m ty1 ty2 =
         (isAppTy g ty2 &&
          isRefTy g ty2 && 
 
-         ((match SuperTypeOfType g amap m ty2 with 
+         ((match GetSuperTypeOfType g amap m ty2 with 
            | None -> false
            | Some ty -> TypeDefinitelySubsumesTypeNoCoercion (ndeep+1) g amap m ty1 ty) ||
 
            (isInterfaceTy g ty1 &&
-            ty2 |> InterfacesOfType g amap m 
+            ty2 |> GetImmediateInterfacesOfType g amap m 
                 |> List.exists (TypeDefinitelySubsumesTypeNoCoercion (ndeep+1) g amap m ty1))))
 
 
 
-type canCoerce = CanCoerce | NoCoerce
+type CanCoerce = CanCoerce | NoCoerce
 
 /// The feasible equivalence relation. Part of the language spec.
 let rec TypesFeasiblyEquiv ndeep g amap m ty1 ty2 = 
@@ -132,11 +135,11 @@ let rec TypeFeasiblySubsumesType ndeep g amap m ty1 canCoerce ty2 =
         ||
         (isAppTy g ty2 &&
          (canCoerce = CanCoerce || isRefTy g ty2) && 
-         begin match SuperTypeOfType g amap m ty2 with 
+         begin match GetSuperTypeOfType g amap m ty2 with 
          | None -> false
          | Some ty -> TypeFeasiblySubsumesType (ndeep+1) g amap m ty1 NoCoerce ty
          end ||
-         ty2 |> InterfacesOfType g amap m 
+         ty2 |> GetImmediateInterfacesOfType g amap m 
              |> List.exists (TypeFeasiblySubsumesType (ndeep+1) g amap m ty1 NoCoerce))
                    
 
@@ -147,12 +150,11 @@ let rec TypeFeasiblySubsumesType ndeep g amap m ty1 canCoerce ty2 =
 /// Here x gets a generalized type "list<'T>".
 let ChooseTyparSolutionAndRange g amap (tp:Typar) =
     let m = tp.Range
-    if verbose then dprintf "ChooseTyparSolution, arbitrary: tp = %s\n" (Layout.showL (typarsL [tp]));
     let max,m = 
          let initial = 
              match tp.Kind with 
-             | KindType -> g.obj_ty 
-             | KindMeasure -> TType_measure MeasureOne
+             | TyparKind.Type -> g.obj_ty 
+             | TyparKind.Measure -> TType_measure MeasureOne
          // Loop through the constraints computing the lub
          ((initial,m), tp.Constraints) ||> List.fold (fun (maxSoFar,_) tpc -> 
              let join m x = 
@@ -162,42 +164,42 @@ let ChooseTyparSolutionAndRange g amap (tp:Typar) =
              // Don't continue if an error occurred and we set the value eagerly 
              if tp.IsSolved then maxSoFar,m else
              match tpc with 
-             | TTyparCoercesToType(x,m) -> 
+             | TyparConstraint.CoercesTo(x,m) -> 
                  join m x,m
-             | TTyparMayResolveMemberConstraint(TTrait(_,nm,_,_,_,_),m) -> 
+             | TyparConstraint.MayResolveMember(TTrait(_,nm,_,_,_,_),m) -> 
                  errorR(Error(FSComp.SR.typrelCannotResolveAmbiguityInOverloadedOperator(DemangleOperatorName nm),m));
                  maxSoFar,m
-             | TTyparSimpleChoice(_,m) -> 
+             | TyparConstraint.SimpleChoice(_,m) -> 
                  errorR(Error(FSComp.SR.typrelCannotResolveAmbiguityInPrintf(),m));
                  maxSoFar,m
-             | TTyparSupportsNull m -> 
+             | TyparConstraint.SupportsNull m -> 
                  maxSoFar,m
-             | TTyparSupportsComparison m -> 
+             | TyparConstraint.SupportsComparison m -> 
                  join m g.mk_IComparable_ty,m
-             | TTyparSupportsEquality m -> 
+             | TyparConstraint.SupportsEquality m -> 
                  maxSoFar,m
-             | TTyparIsEnum(_,m) -> 
+             | TyparConstraint.IsEnum(_,m) -> 
                  errorR(Error(FSComp.SR.typrelCannotResolveAmbiguityInEnum(),m));
                  maxSoFar,m
-             | TTyparIsDelegate(_,_,m) -> 
+             | TyparConstraint.IsDelegate(_,_,m) -> 
                  errorR(Error(FSComp.SR.typrelCannotResolveAmbiguityInDelegate(),m));
                  maxSoFar,m
-             | TTyparIsNotNullableValueType m -> 
+             | TyparConstraint.IsNonNullableStruct m -> 
                  join m g.int_ty,m
-             | TTyparIsUnmanaged m ->
+             | TyparConstraint.IsUnmanaged m ->
                  errorR(Error(FSComp.SR.typrelCannotResolveAmbiguityInUnmanaged(),m))
                  maxSoFar,m
-             | TTyparRequiresDefaultConstructor m -> 
+             | TyparConstraint.RequiresDefaultConstructor m -> 
                  maxSoFar,m
-             | TTyparIsReferenceType m -> 
+             | TyparConstraint.IsReferenceType m -> 
                  maxSoFar,m
-             | TTyparDefaultsToType(_priority,_ty,m) -> 
+             | TyparConstraint.DefaultsTo(_priority,_ty,m) -> 
                  maxSoFar,m)
     max,m
 
 let ChooseTyparSolution g amap tp = 
     let ty,_m = ChooseTyparSolutionAndRange g amap tp
-    if tp.Rigidity = TyparAnon && typeEquiv g ty (TType_measure MeasureOne) then
+    if tp.Rigidity = TyparRigidity.Anon && typeEquiv g ty (TType_measure MeasureOne) then
         warning(Error(FSComp.SR.csCodeLessGeneric(),tp.Range));
     ty
 
@@ -210,8 +212,8 @@ let ChooseTyparSolution g amap tp =
 //   'b = int
 // We ground out the solutions by repeatedly instantiating
 let IterativelySubstituteTyparSolutions g tps solutions = 
+    let tpenv = mkTyparInst tps solutions
     let rec loop n curr = 
-        let tpenv = mkTyparInst tps curr
         let curr' = curr |> instTypes tpenv 
         // We cut out at n > 40 just in case this loops. It shouldn't, since there should be no cycles in the
         // solution equations, and we've only ever seen one example where even n = 2 was required.
@@ -329,7 +331,7 @@ module SignatureConformance = begin
         //     b.	If an attribute is found in ASig that has the same attribute type, then a warning is given and the attribute in the implementation is ignored 
         //     c.	Otherwise, the attribute in the implementation is kept
         // (c)	The attributes appearing in the compiled element are the compiled forms of the attributes from the signature and the kept attributes from the implementation
-        let checkAttribs aenv (implAttribs:Attribs) (sigAttribs:Attribs) fixup =
+        let checkAttribs _aenv (implAttribs:Attribs) (sigAttribs:Attribs) fixup =
             
             // Remap the signature attributes to make them look as if they were declared in 
             // the implementation. This allows us to compare them and propagate them to the implementation
@@ -347,15 +349,15 @@ module SignatureConformance = begin
                 attribExprEq e1 e2
 
             let attribsEq  attrib1 attrib2 = 
-                let (Attrib(implTcref,_,implArgs,implNamedArgs,_,_implRange)) = attrib1
-                let (Attrib(signTcref,_,signArgs,signNamedArgs,_,_signRange)) = attrib2
+                let (Attrib(implTcref,_,implArgs,implNamedArgs,_,_,_implRange)) = attrib1
+                let (Attrib(signTcref,_,signArgs,signNamedArgs,_,_,_signRange)) = attrib2
                 tyconRefEq g signTcref implTcref &&
                 (implArgs,signArgs) ||> List.lengthsEqAndForall2 attribExprEq &&
                 (implNamedArgs, signNamedArgs) ||> List.lengthsEqAndForall2 attribNamedArgEq
 
             let attribsHaveSameTycon attrib1 attrib2 = 
-                let (Attrib(implTcref,_,_,_,_,_)) = attrib1
-                let (Attrib(signTcref,_,_,_,_,_)) = attrib2
+                let (Attrib(implTcref,_,_,_,_,_,_)) = attrib1
+                let (Attrib(signTcref,_,_,_,_,_,_)) = attrib2
                 tyconRefEq g signTcref implTcref 
 
             // For each implementation attribute, only keep if it it is not mentioned in the signature.
@@ -376,7 +378,7 @@ module SignatureConformance = begin
                     let existsSimilarAttrib = sigAttribs |> List.exists (attribsHaveSameTycon implAttrib)
 
                     if existsSimilarAttrib then 
-                        let (Attrib(implTcref,_,_,_,_,implRange)) = implAttrib
+                        let (Attrib(implTcref,_,_,_,_,_,implRange)) = implAttrib
                         warning(Error(FSComp.SR.tcAttribArgsDiffer(implTcref.DisplayName), implRange))
                         check keptImplAttribsRev remainingImplAttribs sigAttribs    
                     else
@@ -408,23 +410,23 @@ module SignatureConformance = begin
                   implTypar.Constraints |> List.forall (fun implTyparCx -> 
                       match implTyparCx with 
                       // defaults can be dropped in the signature 
-                      | TTyparDefaultsToType(_,_acty,_) -> true
+                      | TyparConstraint.DefaultsTo(_,_acty,_) -> true
                       | _ -> 
                           if not (List.exists  (typarConstraintsAEquiv g aenv implTyparCx) sigTypar.Constraints)
-                          then (errorR(Error(FSComp.SR.typrelSigImplNotCompatibleConstraintsDiffer(sigTypar.Name, Layout.showL(NicePrint.constraintL denv (implTypar,implTyparCx))),m)); false)
+                          then (errorR(Error(FSComp.SR.typrelSigImplNotCompatibleConstraintsDiffer(sigTypar.Name, Layout.showL(NicePrint.layoutTyparConstraint denv (implTypar,implTyparCx))),m)); false)
                           else  true) &&
 
                   // Check the constraints in the signature are present in the implementation
                   sigTypar.Constraints |> List.forall (fun sigTyparCx -> 
                       match sigTyparCx with 
                       // defaults can be present in the signature and not in the implementation  because they are erased
-                      | TTyparDefaultsToType(_,_acty,_) -> true
+                      | TyparConstraint.DefaultsTo(_,_acty,_) -> true
                       // 'comparison' and 'equality' constraints can be present in the signature and not in the implementation  because they are erased
-                      | TTyparSupportsComparison _ -> true
-                      | TTyparSupportsEquality _ -> true
+                      | TyparConstraint.SupportsComparison _ -> true
+                      | TyparConstraint.SupportsEquality _ -> true
                       | _ -> 
                           if not (List.exists  (fun implTyparCx -> typarConstraintsAEquiv g aenv implTyparCx sigTyparCx) implTypar.Constraints) then
-                              (errorR(Error(FSComp.SR.typrelSigImplNotCompatibleConstraintsDifferRemove(sigTypar.Name, Layout.showL(NicePrint.constraintL denv (sigTypar,sigTyparCx))),m)); false)
+                              (errorR(Error(FSComp.SR.typrelSigImplNotCompatibleConstraintsDifferRemove(sigTypar.Name, Layout.showL(NicePrint.layoutTyparConstraint denv (sigTypar,sigTyparCx))),m)); false)
                           else  
                               true) &&
                   (not checkingSig || checkAttribs aenv implTypar.Attribs sigTypar.Attribs (fun attribs -> implTypar.Data.typar_attribs <- attribs)))
@@ -446,12 +448,12 @@ module SignatureConformance = begin
             else 
                 let aenv = aenv.BindEquivTypars implTypars sigTypars 
 
-                let aintfs = implTycon.InterfaceTypesOfFSharpTycon 
-                let fintfs = sigTycon.InterfaceTypesOfFSharpTycon 
+                let aintfs = implTycon.ImmediateInterfaceTypesOfFSharpTycon 
+                let fintfs = sigTycon.ImmediateInterfaceTypesOfFSharpTycon 
                 let aintfsUser = implTycon.TypeContents.tcaug_interfaces |> List.filter (fun (_,compgen,_) -> not compgen) |> List.map p13 
                 let flatten tys = 
                    tys 
-                   |> List.collect (AllSuperTypesOfType g amap m AllowMultiIntfInst) 
+                   |> List.collect (AllSuperTypesOfType g amap m AllowMultiIntfInstantiations.Yes) 
                    |> ListSet.setify (typeEquiv g) 
                    |> List.filter (isInterfaceTy g)
                 let aintfs     = flatten aintfs 
@@ -459,7 +461,7 @@ module SignatureConformance = begin
                 let fintfs     = flatten fintfs 
               
                 let unimpl = ListSet.subtract (fun fity aity -> typeAEquiv g aenv aity fity) fintfs aintfs
-                (unimpl |> List.forall (fun ity -> errorR (err (fun x -> FSComp.SR.DefinitionsInSigAndImplNotCompatibleMissingInterface(x, NicePrint.prettyStringOfTy denv ity))); false)) &&
+                (unimpl |> List.forall (fun ity -> errorR (err (fun x -> FSComp.SR.DefinitionsInSigAndImplNotCompatibleMissingInterface(x,  NicePrint.minimalStringOfType denv ity))); false)) &&
                 let hidden = ListSet.subtract (typeAEquiv g aenv) aintfsUser fintfs
                 hidden |> List.iter (fun ity -> (if implTycon.IsFSharpInterfaceTycon then error else warning) (InterfaceNotRevealed(denv,ity,implTycon.Range)));
 
@@ -498,7 +500,8 @@ module SignatureConformance = begin
                 checkTypars m aenv implTypars sigTypars &&
                 checkTypeRepr err aenv implTycon.TypeReprInfo sigTycon.TypeReprInfo &&
                 checkTypeAbbrev err aenv implTycon.TypeOrMeasureKind sigTycon.TypeOrMeasureKind implTycon.TypeAbbrev sigTycon.TypeAbbrev  &&
-                checkAttribs aenv implTycon.Attribs sigTycon.Attribs (fun attribs -> implTycon.Data.entity_attribs <- attribs)
+                checkAttribs aenv implTycon.Attribs sigTycon.Attribs (fun attribs -> implTycon.Data.entity_attribs <- attribs) &&
+                checkModuleOrNamespaceContents implTycon.Range aenv (mkLocalEntityRef implTycon) sigTycon.ModuleOrNamespaceType 
             
         and checkValInfo aenv err (implVal : Val) (sigVal : Val) = 
             let id = implVal.Id
@@ -603,7 +606,7 @@ module SignatureConformance = begin
                 checkAttribs aenv implField.FieldAttribs sigField.FieldAttribs (fun attribs -> implField.rfield_fattribs <- attribs) &&
                 checkAttribs aenv implField.PropertyAttribs sigField.PropertyAttribs (fun attribs -> implField.rfield_pattribs <- attribs)
             
-        and checkMemberDatasConform err  (implAttrs,implVal,implMemberInfo) (sigAttrs, sigVal,sigMemberInfo)  =
+        and checkMemberDatasConform err  (_implAttrs,implVal,implMemberInfo) (_sigAttrs, sigVal,sigMemberInfo)  =
             match implMemberInfo,sigMemberInfo with 
             | None,None -> true
             | Some implMembInfo, Some sigMembInfo -> 
@@ -646,7 +649,7 @@ module SignatureConformance = begin
         // sig for err then checkRecordFieldsForExn.
         // -------------------------------------------------------------------------------
 
-        and checkRecordFields g amap denv err aenv (implFields:TyconRecdFields) (sigFields:TyconRecdFields) =
+        and checkRecordFields _g _amap _denv err aenv (implFields:TyconRecdFields) (sigFields:TyconRecdFields) =
             let implFields = implFields.TrueFieldsAsList
             let sigFields = sigFields.TrueFieldsAsList
             let m1 = implFields |> NameMap.ofKeyedList (fun rfld -> rfld.Name)
@@ -659,7 +662,7 @@ module SignatureConformance = begin
              then true
              else (errorR(err (FSComp.SR.DefinitionsInSigAndImplNotCompatibleFieldOrderDiffer)); false))
 
-        and checkRecordFieldsForExn g denv err aenv (implFields:TyconRecdFields) (sigFields:TyconRecdFields) =
+        and checkRecordFieldsForExn _g _denv err aenv (implFields:TyconRecdFields) (sigFields:TyconRecdFields) =
             let implFields = implFields.TrueFieldsAsList
             let sigFields = sigFields.TrueFieldsAsList
             let m1 = implFields |> NameMap.ofKeyedList (fun rfld -> rfld.Name)
@@ -672,20 +675,20 @@ module SignatureConformance = begin
              then true
              else (errorR(err (FSComp.SR.ExceptionDefsNotCompatibleFieldOrderDiffers)); false))
 
-        and checkVirtualSlots g denv err aenv implAbstractSlots sigAbstractSlots =
+        and checkVirtualSlots _g denv err _aenv implAbstractSlots sigAbstractSlots =
             let m1 = NameMap.ofKeyedList (fun (v:ValRef) -> v.DisplayName) implAbstractSlots
             let m2 = NameMap.ofKeyedList (fun (v:ValRef) -> v.DisplayName) sigAbstractSlots
-            (m1,m2) ||> NameMap.suball2 (fun _s vref -> errorR(err (fun x -> FSComp.SR.DefinitionsInSigAndImplNotCompatibleAbstractMemberMissingInImpl(x, Layout.showL(NicePrint.valL denv vref.Deref)))); false) (fun _x _y -> true)  &&
-            (m2,m1) ||> NameMap.suball2 (fun _s vref -> errorR(err (fun x -> FSComp.SR.DefinitionsInSigAndImplNotCompatibleAbstractMemberMissingInSig(x, Layout.showL(NicePrint.valL denv vref.Deref)))); false) (fun _x _y -> true)  
+            (m1,m2) ||> NameMap.suball2 (fun _s vref -> errorR(err (fun x -> FSComp.SR.DefinitionsInSigAndImplNotCompatibleAbstractMemberMissingInImpl(x, NicePrint.stringValOrMember denv vref.Deref))); false) (fun _x _y -> true)  &&
+            (m2,m1) ||> NameMap.suball2 (fun _s vref -> errorR(err (fun x -> FSComp.SR.DefinitionsInSigAndImplNotCompatibleAbstractMemberMissingInSig(x, NicePrint.stringValOrMember denv vref.Deref))); false) (fun _x _y -> true)  
 
-        and checkClassFields isStruct g amap denv err aenv (implFields:TyconRecdFields) (sigFields:TyconRecdFields) =
+        and checkClassFields isStruct _g _amap _denv err aenv (implFields:TyconRecdFields) (sigFields:TyconRecdFields) =
             let implFields = implFields.TrueFieldsAsList
             let sigFields = sigFields.TrueFieldsAsList
             let m1 = implFields |> NameMap.ofKeyedList (fun rfld -> rfld.Name) 
             let m2 = sigFields |> NameMap.ofKeyedList (fun rfld -> rfld.Name) 
             NameMap.suball2 (fun s _ -> errorR(err (fun x -> FSComp.SR.DefinitionsInSigAndImplNotCompatibleFieldRequiredButNotSpecified(x, s))); false) (checkField aenv)  m1 m2 &&
             (if isStruct then 
-                NameMap.suball2 (fun s _ -> warning(err (fun x -> FSComp.SR.DefinitionsInSigAndImplNotCompatibleFieldIsInImplButNotSig(x, s))); false) (fun x y -> checkField aenv y x)  m2 m1 
+                NameMap.suball2 (fun s _ -> warning(err (fun x -> FSComp.SR.DefinitionsInSigAndImplNotCompatibleFieldIsInImplButNotSig(x, s))); true) (fun x y -> checkField aenv y x)  m2 m1 
              else
                 true)
             
@@ -702,27 +705,34 @@ module SignatureConformance = begin
               | l -> (errorR (err (fun x -> FSComp.SR.DefinitionsInSigAndImplNotCompatibleImplDefinesButSignatureDoesNot(x, k, String.concat ";" l))); false)
 
             match implTypeRepr,sigTypeRepr with 
-            | Some (TRecdRepr _ | TFiniteUnionRepr _ | TILObjModelRepr _ ), None  -> true
-            | Some (TFsObjModelRepr r), None  -> 
+            | (TRecdRepr _ 
+              | TFiniteUnionRepr _ 
+              | TILObjModelRepr _ 
+#if EXTENSIONTYPING
+              | TProvidedTypeExtensionPoint _ 
+              | TProvidedNamespaceExtensionPoint _
+#endif
+              ), TNoRepr  -> true
+            | (TFsObjModelRepr r), TNoRepr  -> 
                 match r.fsobjmodel_kind with 
                 | TTyconStruct | TTyconEnum -> 
                    (errorR (err FSComp.SR.DefinitionsInSigAndImplNotCompatibleImplDefinesStruct); false)
                 | _ -> 
                    true
-            | Some (TAsmRepr _), None -> 
+            | (TAsmRepr _), TNoRepr -> 
                 (errorR (err FSComp.SR.DefinitionsInSigAndImplNotCompatibleDotNetTypeRepresentationIsHidden); false)
-            | Some (TMeasureableRepr _), None -> 
+            | (TMeasureableRepr _), TNoRepr -> 
                 (errorR (err FSComp.SR.DefinitionsInSigAndImplNotCompatibleTypeIsHidden); false)
-            | Some (TFiniteUnionRepr r1), Some (TFiniteUnionRepr r2) -> 
+            | (TFiniteUnionRepr r1), (TFiniteUnionRepr r2) -> 
                 let ucases1 = r1.UnionCasesAsList
                 let ucases2 = r2.UnionCasesAsList
                 if ucases1.Length <> ucases2.Length then
                   let names l = List.map (fun c -> c.Id.idText) l
                   reportNiceError "union case" (names ucases1) (names ucases2) 
                 else List.forall2 (checkUnionCase aenv) ucases1 ucases2
-            | Some (TRecdRepr implFields), Some (TRecdRepr sigFields) -> 
+            | (TRecdRepr implFields), (TRecdRepr sigFields) -> 
                 checkRecordFields g amap denv err aenv implFields sigFields
-            | Some (TFsObjModelRepr r1), Some (TFsObjModelRepr r2) -> 
+            | (TFsObjModelRepr r1), (TFsObjModelRepr r2) -> 
                 if not (match r1.fsobjmodel_kind,r2.fsobjmodel_kind with 
                          | TTyconClass,TTyconClass -> true
                          | TTyconInterface,TTyconInterface -> true
@@ -745,19 +755,32 @@ module SignatureConformance = begin
                   let isStruct = (match r1.fsobjmodel_kind with TTyconStruct -> true | _ -> false)
                   checkClassFields isStruct g amap denv err aenv r1.fsobjmodel_rfields r2.fsobjmodel_rfields &&
                   checkVirtualSlots g denv err aenv r1.fsobjmodel_vslots r2.fsobjmodel_vslots
-            | Some (TAsmRepr tcr1),  Some (TAsmRepr tcr2) -> 
+            | (TAsmRepr tcr1),  (TAsmRepr tcr2) -> 
                 if tcr1 <> tcr2 then  (errorR (err FSComp.SR.DefinitionsInSigAndImplNotCompatibleILDiffer); false) else true
-            | Some (TMeasureableRepr ty1),  Some (TMeasureableRepr ty2) -> 
+            | (TMeasureableRepr ty1),  (TMeasureableRepr ty2) -> 
                 if typeAEquiv g aenv ty1 ty2 then true else (errorR (err FSComp.SR.DefinitionsInSigAndImplNotCompatibleRepresentationsDiffer); false)
-            | Some _, Some _ -> (errorR (err FSComp.SR.DefinitionsInSigAndImplNotCompatibleRepresentationsDiffer); false)
-            | None, Some _ -> (errorR (err FSComp.SR.DefinitionsInSigAndImplNotCompatibleRepresentationsDiffer); false)
-            | None, None -> true
+            | TNoRepr, TNoRepr -> true
+#if EXTENSIONTYPING
+            | TProvidedTypeExtensionPoint info1 , TProvidedTypeExtensionPoint info2 ->  
+                Tainted.EqTainted info1.ProvidedType.TypeProvider info2.ProvidedType.TypeProvider && ProvidedType.TaintedEquals(info1.ProvidedType,info2.ProvidedType)
+            | TProvidedNamespaceExtensionPoint _, TProvidedNamespaceExtensionPoint _ -> 
+                System.Diagnostics.Debug.Assert(false, "unreachable: TProvidedNamespaceExtensionPoint only on namespaces, not types" )
+                true
+#endif
+            | TNoRepr, _ -> (errorR (err FSComp.SR.DefinitionsInSigAndImplNotCompatibleRepresentationsDiffer); false)
+            | _, _ -> (errorR (err FSComp.SR.DefinitionsInSigAndImplNotCompatibleRepresentationsDiffer); false)
 
         and checkTypeAbbrev err aenv kind1 kind2 implTypeAbbrev sigTypeAbbrev =
             if kind1 <> kind2 then (errorR (err (fun x -> FSComp.SR.DefinitionsInSigAndImplNotCompatibleSignatureDeclaresDiffer(x, kind2.ToString(), kind1.ToString()))); false)
             else
               match implTypeAbbrev,sigTypeAbbrev with 
-              | Some ty1, Some ty2 -> if not (typeAEquiv g aenv ty1 ty2) then (errorR (err (fun x -> FSComp.SR.DefinitionsInSigAndImplNotCompatibleAbbreviationsDiffer(x, Layout.showL (typeL ty1), Layout.showL (typeL ty2)))); false) else true
+              | Some ty1, Some ty2 -> 
+                  if not (typeAEquiv g aenv ty1 ty2) then 
+                      let s1, s2, _  = NicePrint.minimalStringsOfTwoTypes denv ty1 ty2
+                      errorR (err (fun x -> FSComp.SR.DefinitionsInSigAndImplNotCompatibleAbbreviationsDiffer(x, s1, s2))); 
+                      false 
+                  else 
+                      true
               | None,None -> true
               | Some _, None -> (errorR (err (FSComp.SR.DefinitionsInSigAndImplNotCompatibleAbbreviationHiddenBySig)); false)
               | None, Some _ -> (errorR (err FSComp.SR.DefinitionsInSigAndImplNotCompatibleSigHasAbbreviation); false)
@@ -782,9 +805,15 @@ module SignatureConformance = begin
                 errorR(RequiredButNotSpecified(denv,implModRef,"value",(fun os -> 
                    (* In the case of missing members show the full required enclosing type and signature *)
                    if fx.IsMember then 
-                       NicePrint.outputQualifiedValSpec denv os fx
+                       NicePrint.outputQualifiedValOrMember denv os fx
                    else
                        Printf.bprintf os "%s" fx.DisplayName),m))
+            
+            let valuesPartiallyMatch (av:Val) (fv:Val) =
+                (av.LinkagePartialKey.MemberParentMangledName = fv.LinkagePartialKey.MemberParentMangledName) &&
+                (av.LinkagePartialKey.LogicalName = fv.LinkagePartialKey.LogicalName) &&
+                (av.LinkagePartialKey.TotalArgCount = fv.LinkagePartialKey.TotalArgCount)    
+                                       
             (implModType.AllValsAndMembersByLogicalNameUncached, signModType.AllValsAndMembersByLogicalNameUncached)
               ||> NameMap.suball2 
                     (fun _s (fxs:Val list) -> sigValHadNoMatchingImplementation fxs.Head None; false)
@@ -792,15 +821,19 @@ module SignatureConformance = begin
                         match avs,fvs with 
                         | [],_ | _,[] -> failwith "unreachable"
                         | [av],[fv] -> 
-                            checkVal implModRef aenv av fv
+                            if valuesPartiallyMatch av fv then
+                                checkVal implModRef aenv av fv
+                            else
+                                sigValHadNoMatchingImplementation fv None
+                                false    
                         | _ -> 
                              // for each formal requirement, try to find a precisely matching actual requirement
                              let matchingPairs = 
                                  fvs |> List.choose (fun fv -> 
                                      match avs |> List.tryFind (fun av -> 
                                                          let res = valLinkageAEquiv g aenv av fv
-                                                         //if res then printfn "%s" (bufs (fun buf -> Printf.bprintf buf "YES MATCH: fv '%a', av '%a'" (NicePrint.outputQualifiedValSpec denv) fv (NicePrint.outputQualifiedValSpec denv) av))
-                                                         //else printfn "%s" (bufs (fun buf -> Printf.bprintf buf "NO MATCH: fv '%a', av '%a'" (NicePrint.outputQualifiedValSpec denv) fv (NicePrint.outputQualifiedValSpec denv) av))  
+                                                         //if res then printfn "%s" (bufs (fun buf -> Printf.bprintf buf "YES MATCH: fv '%a', av '%a'" (NicePrint.outputQualifiedValOrMember denv) fv (NicePrint.outputQualifiedValOrMember denv) av))
+                                                         //else printfn "%s" (bufs (fun buf -> Printf.bprintf buf "NO MATCH: fv '%a', av '%a'" (NicePrint.outputQualifiedValOrMember denv) fv (NicePrint.outputQualifiedValOrMember denv) av))  
                                                          res) with 
                                       | None -> None
                                       | Some av -> Some(fv,av))
@@ -812,10 +845,7 @@ module SignatureConformance = begin
                              if someNotOk then 
                                  let noMatches,partialMatchingPairs = 
                                      fvs |> List.splitChoose (fun fv -> 
-                                         match avs |> List.tryFind (fun av -> 
-                                                             (av.LinkagePartialKey.MemberParentMangledName = fv.LinkagePartialKey.MemberParentMangledName) &&
-                                                             (av.LinkagePartialKey.LogicalName = fv.LinkagePartialKey.LogicalName) &&
-                                                             (av.LinkagePartialKey.TotalArgCount = fv.LinkagePartialKey.TotalArgCount)) with 
+                                         match avs |> List.tryFind (fun av -> valuesPartiallyMatch av fv) with 
                                           | None -> Choice1Of2 fv
                                           | Some av -> Choice2Of2(fv,av))
                                  for (fv,av) in partialMatchingPairs do
@@ -858,7 +888,7 @@ module SignatureConformance = begin
                     errorR(RequiredButNotSpecified(denv,implModRef,"value",(fun os -> 
                        // In the case of missing members show the full required enclosing type and signature 
                        if isSome fx.MemberInfo then 
-                           NicePrint.outputQualifiedValSpec denv os fx
+                           NicePrint.outputQualifiedValOrMember denv os fx
                        else
                            Printf.bprintf os "%s" fx.DisplayName),m)); false)
                 (fun _ _ -> true) 
@@ -879,6 +909,7 @@ type OverrideCanImplement =
     | CanImplementAnySlot
     | CanImplementNoSlots
     
+/// The overall information about a method implementation in a class or object expression 
 type OverrideInfo = 
     | Override of OverrideCanImplement * TyconRef * Ident * (Typars * TyparInst) * (*argTypes:*)TType list list * (*Type:*)TType option * (*isFakeEventProperty:*)bool
     member x.IsFakeEventProperty = let (Override(_,_,_,_,_,_,b)) = x in b
@@ -896,10 +927,7 @@ type SlotImplSet = SlotImplSet of RequiredSlot list * NameMultiMap<RequiredSlot>
 exception TypeIsImplicitlyAbstract of range
 exception OverrideDoesntOverride of DisplayEnv * OverrideInfo * MethInfo option * TcGlobals * Import.ImportMap * range
 
-
-
 module DispatchSlotChecking =
-    /// The overall information about a method implementation in a class or obeject expression 
 
     let PrintOverrideToBuffer denv os (Override(_,_,id,(mtps,memberToParentInst),argTys,retTy,_)) = 
        let denv = { denv with showTyparBinding = true }
@@ -908,22 +936,22 @@ module DispatchSlotChecking =
            match argTys with 
            | [] -> [[(denv.g.unit_ty,ValReprInfo.unnamedTopArg1)]]
            | _ -> argTys |> List.mapSquared (fun ty -> (ty, ValReprInfo.unnamedTopArg1)) 
-       Layout.bufferL os (NicePrint.memberSigL denv (memberToParentInst,id.idText,mtps, argInfos, retTy))
+       Layout.bufferL os (NicePrint.layoutMemberSig denv (memberToParentInst,id.idText,mtps, argInfos, retTy))
 
     let PrintMethInfoSigToBuffer g amap m denv os minfo =
         let denv = { denv with showTyparBinding = true }
-        let argTys,retTy,fmtps,ttpinst = CompiledSigOfMeth g amap m minfo
+        let (CompiledSig(argTys,retTy,fmtps,ttpinst)) = CompiledSigOfMeth g amap m minfo
         let retTy = (retTy  |> GetFSharpViewOfReturnType g)
         let argInfos = argTys |> List.mapSquared (fun ty -> (ty, ValReprInfo.unnamedTopArg1))
         let nm = minfo.LogicalName
-        Layout.bufferL os (NicePrint.memberSigL denv (ttpinst,nm,fmtps, argInfos, retTy))
+        Layout.bufferL os (NicePrint.layoutMemberSig denv (ttpinst,nm,fmtps, argInfos, retTy))
 
     let FormatOverride denv d = bufs (fun buf -> PrintOverrideToBuffer denv buf d)
     let FormatMethInfoSig g amap m denv d = bufs (fun buf -> PrintMethInfoSigToBuffer g amap m denv buf d)
 
     let GetInheritedMemberOverrideInfo g amap m parentType (minfo:MethInfo) = 
         let nm = minfo.LogicalName
-        let argTys,retTy,fmtps,ttpinst = CompiledSigOfMeth g amap m minfo
+        let (CompiledSig (argTys,retTy,fmtps,ttpinst)) = CompiledSigOfMeth g amap m minfo
 
         let isFakeEventProperty = minfo.IsFSharpEventProperty
         Override(parentType,tcrefOfAppTy g minfo.EnclosingType,mkSynId m nm, (fmtps,ttpinst),argTys,retTy,isFakeEventProperty)
@@ -1004,12 +1032,12 @@ module DispatchSlotChecking =
          | CanImplementAnyInterfaceSlot -> isInterfaceTy g dispatchSlot.EnclosingType)
 
     let IsTyparKindMatch g amap m (dispatchSlot:MethInfo) (Override(_,_,_,(mtps,_),_,_,_)) = 
-        let _vargtys,_,fvmtps,_ = CompiledSigOfMeth g amap m dispatchSlot 
+        let (CompiledSig(_,_,fvmtps,_)) = CompiledSigOfMeth g amap m dispatchSlot 
         List.lengthsEqAndForall2 (fun (tp1:Typar) (tp2:Typar) -> tp1.Kind = tp2.Kind) mtps fvmtps
         
     let IsPartialMatch g amap m (dispatchSlot:MethInfo) (Override(_,_,_,(mtps,_),argTys,_retTy,_) as overrideBy) = 
         IsNameMatch dispatchSlot overrideBy &&
-        let vargtys,_,fvmtps,_ = CompiledSigOfMeth g amap m dispatchSlot 
+        let (CompiledSig (vargtys,_,fvmtps,_)) = CompiledSigOfMeth g amap m dispatchSlot 
         mtps.Length = fvmtps.Length &&
         IsTyparKindMatch g amap m dispatchSlot overrideBy && 
         argTys.Length = vargtys.Length &&
@@ -1023,7 +1051,7 @@ module DispatchSlotChecking =
      
     let IsExactMatch g amap m dispatchSlot (Override(_,_,_,(mtps,mtpinst),argTys,retTy,_) as overrideBy) =
         IsPartialMatch g amap m dispatchSlot overrideBy &&
-        let vargtys,vrty,fvmtps,ttpinst = CompiledSigOfMeth g amap m dispatchSlot
+        let (CompiledSig (vargtys,vrty,fvmtps,ttpinst)) = CompiledSigOfMeth g amap m dispatchSlot
 
         // Compare the types. CompiledSigOfMeth, GetObjectExprOverrideInfo and GetTypeMemberOverrideInfo have already 
         // applied all relevant substitutions except the renamings from fvtmps <-> mtps 
@@ -1033,31 +1061,28 @@ module DispatchSlotChecking =
         List.forall2 (List.lengthsEqAndForall2 (typeAEquiv g aenv)) vargtys argTys &&
         returnTypesAEquiv g aenv vrty retTy &&
         
-        (* Comparing the method typars and their constraints is much trickier since the substitutions have not been applied 
-           to the constraints of these babies. This is partly because constraints are directly attached to typars so it's 
-           difficult to apply substitutions to them unless we separate them off at some point, which we don't as yet.        
-
-           Given   C<ctps>
-                   D<dtps>
-                   dispatchSlot :   C<ctys[dtps]>.M<fvmtps[ctps]>(...)
-                   overrideBy:  parent: D<dtys[dtps]>  value: !<ttps> <mtps[ttps]>(...) 
-                   
-               where X[dtps] indicates that X may involve free type variables dtps
-               
-               we have 
-                   ttpinst maps  ctps --> ctys[dtps] 
-                   mtpinst maps  ttps --> dtps
-               
-               compare fvtmps[ctps] and mtps[ttps] by 
-                  fvtmps[ctps]  @ ttpinst     -- gives fvtmps[dtps]
-                  fvtmps[dtps] @ rev(mtpinst) -- gives fvtmps[ttps]
-                  
-               Now fvtmps[ttps] and mtpinst[ttps] are comparable, i.e. have contraints w.r.t. the same set of type variables 
-                   
-          i.e.  Compose the substitutions ttpinst and rev(mtpinst) *)
-
-              
-        (* Compose the substitutions *)
+        // Comparing the method typars and their constraints is much trickier since the substitutions have not been applied 
+        // to the constraints of these babies. This is partly because constraints are directly attached to typars so it's 
+        // difficult to apply substitutions to them unless we separate them off at some point, which we don't as yet.        
+        //
+        // Given   C<ctps>
+        //         D<dtps>
+        //         dispatchSlot :   C<ctys[dtps]>.M<fvmtps[ctps]>(...)
+        //         overrideBy:  parent: D<dtys[dtps]>  value: !<ttps> <mtps[ttps]>(...) 
+        //         
+        //     where X[dtps] indicates that X may involve free type variables dtps
+        //     
+        //     we have 
+        //         ttpinst maps  ctps --> ctys[dtps] 
+        //         mtpinst maps  ttps --> dtps
+        //       
+        //     compare fvtmps[ctps] and mtps[ttps] by 
+        //        fvtmps[ctps]  @ ttpinst     -- gives fvtmps[dtps]
+        //        fvtmps[dtps] @ rev(mtpinst) -- gives fvtmps[ttps]
+        //        
+        //     Now fvtmps[ttps] and mtpinst[ttps] are comparable, i.e. have contraints w.r.t. the same set of type variables 
+        //         
+        // i.e.  Compose the substitutions ttpinst and rev(mtpinst) 
         
         let ttpinst = 
             // check we can reverse - in some error recovery situations we can't 
@@ -1109,9 +1134,9 @@ module DispatchSlotChecking =
                    // Check that no available prior override implements this dispatch slot
                    not (DispatchSlotIsAlreadyImplemented g amap m availPriorOverridesKeyed dispatchSlot) then 
                     // error reporting path 
-                    let vargtys,_vrty,fvmtps,_ = CompiledSigOfMeth g amap m dispatchSlot
-                    let noimpl() = if isReqdTyInterface then fail(Error(FSComp.SR.typrelNoImplementationGivenWithSuggestion(stringOfMethInfo amap m denv dispatchSlot), m))
-                                   else fail(Error(FSComp.SR.typrelNoImplementationGiven(stringOfMethInfo amap m denv dispatchSlot), m))
+                    let (CompiledSig (vargtys,_vrty,fvmtps,_)) = CompiledSigOfMeth g amap m dispatchSlot
+                    let noimpl() = if isReqdTyInterface then fail(Error(FSComp.SR.typrelNoImplementationGivenWithSuggestion(NicePrint.stringOfMethInfo amap m denv dispatchSlot), m))
+                                   else fail(Error(FSComp.SR.typrelNoImplementationGiven(NicePrint.stringOfMethInfo amap m denv dispatchSlot), m))
                     match  overrides |> List.filter (IsPartialMatch g amap m dispatchSlot)  with 
                     | [] -> 
                         match overrides |> List.filter (fun overrideBy -> IsNameMatch dispatchSlot overrideBy && 
@@ -1123,7 +1148,7 @@ module DispatchSlotChecking =
                                 if argTys.Length <> vargtys.Length then FSComp.SR.typrelMemberDoesNotHaveCorrectNumberOfArguments(FormatOverride denv overrideBy, FormatMethInfoSig g amap m denv dispatchSlot)
                                 elif mtps.Length <> fvmtps.Length then FSComp.SR.typrelMemberDoesNotHaveCorrectNumberOfTypeParameters(FormatOverride denv overrideBy, FormatMethInfoSig g amap m denv dispatchSlot)
                                 elif not (IsTyparKindMatch g amap m dispatchSlot overrideBy) then  FSComp.SR.typrelMemberDoesNotHaveCorrectKindsOfGenericParameters(FormatOverride denv overrideBy, FormatMethInfoSig g amap m denv dispatchSlot)
-                                else FSComp.SR.typrelMemberCannotImplement(FormatOverride denv overrideBy, stringOfMethInfo amap m denv dispatchSlot, FormatMethInfoSig g amap m denv dispatchSlot)
+                                else FSComp.SR.typrelMemberCannotImplement(FormatOverride denv overrideBy, NicePrint.stringOfMethInfo amap m denv dispatchSlot, FormatMethInfoSig g amap m denv dispatchSlot)
                             fail(Error(error_msg, overrideBy.Range))
                         | overrideBy :: _ -> 
                             errorR(Error(FSComp.SR.typrelOverloadNotFound(FormatMethInfoSig g amap m denv dispatchSlot, FormatMethInfoSig g amap m denv dispatchSlot),overrideBy.Range))
@@ -1143,7 +1168,7 @@ module DispatchSlotChecking =
         !res
 
     /// 6b. check all implementations implement some virtual method 
-    let CheckOverridesAreAllUsedOnce denv g amap (reqdTy,
+    let CheckOverridesAreAllUsedOnce denv g amap (isObjExpr, reqdTy,
                                                   dispatchSlotsKeyed: NameMultiMap<RequiredSlot>,
                                                   availPriorOverrides: OverrideInfo list,
                                                   overrides
@@ -1174,19 +1199,22 @@ module DispatchSlotChecking =
 
 
             | [dispatchSlot] -> 
-                if dispatchSlot.IsFinal && not (typeEquiv g reqdTy dispatchSlot.EnclosingType) then 
-                    errorR(Error(FSComp.SR.typrelMethodIsSealed(stringOfMethInfo amap m denv dispatchSlot),m))
+                if dispatchSlot.IsFinal && (isObjExpr || not (typeEquiv g reqdTy dispatchSlot.EnclosingType)) then 
+                    errorR(Error(FSComp.SR.typrelMethodIsSealed(NicePrint.stringOfMethInfo amap m denv dispatchSlot),m))
             | dispatchSlots -> 
                 match dispatchSlots |> List.filter (fun dispatchSlot -> 
                               isInterfaceTy g dispatchSlot.EnclosingType || 
                               not (DispatchSlotIsAlreadyImplemented g amap m availPriorOverridesKeyed dispatchSlot)) with
                 | h1 :: h2 :: _ -> 
-                    errorR(Error(FSComp.SR.typrelOverrideImplementsMoreThenOneSlot((FormatOverride denv overrideBy), (stringOfMethInfo amap m denv h1), (stringOfMethInfo amap m denv h2)),m))
+                    errorR(Error(FSComp.SR.typrelOverrideImplementsMoreThenOneSlot((FormatOverride denv overrideBy), (NicePrint.stringOfMethInfo amap m denv h1), (NicePrint.stringOfMethInfo amap m denv h2)),m))
                 | _ -> 
-                    ()
+                    // dispatch slots are ordered from the derived classes to base
+                    // so we can check the topmost dispatch slot if it is final
+                    match dispatchSlots with
+                    | meth::_ when meth.IsFinal -> errorR(Error(FSComp.SR.tcCannotOverrideSealedMethod((sprintf "%s::%s" (meth.EnclosingType.ToString()) (meth.LogicalName))), m)); ()
+                    | _ -> ()
 
 
-    //-------------------------------------------------------------------------
 
     /// Get the slots of a type that can or must be implemented. This depends
     /// partly on the full set of interface types that are being implemented
@@ -1203,22 +1231,24 @@ module DispatchSlotChecking =
         let availImpliedInterfaces : TType list = 
             [ for (reqdTy,m) in allReqdTys do
                 if not (isInterfaceTy g reqdTy) then 
-                    let baseTyOpt = if isObjExpr then Some reqdTy else SuperTypeOfType g amap m reqdTy 
+                    let baseTyOpt = if isObjExpr then Some reqdTy else GetSuperTypeOfType g amap m reqdTy 
                     match baseTyOpt with 
                     | None -> ()
-                    | Some baseTy -> yield! AllInterfacesOfType g amap m AllowMultiIntfInst baseTy  ]
+                    | Some baseTy -> yield! AllInterfacesOfType g amap m AllowMultiIntfInstantiations.Yes baseTy  ]
                     
         // For each implemented type, get a list containing the transitive closure of
         // interface types implied by the type. This includes the implemented type itself if the implemented type
         // is an interface type.
         let intfSets = 
             allReqdTys |> List.mapi (fun i (reqdTy,m) -> 
-                let interfaces = AllInterfacesOfType g amap m AllowMultiIntfInst reqdTy 
+                let interfaces = AllInterfacesOfType g amap m AllowMultiIntfInstantiations.Yes reqdTy 
                 let impliedTys = (if isInterfaceTy g reqdTy then interfaces else reqdTy :: interfaces)
                 (i, reqdTy, impliedTys,m))
 
         // For each implemented type, reduce its list of implied interfaces by subtracting out those implied 
         // by another implemented interface type.
+        //
+        // REVIEW: Note complexity O(ity*jty)
         let reqdTyInfos = 
             intfSets |> List.map (fun (i,reqdTy,impliedTys,m) -> 
                 let reduced = 
@@ -1242,8 +1272,8 @@ module DispatchSlotChecking =
                 if i > j then  
                     let overlap = ListSet.intersect (TypesFeasiblyEquiv 0 g amap reqdTyRange) impliedTys impliedTys2
                     overlap |> List.iter (fun overlappingTy -> 
-                        if nonNil(GetImmediateIntrinsicMethInfosOfType (None,AccessibleFromSomewhere) g amap reqdTyRange overlappingTy |> List.filter MethInfo.IsVirtual) then                                
-                            errorR(Error(FSComp.SR.typrelNeedExplicitImplementation(NicePrint.prettyStringOfTy denv (List.head overlap)),reqdTyRange)));
+                        if nonNil(GetImmediateIntrinsicMethInfosOfType (None,AccessibleFromSomewhere) g amap reqdTyRange overlappingTy |> List.filter (fun minfo -> minfo.IsVirtual)) then                                
+                            errorR(Error(FSComp.SR.typrelNeedExplicitImplementation(NicePrint.minimalStringOfType denv (List.head overlap)),reqdTyRange)));
 
         // Get the SlotImplSet for each implemented type
         // This contains the list of required members and the list of available members
@@ -1279,7 +1309,7 @@ module DispatchSlotChecking =
                       
                       // In the normal case, the requirements for a class are precisely all the abstract slots up the whole hierarchy.
                       // So here we get and yield all of those.
-                      for minfo in reqdTy |> GetIntrinsicMethInfosOfType infoReader (None,AccessibleFromSomewhere,AllowMultiIntfInst) IgnoreOverrides reqdTyRange do
+                      for minfo in reqdTy |> GetIntrinsicMethInfosOfType infoReader (None,AccessibleFromSomewhere,AllowMultiIntfInstantiations.Yes) IgnoreOverrides reqdTyRange do
                          if minfo.IsDispatchSlot then
                              yield RequiredSlot(minfo,(*isOptional=*)false) ]
                 
@@ -1293,7 +1323,7 @@ module DispatchSlotChecking =
                     []
                 else 
                     let reqdTy = 
-                        let baseTyOpt = if isObjExpr then Some reqdTy else SuperTypeOfType g amap reqdTyRange reqdTy 
+                        let baseTyOpt = if isObjExpr then Some reqdTy else GetSuperTypeOfType g amap reqdTyRange reqdTy 
                         match baseTyOpt with 
                         | None -> reqdTy
                         | Some baseTy -> baseTy 
@@ -1303,7 +1333,7 @@ module DispatchSlotChecking =
                       // and not always correctly relate them to the slots they implement. For example, 
                       // we may get an override from a base class and believe it implements a fresh, new abstract
                       // slot in a subclass. 
-                      for minfos in infoReader.GetRawIntrinsicMethodSetsOfType(None,AccessibleFromSomewhere,AllowMultiIntfInst,reqdTyRange,reqdTy) do
+                      for minfos in infoReader.GetRawIntrinsicMethodSetsOfType(None,AccessibleFromSomewhere,AllowMultiIntfInstantiations.Yes,reqdTyRange,reqdTy) do
                         for minfo in minfos do
                           if not minfo.IsAbstract then 
                               yield GetInheritedMemberOverrideInfo g amap reqdTyRange CanImplementAnyClassHierarchySlot minfo   ]
@@ -1314,7 +1344,7 @@ module DispatchSlotChecking =
                 isImpliedInterfaceType x.EnclosingType
                 
             let reqdProperties = 
-                GetIntrinsicPropInfosOfType infoReader (None,AccessibleFromSomewhere,AllowMultiIntfInst) IgnoreOverrides reqdTyRange reqdTy 
+                GetIntrinsicPropInfosOfType infoReader (None,AccessibleFromSomewhere,AllowMultiIntfInstantiations.Yes) IgnoreOverrides reqdTyRange reqdTy 
                 |> List.filter isRelevantRequiredProperty
                 
             let dispatchSlotsKeyed = dispatchSlots |> NameMultiMap.initBy (fun (RequiredSlot(v,_)) -> v.LogicalName) 
@@ -1327,7 +1357,7 @@ module DispatchSlotChecking =
         let amap = infoReader.amap
 
         let tcaug = tycon.TypeContents
-        let interfaces = tycon.InterfacesOfFSharpTycon
+        let interfaces = tycon.ImmediateInterfacesOfFSharpTycon
         
         let interfaces = interfaces |> List.map (fun (ity,_compgen,m) -> (ity,m))
 
@@ -1397,7 +1427,7 @@ module DispatchSlotChecking =
                            |> List.filter (fst >> mustOverrideSomething reqdTy)
                            |> List.map snd
 
-                    CheckOverridesAreAllUsedOnce denv g amap (reqdTy, dispatchSlotsKeyed, availPriorOverrides, overridesToCheck);
+                    CheckOverridesAreAllUsedOnce denv g amap (false, reqdTy, dispatchSlotsKeyed, availPriorOverrides, overridesToCheck);
 
             with e -> errorRecovery e m; ()
 
@@ -1422,11 +1452,11 @@ module DispatchSlotChecking =
                                              | None -> () // not an F# slot
 
                                         // Get the slotsig of the overriden method 
-                                        let slotsig = SlotSigOfMethodInfo amap m dispatchSlot
+                                        let slotsig = dispatchSlot.GetSlotSig(amap, m)
 
                                         // The slotsig from the overriden method is in terms of the type parameters on the parent type of the overriding method,
                                         // Modify map the slotsig so it is in terms of the type parameters for the overriding method 
-                                        let slotsig = ReparentSlotSigToUseMethodTypars g amap m overrideBy slotsig
+                                        let slotsig = ReparentSlotSigToUseMethodTypars g m overrideBy slotsig
                      
                                         // Record the slotsig via mutation 
                                         yield slotsig ] 
@@ -1556,7 +1586,7 @@ type CalledMeth<'T> =
         assert (x.UsesParamArrayConversion)
         x.ParamArrayCalledArgOpt.Value.Type |> destArrayTy g 
     member x.NumAssignedProps = x.AssignedProps.Length
-    member x.CalledObjArgTys(amap,m) = ObjTypesOfMethInfo amap m x.Method x.CalledTyArgs
+    member x.CalledObjArgTys(amap,m) = x.Method.GetObjArgTypes(amap, m, x.CalledTyArgs)
     member x.NumCalledTyArgs = x.CalledTyArgs.Length
     member x.NumCallerTyArgs = x.CallerTyArgs.Length 
 
@@ -1572,10 +1602,10 @@ type CalledMeth<'T> =
     member x.IsAccessible(amap,m,ad) = 
         IsMethInfoAccessible amap m ad x.Method 
 
-    member x.HasCorrectObjArgs(amap,m,ad) = 
+    member x.HasCorrectObjArgs(amap,m,_ad) = 
         x.CalledObjArgTys(amap,m).Length = x.CallerObjArgTys.Length 
 
-    member x.IsCandidate(g,amap,m,ad) =
+    member x.IsCandidate(_g,amap,m,ad) =
         x.IsAccessible(amap,m,ad) &&
         x.HasCorrectArity && 
         x.HasCorrectObjArgs(amap,m,ad) &&
@@ -1585,9 +1615,9 @@ type CalledMeth<'T> =
     member x.TotalNumUnnamedCallerArgs = x.ArgSets |> List.sumBy (fun x -> x.NumUnnamedCallerArgs)
     member x.TotalNumAssignedNamedArgs = x.ArgSets |> List.sumBy (fun x -> x.NumAssignedNamedArgs)
 
-let MakeCalledArgs amap m minfo minst =
+let MakeCalledArgs amap m (minfo:MethInfo) minst =
     // Mark up the arguments with their position, so we can sort them back into order later 
-    let paramDatas = ParamDatasOfMethInfo amap m minfo minst
+    let paramDatas = minfo.GetParamDatas(amap, m, minst)
     paramDatas |> List.mapiSquared (fun i j (ParamData(isParamArrayArg,isOutArg,optArgInfo,nmOpt,typeOfCalledArg))  -> 
         CalledArg((i,j),isParamArrayArg,optArgInfo,isOutArg,nmOpt,typeOfCalledArg))  
 
@@ -1597,7 +1627,7 @@ let MakeCalledMeth
        freshenMethInfo,// a function to help generate fresh type variables the property setters methods in generic classes 
        m, 
        ad,                // the access domain of the place where the call is taking place
-       minfo,             // the method we're attempting to call 
+       minfo:MethInfo,    // the method we're attempting to call 
        minst,             // the instantiation of the method we're attempting to call 
        uminst,            // the formal instantiation of the method we're attempting to call 
        pinfoOpt,          // the property related to the method we're attempting to call, if any  
@@ -1608,10 +1638,7 @@ let MakeCalledMeth
     =
     let g = infoReader.g
     let amap = infoReader.amap
-    let methodRetTy = FSharpReturnTyOfMeth amap m minfo minst
-
-    if verbose then dprintf "--> methodRetTy = %s\n" (Layout.showL (typeL methodRetTy));
-    if verbose then dprintf "--> minfo.Type = %s\n" (Layout.showL (typeL minfo.EnclosingType));
+    let methodRetTy = minfo.GetFSharpReturnTy(amap, m, minst)
 
     let fullCalledArgs = MakeCalledArgs amap m minfo minst
     assert (callerArgs.Length = fullCalledArgs.Length)
@@ -1675,7 +1702,7 @@ let MakeCalledMeth
                 let returnedObjTy = if minfo.IsConstructor then minfo.EnclosingType else methodRetTy
                 unassignedNamedItem |> List.splitChoose (fun (CallerNamedArg(id,e) as arg) -> 
                     let nm = id.idText
-                    let pinfos = GetIntrinsicPropInfoSetsOfType infoReader (Some(nm),ad,FirstIntfInst) IgnoreOverrides id.idRange returnedObjTy
+                    let pinfos = GetIntrinsicPropInfoSetsOfType infoReader (Some(nm),ad,AllowMultiIntfInstantiations.No) IgnoreOverrides id.idRange returnedObjTy
                     let pinfos = pinfos |> ExcludeHiddenOfPropInfos g amap m 
                     match pinfos with 
                     | [pinfo] when pinfo.HasSetter && not pinfo.IsIndexer -> 
@@ -1687,7 +1714,7 @@ let MakeCalledMeth
                         | finfo :: _ -> 
                             Choice1Of2(AssignedItemSetter(id,AssignedIlFieldSetter(finfo), e))
                         | _ ->              
-                          match infoReader.TryFindRecdFieldInfoOfType(nm,m,returnedObjTy) with
+                          match infoReader.TryFindRecdOrClassFieldInfoOfType(nm,m,returnedObjTy) with
                           | Some rfinfo -> 
                               Choice1Of2(AssignedItemSetter(id,AssignedRecdFieldSetter(rfinfo), e))
                           | None -> 
@@ -1737,6 +1764,9 @@ let FinalTypeDefinitionChecksAtEndOfInferenceScope (infoReader:InfoReader) isImp
   
     // Note you only have to explicitly implement 'System.IComparable' to customize structural comparison AND equality on F# types 
     if isImplementation &&
+#if EXTENSIONTYPING
+       not tycon.IsProvidedGeneratedTycon &&
+#endif
        isNone tycon.GeneratedCompareToValues &&
        tycon.HasInterface g g.mk_IComparable_ty && 
        not (tycon.HasOverride g "Equals" [g.obj_ty]) && 
@@ -1750,8 +1780,11 @@ let FinalTypeDefinitionChecksAtEndOfInferenceScope (infoReader:InfoReader) isImp
 
     Augment.CheckAugmentationAttribs isImplementation g amap tycon;
     // Check some conditions about generic comparison and hashing. We can only check this condition after we've done the augmentation 
-    if isImplementation then
-
+    if isImplementation 
+#if EXTENSIONTYPING
+       && not tycon.IsProvidedGeneratedTycon  
+#endif
+       then
         let tcaug = tycon.TypeContents
         let m = tycon.Range
         let hasExplicitObjectGetHashCode = tycon.HasOverride g "GetHashCode" []
@@ -1784,7 +1817,7 @@ let FinalTypeDefinitionChecksAtEndOfInferenceScope (infoReader:InfoReader) isImp
 /// Look for the unique supertype of ty2 for which ty2 :> ty1 might feasibly hold
 let FindUniqueFeasibleSupertype g amap m ty1 ty2 =  
     if not (isAppTy g ty2) then None else
-    let supertypes = Option.toList (SuperTypeOfType g amap m ty2) @ (InterfacesOfType g amap m ty2)
+    let supertypes = Option.toList (GetSuperTypeOfType g amap m ty2) @ (GetImmediateInterfacesOfType g amap m ty2)
     supertypes |> List.tryFind (TypeFeasiblySubsumesType 0 g amap m ty1 NoCoerce) 
     
 
@@ -1797,7 +1830,7 @@ let GetAbstractMethInfosForSynMethodDecl(infoReader:InfoReader,ad,memberName:Ide
         | _,Some(SlotImplSet(_, dispatchSlotsKeyed,_,_)) -> 
             NameMultiMap.find  memberName.idText dispatchSlotsKeyed |> List.map (fun (RequiredSlot(dispatchSlot,_)) -> dispatchSlot)
         | ty, None -> 
-            GetIntrinsicMethInfosOfType infoReader (Some(memberName.idText), ad, AllowMultiIntfInst) IgnoreOverrides bindm ty
+            GetIntrinsicMethInfosOfType infoReader (Some(memberName.idText), ad, AllowMultiIntfInstantiations.Yes) IgnoreOverrides bindm ty
     let dispatchSlots = minfos |> List.filter (fun minfo -> minfo.IsDispatchSlot)
     let topValSynArities = SynInfo.AritiesOfArgs valSynData
     let topValSynArities = if topValSynArities.Length > 0 then topValSynArities.Tail else topValSynArities
@@ -1812,8 +1845,634 @@ let GetAbstractPropInfosForSynPropertyDecl(infoReader:InfoReader,ad,memberName:I
         | _,Some(SlotImplSet(_,_,_,reqdProps)) -> 
             reqdProps |> List.filter (fun pinfo -> pinfo.PropertyName = memberName.idText) 
         | ty, None -> 
-            GetIntrinsicPropInfosOfType infoReader (Some(memberName.idText), ad, AllowMultiIntfInst) IgnoreOverrides bindm ty
+            GetIntrinsicPropInfosOfType infoReader (Some(memberName.idText), ad, AllowMultiIntfInstantiations.Yes) IgnoreOverrides bindm ty
         
     let dispatchSlots = pinfos |> List.filter (fun pinfo -> pinfo.IsVirtualProperty)
     dispatchSlots
 
+
+/// Is this a 'base' call (in the sense of C#) 
+let IsBaseCall objArgs = 
+    match objArgs with 
+    | [Expr.Val(v,_,_)] when v.BaseOrThisInfo  = BaseVal -> true
+    | _ -> false
+    
+/// Compute whether we insert a 'coerce' on the 'this' pointer for an object model call 
+/// For example, when calling an interface method on a struct, or a method on a constrained 
+/// variable type. 
+let ComputeConstrainedCallInfo g amap m (objArgs,minfo:MethInfo) =
+    match objArgs with 
+    | [objArgExpr] when not minfo.IsExtensionMember -> 
+        let methObjTy = minfo.EnclosingType
+        let objArgTy = tyOfExpr g objArgExpr
+        if TypeDefinitelySubsumesTypeNoCoercion 0 g amap m methObjTy objArgTy 
+           // Constrained calls to class types can only ever be needed for the three class types that 
+           // are base types of value types
+           || (isClassTy g methObjTy && 
+                 (not (typeEquiv g methObjTy g.system_Object_typ || 
+                       typeEquiv g methObjTy g.system_Value_typ ||
+                       typeEquiv g methObjTy g.system_Enum_typ))) then 
+            None
+        else
+            // The object argument is a value type or variable type and the target method is an interface or System.Object
+            // type. A .NET 2.0 generic constrained call is required
+            Some objArgTy
+    | _ -> 
+        None
+
+
+/// Adjust the 'this' pointer before making a call 
+/// Take the address of a struct, and coerce to an interface/base/constraint type if necessary 
+let TakeObjAddrForMethodCall g amap (minfo:MethInfo) isMutable m objArgs f =
+    let ccallInfo = ComputeConstrainedCallInfo g amap m (objArgs,minfo) 
+    let mustTakeAddress = 
+        (minfo.IsStruct && not minfo.IsExtensionMember)  // don't take the address of a struct when passing to an extension member
+        ||
+        (match ccallInfo with 
+         | Some _ -> true 
+         | None -> false) 
+    let wrap,objArgs = 
+        match objArgs with
+        | [objArgExpr] -> 
+            let objArgTy = tyOfExpr g objArgExpr
+            let wrap,objArgExpr' = mkExprAddrOfExpr g mustTakeAddress (isSome ccallInfo) isMutable objArgExpr None m
+            
+            // Extension members and calls to class constraints may need a coercion for their object argument
+            let objArgExpr' = 
+              if isNone ccallInfo && // minfo.IsExtensionMember && minfo.IsStruct && 
+                 not (TypeDefinitelySubsumesTypeNoCoercion 0 g amap m minfo.EnclosingType objArgTy) then 
+                  mkCoerceExpr(objArgExpr',minfo.EnclosingType,m,objArgTy)
+              else
+                  objArgExpr'
+
+            wrap,[objArgExpr'] 
+
+        | _ -> 
+            (fun x -> x), objArgs
+    let e,ety = f ccallInfo objArgs
+    wrap e,ety
+
+//-------------------------------------------------------------------------
+// Build method calls.
+//------------------------------------------------------------------------- 
+
+#if EXTENSIONTYPING
+// This imports a provided method, and checks if it is a known compiler intrinsic like "1 + 2"
+let TryImportProvidedMethodBaseAsLibraryIntrinsic (amap:Import.ImportMap, m:range, mbase: Tainted<ProvidedMethodBase>) = 
+    let methodName = mbase.PUntaint((fun x -> x.Name),m)
+    let declaringType = Import.ImportProvidedType amap m (mbase.PApply((fun x -> x.DeclaringType),m))
+    if isAppTy amap.g declaringType then 
+        let declaringEntity = tcrefOfAppTy amap.g declaringType
+        if not declaringEntity.IsLocalRef && ccuEq declaringEntity.nlr.Ccu amap.g.fslibCcu then
+            match amap.g.knownIntrinsics.TryGetValue ((declaringEntity.LogicalName, methodName)) with 
+            | true,vref -> Some vref
+            | _ -> 
+            match amap.g.knownFSharpCoreModules.TryGetValue(declaringEntity.LogicalName) with
+            | true,modRef -> 
+                match modRef.ModuleOrNamespaceType.AllValsByLogicalName |> Seq.tryPick (fun (KeyValue(_,v)) -> if v.CompiledName = methodName then Some v else None) with 
+                | Some v -> Some (mkNestedValRef modRef v)
+                | None -> None
+            | _ -> None
+        else
+            None
+    else
+        None
+#endif
+        
+
+/// Build an expression that calls a given method info. 
+/// This is called after overload resolution, and also to call other 
+/// methods such as 'setters' for properties. 
+//   tcVal: used to convert an F# value into an expression. See tc.fs. 
+//   isProp: is it a property get? 
+//   minst: the instantiation to apply for a generic method 
+//   objArgs: the 'this' argument, if any 
+//   args: the arguments, if any 
+let BuildMethodCall tcVal g amap isMutable m isProp minfo valUseFlags minst objArgs args =
+
+    let direct = IsBaseCall objArgs
+
+    TakeObjAddrForMethodCall g amap minfo isMutable m objArgs (fun ccallInfo objArgs -> 
+        let allArgs = (objArgs @ args)
+        let valUseFlags = 
+            if (direct && (match valUseFlags with NormalValUse -> true | _ -> false)) then 
+                VSlotDirectCall 
+            else 
+                match ccallInfo with
+                | Some ty -> 
+                    // printfn "possible constrained call to '%s' at %A" minfo.LogicalName m
+                    PossibleConstrainedCall ty
+                | None -> 
+                    valUseFlags
+
+        match minfo with 
+#if EXTENSIONTYPING
+        // By this time this is an erased method info, e.g. one returned from an expression
+        // REVIEW: copied from tastops, which doesn't allow protected methods
+        | ProvidedMeth (g,providedMeth,amap,_) -> 
+            // TODO: there  is a fair bit of duplication here with mk_il_minfo_call. We should be able to merge these
+                
+            /// Build an expression node that is a call to a extension method in a generated assembly
+            let enclTy = minfo.EnclosingType
+            // prohibit calls to methods that are declared in specific array types (Get,Set,Address)
+            // these calls are provided by the runtime and should not be called from the user code
+            if isArrayTy g enclTy then
+                let tpe = TypeProviderError(FSComp.SR.tcRuntimeSuppliedMethodCannotBeUsedInUserCode(minfo.DisplayName), providedMeth.TypeProviderDesignation, m)
+                error (tpe)
+            let valu = isStructTy g enclTy
+            let isCtor = minfo.IsConstructor
+            if minfo.IsClassConstructor then 
+                error (InternalError (minfo.LogicalName ^": cannot call a class constructor",m));
+            let useCallvirt = not valu && not direct && minfo.IsVirtual
+            let isProtected = minfo.IsProtectedAccessiblity
+            let exprTy = if isCtor then enclTy else minfo.GetFSharpReturnTy(amap, m, minst)
+            match TryImportProvidedMethodBaseAsLibraryIntrinsic (amap, m, providedMeth) with 
+            | Some fsValRef -> 
+                //reraise() calls are converted to TOp.Reraise in the type checker. So if a provided expression includes a reraise call
+                // we must put it in that form here.
+                if valRefEq amap.g fsValRef amap.g.reraise_vref then
+                    mkReraise m exprTy, exprTy
+                else
+                    let vexp, vexpty = tcVal fsValRef valUseFlags (minfo.ActualTypeInst @ minst) m
+                    BuildFSharpMethodApp g m fsValRef vexp vexpty allArgs
+            | None -> 
+                let ilMethRef = Import.ImportProvidedMethodBaseAsILMethodRef amap m providedMeth
+                let isNewObj = isCtor && (match valUseFlags with NormalValUse -> true | _ -> false)
+                let actualTypeInst = 
+                    if isTupleTy g enclTy then argsOfAppTy g (mkCompiledTupleTy g (destTupleTy g enclTy))  // provided expressions can include method calls that get properties of tuple types
+                    elif isFunTy g enclTy then [ domainOfFunTy g enclTy; rangeOfFunTy g enclTy ]  // provided expressions can call Invoke
+                    else minfo.ActualTypeInst
+                let actualMethInst = minst
+                let retTy = (if not isCtor && (ilMethRef.ReturnType = ILType.Void) then [] else [exprTy])
+                let noTailCall = false
+                let expr = Expr.Op(TOp.ILCall(useCallvirt,isProtected,valu,isNewObj,valUseFlags,isProp,noTailCall,ilMethRef,actualTypeInst,actualMethInst, retTy),[],allArgs,m)
+                expr,exprTy
+
+#endif
+            
+        // Build a call to a .NET method 
+        | ILMeth(_,ilMethInfo,_) -> 
+            BuildILMethInfoCall g amap m isProp ilMethInfo valUseFlags minst direct allArgs
+
+        // Build a call to an F# method 
+        | FSMeth(_,typ,vref,_) -> 
+
+            // Go see if this is a use of a recursive definition... Note we know the value instantiation 
+            // we want to use so we pass that in in order not to create a new one. 
+            let vexp, vexpty = tcVal vref valUseFlags (argsOfAppTy g typ @ minst) m
+            BuildFSharpMethodApp g m vref vexp vexpty allArgs
+
+        // Build a 'call' to a struct default constructor 
+        | DefaultStructCtor (g,typ) -> 
+            if not (TypeHasDefaultValue g typ) then 
+                errorR(Error(FSComp.SR.tcDefaultStructConstructorCall(),m));
+            mkDefault (m,typ), typ)
+
+//-------------------------------------------------------------------------
+// Build delegate constructions (lambdas/functions to delegates)
+//------------------------------------------------------------------------- 
+
+/// Implements the elaborated form of adhoc conversions from functions to delegates at member callsites
+let BuildNewDelegateExpr (eventInfoOpt:EventInfo option, g, amap, delegateTy, invokeMethInfo:MethInfo, delArgTys, f, fty, m) =
+    let slotsig = invokeMethInfo.GetSlotSig(amap, m)
+    let delArgVals,expr = 
+        let topValInfo = ValReprInfo([],List.replicate (List.length delArgTys) ValReprInfo.unnamedTopArg, ValReprInfo.unnamedRetVal)
+
+        // Try to pull apart an explicit lambda and use it directly 
+        // Don't do this in the case where we're adjusting the arguments of a function used to build a .NET-compatible event handler 
+        let lambdaContents = 
+            if isSome eventInfoOpt then 
+                None 
+            else 
+                tryDestTopLambda g amap topValInfo (f, fty)        
+        match lambdaContents with 
+        | None -> 
+        
+            if List.exists (isByrefTy g) delArgTys then
+                    error(Error(FSComp.SR.tcFunctionRequiresExplicitLambda(List.length delArgTys),m)); 
+
+            let delArgVals = delArgTys |> List.map (fun argty -> fst (mkCompGenLocal m "delegateArg" argty)) 
+            let expr = 
+                let args = 
+                    match eventInfoOpt with 
+                    | Some einfo -> 
+                        match delArgVals with 
+                        | [] -> error(nonStandardEventError einfo.EventName m)
+                        | h :: _ when not (isObjTy g h.Type) -> error(nonStandardEventError einfo.EventName m)
+                        | h :: t -> [exprForVal m h; mkTupledVars g m t] 
+                    | None -> 
+                        if isNil delArgTys then [mkUnit g m] else List.map (exprForVal m) delArgVals
+                mkApps g ((f,fty),[],args,m)
+            delArgVals,expr
+            
+        | Some _ -> 
+           if isNil delArgTys then [], mkApps g ((f,fty),[],[mkUnit g m],m) 
+           else
+               let _,_,_,vsl,body,_ = IteratedAdjustArityOfLambda g amap topValInfo f
+               List.concat vsl, body
+            
+    let meth = TObjExprMethod(slotsig, [], [], [delArgVals], expr, m)
+    mkObjExpr(delegateTy,None,BuildObjCtorCall g m,[meth],[],m)
+
+let CoerceFromFSharpFuncToDelegate g amap infoReader ad callerArgTy m callerArgExpr delegateTy =    
+    let (SigOfFunctionForDelegate(invokeMethInfo,delArgTys,_,_)) = GetSigOfFunctionForDelegate infoReader delegateTy m ad
+    BuildNewDelegateExpr (None, g, amap, delegateTy, invokeMethInfo, delArgTys, callerArgExpr, callerArgTy, m)
+
+
+//-------------------------------------------------------------------------
+// Import provided expressions
+//------------------------------------------------------------------------- 
+
+
+#if EXTENSIONTYPING
+// This file is not a great place for this functionality to sit, it's here because of BuildMethodCall
+module ProvidedMethodCalls =
+
+    let private convertConstExpr g amap m (constant : Tainted<obj * ProvidedType>) =
+        let (obj,objTy) = constant.PApply2(id,m)
+        let ty = Import.ImportProvidedType amap m objTy
+        let normTy = normalizeEnumTy g ty
+        obj.PUntaint((fun v ->
+            let fail() = raise <| TypeProviderError(FSComp.SR.etUnsupportedConstantType(v.GetType().ToString()), constant.TypeProviderDesignation, m)
+            try 
+                match v with
+                | null -> mkNull m ty
+                | _ when typeEquiv g normTy g.bool_ty -> Expr.Const(Const.Bool(v :?> bool), m, ty)
+                | _ when typeEquiv g normTy g.sbyte_ty -> Expr.Const(Const.SByte(v :?> sbyte), m, ty)
+                | _ when typeEquiv g normTy g.byte_ty -> Expr.Const(Const.Byte(v :?> byte), m, ty)
+                | _ when typeEquiv g normTy g.int16_ty -> Expr.Const(Const.Int16(v :?> int16), m, ty)
+                | _ when typeEquiv g normTy g.uint16_ty -> Expr.Const(Const.UInt16(v :?> uint16), m, ty)
+                | _ when typeEquiv g normTy g.int32_ty -> Expr.Const(Const.Int32(v :?> int32), m, ty)
+                | _ when typeEquiv g normTy g.uint32_ty -> Expr.Const(Const.UInt32(v :?> uint32), m, ty)
+                | _ when typeEquiv g normTy g.int64_ty -> Expr.Const(Const.Int64(v :?> int64), m, ty)
+                | _ when typeEquiv g normTy g.uint64_ty -> Expr.Const(Const.UInt64(v :?> uint64), m, ty)
+                | _ when typeEquiv g normTy g.nativeint_ty -> Expr.Const(Const.IntPtr(v :?> int64), m, ty) 
+                | _ when typeEquiv g normTy g.unativeint_ty -> Expr.Const(Const.UIntPtr(v :?> uint64), m, ty) 
+                | _ when typeEquiv g normTy g.float32_ty -> Expr.Const(Const.Single(v :?> float32), m, ty)
+                | _ when typeEquiv g normTy g.float_ty -> Expr.Const(Const.Double(v :?> float), m, ty)
+                | _ when typeEquiv g normTy g.char_ty -> Expr.Const(Const.Char(v :?> char), m, ty)
+                | _ when typeEquiv g normTy g.string_ty -> Expr.Const(Const.String(v :?> string), m, ty)
+                | _ when typeEquiv g normTy g.decimal_ty -> Expr.Const(Const.Decimal(v :?> decimal), m, ty)
+                | _ when typeEquiv g normTy g.unit_ty -> Expr.Const(Const.Unit, m, ty)
+                | _ -> fail()
+             with _ -> 
+                 fail()
+            ), range=m)
+
+    /// Erasure over System.Type.
+    ///
+    /// This is a reimplementation of the logic of provided-type erasure, working entirely over (tainted, provided) System.Type
+    /// values. This is used when preparing ParameterInfo objects to give to the provider in GetInvokerExpression. 
+    /// These ParameterInfo have erased ParameterType - giving the provider an erased type makes it considerably easier 
+    /// to implement a correct GetInvokerExpression.
+    ///
+    /// Ideally we would implement this operation by converting to an F# TType using ImportSystemType, and then erasing, and then converting
+    /// back to System.Type. However, there is currently no way to get from an arbitrary F# TType (even the TType for 
+    /// System.Object) to a System.Type to give to the type provider.
+    let eraseSystemType (amap,m,inputType) = 
+        let rec loop (st:Tainted<ProvidedType>) = 
+            if st.PUntaint((fun st -> st.IsGenericParameter),m) then st
+            elif st.PUntaint((fun st -> st.IsArray),m) then 
+                let et = st.PApply((fun st -> st.GetElementType()),m)
+                let rank = st.PUntaint((fun st -> st.GetArrayRank()),m)
+                (loop et).PApply((fun st -> ProvidedType.CreateNoContext(if rank = 1 then st.RawSystemType.MakeArrayType() else st.RawSystemType.MakeArrayType(rank))),m)
+            elif st.PUntaint((fun st -> st.IsByRef),m) then 
+                let et = st.PApply((fun st -> st.GetElementType()),m)
+                (loop et).PApply((fun st -> ProvidedType.CreateNoContext(st.RawSystemType.MakeByRefType())),m)
+            elif st.PUntaint((fun st -> st.IsPointer),m) then 
+                let et = st.PApply((fun st -> st.GetElementType()),m)
+                (loop et).PApply((fun st -> ProvidedType.CreateNoContext(st.RawSystemType.MakePointerType())),m)
+            else
+                let isGeneric = st.PUntaint((fun st -> st.IsGenericType),m)
+                let headType = if isGeneric then st.PApply((fun st -> st.GetGenericTypeDefinition()),m) else st
+                // We import in order to use IsProvidedErasedTycon, to make sure we at least don't reinvent that 
+                let headTypeAsFSharpType = Import.ImportProvidedNamedType amap m headType
+                if headTypeAsFSharpType.IsProvidedErasedTycon then 
+                    let baseType = 
+                        st.PApply((fun st -> 
+                            match st.BaseType with 
+                            | null -> ProvidedType.CreateNoContext(typeof<obj>)  // it might be an interface
+                            | st -> st),m)
+                    loop baseType
+                else
+                    if isGeneric then 
+                        let genericArgs = st.PApplyArray((fun st -> st.GetGenericArguments()),"GetGenericArguments",m) 
+                        let typars = headTypeAsFSharpType.Typars(m)
+                        // Drop the generic arguments that don't correspond to type arguments, i.e. are units-of-measure
+                        let genericArgs = 
+                            [| for (genericArg,tp) in Seq.zip genericArgs typars do
+                                   if tp.Kind = TyparKind.Type then 
+                                       yield genericArg |]
+
+                        if genericArgs.Length = 0 then 
+                            headType
+                        else
+                            let erasedArgTys = genericArgs |> Array.map loop
+                            headType.PApply((fun st -> 
+                                let erasedArgTys = erasedArgTys |> Array.map (fun a -> a.PUntaintNoFailure (fun x -> x.RawSystemType))
+                                ProvidedType.CreateNoContext(st.RawSystemType.MakeGenericType erasedArgTys)),m)
+                    else   
+                        st
+        loop inputType
+
+    let convertProvidedExpressionToExprAndWitness tcVal (thisArg:Expr option,
+                                                         allArgs:Exprs,
+                                                         paramVars:Tainted<ProvidedVar>[],
+                                                         g,amap,mut,isProp,isSuperInit,m,
+                                                         expr:Tainted<ProvidedExpr>) = 
+        let varConv = 
+            [ for (v,e) in Seq.zip (paramVars |> Seq.map (fun x -> x.PUntaint(id,m))) (Option.toList thisArg @ allArgs) do
+                 yield (v,(None,e)) ]
+            |> Dictionary.ofList 
+
+        let rec exprToExprAndWitness top (ea:Tainted<ProvidedExpr>) =
+            let fail() = error(Error(FSComp.SR.etUnsupportedProvidedExpression(ea.PUntaint((fun etree -> etree.UnderlyingExpressionString), m)),m))
+            match ea with
+            | Tainted.Null -> error(Error(FSComp.SR.etNullProvidedExpression(ea.TypeProviderDesignation),m))
+            |  _ ->
+            match ea.PApplyOption((function ProvidedTypeAsExpr x -> Some x | _ -> None), m) with
+            | Some info -> 
+                let (expr,targetTy) = info.PApply2(id,m)
+                let srcExpr = exprToExpr expr
+                let targetTy = Import.ImportProvidedType amap m (targetTy.PApply(id,m)) 
+                let sourceTy = Import.ImportProvidedType amap m (expr.PApply((fun e -> e.Type),m)) 
+                let te = mkCoerceIfNeeded g targetTy sourceTy srcExpr
+                None, (te, tyOfExpr g te)
+            | None -> 
+            match ea.PApplyOption((function ProvidedTypeTestExpr x -> Some x | _ -> None), m) with
+            | Some info -> 
+                let (expr,targetTy) = info.PApply2(id,m)
+                let srcExpr = exprToExpr expr
+                let targetTy = Import.ImportProvidedType amap m (targetTy.PApply(id,m)) 
+                let te = mkCallTypeTest g m targetTy srcExpr
+                None, (te, tyOfExpr g te)
+            | None -> 
+            match ea.PApplyOption((function ProvidedIfThenElseExpr x -> Some x | _ -> None), m) with
+            | Some info -> 
+                let test,thenBranch,elseBranch = info.PApply3(id,m)
+                let testExpr = exprToExpr test
+                let ifTrueExpr = exprToExpr thenBranch
+                let ifFalseExpr = exprToExpr elseBranch
+                let te = mkCond NoSequencePointAtStickyBinding SuppressSequencePointAtTarget m (tyOfExpr g ifTrueExpr) testExpr ifTrueExpr ifFalseExpr
+                None, (te, tyOfExpr g te)
+            | None -> 
+            match ea.PApplyOption((function ProvidedVarExpr x -> Some x | _ -> None), m) with
+            | Some info ->  
+                let _,vTe = varToExpr info
+                None, (vTe, tyOfExpr g vTe)
+            | None -> 
+            match ea.PApplyOption((function ProvidedConstantExpr x -> Some x | _ -> None), m) with
+            | Some info -> 
+                let ce = convertConstExpr g amap m info
+                None, (ce, tyOfExpr g ce)
+            | None -> 
+            match ea.PApplyOption((function ProvidedNewTupleExpr x -> Some x | _ -> None), m) with
+            | Some info -> 
+                let elems = info.PApplyArray(id, "GetInvokerExpresson",m)
+                let elemsT = elems |> Array.map exprToExpr |> Array.toList
+                let exprT = mkTupledNoTypes g m elemsT
+                None, (exprT, tyOfExpr g exprT)
+            | None -> 
+            match ea.PApplyOption((function ProvidedNewArrayExpr x -> Some x | _ -> None), m) with
+            | Some info -> 
+                let ty,elems = info.PApply2(id,m)
+                let tyT = Import.ImportProvidedType amap m ty
+                let elems = elems.PApplyArray(id, "GetInvokerExpresson",m)
+                let elemsT = elems |> Array.map exprToExpr |> Array.toList
+                let exprT = Expr.Op(TOp.Array, [tyT],elemsT,m)
+                None, (exprT, tyOfExpr g exprT)
+            | None -> 
+            match ea.PApplyOption((function ProvidedTupleGetExpr x -> Some x | _ -> None), m) with
+            | Some info -> 
+                let inp,n = info.PApply2(id, m)
+                let inpT = inp |> exprToExpr 
+                // if type of expression is erased type then we need convert it to the underlying base type
+                let typeOfExpr = 
+                    let t = tyOfExpr g inpT
+                    stripTyEqnsWrtErasure EraseMeasures g t
+                let tysT = tryDestTupleTy g typeOfExpr
+                let exprT = mkTupleFieldGet (inpT, tysT, n.PUntaint(id,m), m)
+                None, (exprT, tyOfExpr g exprT)
+            | None -> 
+            match ea.PApplyOption((function ProvidedLambdaExpr x -> Some x | _ -> None), m) with
+            | Some info -> 
+                let v,b = info.PApply2(id, m)
+                let vT = addVar v
+                let bT = exprToExpr b
+                removeVar v
+                let exprT = mkLambda m vT (bT, tyOfExpr g bT)
+                None, (exprT, tyOfExpr g exprT)
+            | None -> 
+            match ea.PApplyOption((function ProvidedLetExpr x -> Some x | _ -> None), m) with
+            | Some info -> 
+                let v,e,b = info.PApply3(id, m)
+                let eT = exprToExpr  e
+                let vT = addVar v
+                let bT = exprToExpr  b
+                removeVar v
+                let exprT = mkCompGenLet m vT eT bT
+                None, (exprT, tyOfExpr g exprT)
+            | None -> 
+            match ea.PApplyOption((function ProvidedVarSetExpr x -> Some x | _ -> None), m) with
+            | Some info -> 
+                let v,e = info.PApply2(id, m)
+                let eT = exprToExpr  e
+                let vTopt,_ = varToExpr v
+                match vTopt with 
+                | None -> 
+                    fail()
+                | Some vT -> 
+                    let exprT = mkValSet m (mkLocalValRef vT) eT 
+                    None, (exprT, tyOfExpr g exprT)
+            | None -> 
+            match ea.PApplyOption((function ProvidedWhileLoopExpr x -> Some x | _ -> None), m) with
+            | Some info -> 
+                let guardExpr,bodyExpr = info.PApply2(id, m)
+                let guardExprT = exprToExpr guardExpr
+                let bodyExprT = exprToExpr bodyExpr
+                let exprT = mkWhile g (SequencePointInfoForWhileLoop.NoSequencePointAtWhileLoop,SpecialWhileLoopMarker.NoSpecialWhileLoopMarker, guardExprT, bodyExprT, m)
+                None, (exprT, tyOfExpr g exprT)
+            | None -> 
+            match ea.PApplyOption((function ProvidedForIntegerRangeLoopExpr x -> Some x | _ -> None), m) with
+            | Some info -> 
+                let v,e1,e2,e3 = info.PApply4(id, m)
+                let e1T = exprToExpr  e1
+                let e2T = exprToExpr  e2
+                let vT = addVar v
+                let e3T = exprToExpr  e3
+                removeVar v
+                let exprT = mkFastForLoop g (SequencePointInfoForForLoop.NoSequencePointAtForLoop,m,vT,e1T,true,e2T,e3T)
+                None, (exprT, tyOfExpr g exprT)
+            | None -> 
+            match ea.PApplyOption((function ProvidedNewDelegateExpr x -> Some x | _ -> None), m) with
+            | Some info -> 
+                let delegateTy,boundVars,delegateBodyExpr = info.PApply3(id, m)
+                let delegateTyT = Import.ImportProvidedType amap m delegateTy
+                let vs = boundVars.PApplyArray(id, "GetInvokerExpresson",m) |> Array.toList 
+                let vsT = List.map addVar vs
+                let delegateBodyExprT = exprToExpr delegateBodyExpr
+                List.iter removeVar vs
+                let lambdaExpr = mkLambdas m [] vsT (delegateBodyExprT, tyOfExpr g delegateBodyExprT)
+                let lambdaExprTy = tyOfExpr g lambdaExpr
+                let infoReader = InfoReader(g, amap)
+                let exprT = CoerceFromFSharpFuncToDelegate g amap infoReader AccessorDomain.AccessibleFromSomewhere lambdaExprTy m lambdaExpr delegateTyT
+                None, (exprT, tyOfExpr g exprT)
+            | None -> 
+#if PROVIDED_ADDRESS_OF
+            match ea.PApplyOption((function ProvidedAddressOfExpr x -> Some x | _ -> None), m) with
+            | Some e -> 
+                let eT =  exprToExpr e
+                let wrap,ce = mkExprAddrOfExpr g true false DefinitelyMutates eT None m
+                let ce = wrap ce
+                None, (ce, tyOfExpr g ce)
+            | None -> 
+#endif
+            match ea.PApplyOption((function ProvidedDefaultExpr x -> Some x | _ -> None), m) with
+            | Some pty -> 
+                let ty = Import.ImportProvidedType amap m pty
+                let ce = mkDefault (m, ty)
+                None, (ce, tyOfExpr g ce)
+            | None -> 
+            match ea.PApplyOption((function ProvidedCallExpr c -> Some c | _ -> None), m) with 
+            | Some info ->
+                methodCallToExpr top ea info
+            | None -> 
+            match ea.PApplyOption((function ProvidedSequentialExpr c -> Some c | _ -> None), m) with 
+            | Some info ->
+                let e1,e2 = info.PApply2(id, m)
+                let e1T = exprToExpr e1
+                let e2T = exprToExpr e2
+                let ce = mkCompGenSequential m e1T e2T
+                None, (ce, tyOfExpr g ce)
+            | None -> 
+            match ea.PApplyOption((function ProvidedTryFinallyExpr c -> Some c | _ -> None), m) with 
+            | Some info ->
+                let e1,e2 = info.PApply2(id, m)
+                let e1T = exprToExpr e1
+                let e2T = exprToExpr e2
+                let ce = mkTryFinally g (e1T,e2T,m,tyOfExpr g e1T,SequencePointInfoForTry.NoSequencePointAtTry,SequencePointInfoForFinally.NoSequencePointAtFinally)
+                None, (ce, tyOfExpr g ce)
+            | None -> 
+            match ea.PApplyOption((function ProvidedTryWithExpr c -> Some c | _ -> None), m) with 
+            | Some info ->
+                let bT = exprToExpr (info.PApply((fun (x,_,_,_,_) -> x), m))
+                let v1 = info.PApply((fun (_,x,_,_,_) -> x), m)
+                let v1T = addVar v1
+                let e1T = exprToExpr (info.PApply((fun (_,_,x,_,_) -> x), m))
+                removeVar v1
+                let v2 = info.PApply((fun (_,_,_,x,_) -> x), m)
+                let v2T = addVar v2
+                let e2T = exprToExpr (info.PApply((fun (_,_,_,_,x) -> x), m))
+                removeVar v2
+                let ce = mkTryWith g (bT,v1T,e1T,v2T,e2T,m,tyOfExpr g bT,SequencePointInfoForTry.NoSequencePointAtTry,SequencePointInfoForWith.NoSequencePointAtWith)
+                None, (ce, tyOfExpr g ce)
+            | None -> 
+            match ea.PApplyOption((function ProvidedNewObjectExpr c -> Some c | _ -> None), m) with 
+            | Some info -> 
+                None, ctorCallToExpr info
+            | None -> 
+                fail()
+
+
+        and ctorCallToExpr (ne:Tainted<_>) =    
+            let (ctor,args) = ne.PApply2(id,m)
+            let targetMethInfo = ProvidedMeth(g,ctor.PApply((fun ne -> upcast ne),m),amap,m)
+            let objArgs = [] 
+            let arguments = [ for ea in args.PApplyArray(id, "GetInvokerExpresson", m) -> exprToExpr ea ]
+            let callExpr = BuildMethodCall tcVal g amap Mutates.PossiblyMutates m false targetMethInfo isSuperInit [] objArgs arguments
+            callExpr
+
+        and addVar (v:Tainted<ProvidedVar>) =    
+            let nm = v.PUntaint ((fun v -> v.Name),m)
+            let mut = v.PUntaint ((fun v -> v.IsMutable),m)
+            let vRaw = v.PUntaint (id,m)
+            let tyT = Import.ImportProvidedType amap m (v.PApply ((fun v -> v.Type),m))
+            let vT,vTe = if mut then mkMutableCompGenLocal m nm tyT else mkCompGenLocal m nm tyT
+            varConv.[vRaw] <- (Some vT,vTe)
+            vT
+
+        and removeVar (v:Tainted<ProvidedVar>) =    
+            let vRaw = v.PUntaint (id,m)
+            varConv.Remove vRaw |> ignore
+
+        and methodCallToExpr top _origExpr (mce:Tainted<_>) =    
+            let (objOpt,meth,args) = mce.PApply3(id,m)
+            let targetMethInfo = ProvidedMeth(g,meth.PApply((fun mce -> upcast mce), m),amap,m)
+            let objArgs = 
+                match objOpt.PApplyOption(id, m) with
+                | None -> []
+                | Some objExpr -> [exprToExpr objExpr]
+
+            let arguments = [ for ea in args.PApplyArray(id, "GetInvokerExpresson", m) -> exprToExpr ea ]
+            let genericArguments = 
+                if meth.PUntaint((fun m -> m.IsGenericMethod), m) then 
+                    meth.PApplyArray((fun m -> m.GetGenericArguments()), "GetGenericArguments", m)  
+                else 
+                    [| |]
+            let replacementGenericArguments = genericArguments |> Array.map (fun t->Import.ImportProvidedType amap m t) |> List.ofArray
+
+            let mut         = if top then mut else PossiblyMutates
+            let isSuperInit = if top then isSuperInit else ValUseFlag.NormalValUse
+            let isProp      = if top then isProp else false
+            let callExpr = BuildMethodCall tcVal g amap mut m isProp targetMethInfo isSuperInit replacementGenericArguments objArgs arguments
+            Some meth, callExpr
+
+        and varToExpr (pe:Tainted<ProvidedVar>) =    
+            // sub in the appropriate argument
+            // REVIEW: "thisArg" pointer should be first, if present
+            let vRaw = pe.PUntaint(id,m)
+            if not (varConv.ContainsKey vRaw) then
+                        let typeProviderDesignation = ExtensionTyping.DisplayNameOfTypeProvider (pe.TypeProvider, m)
+                        error(NumberedError(FSComp.SR.etIncorrectParameterExpression(typeProviderDesignation,vRaw.Name), m))
+            varConv.[vRaw]
+                
+        and exprToExpr expr =
+            let _, (resExpr, _) = exprToExprAndWitness false expr
+            resExpr
+
+        exprToExprAndWitness true expr
+
+        
+    // fill in parameter holes in the expression   
+    let TranslateInvokerExpressionForProvidedMethodCall tcVal (g, amap, mut, isProp, isSuperInit, mi:Tainted<ProvidedMethodBase>, objArgs, allArgs, m) =        
+        let parameters = 
+            mi.PApplyArray((fun mi -> mi.GetParameters()), "GetParameters", m)
+        let paramTys = 
+            parameters
+            |> Array.map (fun p -> p.PApply((fun st -> st.ParameterType),m))
+        let erasedParamTys = 
+            paramTys
+            |> Array.map (fun pty -> eraseSystemType (amap,m,pty))
+        let paramVars = 
+            erasedParamTys
+            |> Array.mapi (fun i erasedParamTy -> erasedParamTy.PApply((fun ty ->  ProvidedVar.Fresh("arg" + i.ToString(),ty)),m))
+
+
+        // encode "this" as the first ParameterExpression, if applicable
+        let thisArg, paramVars = 
+            match objArgs with
+            | [objArg] -> 
+                let erasedThisTy = eraseSystemType (amap,m,mi.PApply((fun mi -> mi.DeclaringType),m))
+                let thisVar = erasedThisTy.PApply((fun ty -> ProvidedVar.Fresh("this", ty)), m)
+                Some objArg , Array.append [| thisVar |] paramVars
+            | [] -> None , paramVars
+            | _ -> failwith "multiple objArgs?"
+            
+        let ea = mi.PApplyWithProvider((fun (methodInfo,provider) -> ExtensionTyping.GetInvokerExpression(provider, methodInfo, [| for p in paramVars -> p.PUntaintNoFailure id |])), m)
+
+        convertProvidedExpressionToExprAndWitness tcVal (thisArg,allArgs,paramVars,g,amap,mut,isProp,isSuperInit,m,ea)
+
+            
+    let BuildInvokerExpressionForProvidedMethodCall tcVal (g, amap, mi:Tainted<ProvidedMethodBase>, objArgs, mut, isProp, isSuperInit, allArgs, m) =
+        try                   
+            let methInfoOpt, (expr, retTy) = TranslateInvokerExpressionForProvidedMethodCall tcVal (g, amap, mut, isProp, isSuperInit, mi, objArgs, allArgs, m)
+
+            let exprty = GetCompiledReturnTyOfProvidedMethodInfo amap m mi |> GetFSharpViewOfReturnType g
+            let expr = mkCoerceIfNeeded g exprty retTy expr
+            methInfoOpt, expr, exprty
+        with
+            | :? TypeProviderError as tpe ->
+                let typeName = mi.PUntaint((fun mb -> mb.DeclaringType.FullName), m)
+                let methName = mi.PUntaint((fun mb -> mb.Name), m)
+                raise( tpe.WithContext(typeName, methName) )  // loses original stack trace
+#endif

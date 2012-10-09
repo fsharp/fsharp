@@ -2,7 +2,7 @@
 
 <head>
     <Attribute>
-<title>F# Compiler Source Drop, April 2010</title>
+<title>F# Compiler Source Drop, (3.0, not yet released externally)</title>
 
 
   <style type="text/css">
@@ -300,62 +300,182 @@ LI A
 
 <body>
 
-<h1>F# 2.0 Compiler + Library Source Code Drop, matching April 2010 binary releases</h1>
+<h1>F# 3.0 Compiler + Library Source Code Drop, matching Visual Studio 2012 (R) RTM binary release</h1>
 
-<p>This directory contains a drop of the source code for an F# 2.0 compiler and core 
-    library.
-The code has been cleaned up &quot;a little" to try to help ensure better stability as
+<p>This directory contains a drop of the source code for an F# 3.0 compiler and core library.
+The code has been cleaned up &quot;a little&quot; to try to help ensure better stability as
 more development is done on the codebase. </p>
+
+<p>The compiler is normally compiled as a set of .NET 4.0 components.
+The compiler can also be hosted in a browser to implement websites like <a href="http://www.tryfsharp.org">Try F#</a>.</p>
 
 <p><b>Before we start, are sure you&#39;re in the right place?</b></p>
 <ul>
-    <li>To get an F# compiler, go to <a href="http://fsharp.net">fsharp.net</a> or
-        <a href="http://tryfsharp.org">tryfsharp.org</a>&nbsp;&nbsp; </li>
-    <li>To learn F#, go to <a href="http://fsharp.net">fsharp.net</a> or
-        <a href="http://tryfsharp.org">tryfsharp.org</a>&nbsp;&nbsp; </li>
-    <li>To learn what F# is and why it&#39;s interesting, go to <a href="http://fsharp.net">fsharp.net</a> 
-        or <a href="http://tryfsharp.org">tryfsharp.org</a>&nbsp;&nbsp; </li>
-    <li>To download and install an F# compiler, go to <a href="http://fsharp.net">fsharp.net</a> 
-        or <a href="http://tryfsharp.org">tryfsharp.org</a>&nbsp;&nbsp; </li>
-    <li>If you want to to use F# in Visual Studio 2008 (R) or Visual Studio 2010 (R), go to         <a href="http://fsharp.net">fsharp.net</a>.</li>
-    <li>Looking for F# coding samples? Go to <a href="http://fsharp.net">fsharp.net</a> 
-        or search elsewhere. This code is not a model F# codebase and should not be used 
+    <li>To get a free F# environment for Windows, go to <a href="http://fsharp.net">fsharp.net</a>&nbsp;&nbsp; </li>
+    <li>To get a free F# environment for Linux or Mac, go to <a href="http://fsxplat.codeplex.com/">fsxplat.codeplex.com</a> 
+    <li>To learn what F# is and why it&#39;s interesting, go to <a href="http://fsharp.net">fsharp.net</a>  or <a href="http://tryfsharp.org">tryfsharp.org</a>&nbsp;&nbsp; </li>
+    <li>If you want to to use F# in Visual Studio 2010 (R) or Visual Studio 2012 (R), go to         <a href="http://fsharp.net">fsharp.net</a>.</li>
+    <li>Looking for F# coding samples? Go to <a href="http://fsharp.net">fsharp.net</a> or <a href="http://tryfsharp.org">tryfsharp.org</a>
+        or <a href="http://fssnip.net">fssnip.net</a>. While the code has its nice points, it is not a model F# codebase and should not be used 
         as guidance for F# coding style - there are plenty of things we would change if 
         we had all the time in the world.</li>
 </ul>
 <p>
     To emphasize, this distribution should not be seen as a way to &quot;get&quot; an F# 
     compiler for immediate use. For that you&#39;re better going to <a href="http://fsharp.net">fsharp.net</a> or
-        <a href="http://tryfsharp.org">tryfsharp.org</a>&nbsp;&nbsp;</p>
-<p>
-    <b>Copyright:</b> Copyright 2002-2010 (c) Microsoft Corporation.</p>
-
+        <a href="http://fsxplat.codeplex.com/">fsxplat.codeplex.com</a> 
 <p>
 <b>License:</b> subject to terms and conditions of the Apache License, Version 2.0. A 
 copy of the license can be found in the <a href="license.html">License.html</a> file at the root of this distribution. 
 By using this source code in any fashion, you are agreeing to be bound 
-by the terms of the Apache License, Version 2.0.</p>
-<p>
-You must not remove this notice, or any other, from this software.</p>
-<p><b>Questions?</b> If you have questions about the source code, please ask on a 
-    forum, or start a forum for community discussions, or post to the forum on 
-    fsharppowerpack.codeplex.com. Please do not ask the F# team at Microsoft for 
+by the terms of the Apache License, Version 2.0. You must not remove this notice, or any other, from this software.</p>
+<p><b>Questions?</b> If you have questions about the source code, please ask at the <a href="http://groups.google.com/group/fsharp-opensource">F# Open Source Google Group</a>. 
+    Please do not ask the F# team at Microsoft for 
     help with this source code: they like to be friendly, but they are very busy 
     working on improving F# and need to focus on that.</p>
-<p><b>Updates?</b> The F# team do not do active development in this repository, 
+<p><b>Updates?</b> The F# team do not do active development in open repositories, 
     though some changes such as cleanup or additional tools may be submitted. They 
-    aspire to update the tree as and when future versions of F# compilers are 
-    released from Microsoft.</p>
+    aspire to update the code drop when future versions of F# compilers are 
+    released from Microsoft, usually at or around the RTM stage.</p>
+<p><b>Copyright:</b> Copyright 2002-2012 (c) Microsoft Corporation.</p>
+
 
 <h3>What do I get when I compile?</h3>
 
-<p>When you compile, you get <tt>fsc.exe</tt>, <tt>fsi.exe</tt>, <tt>FSharp.Core.dll</tt> and some related DLLs.</p>
+<p>When you build the compiler using the standard instructions below, you get <tt>fsc.exe</tt>, <tt>fsi.exe</tt>, <tt>FSharp.Core.dll</tt>, <tt>FSharp.Compiler.dll</tt> and some related DLLs.</p>
 
-<h3>How do I compile?</h3>
+<p>The compiler binaries produced are "private" and 
+strong-named signed with a test key (src\fsharp\test.snk). They use CLI assembly version nunmber 2.9.9.999. You can place these components in the GAC but they will not replace
+the components used by normal Visual Studio or normal F# programs.  </p>
+
+<h3>Steps - Building a Proto Compiler </h3>
+<pre>
+  cd src 
+  gacutil /i ..\lkg\FSharp-2.0.50726.900\bin\FSharp.Core.dll
+  msbuild fsharp-proto-build.proj /p:TargetFramework=net40
+</pre>
+<p>Note: Make sure you run the .NET 4.0 msbuild.exe, e.g. <tt>C:\Windows\Microsoft.NET\Framework\v4.0.30319\MSBuild.exe</tt>.</p>
+
+<p>Optional: NGEN the Proto Compiler for faster future startup (optional)</p>
+<pre>
+ngen install ..\Proto\net40\bin\fsc-proto.exe
+</pre>
+
+<h3>Steps - Building the F# Core Library</h3>
+
+<p>This uses the proto compiler to build the FSharp.Core library, for Mono/.NET 4.0.</p>
+<pre>
+msbuild fsharp-library-build.proj /p:TargetFramework=net40
+</pre>
+<p>Note: Make sure you run the .NET 4.0 msbuild.exe, e.g. <tt>C:\Windows\Microsoft.NET\Framework\v4.0.30319\MSBuild.exe</tt>.</p>
+
+<h3>Steps - Building the F# Compiler</h3>
+<p>This uses the proto compiler to build the FSharp.Compiler.dll and fsc.exe to run on for Mono/.NET 4.0.</p>
+<pre>
+msbuild fsharp-compiler-build.proj /p:TargetFramework=net40
+</pre>
+<p>Note: Make sure you run the .NET 4.0 msbuild.exe, e.g. <tt>C:\Windows\Microsoft.NET\Framework\v4.0.30319\MSBuild.exe</tt>.</p>
+
+
+<h3>Steps - Building a compiler component for hosting in the browser with Silverlight or Moonlight</h3>
+
+<p>This builds <tt>FSharp.Compiler.Silverlight.dll</tt> which is a Silverlight 5.0 component for hosting in the browser.</p>
+<pre>
+-- Debug configuration for browser-hosted compiler for Silverlight 5.0:
+msbuild fsharp-library-build.proj  /p:TargetFramework=sl5-compiler
+msbuild fsharp-compiler-build.proj  /p:TargetFramework=sl5-compiler
+
+-- Release configuration for browser-hosted compiler for Silverlight 5.0:
+msbuild fsharp-library-build.proj  /p:TargetFramework=sl5-compiler /p:Configuration=Release
+msbuild fsharp-compiler-build.proj  /p:TargetFramework=sl5-compiler /p:Configuration=Release
+
+</pre>
+<p>The binaries are placed in <tt>Debug\sl5-compiler</tt>, <tt>Release\sl5-compiler</tt>, <tt>Debug\sl5-compiler</tt> and/or <tt>Release\sl5-compiler</tt>.  
+<b>A custom <tt>FSharp.Core.dll</tt> is used for this configuration, be sure to reference it
+rather than any other  <tt>FSharp.Core.dll</tt> for Silverlight. You may have to edit your project file by hand to ensure
+you get exactly the right reference to <tt>FSharp.Core.dll</tt>.</b> </p>
+
+<h3>Building the F# core library for alternative CLI/.NET/CIL implementations</h3>
+<pre>
+msbuild fsharp-library-build.proj /p:TargetFramework=net20 
+msbuild fsharp-library-build.proj /p:TargetFramework=sl3-wp 
+msbuild fsharp-library-build.proj /p:TargetFramework=sl5  
+
+msbuild fsharp-library-build.proj /p:TargetFramework=net20 /p:Configuration=Release
+msbuild fsharp-library-build.proj /p:TargetFramework=sl3-wp /p:Configuration=Release
+msbuild fsharp-library-build.proj /p:TargetFramework=sl5 /p:Configuration=Release
+</pre>
+<p>Here  <tt>net20</tt> gives a runtime for .NET 2.0-3.5, <tt>sl3-wp</tt> gives a runtime for Windows Phone 7, 
+    and <tt>sl5</tt> gives a runtime for Silverlight 5.</p>
+
+<h3>Steps - Building F# Core Unit Tests for .NET 4.x (optional)</h3>
+
+<p>This uses the proto compiler to build the unit tests that check some parts of FSharp.Core.dll and FSharp.Compiler.dll.
+There is also another set of tests under tests\fsharp.</p>
+<pre>
+msbuild fsharp-library-unittests-build.proj /p:TargetFramework=net40
+</pre>
+<p>Note: You must have NUnit installed.</p>
+
+<h3>Steps - Running Compiler tests (on Windows)</h3>
+
+<p>There are language tests under tests\fsharp\core. The test apparatus is primitive and unfortunately uses batch files. 
+    You can run these on Windows using:</p>
+<pre>
+cd ..\tests\fsharp\core
+..\..\build-and-run-all-installed-ilx-configs.bat results.log
+</pre>
+
+<p>The results file will contain one entry for each test directory, plus any reported errors.</p>
+<pre>
+C:\projects\openfsharp\Compiler\3.0\head\tests\fsharp\core
+C:\projects\openfsharp\Compiler\3.0\head\tests\fsharp\core\queriesCustomQueryOps
+C:\projects\openfsharp\Compiler\3.0\head\tests\fsharp\core\queriesLeafExpressionConvert
+C:\projects\openfsharp\Compiler\3.0\head\tests\fsharp\core\queriesNullableOperators
+C:\projects\openfsharp\Compiler\3.0\head\tests\fsharp\core\queriesOverIEnumerable
+...
+</pre>
+<p>Some tests for LINQ queries require SQL Server be installed. A failing test will look like this:</p>
+<pre>
+ERRORLEVEL=1: in C:\projects\openfsharp\Compiler\3.0\head\tests\fsharp\core\csfromfs\build.bat
+</pre>
+<p>You can then go to the relevant directory and run 'build.bat' and 'run.bat'.</p>
+    
+    <h3>Using the FSharp.Core you built</h3>
+<p>The FSharp.Core.dll library produced uses the standard version number 4.3.0.0 and is delay signed with the Microsoft public key. This gives it 
+    the same identity as FSharp.Core for F# 3.0 in Visual Studio 2012. <b>This means that if you have Visual Studio 2012 installed, the FSharp.Core you produce will not be used by default</b>. You must 
+    replace the one in the GAC and skip strong-name verification for the DLL, e.g.
+</p>
+<pre>
+    sn -Vr FSharp.Core,*
+    gacutil /i Debug\net40\bin\FSharp.Core.dll
+</pre>
+<p>However, this is not recommended except in the rare case you are adding extra functionality to 
+    FSharp.Core - it is better to just continue to run with the
+    FSharp.Core that comes with Visual Studio 2012.</p>
+
+    <h3>Preparing for inclusion in Mono</h3>
+<p>    Building for the 'mono20' and 'mono40' frameworks gives strong-named, delay-signed assemblies with the msfinal.pub key
+    and standard version numbers such as 2.0.0.0, 2.3.0.0, 4.0.0.0 and 4.3.0.0. You complete the signing of these assemblies using 
+    <tt>http://github.com/fsharp/fsharp/raw/master/mono.snk</tt>. These assemblies will not run if you already have
+    a version of them installed in your GAC (e.g. if you have Visual Studio 2012).
+</p>
+<pre>
+    sn -R ..\Debug\mono40\bin\fsc.exe mono.snk
+    sn -R ..\Debug\mono40\bin\fsi.exe mono.snk
+    sn -R ..\Debug\mono40\bin\FSharp.Core.dll mono.snk
+    sn -R ..\Debug\mono40\bin\FSharp.Compiler.dll mono.snk
+    sn -R ..\Debug\mono40\bin\FSharp.Compiler.Server.Shared.dll mono.snk
+    sn -R ..\Debug\mono40\bin\FSharp.Compiler.Interactive.Settings.dll mono.snk
+</pre>     
+<p>This is the way the assemblies are built in a source build of <a href="https://github.com/fsharp/fsharp">the canonical GitHub repository for fsharp</a> 
+    and how the binaries are shipped in Mono binary distributions.
+</p>
+
+<h3>Notes on the build</h3>
 
 <p>The prerequisites and build command line for compiling the source (on Windows) are shown 
-    later in this README. Here's the
-logic of the build:</p>
+    later in this README. Here's the logic of the build:</p>
 <ul>
 <li>We first need an existing F# compiler, usually the one available from <a href="http://fsharp.net">fsharp.net</a>,
 although it could also be another. Let's assume this compiler has an FSharp.Core.dll with version X.</li>
@@ -374,278 +494,96 @@ tools found in the lkg directory. These are "Last Known Good" binaries created f
 on CodePlex. If you like you can throw away these binaries and use your own compiled versions of these.
 tools.</p>
 
-<h3>Strong names and versions</h3>
 
-<p>When you build the compiler using the instructions below, the compiler and 
-    library binaries produced are not strong-named or signed,
-and use CLI assembly version nunmber 1.9.9.999. Without a strong-name you will not be able to add FSharp.Core.dll to the GAC, though
-that is not a problem for most purposes since the FSharp.Core.dll you compile can be copied as part of your 
-application.</p>
-<p>Once you have an F# compiler, you will normally be able to reference another or 
-    an existing FSharp.Core.dll and matching mscorlib.dll explicitly to target that 
-    profile.</p>
-
-<p>To add strong names you would need to adjust the build settings. Our recommendation is not to use the 
-version number 2.0 on your binaries, since that can get confusing if you already have an installation of 
-an F# 2.0 compiler.</p>
-
-<h3>Building on Windows using MSBuild from the Command Linees</h3>
-
-<ul>
-   <li>Both .NET 2.0 and .NET 4.0</li>
-   <li>Visual Studio 2010 Shell (Integrated Edition, with F# CTP MSI added), OR Visual Studio Professional 2010, OR
-       another non-Express version of Visual Studio 2010 OR the F# CTP MSI installed as a standlone compiler.</li>
-</ul>
-
-<h3>Steps - Cleaning (if needed)</h3>
-
-<pre>
-cd src 
-rmdir /s /q ..\Proto
-rmdir /s /q ..\Debug
-rmdir /s /q ..\Release
-</pre>
-<h3>Steps - Building a Proto Compiler for Mono or .NET 2.0 using .NET 2.0/4.0 tools</h3>
-<pre>
-  cd src 
-  msbuild fsharp-proto-build.proj /p:TargetFramework=cli\2.0
-</pre>
-<p>Note: Make sure you run the .NET 4.0 msbuild.exe, e.g. <tt>C:\Windows\Microsoft.NET\Framework\v4.0.30319\MSBuild.exe</tt>.</p>
-
-<h3>Steps - NGEN the Proto Compiler for faster future startup (optional)</h3>
-<pre>
-ngen install ..\Proto\cli\2.0\bin\fsi.exe
-</pre>
-
-<h3>Steps - Building the F# core library and unittests for running on Mono or .NET 2.0-4.0, using the Proto compiler</h3>
-<pre>
-msbuild fsharp-library-build.proj /p:TargetFramework=cli\2.0
-</pre>
-<p>Note: Make sure you run the .NET 4.0 msbuild.exe, e.g. <tt>C:\Windows\Microsoft.NET\Framework\v4.0.30319\MSBuild.exe</tt>.</p>
-
-<h3>Steps - Building a bootstrapped F# Compiler for running on Mono or .NET 2.0-4.0, using the Proto Compiler</h3>
-<pre>
-msbuild fsharp-compiler-build.proj /p:TargetFramework=cli\2.0
-</pre>
-<p>Note: Make sure you run the .NET 4.0 msbuild.exe, e.g. <tt>C:\Windows\Microsoft.NET\Framework\v4.0.30319\MSBuild.exe</tt>.</p>
-
-
-<h3>Steps - Building a F# Compiler unit tests for NUnit for running on Mono or .NET 2.0-4.0, using the Proto Compiler</h3>
-<pre>
-msbuild fsharp-library-unittests-build.proj /p:TargetFramework=cli\2.0
-msbuild fsharp-compiler-unittests-build.proj /p:TargetFramework=cli\2.0
-</pre>
-<p>Note: You must have NUnit installed.</p>
 
 <h3>Validation and Use</h3>
 
+<p>Here are some simple tests to validate what you have built by checking <tt>fsi.exe</tt> (F# Interactive) starts up:</p>
+
 <pre>
-ngen install ..\Debug\cli\2.0\bin\fsi.exe
-..\Debug\cli\2.0\bin\fsi.exe
+ngen install ..\Debug\net40\bin\fsi.exe
+..\Debug\net40\bin\fsi.exe
 1 + 1;;
 #q;;
-..\Debug\cli\2.0\bin\fsi.exe /help
-..\Debug\cli\2.0\bin\fsc.exe /help
+..\Debug\net40\bin\fsi.exe /help
+..\Debug\net40\bin\fsc.exe /help
 echo printfn "hello world" > hello.fs
-..\Debug\cli\2.0\bin\fsc.exe hello.fs
-copy ..\Debug\cli\2.0\bin\FSharp.Core.dll .
+..\Debug\net40\bin\fsc.exe hello.fs
+copy ..\Debug\net40\bin\FSharp.Core.dll .
 hello.exe
 del /q FSharp.Core.dll 
-
-
-
 </pre>
 
-
-
-<h3>Some alternative Steps - Building the F# core library and unittests for alternative CLI/.NET/CIL implementations, using the Proto compiler</h3>
-<pre>
-msbuild fsharp-library-build.proj /p:TargetFramework=Silverlight\3.0
-msbuild fsharp-library-build.proj /p:TargetFramework=Silverlight\4.0
-msbuild fsharp-library-build.proj /p:TargetFramework=WindowsPhone7\Silverlight\4.0
-msbuild fsharp-library-build.proj /p:TargetFramework=CompactFramework\2.0
-msbuild fsharp-library-build.proj /p:TargetFramework=CompactFramework\3.5
-</pre>
-
-
-<h3>Some alternative Steps - Building for .NET 4.0 profile</h3>
+<h3>Some alternative Steps - Building for .NET 2.0 profile</h3>
 <pre>
 cd src 
-msbuild fsharp-proto-build.proj /p:TargetFramework=cli\4.0
-msbuild fsharp-library-build.proj /p:TargetFramework=cli\4.0
-msbuild fsharp-compiler-build.proj /p:TargetFramework=cli\4.0
-msbuild fsharp-library-unittests-build.proj /p:TargetFramework=cli\4.0
-msbuild fsharp-compiler-unittests-build.proj /p:TargetFramework=cli\4.0
+msbuild fsharp-proto-build.proj /p:TargetFramework=net20
+msbuild fsharp-library-build.proj /p:TargetFramework=net20
+msbuild fsharp-compiler-build.proj /p:TargetFramework=net20
+msbuild fsharp-library-unittests-build.proj /p:TargetFramework=net20
 
-ngen install ..\Debug\cli\4.0\bin\fsi.exe
-..\Debug\cli\4.0\bin\fsi.exe
+ngen install ..\Debug\net20\bin\fsi.exe
+..\Debug\net20\bin\fsi.exe
 1 + 1;;
 #q;;
-..\Debug\cli\4.0\bin\fsi.exe /help
-..\Debug\cli\4.0\bin\fsc.exe /help
+..\Debug\net20\bin\fsi.exe /help
+..\Debug\net20\bin\fsc.exe /help
 echo printfn "hello world" > hello.fs
-..\Debug\cli\4.0\bin\fsc.exe hello.fs
-copy ..\Debug\cli\4.0\bin\FSharp.Core.dll .
+..\Debug\net20\bin\fsc.exe hello.fs
+copy ..\Debug\net20\bin\FSharp.Core.dll .
 hello.exe
 del /q FSharp.Core.dll 
 
-msbuild fsharp-compiler-build.proj /p:TargetFramework=cli\4.0 /p:Configuration=Release
+</pre>
 
-ngen install ..\Release\cli\4.0\bin\fsi.exe
-..\Release\cli\4.0\bin\fsi.exe
+
+<h3>Some alternative Steps - Building an optimized (Release) compiler for .NET 4.0 profile</h3>
+<pre>
+msbuild fsharp-compiler-build.proj /p:TargetFramework=net40 /p:Configuration=Release
+
+ngen install ..\Release\net40\bin\fsi.exe
+..\Release\net40\bin\fsi.exe
 1 + 1;;
 #q;;
-..\Release\cli\4.0\bin\fsi.exe /help
-..\Release\cli\4.0\bin\fsc.exe /help
+..\Release\net40\bin\fsi.exe /help
+..\Release\net40\bin\fsc.exe /help
 echo printfn "hello world" > hello.fs
-..\Release\cli\4.0\bin\fsc.exe hello.fs
-copy ..\Release\cli\4.0\bin\FSharp.Core.dll .
+..\Release\net40\bin\fsc.exe hello.fs
+copy ..\Release\net40\bin\FSharp.Core.dll .
 hello.exe
 del /q FSharp.Core.dll 
 </pre>
 
-<h3>Some alternative Steps - Building Release mode (choose some of these as you need)</h3>
+<h3>Some alternative Steps - Other examples of building for Release mode (choose some of these as you need)</h3>
 <pre>
 
 msbuild fsharp-library-build.proj /p:Configuration=Release
-msbuild fsharp-library-build.proj /p:TargetFramework=cli\2.0 /p:Configuration=Release
-msbuild fsharp-library-build.proj /p:TargetFramework=cli\4.0 /p:Configuration=Release
-msbuild fsharp-library-build.proj /p:TargetFramework=Silverlight\3.0 /p:Configuration=Release
-msbuild fsharp-library-build.proj /p:TargetFramework=Silverlight\4.0 /p:Configuration=Release
-msbuild fsharp-library-build.proj /p:TargetFramework=WindowsPhone7\Silverlight\4.0 /p:Configuration=Release
-msbuild fsharp-library-build.proj /p:TargetFramework=CompactFramework\2.0 /p:Configuration=Release
-msbuild fsharp-library-build.proj /p:TargetFramework=CompactFramework\3.5 /p:Configuration=Release
+msbuild fsharp-library-build.proj /p:TargetFramework=net20 /p:Configuration=Release
+msbuild fsharp-library-build.proj /p:TargetFramework=net40 /p:Configuration=Release
+msbuild fsharp-library-build.proj /p:TargetFramework=sl3-wp /p:Configuration=Release
+msbuild fsharp-library-build.proj /p:TargetFramework=sl5 /p:Configuration=Release
 
-msbuild fsharp-compiler-build.proj /p:TargetFramework=cli\2.0 /p:Configuration=Release
-
-ngen install ..\Release\cli\2.0\bin\fsi.exe
-..\Release\cli\2.0\bin\fsi.exe
-1 + 1;;
-#q;;
-..\Release\cli\2.0\bin\fsi.exe /help
-..\Release\cli\2.0\bin\fsc.exe /help
-echo printfn "hello world" > hello.fs
-..\Release\cli\2.0\bin\fsc.exe hello.fs
-copy ..\Release\cli\2.0\bin\FSharp.Core.dll .
-hello.exe
-del /q FSharp.Core.dll 
-"c:\Program Files\Mono-2.8\bin\mono.exe" ..\Release\cli\2.0\bin\Fsi.exe /help
-"c:\Program Files\Mono-2.8\bin\mono.exe" ..\Release\cli\2.0\bin\Fsc.exe /help
-"c:\Program Files\Mono-2.8\bin\mono.exe" ..\Release\cli\2.0\bin\Fsi.exe < hello.fs
-"c:\Program Files\Mono-2.8\bin\mono.exe" ..\Release\cli\2.0\bin\Fsc.exe hello.fs
-
+msbuild fsharp-compiler-build.proj /p:TargetFramework=net20 /p:Configuration=Release
 </pre>
 
-<h3>Editing and Building on Windows using Visual Studio 2010</h3>
+<h3>Editing and Building on Windows using Visual Studio 2012</h3>
 
 
 <h3>Prerequisites</h3>
 
 <ul>
-   <li>Visual Studio Shell 2010 (with F# CTP MSI added), Visual Studio Professional 2010 or another non-Express version of Visual Studio 2010.</li>
+   <li>Visual Studio Shell 2012 (with F# CTP MSI added), Visual Studio Professional 2012 or another non-Express version of Visual Studio 2012.</li>
 </ul>
 
 <h3>Editing and Building</h3>
 
 
 
-<p>Open all-vs2010.sln, and edit in modes Debug or Release. The compiler takes a long time to compile and
+<p>Open all-vs2012.sln, and edit in modes Debug or Release. The compiler takes a long time to compile and
 that can be a bit invasive to the work flow, so it's normally better to do the actual compilation from the command line,
 see above.</p>
 
 
 
-
-
-
-<h3>Building where a Proto compiler is run on Mono 2.8, Windows</h3>
-
-<p>This can be useful if you want to prove to yourself that it's possible to build without running the 
-base compiler using .NET CLR. At the moment however the steps below still use MSBuild and compile against
-the .NET 2.0 reference assemblies. It would need more work to get the build going against the Mono libraries.</p>
-
-<h3>Prerequisites</h3>
-
-<ul>
-   <li>An existing F# compiler to start the bootstrap. You can start with the Microsoft F# release, then
-       build a new compiler using that, then throw away the former and just use the compiler(s) you've built
-       from then on.
-   <li>Mono 2.8 for Windows
-</ul>
-
-<h3>Building</h3>
-
-<p>See below for some of the sample steps. On Windows it is best to use fsc-mono.bat files to act as a "compiler that
-just happens to run using Mono".</p>
-
-<h3>Steps - Building a Proto Compiler for Mono or .NET 2.0 (either one)</h3>
-<pre>
-cd src 
-REM Prepare driver batch files that run the corresponding exe using Mono
-copy /y setups\run-as-mono.bat ..\lkg\bin\fsc-mono.bat
-copy /y setups\run-as-mono.bat  ..\lkg\FSharp-2.0.50726.900\bin\fslex-mono.bat
-copy /y setups\run-as-mono.bat  ..\lkg\FSharp-2.0.50726.900\bin\fsyacc-mono.bat
-msbuild fsharp-proto-build.proj /p:TargetFramework=mono\2.0
-</pre>
-
-<h3>Steps - Prepare proto compiler for execution on Mono by registering FSharp.Core.dll for the base compiler</h3>
-<pre>
-
-copy /y "C:\Program Files\Reference Assemblies\Microsoft\FSharp\2.0\Runtime\v2.0\FSharp.Core.dll" setups\FSharp.Core.dll
-"C:\Program Files\Mono-2.8\bin\sn" -R setups\FSharp.Core.dll setups\mono.snk  
-"C:\Program Files\Mono-2.8\bin\gacutil" /i setups\FSharp.Core.dll 
-del setups\FSharp.Core.dll
-</pre>
-
-<h3>Steps - Prepare driver batch files that run the corresponding exe with mono</h3>
-<pre>
-
-copy /y setups\run-as-mono.bat ..\Proto\cli\2.0\bin\fsc-proto-mono.bat
-copy /y setups\run-as-mono.bat  ..\lkg\FSharp-2.0.50726.900\bin\fslex-mono.bat
-copy /y setups\run-as-mono.bat  ..\lkg\FSharp-2.0.50726.900\bin\fsyacc-mono.bat
-
-</pre>
-
-<h3>Steps - Build the core library using the proto compiler, running the proto with Mono on Windows</h3>
-<pre>
-
-
-msbuild fsharp-library-build.proj /p:TargetFramework=mono\2.0
-
-</pre>
-
-<h3>Steps - Bootstrap the compiler using the proto compiler, running the proto with Mono on Windows</h3>
-<pre>
-
-msbuild fsharp-compiler-build.proj /p:TargetFramework=mono\2.0
-
-</pre>
-
-<h3>Validation and Use</h3>
-<pre>
-"c:\Program Files\Mono-2.8\bin\mono.exe" ..\Debug\mono\2.0\bin\fsi.exe
-1 + 1;;
-#q;;
-"c:\Program Files\Mono-2.8\bin\mono.exe" ..\Debug\mono\2.0\bin\fsi.exe /help
-"c:\Program Files\Mono-2.8\bin\mono.exe" ..\Debug\mono\2.0\bin\fsc.exe /help
-echo printfn "hello world" > hello.fs
-"c:\Program Files\Mono-2.8\bin\mono.exe" ..\Debug\mono\2.0\bin\fsc.exe hello.fs
-copy ..\Debug\mono\2.0\bin\FSharp.Core.dll .
-"c:\Program Files\Mono-2.8\bin\mono.exe" hello.exe
-del /q FSharp.Core.dll 
-
-
-</pre>
-
-<h3>Building on Unix with Mono</h3>
-
-<p>Because of some issues with xbuild, some shell scripts are provided
-to build the compiler on Unix. You may need to adapt the paths in config.sh first.</p>
-
-<pre>
-./make_proto.sh
-./make_library.sh
-./make_compiler.sh
-</pre>
 
 </body>

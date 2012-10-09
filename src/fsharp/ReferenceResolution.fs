@@ -1,7 +1,18 @@
+namespace Viz
+
+/// This type exists to have a concrete 'Target' type for a DebuggerVisualizerAttribute.
+/// Ideally it would be out in its own assembly, but then the compiler would need to take a dependency on that assembly, so instead we 
+/// pragmatically just shove this into the compiler assembly itself.
+type internal Visualizable(o:obj) =
+    member this.Data = o
+    /// assuming this assembly is already in the debuggee process, then Viz.Visualiable.Make(foo) in the Watch window will make a visualizer for foo
+    static member Make(o:obj) = new Visualizable(o)
+
 namespace Microsoft.FSharp.Compiler
 
 module internal MSBuildResolver = 
 
+    open Microsoft.FSharp.Compiler.AbstractIL.Internal.Library 
     exception ResolutionFailure
     
     type ResolvedFrom =
@@ -10,9 +21,9 @@ module internal MSBuildResolver =
         | TargetFrameworkDirectory
         | RawFileName
         | GlobalAssemblyCache
-        | Path of string 
+        | Path of string
         | Unknown
-    
+            
     type ResolutionEnvironment = CompileTimeLike | RuntimeLike | DesigntimeLike
     
 #if SILVERLIGHT
@@ -43,27 +54,21 @@ module internal MSBuildResolver =
         referenceCopyLocalPaths:string array
         suggestedBindingRedirects:string array
         }
+
+    let DotNetFrameworkReferenceAssembliesRootDirectory = 
+        // Note that ProgramFilesX86 is correct for both x86 and x64 architectures (the reference assemblies are always in the 32-bit location, which is PF(x86) on an x64 machine)
+        let PF = 
+            //System.Environment.GetFolderPath(System.Environment.SpecialFolder.ProgramFilesX86) // This API is not available to bootstrap compiler
+            match System.Environment.GetEnvironmentVariable("ProgramFiles(x86)") with
+            | null -> System.Environment.GetEnvironmentVariable("ProgramFiles")  // if PFx86 is null, then we are 32-bit and just get PF
+            | s -> s 
+        PF + @"\Reference Assemblies\Microsoft\Framework\.NETFramework"
         
     let ReplaceFrameworkVariables(dirs) =
         let windowsFramework = System.Environment.GetEnvironmentVariable("windir")+ @"\Microsoft.NET\Framework"
-        let referenceAssemblies =  System.Environment.GetEnvironmentVariable("ProgramFiles")+ @"\Reference Assemblies\Microsoft\Framework\.NETFramework"
+        let referenceAssemblies = DotNetFrameworkReferenceAssembliesRootDirectory
         dirs|>List.map(fun (d:string)->d.Replace("{WindowsFramework}",windowsFramework).Replace("{ReferenceAssemblies}",referenceAssemblies))
-        
-// Q: Why is there a compilation difference between fsc.exe-2.0 and fsc.exe-4.0? Shouldn't the resolve behavior be the same?
-// A: Two reasons
-//   1) For 4.0 we don't know the version number in this path: c:\Windows\Microsoft.NET\Framework\v4.0.xxxxx
-//   2) Fsc.exe-2.0 by design cannot target 4.0
-#if FX_ATLEAST_40 
-    /// The .NET runtime version that F# was built against.
-    let DotNetRuntime = "v4.0.30319"
-    /// The short version (like 4.0) that F# was built against.
-    let DotNetRuntimeShort = "v4.0"
-    /// Locations of .NET framework assemblies.
-    let DotNetFrameworkDirectories(excludeNonExecutableAssemblies) = 
-        if excludeNonExecutableAssemblies 
-        then ReplaceFrameworkVariables([@"{WindowsFramework}\"+DotNetRuntime])
-        else ReplaceFrameworkVariables([@"{ReferenceAssemblies}\"+DotNetRuntimeShort; @"{WindowsFramework}\"+DotNetRuntime])
-#endif        
+               
 
     /// Derive the target framework directories.        
     let DeriveTargetFrameworkDirectories
@@ -81,11 +86,10 @@ module internal MSBuildResolver =
             else if FrameworkStartsWith("v2.0") then ReplaceFrameworkVariables([@"{WindowsFramework}\v2.0.50727"])
             else if FrameworkStartsWith("v3.0") then ReplaceFrameworkVariables([@"{ReferenceAssemblies}\v3.0"; @"{WindowsFramework}\v3.0"; @"{WindowsFramework}\v2.0.50727"])
             else if FrameworkStartsWith("v3.5") then ReplaceFrameworkVariables([@"{ReferenceAssemblies}\v3.5"; @"{WindowsFramework}\v3.5"; @"{ReferenceAssemblies}\v3.0"; @"{WindowsFramework}\v3.0"; @"{WindowsFramework}\v2.0.50727"])
-#if FX_ATLEAST_40 
-            else DotNetFrameworkDirectories(excludeNonExecutableAssemblies)
-#else            
+            else if FrameworkStartsWith("v4.0") then ReplaceFrameworkVariables([@"{ReferenceAssemblies}\v4.0"])  // starting with .Net 4.0, the runtime dirs (WindowsFramework) are never used by MSBuild RAR
+            else if FrameworkStartsWith("v4.5") then ReplaceFrameworkVariables([@"{ReferenceAssemblies}\v4.5"])         
             else (ignore(excludeNonExecutableAssemblies); [])
-#endif            
+
         let result = result |> Array.ofList                
         logmessage (sprintf "Derived target framework directories for version %s are: %s" targetFrameworkVersion (String.Join(",", result)))                
         result    
@@ -104,7 +108,7 @@ module internal MSBuildResolver =
         
 
     type ErrorWarningCallbackSig = ((*code:*)string->(*message*)string->unit)
-
+                      
     type Foregrounded =
         | ForegroundedMessage of string 
         | ForegroundedError of string * string
@@ -117,7 +121,7 @@ module internal MSBuildResolver =
                     targetFrameworkDirectories:string list,
                     targetProcessorArchitecture:string,                
                     outputDirectory:string, 
-                    fsharpBinariesDir:string,
+                    fsharpCoreExplicitDirOrFSharpBinariesDir:string,
                     explicitIncludeDirs:string list,
                     implicitIncludeDir:string,
                     frameworkRegistryBase:string, 
@@ -198,8 +202,13 @@ module internal MSBuildResolver =
         rar.FindDependencies <- false
         rar.FindSatellites <- false
         rar.FindSerializationAssemblies <- false
+#if BUILDING_WITH_LKG
+        ignore targetProcessorArchitecture
+#else       
+        rar.TargetedRuntimeVersion <- typeof<obj>.Assembly.ImageRuntimeVersion
         rar.TargetProcessorArchitecture <- targetProcessorArchitecture
-        
+        rar.CopyLocalDependenciesWhenParentReferenceInGac <- true
+#endif        
         rar.Assemblies <- [|for (referenceName,baggage) in references -> 
                                         let item = new Microsoft.Build.Utilities.TaskItem(referenceName)
                                         item.SetMetadata("Baggage", baggage)
@@ -215,7 +224,7 @@ module internal MSBuildResolver =
                 rawFileNamePath @        // Quick-resolve straight to filename first 
                 explicitIncludeDirs @    // From -I, #I
                 [implicitIncludeDir] @   // Usually the project directory
-                [fsharpBinariesDir] @    // Location of fsc.exe
+                [fsharpCoreExplicitDirOrFSharpBinariesDir] @    // Location of explicit reference to FSharp.Core, otherwise location of fsc.exe
                 ["{TargetFrameworkDirectory}"] @
                 [sprintf "{Registry:%s,%s,%s%s}" frameworkRegistryBase targetFrameworkVersion assemblyFoldersSuffix assemblyFoldersConditions] @
                 ["{AssemblyFolders}"] @
@@ -227,14 +236,15 @@ module internal MSBuildResolver =
                 rawFileNamePath @        // Quick-resolve straight to filename first
                 explicitIncludeDirs @    // From -I, #I
                 [implicitIncludeDir] @   // Usually the project directory
-                [fsharpBinariesDir] @    // Location of fsc.exe
+                [fsharpCoreExplicitDirOrFSharpBinariesDir] @    // Location of explicit reference to FSharp.Core, otherwise location of fsc.exe
                 [sprintf "{Registry:%s,%s,%s%s}" frameworkRegistryBase targetFrameworkVersion assemblyFoldersSuffix assemblyFoldersConditions] @ // Like {Registry:Software\Microsoft\.NETFramework,v2.0,AssemblyFoldersEx}
                 ["{AssemblyFolders}"] @
-                [outputDirectory]                    
+                [outputDirectory] @
+                ["{GAC}"]     
     
         rar.SearchPaths <- searchPaths |> Array.ofList
                                   
-        rar.AllowedAssemblyExtensions <- [| ".exe"; ".dll" |]     
+        rar.AllowedAssemblyExtensions <- [| ".dll" ; ".exe" |]     
         
         let succeeded = rar.Execute()
         
@@ -278,7 +288,7 @@ module internal MSBuildResolver =
                 targetFrameworkDirectories:string list,
                 targetProcessorArchitecture:string,                
                 outputDirectory:string, 
-                fsharpBinariesDir:string,
+                fsharpCoreExplicitDirOrFSharpBinariesDir:string,
                 explicitIncludeDirs:string list,
                 implicitIncludeDir:string,
                 frameworkRegistryBase:string, 
@@ -295,7 +305,7 @@ module internal MSBuildResolver =
         let references = references |> Array.map (fun ((file,baggage) as data) -> 
             // However, MSBuild will not resolve 'relative' paths, even when e.g. implicitIncludeDir is part of the search.  As a result,
             // if we have an unrooted path+filename, we'll assume this is relative to the project directory and root it.
-            if System.IO.Path.IsPathRooted(file) then
+            if FileSystem.IsPathRootedShim(file) then
                 data  // fine, e.g. "C:\Dir\foo.dll"
             elif not(file.Contains("\\") || file.Contains("/")) then
                 data  // fine, e.g. "System.Transactions.dll"
@@ -304,7 +314,7 @@ module internal MSBuildResolver =
                 // turn it into an absolute path based at implicitIncludeDir
                 (System.IO.Path.Combine(implicitIncludeDir, file), baggage)
         )
-        let rooted, unrooted = references |> Array.partition (fun (file,_baggage) -> System.IO.Path.IsPathRooted(file))
+        let rooted, unrooted = references |> Array.partition (fun (file,_baggage) -> FileSystem.IsPathRootedShim(file))
 
         let CallResolveCore(references, allowRawFileName) =    
             if Array.isEmpty references then 
@@ -326,7 +336,7 @@ module internal MSBuildResolver =
                     targetFrameworkDirectories,
                     targetProcessorArchitecture,                
                     outputDirectory, 
-                    fsharpBinariesDir,
+                    fsharpCoreExplicitDirOrFSharpBinariesDir,
                     explicitIncludeDirs,
                     implicitIncludeDir,
                     frameworkRegistryBase, 

@@ -1,6 +1,5 @@
 //----------------------------------------------------------------------------
-//
-// Copyright (c) 2002-2011 Microsoft Corporation. 
+// Copyright (c) 2002-2012 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -43,7 +42,7 @@ let ilxFsharpCoreLibScopeRef () =
                 ILAssemblyRef.Create("FSharp.Core", None, 
                                      Some (PublicKeyToken(Bytes.ofInt32Array [| 0xb0; 0x3f; 0x5f; 0x7f; 0x11; 0xd5; 0x0a; 0x3a |])),
                                      false, 
-                                     Some (IL.parseILVersion Internal.Utilities.FSharpEnvironment.FSharpTeamVersionNumber), None)
+                                     Some (IL.parseILVersion "0.0.0.0"), None)
         ILScopeRef.Assembly assref
 
 let ilxNamespace () =  "Microsoft.FSharp.Core"

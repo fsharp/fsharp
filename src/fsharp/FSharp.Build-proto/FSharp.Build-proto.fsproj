@@ -2,10 +2,10 @@
 <!--
 # Copyright (c) 2002-2011 Microsoft Corporation. 
 #
-# This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
-# copy of the license can be found in the License.html file at the root of this distribution. 
-# By using this source code in any fashion, you are agreeing to be bound 
-# by the terms of the Apache License, Version 2.0.
+# 
+# 
+# 
+#
 #
 # You must not remove this notice, or any other, from this software.
 -->
@@ -23,7 +23,7 @@
     <DefineConstants>BUILDING_WITH_LKG;$(DefineConstants)</DefineConstants>
     <BuildWith>LKG</BuildWith>
     <ProjectGuid>{D8BC791F-C1A9-49DC-9432-0F3090537555}</ProjectGuid>
-    <TargetFrameworkVersion Condition="'$(TargetFramework)'=='cli\2.0' or '$(TargetFramework)'=='mono\2.0'">v3.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion Condition="'$(TargetFramework)'=='net20' or '$(TargetFramework)'=='mono20'">v3.5</TargetFrameworkVersion>
   </PropertyGroup>
   <ItemGroup>
 	  <FsSrGen Include="..\FSharp.Build\FSBuild.txt">
@@ -53,11 +53,14 @@
     <Reference Include="mscorlib" />
     <Reference Include="FSharp.Core" />
     <Reference Include="System" />
+    <Reference Include="System.Numerics" Condition="'$(TargetFramework)' == 'net40' OR '$(TargetFramework)' == 'mono40'" />
     <Reference Include="Microsoft.Build.Engine" />
-    <Reference Include="Microsoft.Build.Utilities.v3.5" />
-    <Reference Include="Microsoft.Build.Framework" />
-    <Reference Include="Microsoft.Build.Tasks.v3.5" />
-    <Reference Include="nunit.framework" Condition="'$(BuildUnittests)'!='false'" />
+    <Reference Include="Microsoft.Build.Utilities.v3.5" Condition="'$(TargetFramework)' == 'net20'" />
+    <Reference Include="Microsoft.Build.Tasks.v3.5" Condition="'$(TargetFramework)' == 'net20'" />
+    <Reference Include="Microsoft.Build" Condition="'$(TargetFramework)'=='net40'" />
+    <Reference Include="Microsoft.Build.Framework" Condition="'$(TargetFramework)'=='net40'" />
+    <Reference Include="Microsoft.Build.Utilities.v4.0" Condition="'$(TargetFramework)'=='net40'" />
+    <Reference Include="Microsoft.Build.Tasks.v4.0" Condition="'$(TargetFramework)'=='net40'" />
   </ItemGroup>
   <Import Project="$(FSharpSourcesRoot)\FSharpSource.targets" />
 </Project>
