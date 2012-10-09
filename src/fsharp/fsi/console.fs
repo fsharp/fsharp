@@ -370,7 +370,7 @@ type ReadLineConsole() =
         let rec read() = 
             let key = Console.ReadKey true
 
-            match (key.Key) with
+            match key.Key with
             | ConsoleKey.Backspace ->  
                 backspace();
                 change() 
@@ -405,6 +405,37 @@ type ReadLineConsole() =
                 current := input.Length;
                 (!anchor).PlaceAt(x.Inset,!rendered);
                 change()
+            | _ ->
+            match (key.Modifiers, key.KeyChar) with
+            // Control-A
+            | (ConsoleModifiers.Control, '\001') ->
+                current := 0;
+                (!anchor).PlaceAt(x.Inset,0)
+                change ()
+            // Control-E
+            | (ConsoleModifiers.Control, '\005') ->
+                current := input.Length;
+                (!anchor).PlaceAt(x.Inset,!rendered)
+                change ()
+            // Control-B
+            | (ConsoleModifiers.Control, '\002') ->
+                moveLeft()
+                change ()
+            // Control-f
+            | (ConsoleModifiers.Control, '\006') ->
+                moveRight()
+                change ()
+            // Control-P
+            | (ConsoleModifiers.Control, '\020') ->
+                setInput(history.Previous());
+                change()
+            // Control-n
+            | (ConsoleModifiers.Control, '\016') ->
+                setInput(history.Next());
+                change()
+            // Control-d
+            | (ConsoleModifiers.Control, '\004') ->
+                raise <| new System.IO.EndOfStreamException()
             | _ ->
                 // Note: If KeyChar=0, the not a proper char, e.g. it could be part of a multi key-press character,
                 //       e.g. e-acute is ' and e with the French (Belgium) IME and US Intl KB.
