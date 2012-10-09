@@ -1428,13 +1428,22 @@ let signerCloseKeyContainer kc =
     let iclrSN = getICLRStrongName()
     iclrSN.StrongNameKeyDelete(kc) |> ignore
 
-let signerSignatureSize pk = 
+let signerSignatureSize (pk:byte[]) = 
+ if IL.runningOnMono then
+   if pk.Length > 32 then pk.Length - 32 else 128
+ else
     let mutable pSize =  0u
     let iclrSN = getICLRStrongName()
     iclrSN.StrongNameSignatureSize(pk, uint32 pk.Length, &pSize) |> ignore
     int pSize
 
-let signerSignFileWithKeyPair fileName kp = 
+let signerSignFileWithKeyPair fileName (kp:byte[]) = 
+ if IL.runningOnMono then 
+    let sn = System.Type.GetType("Mono.Security.StrongName") 
+    let conv (x:obj) = if (unbox x : bool) then 0 else -1
+    sn.GetType().InvokeMember("Sign", (BindingFlags.InvokeMethod ||| BindingFlags.Instance ||| BindingFlags.Public), null, sn, [| box fileName |], Globalization.CultureInfo.InvariantCulture) |> conv |> check "Sign"
+    sn.GetType().InvokeMember("Verify", (BindingFlags.InvokeMethod ||| BindingFlags.Instance ||| BindingFlags.Public), null, sn, [| box fileName |], Globalization.CultureInfo.InvariantCulture) |> conv |> check "Verify"
+ else
     let mutable pcb = 0u
     let mutable ppb = (nativeint)0
     let mutable ok = false

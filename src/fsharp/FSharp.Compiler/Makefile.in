@@ -13,24 +13,22 @@ FLAGS += \
 	--target:library
 
 DEFINES += \
-	--define:TRYING_TO_FIX_4577 \
 	--define:COMPILER \
 	--define:INCLUDE_METADATA_READER \
 	--define:INCLUDE_METADATA_WRITER \
-	--define:EXTENSIBLE_DUMPER 
+    --define:EXTENSIONTYPING
 
 REFERENCES += \
 	-r:$(outdir)FSharp.Core.dll \
 	-r:Mono.Security.dll \
     -r:$(monolibdir)System.Runtime.Remoting.dll \
+    -r:$(monolibdir)System.Drawing.dll \
     -r:$(monolibdir)System.Windows.Forms.dll
 
 
 sources = \
 	$(tmpdir)FSComp.fs \
 	../../assemblyinfo/assemblyinfo.FSharp.Compiler.dll.fs \
-	../ExtensibleDumper.fsi \
-	../ExtensibleDumper.fs \
 	../../utils/sformat.fsi \
 	../../utils/sformat.fs \
 	../sr.fsi \
@@ -45,10 +43,10 @@ sources = \
 	../../utils/HashMultiMap.fs \
 	../../utils/TaggedCollections.fsi \
 	../../utils/TaggedCollections.fs \
+    ../FlatList.fs \
+    ../../absil/illib.fs \
 	../../utils/filename.fsi \
 	../../utils/filename.fs \
-	../FlatList.fs \
-	../../absil/illib.fs \
 	../../absil/zmap.fsi \
 	../../absil/zmap.fs \
 	../../absil/zset.fsi \
@@ -78,6 +76,8 @@ sources = \
 	../range.fsi \
 	../range.fs \
 	../ErrorLogger.fs \
+    ../tainted.fsi \
+    ../tainted.fs \
 	../InternalCollections.fsi \
 	../InternalCollections.fs \
 	../../absil/ilread.fsi \
@@ -92,11 +92,15 @@ sources = \
 	../../ilx/pubclo.fs \
 	../../ilx/cu_erase.fsi \
 	../../ilx/cu_erase.fs \
+    ../InternalFileSystemUtils.fsi \
+    ../InternalFileSystemUtils.fs \
 	../unilex.fsi \
 	../unilex.fs \
 	../layout.fsi \
 	../layout.fs \
-	../ast.fs \
+    ../ast.fs \
+    ../est.fsi \
+    ../est.fs \
 	$(tmpdir)pars.fs \
 	../lexhelp.fsi \
 	../lexhelp.fs \
@@ -114,19 +118,20 @@ sources = \
 	../import.fsi \
 	../import.fs \
 	../infos.fs \
+    ../NicePrint.fs \
 	../augment.fsi \
 	../augment.fs \
+    ../typrelns.fs \
+    ../patcompile.fsi \
+    ../patcompile.fs \
 	../outcome.fsi \
 	../outcome.fs \
+    ../csolve.fsi \
+    ../csolve.fs \
+    ../formats.fsi \
+    ../formats.fs \
 	../nameres.fsi \
 	../nameres.fs \
-	../typrelns.fs \
-	../patcompile.fsi \
-	../patcompile.fs \
-	../csolve.fsi \
-	../csolve.fs \
-	../formats.fsi \
-	../formats.fs \
 	../unsolved.fs \
 	../creflect.fsi \
 	../creflect.fs \
@@ -135,8 +140,8 @@ sources = \
 	../tc.fsi \
 	../tc.fs \
 	../opt.fsi \
-	../detuple.fsi \
 	../opt.fs \
+    ../detuple.fsi \
 	../detuple.fs \
 	../tlr.fsi \
 	../tlr.fs \
@@ -151,9 +156,22 @@ sources = \
 	../vs/IncrementalBuild.fsi \
 	../vs/IncrementalBuild.fs \
 	../vs/Reactor.fsi \
-	../vs/Reactor.fs \
+    ../vs/Reactor.fs \
+    ../vs/ServiceLexing.fsi \
+    ../vs/ServiceLexing.fs \
+    ../vs/ServiceConstants.fs \
+    ../vs/ServiceParseTreeWalk.fs \
+    ../vs/ServiceNavigation.fsi \
+    ../vs/ServiceNavigation.fs \
+    ../vs/ServiceParamInfoLocations.fsi \
+    ../vs/ServiceParamInfoLocations.fs \
+    ../vs/ServiceUntypedParse.fsi \
+    ../vs/ServiceUntypedParse.fs \
+    ../vs/ServiceDeclarations.fsi \
+    ../vs/ServiceDeclarations.fs \
 	../vs/service.fsi \
-	../vs/service.fs
+	../vs/service.fs \
+    ../fsc.fs
 
 RESOURCES= \
 	$(tmpdir)FSStrings.resources \

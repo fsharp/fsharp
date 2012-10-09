@@ -13,7 +13,6 @@ FLAGS_2_0 += \
 	--compiling-fslib \
     --nowarn:75,1204 \
     --target:library \
-    --define:FX_NO_BIGINT \
     --compiling-fslib-20:$(monolibdir)mscorlib.dll \
     --extraoptimizationloops:1 
 
@@ -22,7 +21,6 @@ FLAGS_4_0 += \
     --compiling-fslib \
     --nowarn:75,1204 \
     --target:library \
-    --define:FX_NO_BIGINT_CULTURE_PARSE \
     --compiling-fslib-40 \
     --extraoptimizationloops:1 
 
