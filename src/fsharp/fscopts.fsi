@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2011 Microsoft Corporation. 
+// Copyright (c) 2002-2012 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -22,7 +22,10 @@ open Microsoft.FSharp.Compiler.Build
 open Microsoft.FSharp.Compiler.ErrorLogger
 open Microsoft.FSharp.Compiler.Ast
 open Microsoft.FSharp.Compiler.Tast
+#if NO_COMPILER_BACKEND
+#else
 open Microsoft.FSharp.Compiler.Ilxgen
+#endif
 open Microsoft.FSharp.Compiler.Import
 open Microsoft.FSharp.Compiler.Opt
 open Microsoft.FSharp.Compiler.Env
@@ -42,13 +45,16 @@ val PrintOptionInfo   : TcConfigBuilder -> unit
 
 val fsharpModuleName : CompilerTarget -> string -> string
 
+#if NO_COMPILER_BACKEND
+#else
+val InitialOptimizationEnv : TcImports -> TcGlobals -> IncrementalOptimizationEnv
+val AddExternalCcuToOpimizationEnv : TcGlobals -> IncrementalOptimizationEnv -> ImportedAssembly -> IncrementalOptimizationEnv
+val ApplyAllOptimizations : TcConfig * TcGlobals * ConstraintSolver.TcValF * string * ImportMap * bool * IncrementalOptimizationEnv * CcuThunk * TypedAssembly -> TypedAssembly * Opt.LazyModuleInfo * IncrementalOptimizationEnv
 
-val InitialOptimizationEnv : TcImports -> IncrementalOptimizationEnv
-val AddExternalCcuToOpimizationEnv : IncrementalOptimizationEnv -> ImportedAssembly -> IncrementalOptimizationEnv
-val ApplyAllOptimizations : TcConfig * TcGlobals * string * ImportMap * bool * IncrementalOptimizationEnv * CcuThunk * TypedAssembly -> TypedAssembly * Opt.LazyModuleInfo * IncrementalOptimizationEnv
+val CreateIlxAssemblyGenerator : TcConfig * TcImports * TcGlobals * ConstraintSolver.TcValF * CcuThunk -> IlxAssemblyGenerator
 
-val IlxgenEnvInit : TcConfig * TcImports * TcGlobals * CcuThunk -> IlxGenEnv
-val GenerateIlxCode : IlxBackend * bool * bool * bool * TcGlobals * TcConfig * ImportMap * TypeChecker.TopAttribs * TypedAssembly * CcuThunk * string * IlxGenEnv -> CodegenResults
+val GenerateIlxCode : IlxGenBackend * bool * bool * TcConfig * TypeChecker.TopAttribs * TypedAssembly * string * bool * IlxAssemblyGenerator -> IlxGenResults
+#endif
 
 // Used during static linking
 val NormalizeAssemblyRefs : TcImports -> (AbstractIL.IL.ILScopeRef -> AbstractIL.IL.ILScopeRef)

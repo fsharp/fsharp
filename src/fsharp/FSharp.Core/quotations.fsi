@@ -1,6 +1,5 @@
 ﻿//----------------------------------------------------------------------------
-//
-// Copyright (c) 2002-2011 Microsoft Corporation. 
+// Copyright (c) 2002-2012 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -357,6 +356,11 @@ type Expr =
     /// <param name="name">The variable name.</param>
     /// <returns>The created of fetched typed global variable.</returns>
     static member GlobalVar<'T> : name:string -> Expr<'T>
+
+    /// <summary>Format the expression as a string</summary>
+    /// <param name="full">Indicates if method, property, constructor and type objects should be printed in detail. If false, these are abbreviated to their name.</param>
+    /// <returns>The formatted string.</returns>
+    member ToString : full: bool -> string
 
 
 /// <summary>Type-carrying quoted expressions. Expressions are generated either

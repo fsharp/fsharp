@@ -1,6 +1,5 @@
 //----------------------------------------------------------------------------
-//
-// Copyright (c) 2002-2011 Microsoft Corporation. 
+// Copyright (c) 2002-2012 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -28,9 +27,53 @@ namespace Microsoft.FSharp.Collections
         | MapEmpty 
         | MapOne of 'Key * 'Value
         | MapNode of 'Key * 'Value * MapTree<'Key,'Value> *  MapTree<'Key,'Value> * int
+            // REVIEW: performance rumour has it that the data held in MapNode and MapOne should be
+            // exactly one cache line. It is currently ~7 and 4 words respectively. 
 
     [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
     module MapTree = 
+
+        let rec sizeAux acc m = 
+            match m with  
+            | MapEmpty -> acc
+            | MapOne _ -> acc + 1
+            | MapNode(_,_,l,r,_) -> sizeAux (sizeAux (acc+1) l) r 
+
+        let size x = sizeAux 0 x
+
+
+    #if TRACE_SETS_AND_MAPS
+        let mutable traceCount = 0
+        let mutable numOnes = 0
+        let mutable numNodes = 0
+        let mutable numAdds = 0
+        let mutable numRemoves = 0
+        let mutable numLookups = 0
+        let mutable numUnions = 0
+        let mutable totalSizeOnNodeCreation = 0.0
+        let mutable totalSizeOnMapAdd = 0.0
+        let mutable totalSizeOnMapLookup = 0.0
+        let mutable largestMapSize = 0
+        let mutable largestMapStackTrace = Unchecked.defaultof<_>
+        let report() = 
+           traceCount <- traceCount + 1 
+           if traceCount % 1000000 = 0 then 
+               System.Console.WriteLine("#MapOne = {0}, #MapNode = {1}, #Add = {2}, #Remove = {3}, #Unions = {4}, #Lookups = {5}, avMapTreeSizeOnNodeCreation = {6}, avMapSizeOnCreation = {7}, avMapSizeOnLookup = {8}",numOnes,numNodes,numAdds,numRemoves,numUnions,numLookups,(totalSizeOnNodeCreation / float (numNodes + numOnes)),(totalSizeOnMapAdd / float numAdds),(totalSizeOnMapLookup / float numLookups))
+               System.Console.WriteLine("#largestMapSize = {0}, largestMapStackTrace = {1}",largestMapSize, largestMapStackTrace)
+
+        let MapOne n = 
+            report(); 
+            numOnes <- numOnes + 1; 
+            totalSizeOnNodeCreation <- totalSizeOnNodeCreation + 1.0; 
+            MapTree.MapOne n
+
+        let MapNode (x,l,v,r,h) = 
+            report(); 
+            numNodes <- numNodes + 1; 
+            let n = MapTree.MapNode(x,l,v,r,h)
+            totalSizeOnNodeCreation <- totalSizeOnNodeCreation + float (size n); 
+            n
+    #endif
 
         let empty = MapEmpty 
 
@@ -83,14 +126,6 @@ namespace Microsoft.FSharp.Collections
                         mk t1l t1k t1v (mk t1r k v t2)
                   | _ -> failwith "rebalance"
                 else mk t1 k v t2
-
-        let rec sizeAux acc m = 
-            match m with  
-            | MapEmpty -> acc
-            | MapOne _ -> acc + 1
-            | MapNode(_,_,l,r,_) -> sizeAux (sizeAux (acc+1) l) r 
-
-        let size x = sizeAux 0 x
 
         let rec add (comparer: IComparer<'Value>) k v m = 
             match m with 
@@ -329,7 +364,7 @@ namespace Microsoft.FSharp.Collections
                mutable started : bool }
 
         // collapseLHS:
-        // a) Always returns either [] or a list starting with SetOne.
+        // a) Always returns either [] or a list starting with MapOne.
         // b) The "fringe" of the set stack is unchanged. 
         let rec collapseLHS stack =
             match stack with
@@ -416,6 +451,7 @@ namespace Microsoft.FSharp.Collections
 #else
         [<System.Runtime.Serialization.OnSerializingAttribute>]
         member __.OnSerializing(context: System.Runtime.Serialization.StreamingContext) =
+            ignore(context)
             serializedData <- MapTree.toArray tree |> Array.map (fun (k,v) -> KeyValuePair(k,v))
 
         // Do not set this to null, since concurrent threads may also be serializing the data
@@ -425,6 +461,7 @@ namespace Microsoft.FSharp.Collections
 
         [<System.Runtime.Serialization.OnDeserializedAttribute>]
         member __.OnDeserialized(context: System.Runtime.Serialization.StreamingContext) =
+            ignore(context)
             comparer <- LanguagePrimitives.FastGenericComparer<'Key>
             tree <- serializedData |> Array.map (fun (KeyValue(k,v)) -> (k,v)) |> MapTree.ofArray comparer 
             serializedData <- null
@@ -449,13 +486,30 @@ namespace Microsoft.FSharp.Collections
         member internal m.Comparer = comparer
         //[<DebuggerBrowsable(DebuggerBrowsableState.Never)>]
         member internal m.Tree = tree
-        member m.Add(k,v) : Map<'Key,'Value> = new Map<'Key,'Value>(comparer,MapTree.add comparer k v tree)
+        member m.Add(k,v) : Map<'Key,'Value> = 
+#if TRACE_SETS_AND_MAPS
+            MapTree.report()
+            MapTree.numAdds <- MapTree.numAdds + 1
+            let size = MapTree.size m.Tree + 1
+            MapTree.totalSizeOnMapAdd <- MapTree.totalSizeOnMapAdd + float size
+            if size > MapTree.largestMapSize then 
+               MapTree.largestMapSize <- size
+               MapTree.largestMapStackTrace <- System.Diagnostics.StackTrace().ToString()
+#endif
+            new Map<'Key,'Value>(comparer,MapTree.add comparer k v tree)
 #if FX_NO_DEBUG_DISPLAYS
 #else
         [<DebuggerBrowsable(DebuggerBrowsableState.Never)>]
 #endif
         member m.IsEmpty = MapTree.isEmpty tree
-        member m.Item with get(k : 'Key) = MapTree.find comparer k tree
+        member m.Item 
+         with get(k : 'Key) = 
+#if TRACE_SETS_AND_MAPS
+            MapTree.report()
+            MapTree.numLookups <- MapTree.numLookups + 1
+            MapTree.totalSizeOnMapLookup <- MapTree.totalSizeOnMapLookup + float (MapTree.size tree)
+#endif
+            MapTree.find comparer k tree
         member m.TryPick(f) = MapTree.tryPick f tree 
         member m.Exists(f) = MapTree.exists f tree 
         member m.Filter(f)  : Map<'Key,'Value> = new Map<'Key,'Value>(comparer ,MapTree.filter comparer f tree)
@@ -463,18 +517,42 @@ namespace Microsoft.FSharp.Collections
         member m.Fold f acc =  
             let f = OptimizedClosures.FSharpFunc<_,_,_,_>.Adapt(f)
             MapTree.foldBack f tree acc
+
         member m.FoldSection (lo:'Key) (hi:'Key) f (acc:'z) = MapTree.foldSection comparer lo hi f tree acc 
+
         member m.Iterate f = MapTree.iter f tree
+
         member m.MapRange f  = new Map<'Key,'b>(comparer,MapTree.map f tree)
+
         member m.Map f  = new Map<'Key,'b>(comparer,MapTree.mapi f tree)
+
         member m.Partition(f)  : Map<'Key,'Value> * Map<'Key,'Value> = 
             let r1,r2 = MapTree.partition comparer f tree  in 
             new Map<'Key,'Value>(comparer,r1), new Map<'Key,'Value>(comparer,r2)
+
         member m.Count = MapTree.size tree
-        member m.ContainsKey(k) = MapTree.mem comparer k tree
-        member m.Remove(k)  : Map<'Key,'Value> = new Map<'Key,'Value>(comparer,MapTree.remove comparer k tree)
-        member m.TryFind(k) = MapTree.tryFind comparer k tree
+
+        member m.ContainsKey(k) = 
+#if TRACE_SETS_AND_MAPS
+            MapTree.report()
+            MapTree.numLookups <- MapTree.numLookups + 1
+            MapTree.totalSizeOnMapLookup <- MapTree.totalSizeOnMapLookup + float (MapTree.size tree)
+#endif
+            MapTree.mem comparer k tree
+
+        member m.Remove(k)  : Map<'Key,'Value> = 
+            new Map<'Key,'Value>(comparer,MapTree.remove comparer k tree)
+
+        member m.TryFind(k) = 
+#if TRACE_SETS_AND_MAPS
+            MapTree.report()
+            MapTree.numLookups <- MapTree.numLookups + 1
+            MapTree.totalSizeOnMapLookup <- MapTree.totalSizeOnMapLookup + float (MapTree.size tree)
+#endif
+            MapTree.tryFind comparer k tree
+
         member m.ToList() = MapTree.toList tree
+
         member m.ToArray() = MapTree.toArray tree
 
         static member ofList(l) : Map<'Key,'Value> = 
@@ -512,21 +590,23 @@ namespace Microsoft.FSharp.Collections
         interface IDictionary<'Key, 'Value> with 
             member m.Item 
                 with get x = m.[x]            
-                and  set x v = raise (NotSupportedException(SR.GetString(SR.mapCannotBeMutated)))
+                and  set x v = ignore(x,v); raise (NotSupportedException(SR.GetString(SR.mapCannotBeMutated)))
 
+            // REVIEW: this implementation could avoid copying the Values to an array    
             member s.Keys = ([| for kvp in s -> kvp.Key |] :> ICollection<'Key>)
 
+            // REVIEW: this implementation could avoid copying the Values to an array    
             member s.Values = ([| for kvp in s -> kvp.Value |] :> ICollection<'Value>)
 
-            member s.Add(k,v) = raise (NotSupportedException(SR.GetString(SR.mapCannotBeMutated)))
+            member s.Add(k,v) = ignore(k,v); raise (NotSupportedException(SR.GetString(SR.mapCannotBeMutated)))
             member s.ContainsKey(k) = s.ContainsKey(k)
             member s.TryGetValue(k,r) = if s.ContainsKey(k) then (r <- s.[k]; true) else false
-            member s.Remove(k : 'Key) = (raise (NotSupportedException(SR.GetString(SR.mapCannotBeMutated))) : bool)
+            member s.Remove(k : 'Key) = ignore(k); (raise (NotSupportedException(SR.GetString(SR.mapCannotBeMutated))) : bool)
 
         interface ICollection<KeyValuePair<'Key, 'Value>> with 
-            member s.Add(x) = raise (NotSupportedException(SR.GetString(SR.mapCannotBeMutated)));
+            member s.Add(x) = ignore(x); raise (NotSupportedException(SR.GetString(SR.mapCannotBeMutated)));
             member s.Clear() = raise (NotSupportedException(SR.GetString(SR.mapCannotBeMutated)));
-            member s.Remove(x) = raise (NotSupportedException(SR.GetString(SR.mapCannotBeMutated)));
+            member s.Remove(x) = ignore(x); raise (NotSupportedException(SR.GetString(SR.mapCannotBeMutated)));
             member s.Contains(x) = s.ContainsKey(x.Key) && Unchecked.equals s.[x.Key] x.Value
             member s.CopyTo(arr,i) = MapTree.copyToArray tree arr i
             member s.IsReadOnly = true

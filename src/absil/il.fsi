@@ -1,6 +1,5 @@
 //----------------------------------------------------------------------------
-//
-// Copyright (c) 2002-2011 Microsoft Corporation. 
+// Copyright (c) 2002-2012 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -17,6 +16,20 @@ module internal Microsoft.FSharp.Compiler.AbstractIL.IL
 open Internal.Utilities
 open System.Collections.Generic
 
+/// The type used to store relatively small lists in the Abstract IL data structures, i.e. for ILTypes, ILGenericArgs, ILParameters and ILLocals.
+/// See comments in il.fs for why we've isolated this representation and the possible future choices we might use here.
+#if ABSIL_USES_ARRAY_FOR_ILLIST
+type ILList<'T> = 'T []
+#endif
+
+#if ABSIL_USES_THREELIST_FOR_ILLIST
+type ILList<'T> = ThreeList<'T>
+#endif
+
+//#if ABSIL_USES_LIST_FOR_ILLIST
+type ILList<'T> = 'T list
+//#endif
+ 
 
 // ====================================================================
 // .NET binaries can be converted to the data structures below by using 
@@ -59,7 +72,7 @@ open System.Collections.Generic
 //   7. A somewhat obscure facility to allow new instructions and types
 //      to be added to the   This is only used by ILX.
 // ==================================================================== 
- 
+
 // Guids (Note: consider adjusting these to the System.Guid type)
 type Guid = byte[]
 
@@ -115,9 +128,7 @@ type ILVersionInfo = uint16 * uint16 * uint16 * uint16
 [<Sealed>]
 type ILAssemblyRef =
     static member Create : name: string * hash: byte[] option * publicKey: PublicKey option * retargetable: bool * version: ILVersionInfo option * locale: string option -> ILAssemblyRef
-
-    static member FromAssembly : System.Reflection.Assembly -> ILAssemblyRef
-
+    static member FromAssemblyName : System.Reflection.AssemblyName -> ILAssemblyRef
     member Name: string;
     /// The fully qualified name of the assembly reference, e.g. mscorlib, Version=1.0.3705 etc.
     member QualifiedName: string; 
@@ -292,6 +303,9 @@ type ILTypeRef =
     /// The name of the type in the assembly using the '+' notation for nested types
     member BasicQualifiedName : string
     member QualifiedName: string
+#if EXTENSIONTYPING
+    member QualifiedNameWithNoShortMscorlib: string
+#endif
     interface System.IComparable
     
 /// Type specs and types.  
@@ -356,11 +370,34 @@ and
 and [<StructuralEquality; StructuralComparison>]
     ILCallingSignature =  
     { CallingConv: ILCallingConv;
-      ArgTypes: ILType list;
+      ArgTypes: ILTypes;
       ReturnType: ILType }
 
 /// Actual generic parameters are  always types.  
-and ILGenericArgs = ILType list
+
+
+and ILGenericArgs = ILList<ILType>
+and ILTypes = ILList<ILType>
+
+
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module ILList = 
+    val inline map : ('T -> 'U) -> ILList<'T> -> ILList<'U>
+    val inline mapi : (int -> 'T -> 'U) -> ILList<'T> -> ILList<'U>
+    val inline isEmpty : ILList<'T> -> bool
+    val inline toList : ILList<'T> -> 'T list
+    val inline ofList : 'T list -> ILList<'T> 
+    val inline lengthsEqAndForall2 : ('T -> 'U -> bool) -> ILList<'T> -> ILList<'U> -> bool
+    val inline init : int -> (int -> 'T) -> ILList<'T>
+    val inline empty<'T> : ILList<'T>
+    val inline toArray : ILList<'T> -> 'T[]
+    val inline ofArray : 'T[] -> ILList<'T>
+    val inline nth : ILList<'T> -> int -> 'T
+    val inline iter : ('T -> unit) -> ILList<'T> -> unit
+    val inline iteri : (int -> 'T -> unit) -> ILList<'T> -> unit
+    val inline foldBack : ('T -> 'State -> 'State) -> ILList<'T> -> 'State -> 'State
+    val inline exists : ('T -> bool) -> ILList<'T> -> bool
+
 
 /// Formal identities of methods.  Method refs refer to methods on 
 /// named types.  In general you should work with ILMethodSpec objects
@@ -372,13 +409,13 @@ and ILGenericArgs = ILType list
 
 [<Sealed>]
 type ILMethodRef =
-     static member Create : enclosingTypeRef: ILTypeRef * callingConv: ILCallingConv * name: string * genericArity: int * argTypes: ILType list * returnType: ILType -> ILMethodRef
+     static member Create : enclosingTypeRef: ILTypeRef * callingConv: ILCallingConv * name: string * genericArity: int * argTypes: ILTypes * returnType: ILType -> ILMethodRef
      member EnclosingTypeRef: ILTypeRef
      member CallingConv: ILCallingConv
      member Name: string
      member GenericArity: int
      member ArgCount: int
-     member ArgTypes: ILType list
+     member ArgTypes: ILTypes
      member ReturnType: ILType
      member CallingSignature: ILCallingSignature
      interface System.IComparable
@@ -413,7 +450,7 @@ type ILMethodSpec =
      member CallingConv: ILCallingConv
      member GenericArity: int
      member Name: string
-     member FormalArgTypes: ILType list
+     member FormalArgTypes: ILTypes
      member FormalReturnType: ILType
      interface System.IComparable
       
@@ -481,7 +518,7 @@ type ILReadonly =
     | ReadonlyAddress
     | NormalAddress
 
-type ILVarArgs = ILType list option
+type ILVarArgs = ILTypes option
 
 [<StructuralEquality; StructuralComparison>]
 type ILComparisonInstr = 
@@ -610,7 +647,7 @@ type ILInstr =
     // The IL writer then reverses this when emitting the binary. 
     | I_ldelem      of ILBasicType
     | I_stelem      of ILBasicType
-    | I_ldelema     of ILReadonly * ILArrayShape * ILType (* ILArrayShape = ILArrayShape.SingleDimensional for single dimensional arrays *)
+    | I_ldelema     of ILReadonly * bool * ILArrayShape * ILType (* ILArrayShape = ILArrayShape.SingleDimensional for single dimensional arrays *)
     | I_ldelem_any  of ILArrayShape * ILType (* ILArrayShape = ILArrayShape.SingleDimensional for single dimensional arrays *)
     | I_stelem_any  of ILArrayShape * ILType (* ILArrayShape = ILArrayShape.SingleDimensional for single dimensional arrays *)
     | I_newarr      of ILArrayShape * ILType (* ILArrayShape = ILArrayShape.SingleDimensional for single dimensional arrays *)
@@ -645,7 +682,7 @@ type ILInstr =
     | EI_ldlen_multi      of int32 * int32
     | I_other    of IlxExtensionInstr
 
-// We could remove this open-ended way of extending the IL and just combine with ILX
+// REVIEW: remove this open-ended way of extending the IL and just combine with ILX
 type ILInstrSetExtension<'Extension> = 
     { instrExtDests: ('Extension -> ILCodeLabel list);
       instrExtFallthrough: ('Extension -> ILCodeLabel option);
@@ -934,17 +971,22 @@ type ILNativeType =
 
 
 /// Local variables
+[<NoComparison; NoEquality>]
 type ILLocal = 
     { Type: ILType;
       IsPinned: bool }
      
+
+type ILLocals = ILList<ILLocal>
+
 /// IL method bodies
+[<NoComparison; NoEquality>]
 type ILMethodBody = 
     { IsZeroInit: bool;
       /// strictly speakin should be a uint16 
       MaxStack: int32; 
       NoInlining: bool;
-      Locals: ILLocal list;
+      Locals: ILLocals;
       Code: ILCode;
       SourceMarker: ILSourceMarker option }
 
@@ -1010,7 +1052,10 @@ type ILParameter =
       IsOptional: bool;
       CustomAttrs: ILAttributes }
 
-val typesOfILParams : ILParameter list -> ILType list
+type ILParameters = ILList<ILParameter>
+
+val typesOfILParamsRaw : ILParameters -> ILTypes
+val typesOfILParamsList : ILParameter list -> ILType list
 
 /// Method return values
 type ILReturn = 
@@ -1081,6 +1126,7 @@ type PInvokeThrowOnUnmappableChar =
     | Enabled
     | Disabled
 
+[<NoComparison; NoEquality>]
 type PInvokeMethod =
     { Where: ILModuleRef;
       Name: string;
@@ -1103,6 +1149,7 @@ type ILOverridesSpec =
     member MethodRef: ILMethodRef
     member EnclosingType: ILType 
 
+// REVIEW: fold this into ILMethodDef
 type ILMethodVirtualInfo =
     { IsFinal: bool; 
       IsNewSlot: bool; 
@@ -1117,6 +1164,7 @@ type MethodKind =
     | NonVirtual 
     | Virtual of ILMethodVirtualInfo
 
+// REVIEW: fold this into ILMethodDef
 [<RequireQualifiedAccess>]
 type MethodBody =
     | IL of ILMethodBody
@@ -1124,6 +1172,7 @@ type MethodBody =
     | Abstract
     | Native
 
+// REVIEW: fold this into ILMethodDef
 [<RequireQualifiedAccess>]
 type MethodCodeKind =
     | IL
@@ -1135,7 +1184,7 @@ type MethodCodeKind =
 type ILGenericParameterDef =
     { Name: string;
     /// At most one is the parent type, the others are interface types 
-      Constraints: ILType list; 
+      Constraints: ILTypes; 
       /// Variance of type parameters, only applicable to generic parameters for generic interfaces and delegates 
       Variance: ILGenericVariance; 
       /// Indicates the type argument must be a reference type 
@@ -1149,6 +1198,7 @@ type ILGenericParameterDef =
 
 type ILGenericParameterDefs = ILGenericParameterDef list
 
+// REVIEW: fold this into ILMethodDef
 [<NoComparison; NoEquality; Sealed>]
 type ILLazyMethodBody = 
     member Contents : MethodBody 
@@ -1160,11 +1210,12 @@ type ILLazyMethodBody =
 /// is no perfect factorization of these as the combinations are not
 /// independent.  
 
+[<NoComparison; NoEquality>]
 type ILMethodDef = 
     { Name: string;
       mdKind: MethodKind;
       CallingConv: ILCallingConv;
-      Parameters: ILParameter list;
+      Parameters: ILParameters;
       Return: ILReturn;
       Access: ILMemberAccess;
       mdBody: ILLazyMethodBody;   
@@ -1185,15 +1236,15 @@ type ILMethodDef =
       IsPreserveSig: bool;
       /// .NET 2.0 feature: SafeHandle finalizer must be run 
       IsMustRun: bool; 
+      IsNoInline: bool;
      
       GenericParams: ILGenericParameterDefs;
       CustomAttrs: ILAttributes; }
       
-    member ParameterTypes: ILType list;
+    member ParameterTypes: ILTypes;
     member IsIL : bool
     member Code : ILCode option
-    member Locals : ILLocal list
-    member IsNoInline : bool
+    member Locals : ILLocals
     member MaxStack : int32
     member IsZeroInit : bool
     
@@ -1227,6 +1278,7 @@ type ILMethodDefs =
     member FindByName : string -> ILMethodDef list
 
 /// Field definitions
+[<NoComparison; NoEquality>]
 type ILFieldDef = 
     { Name: string;
       Type: ILType;
@@ -1252,6 +1304,7 @@ type ILFieldDefs =
     member LookupByName : string -> ILFieldDef list
 
 /// Event definitions
+[<NoComparison; NoEquality>]
 type ILEventDef =
     { Type: ILType option; 
       Name: string;
@@ -1270,6 +1323,7 @@ type ILEventDefs =
     member LookupByName : string -> ILEventDef list
 
 /// Property definitions
+[<NoComparison; NoEquality>]
 type ILPropertyDef =
     { Name: string;
       IsRTSpecialName: bool;
@@ -1279,7 +1333,7 @@ type ILPropertyDef =
       CallingConv: ILThisConvention;
       Type: ILType;          
       Init: ILFieldInit option;
-      Args: ILType list;
+      Args: ILTypes;
       CustomAttrs: ILAttributes; }
 
 /// Table of those properties in a type definition.
@@ -1385,7 +1439,8 @@ type ILTypeDefs =
 /// in the type definition below, for example that the super class of
 /// an interface type is always None, or that enumerations always
 /// have a very specific form.
-and ILTypeDef =  
+and [<NoComparison; NoEquality>]
+    ILTypeDef =  
     { tdKind: ILTypeDefKind;
       Name: string;  
       GenericParams: ILGenericParameterDefs;  
@@ -1399,7 +1454,7 @@ and ILTypeDef =
       IsSpecialName: bool;
       Encoding: ILDefaultPInvokeEncoding;
       NestedTypes: ILTypeDefs;
-      Implements: ILType list;  
+      Implements: ILTypes;  
       Extends: ILType option; 
       Methods: ILMethodDefs;
       SecurityDecls: ILPermissions;
@@ -1448,6 +1503,7 @@ type ILNestedExportedTypes =
 /// definition.
 
 /// these are only found in the "Nested" field of ILExportedTypeOrForwarder objects 
+// REVIEW: fold this into ILExportedTypeOrForwarder. There's not much value in keeping these distinct
 and ILNestedExportedType =
     { Name: string;
       Access: ILMemberAccess;
@@ -1455,6 +1511,7 @@ and ILNestedExportedType =
       CustomAttrs: ILAttributes } 
 
 /// these are only found in the ILExportedTypesAndForwarders table in the manifest 
+[<NoComparison; NoEquality>]
 type ILExportedTypeOrForwarder =
     { ScopeRef: ILScopeRef;
       /// [Namespace.]Name
@@ -1545,12 +1602,15 @@ type ILModuleDef =
       CustomAttrs: ILAttributes;
       Name: string;
       TypeDefs: ILTypeDefs;
+      SubsystemVersion : int * int
+      UseHighEntropyVA : bool
       SubSystemFlags: int32;
       IsDLL: bool;
       IsILOnly: bool;
       Platform: ILPlatform option;
       StackReserveSize: int32 option;
       Is32Bit: bool;
+      Is32BitPreferred: bool;
       Is64Bit: bool;
       VirtualAlignment: int32;
       PhysicalAlignment: int32;
@@ -1583,16 +1643,16 @@ val splitNamespace: string -> string list
 
 val splitNamespaceToArray: string -> string[]
 
-/// The splitTypeName utility helps you split a string representing
+/// The splitILTypeName utility helps you split a string representing
 /// a type name into the leading namespace elements (if any), the
 /// names of any nested types and the type name itself.  This function
 /// memoizes and interns the splitting of the namespace portion of
 /// the type name. 
-val splitTypeName: string -> string list * string
+val splitILTypeName: string -> string list * string
 
-val splitTypeNameToArray: string -> string[] * string
+val splitILTypeNameWithPossibleStaticArguments: string -> string[] * string
 
-/// splitTypeNameRight is like splitTypeName except the 
+/// splitTypeNameRight is like splitILTypeName except the 
 /// namespace is kept as a whole string, rather than split at dots.
 val splitTypeNameRight: string -> string option * string
 
@@ -1618,7 +1678,7 @@ val ungenericizeTypeName: string -> string (* e.g. List`1 --> List *)
 type ILGlobals = 
     { mscorlibScopeRef: ILScopeRef
       mscorlibAssemblyName: string
-      noDebugData: bool; // REVIEW-HOST: this needs to be in cenv - I'm placing it here to make the shelveset smaller
+      noDebugData: bool
       tref_Object: ILTypeRef
       tspec_Object: ILTypeSpec
       typ_Object: ILType
@@ -1724,40 +1784,49 @@ val mkILNestedTyRef: ILScopeRef * string list * string -> ILTypeRef
 val mkILTyRef: ILScopeRef * string -> ILTypeRef
 val mkILTyRefInTyRef: ILTypeRef * string -> ILTypeRef
 
+type ILGenericArgsList = ILType list
+val mkILGenericArgs : ILGenericArgsList -> ILGenericArgs
 /// Make type specs
 val mkILNonGenericTySpec: ILTypeRef -> ILTypeSpec
-val mkILTySpec: ILTypeRef * ILGenericArgs -> ILTypeSpec
+val mkILTySpec: ILTypeRef * ILGenericArgsList -> ILTypeSpec
+val mkILTySpecRaw: ILTypeRef * ILGenericArgs -> ILTypeSpec
 
 /// Make types
 val mkILTy: ILBoxity -> ILTypeSpec -> ILType
-val mkILNamedTy: ILBoxity -> ILTypeRef -> ILGenericArgs -> ILType
-val mkILBoxedTy: ILTypeRef -> ILGenericArgs -> ILType
-val mkILValueTy: ILTypeRef -> ILGenericArgs -> ILType
+val mkILNamedTy: ILBoxity -> ILTypeRef -> ILGenericArgsList -> ILType
+val mkILBoxedTy: ILTypeRef -> ILGenericArgsList -> ILType
+val mkILBoxedTyRaw: ILTypeRef -> ILGenericArgs -> ILType
+val mkILValueTy: ILTypeRef -> ILGenericArgsList -> ILType
 val mkILNonGenericBoxedTy: ILTypeRef -> ILType
 val mkILNonGenericValueTy: ILTypeRef -> ILType
 val mkILArrTy: ILType * ILArrayShape -> ILType
 val mkILArr1DTy: ILType -> ILType
 val isILArrTy: ILType -> bool
 val destILArrTy: ILType -> ILArrayShape * ILType 
+val mkILBoxedType : ILTypeSpec -> ILType
 
+val mkILTypes : ILType list -> ILTypes
 
 /// Make method references and specs
+val mkILMethRefRaw: ILTypeRef * ILCallingConv * string * int * ILTypes * ILType -> ILMethodRef
 val mkILMethRef: ILTypeRef * ILCallingConv * string * int * ILType list * ILType -> ILMethodRef
-val mkILMethSpec: ILMethodRef * ILBoxity * ILGenericArgs * ILGenericArgs -> ILMethodSpec
-val mkILMethSpecForMethRefInTy: ILMethodRef * ILType * ILGenericArgs -> ILMethodSpec
-val mkILMethSpecInTy: ILType * ILCallingConv * string * ILType list * ILType * ILGenericArgs -> ILMethodSpec
+val mkILMethSpec: ILMethodRef * ILBoxity * ILGenericArgsList * ILGenericArgsList -> ILMethodSpec
+val mkILMethSpecForMethRefInTyRaw: ILMethodRef * ILType * ILGenericArgs -> ILMethodSpec
+val mkILMethSpecForMethRefInTy: ILMethodRef * ILType * ILGenericArgsList -> ILMethodSpec
+val mkILMethSpecInTy: ILType * ILCallingConv * string * ILType list * ILType * ILGenericArgsList -> ILMethodSpec
+val mkILMethSpecInTyRaw: ILType * ILCallingConv * string * ILTypes * ILType * ILGenericArgs -> ILMethodSpec
 
 /// Construct references to methods on a given type 
 val mkILNonGenericMethSpecInTy: ILType * ILCallingConv * string * ILType list * ILType -> ILMethodSpec
 
 /// Construct references to instance methods 
-val mkILInstanceMethSpecInTy: ILType * string * ILType list * ILType * ILGenericArgs -> ILMethodSpec
+val mkILInstanceMethSpecInTy: ILType * string * ILType list * ILType * ILGenericArgsList -> ILMethodSpec
 
 /// Construct references to instance methods 
 val mkILNonGenericInstanceMethSpecInTy: ILType * string * ILType list * ILType -> ILMethodSpec
 
 /// Construct references to static methods 
-val mkILStaticMethSpecInTy: ILType * string * ILType list * ILType * ILGenericArgs -> ILMethodSpec
+val mkILStaticMethSpecInTy: ILType * string * ILType list * ILType * ILGenericArgsList -> ILMethodSpec
 
 /// Construct references to static, non-generic methods 
 val mkILNonGenericStaticMethSpecInTy: ILType * string * ILType list * ILType -> ILMethodSpec
@@ -1770,6 +1839,7 @@ val mkILFieldRef: ILTypeRef * string * ILType -> ILFieldRef
 val mkILFieldSpec: ILFieldRef * ILType -> ILFieldSpec
 val mkILFieldSpecInTy: ILType * string * ILType -> ILFieldSpec
 
+val mkILCallSigRaw: ILCallingConv * ILTypes * ILType -> ILCallingSignature
 val mkILCallSig: ILCallingConv * ILType list * ILType -> ILCallingSignature
 
 /// Make generalized verions of possibly-generic types,
@@ -1777,8 +1847,10 @@ val mkILCallSig: ILCallingConv * ILType list * ILType -> ILCallingSignature
 
 val mkILFormalBoxedTy: ILTypeRef -> ILGenericParameterDef list -> ILType
 
-val mkILFormalTypars: ILGenericArgs -> ILGenericParameterDefs
-val mkILFormalGenericArgs: ILGenericParameterDefs -> ILGenericArgs
+val mkILFormalTyparsRaw: ILTypes -> ILGenericParameterDefs
+val mkILFormalTypars: ILType list -> ILGenericParameterDefs
+val mkILFormalGenericArgsRaw: ILGenericParameterDefs -> ILGenericArgs
+val mkILFormalGenericArgs: ILGenericParameterDefs -> ILGenericArgsList
 val mkILSimpleTypar : string -> ILGenericParameterDef
 /// Make custom attributes 
 val mkILCustomAttribMethRef: 
@@ -1839,6 +1911,9 @@ val mkNormalLdobj: ILType -> ILInstr
 val mkNormalStobj: ILType -> ILInstr 
 val mkLdcInt32: int32 -> ILInstr
 val mkLdarg0: ILInstr
+val mkLdloc: uint16 -> ILInstr
+val mkStloc: uint16 -> ILInstr
+val mkLdarg: uint16 -> ILInstr
 
 val andTailness: ILTailcall -> bool -> ILTailcall
 
@@ -1849,13 +1924,15 @@ val mkILParamAnon: ILType -> ILParameter
 val mkILParamNamed: string * ILType -> ILParameter
 val mkILReturn: ILType -> ILReturn
 val mkILLocal: ILType -> ILLocal
+val mkILLocals : ILLocal list -> ILLocals
+val emptyILLocals : ILLocals
 
 /// Make a formal generic parameters
 val mkILEmptyGenericParams: ILGenericParameterDefs
 
 /// Make method definitions
-val mkILMethodBody: initlocals:bool * ILLocal list * int * ILCode * ILSourceMarker option -> ILMethodBody
-val mkMethodBody: bool * ILLocal list * int * ILCode * ILSourceMarker option -> MethodBody
+val mkILMethodBody: initlocals:bool * ILLocals * int * ILCode * ILSourceMarker option -> ILMethodBody
+val mkMethodBody: bool * ILLocals * int * ILCode * ILSourceMarker option -> MethodBody
 
 val mkILCtor: ILMemberAccess * ILParameter list * MethodBody -> ILMethodDef
 val mkILClassCtor: MethodBody -> ILMethodDef
@@ -1970,7 +2047,7 @@ val mkILResources: ILResource list -> ILResources
 val mkILResourcesLazy: Lazy<ILResource list> -> ILResources
 
 /// Making modules
-val mkILSimpleModule: assemblyName:string -> moduleName:string -> dll:bool -> ILTypeDefs -> int32 option -> string option -> int -> ILExportedTypesAndForwarders -> string -> ILModuleDef
+val mkILSimpleModule: assemblyName:string -> moduleName:string -> dll:bool -> subsystemVersion : (int * int) -> useHighEntropyVA : bool -> ILTypeDefs -> int32 option -> string option -> int -> ILExportedTypesAndForwarders -> string -> ILModuleDef
 
 /// Generate references to existing type definitions, method definitions
 /// etc.  Useful for generating references, e.g. to a  class we're processing

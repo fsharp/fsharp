@@ -1,6 +1,8 @@
 /// Some filename operations.    
 module internal Internal.Utilities.Filename
 
+exception IllegalFileNameChar of string * char
+
 /// "checkSuffix f s" returns true if filename "f" ends in suffix "s",
 /// e.g. checkSuffix "abc.fs" ".fs" returns true.
 val checkSuffix: string -> string -> bool
@@ -14,4 +16,11 @@ val directoryName: string -> string
 
 /// Return true if the filename has a "." extension
 val hasExtension: string -> bool
+
+/// Get the filename of the given path
+val fileNameOfPath: string -> string
+
+/// Get the filename without extenstion of the given path
+val fileNameWithoutExtension: string -> string
+
 

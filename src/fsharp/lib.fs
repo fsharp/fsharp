@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2011 Microsoft Corporation. 
+// Copyright (c) 2002-2012 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -33,7 +33,8 @@ let condition _s =
 #else    
     try (System.Environment.GetEnvironmentVariable(_s) <> null) with _ -> false
 #endif    
-    
+
+let dispose (x:System.IDisposable) = match x with null -> () | x -> x.Dispose()
 
 //-------------------------------------------------------------------------
 // Library: bits
@@ -51,29 +52,20 @@ module Bits =
     let mask64 m n = (pown64 n) <<< m
 
 
-module List = 
-    let noRepeats xOrder xs =
-        let s = Zset.addList   xs (Zset.empty xOrder) // build set 
-        Zset.elements s          // get elements... no repeats 
-
-
 //-------------------------------------------------------------------------
 // Library: files
 //------------------------------------------------------------------------
 
 module Filename = 
     let fullpath cwd nm = 
-        let p = if Path.IsPathRootedShim(nm) then nm else Path.Combine(cwd,nm)
-#if SILVERLIGHT
-        p
-#else
-        try Path.GetFullPathShim(p) with 
+        let p = if FileSystem.IsPathRootedShim(nm) then nm else Path.Combine(cwd,nm)
+        try FileSystem.GetFullPathShim(p) with 
         | :? System.ArgumentException 
         | :? System.ArgumentNullException 
         | :? System.NotSupportedException 
         | :? System.IO.PathTooLongException 
         | :? System.Security.SecurityException -> p
-#endif
+
     let hasSuffixCaseInsensitive suffix filename = (* case-insensitive *)
       Filename.checkSuffix (String.lowercase filename) (String.lowercase suffix)
 
@@ -98,6 +90,18 @@ module Pair =
              member __.Compare((a1,a2),(aa1,aa2)) =
                   let res1 = compare1.Compare (a1, aa1)
                   if res1 <> 0 then res1 else compare2.Compare (a2, aa2) }
+
+
+type NameSet =  Zset<string>
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module NameSet =
+    let ofList l : NameSet = List.foldBack Zset.add l (Zset.empty String.order)
+
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module NameMap = 
+    let domain m = Map.foldBack (fun x _ acc -> Zset.add x acc) m (Zset.empty String.order)
+    let domainL m = Zset.elements (domain m)
+
 
 (*
 
@@ -141,113 +145,6 @@ and Atom internal (idx:int32
 *)            
 
     
-//-------------------------------------------------------------------------
-// Library: Name maps
-//------------------------------------------------------------------------
-
-type NameMap<'T> = Map<string,'T>
-type NameSet =  Zset<string>
-type NameMultiMap<'T> = NameMap<'T list>
-type MultiMap<'T,'U when 'T : comparison> = Map<'T,'U list>
-
-[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module NameSet =
-    let ofList l : NameSet = List.foldBack Zset.add l (Zset.empty String.order)
-
-[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module NameMap = 
-
-    let empty = Map.empty
-    let domain m = Map.foldBack (fun x _ acc -> Zset.add x acc) m (Zset.empty String.order)
-    let domainL m = Zset.elements (domain m)
-    let range m = List.rev (Map.foldBack (fun _ x sofar -> x :: sofar) m [])
-    let foldBack f (m:NameMap<'T>) z = Map.foldBack f m z
-    let forall f m = Map.foldBack (fun x y sofar -> sofar && f x y) m true
-    let exists f m = Map.foldBack (fun x y sofar -> sofar || f x y) m false
-    let ofKeyedList f l = List.foldBack (fun x acc -> Map.add (f x) x acc) l Map.empty
-    let ofList l : NameMap<'T> = Map.ofList l
-    let ofFlatList (l:FlatList<_>) : NameMap<'T> = FlatList.toMap l
-    let toList (l: NameMap<'T>) = Map.toList l
-    let layer (m1 : NameMap<'T>) m2 = Map.foldBack Map.add m1 m2
-
-    (* not a very useful function - only called in one place - should be changed *)
-    let layerAdditive addf m1 m2 = 
-      Map.foldBack (fun x y sofar -> Map.add x (addf (Map.tryFindMulti x sofar) y) sofar) m1 m2
-
-    // Union entries by identical key, using the provided function to union sets of values
-    let union unionf (ms: NameMap<_> seq) = 
-        seq { for m in ms do yield! m } 
-           |> Seq.groupBy (fun (KeyValue(k,_v)) -> k) 
-           |> Seq.map (fun (k,es) -> (k,unionf (Seq.map (fun (KeyValue(_k,v)) -> v) es))) 
-           |> Map.ofSeq
-
-    (* For every entry in m2 find an entry in m1 and fold *)
-    let subfold2 errf f m1 m2 acc =
-        Map.foldBack (fun n x2 acc -> try f n (Map.find n m1) x2 acc with :? KeyNotFoundException -> errf n x2) m2 acc
-
-    let suball2 errf p m1 m2 = subfold2 errf (fun _ x1 x2 acc -> p x1 x2 && acc) m1 m2 true
-
-    let mapFold f s (l: NameMap<'T>) = 
-        Map.foldBack (fun x y (l',s') -> let y',s'' = f s' x y in Map.add x y' l',s'') l (Map.empty,s)
-
-    let foldBackRange f (l: NameMap<'T>) acc = Map.foldBack (fun _ y acc -> f y acc) l acc
-
-    let filterRange f (l: NameMap<'T>) = Map.foldBack (fun x y acc -> if f y then Map.add x y acc else acc) l Map.empty
-
-    let mapFilter f (l: NameMap<'T>) = Map.foldBack (fun x y acc -> match f y with None -> acc | Some y' -> Map.add x y' acc) l Map.empty
-
-    let map f (l : NameMap<'T>) = Map.map (fun _ x -> f x) l
-
-    let iter f (l : NameMap<'T>) = Map.iter (fun _k v -> f v) l
-
-    let iteri f (l : NameMap<'T>) = Map.iter f l
-
-    let mapi f (l : NameMap<'T>) = Map.map f l
-
-    let partition f (l : NameMap<'T>) = Map.filter (fun _ x-> f x) l, Map.filter (fun _ x -> not (f x)) l
-
-    let mem v (m: NameMap<'T>) = Map.containsKey v m
-
-    let find v (m: NameMap<'T>) = Map.find v m
-
-    let tryFind v (m: NameMap<'T>) = Map.tryFind v m 
-
-    let add v x (m: NameMap<'T>) = Map.add v x m
-
-    let isEmpty (m: NameMap<'T>) = (Map.isEmpty  m)
-
-    let existsInRange p m =  Map.foldBack (fun _ y acc -> acc || p y) m false 
-
-    let tryFindInRange p m = 
-        Map.foldBack (fun _ y acc -> 
-             match acc with 
-             | None -> if p y then Some y else None 
-             | _ -> acc) m None 
-
-[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module NameMultiMap = 
-    let existsInRange f (m: NameMultiMap<'T>) = NameMap.exists (fun _ l -> List.exists f l) m
-    let find v (m: NameMultiMap<'T>) = match Map.tryFind v m with None -> [] | Some r -> r
-    let add v x (m: NameMultiMap<'T>) = NameMap.add v (x :: find v m) m
-    let range (m: NameMultiMap<'T>) = Map.foldBack (fun _ x sofar -> x @ sofar) m []
-    let rangeReversingEachBucket (m: NameMultiMap<'T>) = Map.foldBack (fun _ x sofar -> List.rev x @ sofar) m []
-    
-    let chooseRange f (m: NameMultiMap<'T>) = Map.foldBack (fun _ x sofar -> List.choose f x @ sofar) m []
-    let map f (m: NameMultiMap<'T>) = NameMap.map (List.map f) m 
-    let empty : NameMultiMap<'T> = Map.empty
-    let initBy f xs : NameMultiMap<'T> = xs |> Seq.groupBy f |> Seq.map (fun (k,v) -> (k,List.ofSeq v)) |> Map.ofSeq 
-    let ofList (xs: (string * 'T) list) : NameMultiMap<'T> = xs |> Seq.groupBy fst |> Seq.map (fun (k,v) -> (k,List.ofSeq (Seq.map snd v))) |> Map.ofSeq 
-
-[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module MultiMap = 
-    let existsInRange f (m: MultiMap<_,_>) = Map.exists (fun _ l -> List.exists f l) m
-    let find v (m: MultiMap<_,_>) = match Map.tryFind v m with None -> [] | Some r -> r
-    let add v x (m: MultiMap<_,_>) = Map.add v (x :: find v m) m
-    let range (m: MultiMap<_,_>) = Map.foldBack (fun _ x sofar -> x @ sofar) m []
-    //let chooseRange f (m: MultiMap<_,_>) = Map.foldBack (fun _ x sofar -> List.choose f x @ sofar) m []
-    let empty : MultiMap<_,_> = Map.empty
-    let initBy f xs : MultiMap<_,_> = xs |> Seq.groupBy f |> Seq.map (fun (k,v) -> (k,List.ofSeq v)) |> Map.ofSeq 
-
 
 //---------------------------------------------------------------------------
 // Library: Pre\Post checks
@@ -413,6 +310,13 @@ let foldTriple (f1,f2,f3) acc (a1,a2,a3)      = f3 (f2 (f1 acc a1) a2) a3
 let mapPair (f1,f2)    (a1,a2)     = (f1 a1, f2 a2)
 let mapTriple (f1,f2,f3) (a1,a2,a3)  = (f1 a1, f2 a2, f3 a3)
 let fmap2Of2 f z (a1,a2)       = let z,a2 = f z a2 in z,(a1,a2)
+
+module List = 
+    let noRepeats xOrder xs =
+        let s = Zset.addList   xs (Zset.empty xOrder) // build set 
+        Zset.elements s          // get elements... no repeats 
+
+    let groupBy f (xs:list<'T>) =  xs |> Seq.groupBy f |> Seq.map (map2Of2 Seq.toList) |> Seq.toList
 
 //---------------------------------------------------------------------------
 // Zmap rebinds
@@ -622,7 +526,92 @@ type Dumper(x:obj) =
      member self.Dump = sprintf "%A" x 
 #endif
 
+//---------------------------------------------------------------------------
+// AsyncUtil
+//---------------------------------------------------------------------------
 
+module internal AsyncUtil =
+    open System
+    open System.Threading
+    open Microsoft.FSharp.Control
+
+    /// Represents the reified result of an asynchronous computation
+    [<NoEquality; NoComparison>]
+    type AsyncResult<'T>  =
+        |   AsyncOk of 'T
+        |   AsyncException of exn
+        |   AsyncCanceled of OperationCanceledException
+
+        static member Commit(res:AsyncResult<'T>) =
+            Async.FromContinuations (fun (cont,econt,ccont) ->
+                    match res with
+                    | AsyncOk v -> cont v
+                    | AsyncException exn -> econt exn
+                    | AsyncCanceled exn -> ccont exn)
+
+    /// When using .NET 4.0 you can replace this type by Task<'T>
+    [<Sealed>]
+    type AsyncResultCell<'T>() =
+        let mutable result = None
+        // The continuation for the result, if any
+        let mutable savedConts = []
+       
+        let syncRoot = new obj()
+               
+
+        // Record the result in the AsyncResultCell.
+        // Ignore subsequent sets of the result. This can happen, e.g. for a race between
+        // a cancellation and a success.
+        member x.RegisterResult (res:AsyncResult<'T>) =
+            let grabbedConts =
+                lock syncRoot (fun () ->
+                    if result.IsSome then  
+                        []
+                    else
+                        result <- Some res;
+                        // Invoke continuations in FIFO order
+                        // Continuations that Async.FromContinuations provide do QUWI/SynchContext.Post,
+                        // so the order is not overly relevant but still.                        
+                        List.rev savedConts)
+            let postOrQueue (sc:SynchronizationContext,cont) =
+                match sc with
+                |   null -> ThreadPool.QueueUserWorkItem(fun _ -> cont res) |> ignore
+                |   sc -> sc.Post((fun _ -> cont res), state=null)
+
+            // Run continuations outside the lock
+            match grabbedConts with
+            |   [] -> ()
+            |   [(sc,cont) as c] -> 
+                    if SynchronizationContext.Current = sc then
+                        cont res
+                    else
+                        postOrQueue c
+            |   _ ->
+                    grabbedConts |> List.iter postOrQueue
+
+        /// Get the reified result
+        member private x.AsyncPrimitiveResult =
+            Async.FromContinuations(fun (cont,_,_) ->
+                let grabbedResult =
+                    lock syncRoot (fun () ->
+                        match result with
+                        | Some _ ->
+                            result
+                        | None ->
+                            // Otherwise save the continuation and call it in RegisterResult
+                            let sc = SynchronizationContext.Current
+                            savedConts <- (sc,cont)::savedConts
+                            None)
+                // Run the action outside the lock
+                match grabbedResult with
+                | None -> ()
+                | Some res -> cont res)
+                          
+
+        /// Get the result and commit it
+        member x.AsyncResult =
+            async { let! res = x.AsyncPrimitiveResult
+                    return! AsyncResult.Commit(res) }
 
 //---------------------------------------------------------------------------
 // EnableHeapTerminationOnCorruption()

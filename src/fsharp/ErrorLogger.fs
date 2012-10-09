@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2011 Microsoft Corporation. 
+// Copyright (c) 2002-2012 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -18,6 +18,7 @@ open Microsoft.FSharp.Compiler
 open Microsoft.FSharp.Compiler.AbstractIL.Diagnostics
 open Microsoft.FSharp.Compiler.Lib
 open Microsoft.FSharp.Compiler.Range
+open System
 
 //------------------------------------------------------------------------
 // General error recovery mechanism
@@ -33,7 +34,11 @@ exception WrappedError of exn * range
 /// The exception that caused the report is carried as data because in some
 /// situations (LazyWithContext) we may need to re-report the original error
 /// when a lazy thunk is re-evaluated.
-exception ReportedError of exn option
+exception ReportedError of exn option with
+    override this.Message =
+        match this :> exn with
+        | ReportedError (Some exn) -> exn.Message
+        | _ -> "ReportedError"
 
 let rec findOriginalException err = 
     match err with 
@@ -47,8 +52,16 @@ exception StopProcessing
 
 
 (* common error kinds *)
-exception NumberedError of (int * string) * range   // int is e.g. 191 in FS0191
-exception Error of (int * string) * range   // int is e.g. 191 in FS0191  // eventually remove this type, it is a transitional artifact of the old unnumbered error style
+exception NumberedError of (int * string) * range with   // int is e.g. 191 in FS0191
+    override this.Message =
+        match this :> exn with
+        | NumberedError((_,msg),_) -> msg
+        | _ -> "impossible"
+exception Error of (int * string) * range with   // int is e.g. 191 in FS0191  // eventually remove this type, it is a transitional artifact of the old unnumbered error style
+    override this.Message =
+        match this :> exn with
+        | Error((_,msg),_) -> msg
+        | _ -> "impossible"
 exception InternalError of string * range
 exception UserCompilerMessage of string * int * range
 exception LibraryUseOnly of range
@@ -94,21 +107,18 @@ let rec AttachRange m (exn:exn) =
 // Error logger interface
 
 type Exiter = 
-    abstract Exit : int -> 'T
+    abstract Exit : int -> 'T 
 
 let QuitProcessExiter = 
     { new Exiter with 
         member x.Exit(n) = 
-            try 
 #if SILVERLIGHT
-              // SILVERLIGHT-TODO: Wire up an event handler for exit
-              ()
 #else                    
+            try 
               System.Environment.Exit(n)
-#endif              
-
             with _ -> 
               ()
+#endif              
             failwithf "%s" <| FSComp.SR.elSysEnvExitDidntExit() }
 
 /// Closed enumeration of build phases.
@@ -147,6 +157,7 @@ module BuildPhaseSubcategory =
     [<Literal>] 
     let Internal = "internal"          // Compiler ICE
 
+[<System.Diagnostics.DebuggerDisplay("{DebugDisplay()}")>]
 type PhasedError = { Exception:exn; Phase:BuildPhase } with
     /// Construct a phased error
     static member Create(exn:exn,phase:BuildPhase) : PhasedError =
@@ -155,6 +166,8 @@ type PhasedError = { Exception:exn; Phase:BuildPhase } with
         System.Diagnostics.Debug.Assert(phase<>BuildPhase.DefaultPhase, sprintf "Compile error seen with no phase to attribute it to.%A %s %s" phase exn.Message exn.StackTrace )        
 #endif
         {Exception = exn; Phase=phase}
+    member this.DebugDisplay() =
+        sprintf "%s: %s" (this.Subcategory()) this.Exception.Message
     /// This is the textual subcategory to display in error and warning messages (shows only under --vserrors):
     ///
     ///     file1.fs(72): subcategory warning FS0072: This is a warning message
@@ -175,6 +188,7 @@ type PhasedError = { Exception:exn; Phase:BuildPhase } with
     /// Return true if the textual phase given is from the compile part of the build process.
     /// This set needs to be equal to the set of subcategories that the language service can produce. 
     static member IsSubcategoryOfCompile(subcategory:string) =
+        // Beware: This code logic is duplicated in DocumentTask.cs in the language service
         match subcategory with 
         | BuildPhaseSubcategory.Compile 
         | BuildPhaseSubcategory.Parameter 
@@ -213,22 +227,36 @@ type PhasedError = { Exception:exn; Phase:BuildPhase } with
 #endif            
         isPhaseInCompile
 
-type ErrorLogger = 
-    abstract ErrorCount: int;
-    abstract WarnSink: PhasedError -> unit;
-    abstract ErrorSink: PhasedError -> unit
+[<AbstractClass>]
+[<System.Diagnostics.DebuggerDisplay("{DebugDisplay()}")>]
+type ErrorLogger(nameForDebugging:string) = 
+    abstract ErrorCount: int
+    // the purpose of the 'Impl' factoring is so that you can put a breakpoint on the non-Impl code just below, and get a breakpoint for all implementations of error loggers
+    abstract WarnSinkImpl: PhasedError -> unit
+    abstract ErrorSinkImpl: PhasedError -> unit
+    member this.WarnSink err = 
+        this.WarnSinkImpl err
+    member this.ErrorSink err =
+        this.ErrorSinkImpl err
+    member this.DebugDisplay() = sprintf "ErrorLogger(%s)" nameForDebugging
 
 let DiscardErrorsLogger = 
-    { new ErrorLogger with 
-            member x.WarnSink(e)  = ()
-            member x.ErrorSink(e) = ()
-            member x.ErrorCount   = 0 }
+    { new ErrorLogger("DiscardErrorsLogger") with 
+            member x.WarnSinkImpl(e) = 
+                ()
+            member x.ErrorSinkImpl(e) = 
+                ()
+            member x.ErrorCount = 
+                0 }
 
 let AssertFalseErrorLogger =
-    { new ErrorLogger with 
-            member x.WarnSink(e)  = assert false; ()
-            member x.ErrorSink(e) = assert false; ()
-            member x.ErrorCount   = assert false; 0 }
+    { new ErrorLogger("AssertFalseErrorLogger") with 
+            member x.WarnSinkImpl(e) = 
+                assert false; ()
+            member x.ErrorSinkImpl(e) = 
+                assert false; ()
+            member x.ErrorCount = 
+                assert false; 0 }
 
 /// When no errorLogger is installed (on the thread) use this one.
 let uninitializedErrorLoggerFallback = ref AssertFalseErrorLogger
@@ -244,11 +272,11 @@ type internal CompileThreadStatic =
     static member BuildPhaseUnchecked with get() = CompileThreadStatic.buildPhase (* This can be a null value *)
     static member BuildPhase
         with get() = if box CompileThreadStatic.buildPhase <> null then CompileThreadStatic.buildPhase else (assert false; BuildPhase.DefaultPhase)
-        and set(v) = CompileThreadStatic.buildPhase <- v
+        and set v = CompileThreadStatic.buildPhase <- v
             
     static member ErrorLogger
         with get() = if box CompileThreadStatic.errorLogger <> null then CompileThreadStatic.errorLogger else !uninitializedErrorLoggerFallback
-        and set(v) = CompileThreadStatic.errorLogger <- v
+        and set v = CompileThreadStatic.errorLogger <- v
 
 
 [<AutoOpen>]
@@ -336,10 +364,10 @@ let PushErrorLoggerPhaseUntilUnwind(errorLoggerTransformer : ErrorLogger -> #Err
     let oldErrorLogger = CompileThreadStatic.ErrorLogger
     let newErrorLogger = errorLoggerTransformer oldErrorLogger
     let newInstalled = ref true
-    let newIsInstalled() = if !newInstalled then () else (assert false; (); ) 
-    let chkErrorLogger = { new ErrorLogger with
-                             member x.WarnSink(e)  = newIsInstalled(); newErrorLogger.WarnSink(e)
-                             member x.ErrorSink(e) = newIsInstalled(); newErrorLogger.ErrorSink(e)
+    let newIsInstalled() = if !newInstalled then () else (assert false; (); (*failwith "error logger used after unwind"*)) // REVIEW: ok to throw?
+    let chkErrorLogger = { new ErrorLogger("PushErrorLoggerPhaseUntilUnwind") with
+                             member x.WarnSinkImpl(e)  = newIsInstalled(); newErrorLogger.WarnSink(e)
+                             member x.ErrorSinkImpl(e) = newIsInstalled(); newErrorLogger.ErrorSink(e)
                              member x.ErrorCount   = newIsInstalled(); newErrorLogger.ErrorCount }
     CompileThreadStatic.ErrorLogger <- chkErrorLogger
     { new System.IDisposable with 
@@ -377,8 +405,25 @@ let libraryOnlyWarning m = if reportLibraryOnlyFeatures then warning(LibraryUseO
 let deprecatedOperator m = deprecatedWithError (FSComp.SR.elDeprecatedOperator()) m
 let mlCompatWarning s m = warning(UserCompilerMessage(FSComp.SR.mlCompatMessage s, 62, m))
 
+let suppressErrorReporting f =
+    let errorLogger = CompileThreadStatic.ErrorLogger
+    try
+        let errorLogger = 
+            { new ErrorLogger("suppressErrorReporting") with 
+                member x.WarnSinkImpl(_exn) = ()
+                member x.ErrorSinkImpl(_exn) = ()
+                member x.ErrorCount = 0 }
+        SetThreadErrorLoggerNoUnwind(errorLogger)
+        f()
+    finally
+        SetThreadErrorLoggerNoUnwind(errorLogger)
+
+let conditionallySuppressErrorReporting cond f = if cond then suppressErrorReporting f else f()
+
 //------------------------------------------------------------------------
 // Errors as data: Sometimes we have to reify errors as data, e.g. if backtracking 
+//
+// REVIEW: consider using F# computation expressions here
 
 [<NoEquality; NoComparison>]
 type OperationResult<'T> = 
@@ -454,3 +499,37 @@ let TryD f g =
 
 let rec RepeatWhileD ndeep body = body ndeep ++ (function true -> RepeatWhileD (ndeep+1) body | false -> CompleteD) 
 let AtLeastOneD f l = MapD f l ++ (fun res -> ResultD (List.exists id res))
+
+
+// Code below is for --flaterrors flag that is only used by the IDE
+
+let stringThatIsAProxyForANewlineInFlatErrors = new System.String[|char 29 |]
+
+let NewlineifyErrorString (message:string) = message.Replace(stringThatIsAProxyForANewlineInFlatErrors, Environment.NewLine)
+
+/// fixes given string by replacing all control chars with spaces.
+/// NOTE: newlines are recognized and replaced with stringThatIsAProxyForANewlineInFlatErrors (ASCII 29, the 'group separator'), 
+/// which is decoded by the IDE with 'NewlineifyErrorString' back into newlines, so that multi-line errors can be displayed in QuickInfo
+let NormalizeErrorString (text : string) =    
+    if text = null then nullArg "text"
+    let text = text.Trim()
+
+    let buf = System.Text.StringBuilder()
+    let mutable i = 0
+    while i < text.Length do
+        let delta = 
+            match text.[i] with
+            | '\r' when i + 1 < text.Length && text.[i + 1] = '\n' ->
+                // handle \r\n sequence - replace it with one single space
+                buf.Append(stringThatIsAProxyForANewlineInFlatErrors) |> ignore
+                2
+            | '\n' ->
+                buf.Append(stringThatIsAProxyForANewlineInFlatErrors) |> ignore
+                1
+            | c ->
+                // handle remaining chars: control - replace with space, others - keep unchanged
+                let c = if Char.IsControl(c) then ' ' else c
+                buf.Append(c) |> ignore
+                1
+        i <- i + delta
+    buf.ToString()

@@ -166,7 +166,7 @@
     <value>Discriminated union cases and exception labels must be uppercase identifiers</value>
   </data>
   <data name="PossibleOverload" xml:space="preserve">
-    <value>Possible overload: '{0}'.</value>
+    <value>Possible overload: '{0}'. {1}.</value>
   </data>
   <data name="PossibleBestOverload" xml:space="preserve">
     <value>\n\nPossible best overload: '{0}'.</value>
@@ -506,6 +506,9 @@
   </data>
   <data name="Parser.TOKEN.ODO" xml:space="preserve">
     <value>keyword 'do'</value>
+  </data>
+  <data name="Parser.TOKEN.CONST" xml:space="preserve">
+    <value>keyword 'const'</value>
   </data>
   <data name="Parser.TOKEN.OWITH" xml:space="preserve">
     <value>keyword 'with'</value>
@@ -904,7 +907,7 @@
     <value>This value will be eventually evaluated as part of its own definition. You may need to make the value lazy or a function. Value '{0}'{1}.</value>
   </data>
   <data name="LetRecUnsoundInner" xml:space="preserve">
-    <value>" will evaluate '{0}'"</value>
+    <value> will evaluate '{0}'</value>
   </data>
   <data name="LetRecEvaluatedOutOfOrder" xml:space="preserve">
     <value>Bindings may be executed out-of-order because of this forward reference.</value>

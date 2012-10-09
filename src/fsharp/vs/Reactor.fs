@@ -1,6 +1,5 @@
 //----------------------------------------------------------------------------
-//
-// Copyright (c) 2002-2011 Microsoft Corporation. 
+// Copyright (c) 2002-2012 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -9,11 +8,11 @@
 //
 // You must not remove this notice, or any other, from this software.
 //----------------------------------------------------------------------------
-//----------------------------------------------------------------------------
 
 namespace Microsoft.FSharp.Compiler.SourceCodeServices
 open System
 open Microsoft.FSharp.Control
+open Microsoft.FSharp.Compiler.Lib
 
 module internal Reactor =
 
@@ -55,7 +54,8 @@ module internal Reactor =
         | Idling
         | ActivelyBuilding of BuildStepper
         | FinishingBuild of BuildStepper * AsyncReplyChannel<ResultOrException<unit>>
-        | BackgroundError of Exception                                         // An exception was seen in a prior state. The exception is preserved so it can be thrown back to the calling thread.
+        /// An exception was seen in a prior state. The exception is preserved so it can be thrown back to the calling thread.
+        | BackgroundError of Exception                                         
         override rs.ToString() = 
             match rs with 
             | Idling->"Idling" 
@@ -98,7 +98,7 @@ module internal Reactor =
                 | Idling -> 
                     match recentBuild with
                     | None -> Idling
-                    | Some(mostRecent) -> HandleStartBuild mostRecent Idling
+                    | Some mostRecent -> HandleStartBuild mostRecent Idling
                 | state -> state
                 
             // Stop the build.
@@ -108,30 +108,24 @@ module internal Reactor =
                   | ActivelyBuilding(_) 
                   | Idling -> channel.Reply(Result ())
                   | FinishingBuild(_, channel) -> UnexpectedFinishingBuild "StopBuild" channel
-                  | BackgroundError(e)-> channel.Reply(Exception e)
+                  | BackgroundError e-> channel.Reply(Exception e)
                 Idling
                 
             // Do the given operation
             let HandleAsyncOp op state = 
-                match state with
-                  | ActivelyBuilding(_) 
-                  | BackgroundError(_)
-                  | Idling -> 
-                        try 
-                            op()
-                            state                            
-                        with 
-                        | e->
-                            System.Diagnostics.Debug.Assert(false, sprintf "Bug in target of HandleAsyncOp: %A: %s\nThe most recent error reported to an error scope: %+A\n" (e.GetType()) e.Message e.StackTrace)
-                            state
-                  | FinishingBuild(_, oldChannel) -> 
-                        UnexpectedFinishingBuild "AsyncOp" oldChannel
-                        Idling
+                try 
+                    op()
+                    state                            
+                with 
+                | e->
+                    System.Diagnostics.Debug.Assert(false, sprintf "Bug in target of HandleAsyncOp: %A: %s\nThe most recent error reported to an error scope: %+A\n" (e.GetType()) e.Message e.StackTrace)
+                    state
                 
             // Do the given operation and reply
             let HandleSyncOp op (channel:AsyncReplyChannel<_>) state = 
                 match state with
                   | ActivelyBuilding(_) 
+                  | FinishingBuild(_)  
                   | Idling -> 
                         try 
                             op()
@@ -141,10 +135,6 @@ module internal Reactor =
                         | e->
                             channel.Reply(Exception e)
                             state
-                  | FinishingBuild(_, oldChannel) -> 
-                        UnexpectedFinishingBuild "SyncOp" channel
-                        UnexpectedFinishingBuild "SyncOp" oldChannel
-                        Idling
                   | BackgroundError(e)->
                         channel.Reply(Exception e)
                         Idling
@@ -241,11 +231,29 @@ module internal Reactor =
         member r.AsyncOp(op) =
             builder.Post(AsyncOp(op)) 
 
+        // This is for testing only
         member r.WaitForBackgroundCompile() =
             match builder.PostAndReply(fun replyChannel->FinishBuild(replyChannel)) with
             | Result result->result
-            | Exception excn->
-                raise excn
+            | Exception excn->raise excn
+
+        member r.RunSyncOp f = 
+            let result = ref None
+            r.SyncOp (fun () -> result := Some(f()))
+            Option.get !result
+
+        member r.RunAsyncOp f = 
+            let resultCell = AsyncUtil.AsyncResultCell<_>()
+            r.AsyncOp(
+                fun () ->
+                    let result =
+                        try
+                            f () |> AsyncUtil.AsyncOk
+                        with
+                        |   e -> e |> AsyncUtil.AsyncException
+                    resultCell.RegisterResult(result)
+            )
+            resultCell.AsyncResult
 
     let mutable theReactor = Reactor()
     let Reactor() = theReactor

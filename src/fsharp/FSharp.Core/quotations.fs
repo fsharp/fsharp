@@ -1,6 +1,5 @@
 ﻿//----------------------------------------------------------------------------
-//
-// Copyright (c) 2002-2011 Microsoft Corporation. 
+// Copyright (c) 2002-2012 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -132,12 +131,12 @@ type Var(name: string, typ:Type, ?isMutable: bool) =
                 if c <> 0 then c else 
 #if FX_NO_REFLECTION_METADATA_TOKENS // not available on Compact Framework
 #else
-                let c = compare v.Type.MetadataToken v2.Type.MetadataToken in 
+                let c = compare v.Type.MetadataToken v2.Type.MetadataToken 
                 if c <> 0 then c else 
-                let c = compare v.Type.Module.MetadataToken v2.Type.Module.MetadataToken in 
+                let c = compare v.Type.Module.MetadataToken v2.Type.Module.MetadataToken 
                 if c <> 0 then c else 
 #endif
-                let c = compare v.Type.Assembly.FullName v2.Type.Assembly.FullName in 
+                let c = compare v.Type.Assembly.FullName v2.Type.Assembly.FullName 
                 if c <> 0 then c else 
                 compare v.Stamp v2.Stamp
             | _ -> 0
@@ -203,11 +202,13 @@ and [<CompiledName("FSharpExpr")>]
     override x.GetHashCode() = 
         x.Tree.GetHashCode() 
 
-    override x.ToString() = 
-        Microsoft.FSharp.Text.StructuredPrintfImpl.Display.layout_to_string Microsoft.FSharp.Text.StructuredPrintfImpl.FormatOptions.Default (x.GetLayout())
+    override x.ToString() = x.ToString(false)
+
+    member x.ToString(long) = 
+        Microsoft.FSharp.Text.StructuredPrintfImpl.Display.layout_to_string Microsoft.FSharp.Text.StructuredPrintfImpl.FormatOptions.Default (x.GetLayout(long))
         
-    member x.GetLayout() = 
-        let expr (e:Expr ) = e.GetLayout()
+    member x.GetLayout(long) = 
+        let expr (e:Expr ) = e.GetLayout(long)
         let exprs (es:Expr list) = es |> List.map expr
         let parens ls = bracketL (commaListL ls)
         let pairL l1 l2 = bracketL (l1 ^^ sepL "," ^^ l2)
@@ -215,13 +216,17 @@ and [<CompiledName("FSharpExpr")>]
         let combL nm ls = wordL nm ^^ parens ls
         let noneL = wordL "None"
         let someL e = combL "Some" [expr e]
-        let typeL (o: Type)  = wordL o.FullName
+        let typeL (o: Type)  = wordL (if long then o.FullName else o.Name)
         let objL (o: 'T)  = wordL (sprintf "%A" o)
         let varL (v:Var) = wordL v.Name
         let (|E|) (e: Expr) = e.Tree
         let (|Lambda|_|)        (E x) = match x with LambdaTerm(a,b)  -> Some (a,b) | _ -> None 
         let (|IteratedLambda|_|) (e: Expr) = qOneOrMoreRLinear (|Lambda|_|) e
-        
+        let ucaseL (unionCase:UnionCaseInfo) = (if long then objL unionCase else wordL unionCase.Name) 
+        let minfoL (minfo: MethodInfo) = if long then objL minfo else wordL minfo.Name 
+        let cinfoL (cinfo: ConstructorInfo) = if long then objL cinfo else wordL cinfo.DeclaringType.Name
+        let pinfoL (pinfo: PropertyInfo) = if long then objL pinfo else wordL pinfo.Name
+        let finfoL (finfo: FieldInfo) = if long then objL finfo else wordL finfo.Name
         let rec (|NLambdas|_|) n (e:Expr) = 
             match e with 
             | _ when n <= 0 -> Some([],e) 
@@ -231,26 +236,26 @@ and [<CompiledName("FSharpExpr")>]
         match x.Tree with 
         | CombTerm(AppOp,args)                     -> combL "Application" (exprs args)
         | CombTerm(IfThenElseOp,args)              -> combL "IfThenElse" (exprs args)
-        | CombTerm(LetRecOp,[IteratedLambda(vs,E(CombTerm(LetRecCombOp,b2::bs)))]) -> combL "LetRecursive" [listL (List.map2 pairL (List.map varL vs) (exprs bs) ); b2.GetLayout()]
-        | CombTerm(LetOp,[e;E(LambdaTerm(v,b))]) -> combL "Let" [varL v; e.GetLayout(); b.GetLayout()]
+        | CombTerm(LetRecOp,[IteratedLambda(vs,E(CombTerm(LetRecCombOp,b2::bs)))]) -> combL "LetRecursive" [listL (List.map2 pairL (List.map varL vs) (exprs bs) ); b2.GetLayout(long)]
+        | CombTerm(LetOp,[e;E(LambdaTerm(v,b))]) -> combL "Let" [varL v; e.GetLayout(long); b.GetLayout(long)]
         | CombTerm(NewRecordOp(ty),args)           -> combL "NewRecord" (typeL ty :: exprs args)
-        | CombTerm(NewUnionCaseOp(unionCase),args)    -> combL "NewUnionCase" (objL unionCase :: exprs args)
-        | CombTerm(UnionCaseTestOp(unionCase),args)   -> combL "UnionCaseTest" (exprs args@ [objL unionCase])
+        | CombTerm(NewUnionCaseOp(unionCase),args)    -> combL "NewUnionCase" (ucaseL unionCase :: exprs args)
+        | CombTerm(UnionCaseTestOp(unionCase),args)   -> combL "UnionCaseTest" (exprs args@ [ucaseL unionCase])
         | CombTerm(NewTupleOp _,args)            -> combL "NewTuple" (exprs args)
         | CombTerm(TupleGetOp (_,i),[arg])         -> combL "TupleGet" ([expr arg] @ [objL i])
         | CombTerm(ValueOp(v,_),[])               -> combL "Value" [objL v]
-        | CombTerm(InstanceMethodCallOp(minfo),obj::args) -> combL "Call"     [someL obj; objL minfo; listL (exprs args)]
-        | CombTerm(StaticMethodCallOp(minfo),args)        -> combL "Call"     [noneL;     objL minfo; listL (exprs args)]
-        | CombTerm(InstancePropGetOp(pinfo),(obj::args))  -> combL "PropertyGet"  [someL obj; objL pinfo; listL (exprs args)]
-        | CombTerm(StaticPropGetOp(pinfo),args)           -> combL "PropertyGet"  [noneL;     objL pinfo; listL (exprs args)]
-        | CombTerm(InstancePropSetOp(pinfo),(obj::args))  -> combL "PropertySet"  [someL obj; objL pinfo; listL (exprs args)]
-        | CombTerm(StaticPropSetOp(pinfo),args)           -> combL "PropertySet"  [noneL;     objL pinfo; listL (exprs args)]
-        | CombTerm(InstanceFieldGetOp(finfo),[obj])       -> combL "FieldGet" [someL obj; objL finfo]
-        | CombTerm(StaticFieldGetOp(finfo),[])            -> combL "FieldGet" [noneL;     objL finfo]
-        | CombTerm(InstanceFieldSetOp(finfo),[obj;v])       -> combL "FieldSet" [someL obj; objL finfo; expr v;]
-        | CombTerm(StaticFieldSetOp(finfo),[v])            -> combL "FieldSet" [noneL;     objL finfo; expr v;]
+        | CombTerm(InstanceMethodCallOp(minfo),obj::args) -> combL "Call"     [someL obj; minfoL minfo; listL (exprs args)]
+        | CombTerm(StaticMethodCallOp(minfo),args)        -> combL "Call"     [noneL;     minfoL minfo; listL (exprs args)]
+        | CombTerm(InstancePropGetOp(pinfo),(obj::args))  -> combL "PropertyGet"  [someL obj; pinfoL pinfo; listL (exprs args)]
+        | CombTerm(StaticPropGetOp(pinfo),args)           -> combL "PropertyGet"  [noneL;     pinfoL pinfo; listL (exprs args)]
+        | CombTerm(InstancePropSetOp(pinfo),(obj::args))  -> combL "PropertySet"  [someL obj; pinfoL pinfo; listL (exprs args)]
+        | CombTerm(StaticPropSetOp(pinfo),args)           -> combL "PropertySet"  [noneL;     pinfoL pinfo; listL (exprs args)]
+        | CombTerm(InstanceFieldGetOp(finfo),[obj])       -> combL "FieldGet" [someL obj; finfoL finfo]
+        | CombTerm(StaticFieldGetOp(finfo),[])            -> combL "FieldGet" [noneL;     finfoL finfo]
+        | CombTerm(InstanceFieldSetOp(finfo),[obj;v])       -> combL "FieldSet" [someL obj; finfoL finfo; expr v;]
+        | CombTerm(StaticFieldSetOp(finfo),[v])            -> combL "FieldSet" [noneL;     finfoL finfo; expr v;]
         | CombTerm(CoerceOp(ty),[arg])                    -> combL "Coerce"  [ expr arg; typeL ty]
-        | CombTerm(NewObjectOp minfo,args)   -> combL "NewObject" ([ objL minfo ] @ exprs args)
+        | CombTerm(NewObjectOp cinfo,args)   -> combL "NewObject" ([ cinfoL cinfo ] @ exprs args)
         | CombTerm(DefaultValueOp(ty),args)  -> combL "DefaultValue" ([ typeL ty ] @ exprs args)
         | CombTerm(NewArrayOp(ty),args)      -> combL "NewArray" ([ typeL ty ] @ exprs args)
         | CombTerm(TypeTestOp(ty),args)      -> combL "TypeTest" ([ typeL ty] @ exprs args)
@@ -266,10 +271,10 @@ and [<CompiledName("FSharpExpr")>]
             let n = (getDelegateInvoke ty).GetParameters().Length
             match e with 
             | NLambdas n (vs,e) -> combL "NewDelegate" ([typeL ty] @ (vs |> List.map varL) @ [expr e])
-            | _ -> combL "NewDelegate" ([typeL ty; expr e])
+            | _ -> combL "NewDelegate" [typeL ty; expr e]
         //| CombTerm(_,args)   -> combL "??" (exprs args)
         | VarTerm(v)   -> wordL v.Name
-        | LambdaTerm(v,b)   -> combL "Lambda" [wordL v.Name; expr b]
+        | LambdaTerm(v,b)   -> combL "Lambda" [varL v; expr b]
         | HoleTerm _  -> wordL "_"
         | CombTerm(QuoteOp,args) -> combL "Quote" (exprs args)
         | _ -> failwithf "Unexpected term in layout %A" x.Tree
@@ -569,8 +574,6 @@ module Patterns =
     let mkFE3 op (x,y,z) = E(CombTerm(op,[(x:>Expr);(y:>Expr);(z:>Expr)])  )
     let mkOp v () = v
 
-    let mkLetRaw v = mkFE2 LetOp v
-
     //--------------------------------------------------------------------------
     // Type-checked constructors for building Raw quotations
     //--------------------------------------------------------------------------
@@ -579,11 +582,11 @@ module Patterns =
     let assignableFrom (t1:Type) (t2:Type) =  
         t1.IsAssignableFrom(t2)
       
-    let checkTypesSR (expectedType: Type) (receivedType : Type)  name threeHoleSR =
+    let checkTypesSR (expectedType: Type) (receivedType : Type)  name (threeHoleSR : string) =
         if (expectedType <> receivedType) then 
           invalidArg "receivedType" (String.Format(threeHoleSR, name, expectedType, receivedType))
 
-    let checkTypesWeakSR (expectedType: Type) (receivedType : Type)  name threeHoleSR = 
+    let checkTypesWeakSR (expectedType: Type) (receivedType : Type)  name (threeHoleSR : string) = 
         if (not (assignableFrom expectedType receivedType)) then 
           invalidArg "receivedType" (String.Format(threeHoleSR, name, expectedType, receivedType))
   
@@ -650,6 +653,13 @@ module Patterns =
     let mkNull        (ty)   = mkFE0 (ValueOp(null,ty))
     
     let mkApplication v = checkAppliedLambda v; mkFE2 AppOp v 
+
+    let mkLetRaw v =
+        mkFE2 LetOp v
+
+    let mkLetRawWithCheck ((e1,e2) as v) =
+        checkAppliedLambda (e2,e1) 
+        mkLetRaw v
 
     // Tuples
     let mkNewTupleWithType    (ty,args:Expr list) = 
@@ -886,7 +896,11 @@ module Patterns =
           let resT  = instFormal tyargTs rty 
           let methInfo = 
               try 
+#if FX_ATLEAST_PORTABLE
+                 match parentT.GetMethod(nm,argTs) with 
+#else              
                  match parentT.GetMethod(nm,staticOrInstanceBindingFlags,null,argTs,null) with 
+#endif                 
                  | null -> None
                  | res -> Some(res)
                with :? AmbiguousMatchException -> None 
@@ -897,7 +911,11 @@ module Patterns =
           bindMethodBySearch(parentT,nm,marity,argtys,rty)
 
     let bindModuleProperty (ty:Type,nm) = 
+#if FX_ATLEAST_PORTABLE
+        match ty.GetProperty(nm) with
+#else    
         match ty.GetProperty(nm,staticBindingFlags) with
+#endif        
         | null -> raise <| System.InvalidOperationException (SR.GetString2(SR.QcannotBindProperty, nm, ty.ToString()))
         | res -> res
 
@@ -924,20 +942,30 @@ module Patterns =
         let typ = mkNamedType(tc,tyargs)
         let argtyps : Type list = argTypes |> inst tyargs
         let retType : Type = retType |> inst tyargs |> removeVoid
+#if FX_ATLEAST_PORTABLE
+        typ.GetProperty(propName, retType, Array.ofList argtyps) |> checkNonNullResult ("propName", SR.GetString1(SR.QfailedToBindProperty, propName)) // fxcop may not see "propName" as an arg
+#else        
         typ.GetProperty(propName, staticOrInstanceBindingFlags, null, retType, Array.ofList argtyps, null) |> checkNonNullResult ("propName", SR.GetString1(SR.QfailedToBindProperty, propName)) // fxcop may not see "propName" as an arg
-
+#endif
     let bindField (tc,fldName,tyargs) =
         let typ = mkNamedType(tc,tyargs)
         typ.GetField(fldName,staticOrInstanceBindingFlags) |> checkNonNullResult ("fldName", SR.GetString1(SR.QfailedToBindField, fldName))  // fxcop may not see "fldName" as an arg
 
     let bindGenericCtor (tc:Type,argTypes:Instantiable<Type list>) =
         let argtyps =  instFormal (getGenericArguments tc) argTypes
+#if FX_ATLEAST_PORTABLE
+        tc.GetConstructor(Array.ofList argtyps) |> checkNonNullResult ("tc", SR.GetString(SR.QfailedToBindConstructor))  // fxcop may not see "tc" as an arg
+#else        
         tc.GetConstructor(instanceBindingFlags,null,Array.ofList argtyps,null) |> checkNonNullResult ("tc", SR.GetString(SR.QfailedToBindConstructor))  // fxcop may not see "tc" as an arg
-
+#endif
     let bindCtor (tc,argTypes:Instantiable<Type list>,tyargs) =
         let typ = mkNamedType(tc,tyargs)
         let argtyps = argTypes |> inst tyargs
+#if FX_ATLEAST_PORTABLE
+        typ.GetConstructor(Array.ofList argtyps) |> checkNonNullResult ("tc", SR.GetString(SR.QfailedToBindConstructor)) // fxcop may not see "tc" as an arg
+#else        
         typ.GetConstructor(instanceBindingFlags,null,Array.ofList argtyps,null) |> checkNonNullResult ("tc", SR.GetString(SR.QfailedToBindConstructor)) // fxcop may not see "tc" as an arg
+#endif
 
     let chop n xs =
         if n < 0 then invalidArg "n" (SR.GetString(SR.inputMustBeNonNegative))
@@ -1287,8 +1315,9 @@ module Patterns =
         | HoleTerm   (ty,idx) ->  
            if idx < 0 || idx >= l.Length then failwith "hole index out of range";
            let h = l.[idx]
-           checkTypesSR (typeOf h) ty "fill" (SR.GetString(SR.QtmmRaw))
-           h
+           match typeOf h with
+           | expected when expected <> ty -> invalidArg "receivedType" (String.Format(SR.GetString(SR.QtmmRaw), expected, ty))
+           | _ -> h
 
     let rec freeInExprAcc bvs acc (E t) = 
         match t with 
@@ -1355,6 +1384,8 @@ module Patterns =
 
     let decodedTopResources = new Dictionary<Assembly * string, int>(10,HashIdentity.Structural)
 
+#if FX_NO_REFLECTION_METADATA_TOKENS
+#else
 #if FX_NO_REFLECTION_MODULE_HANDLES // not available on Silverlight
     [<StructuralEquality;StructuralComparison>]
     type ModuleHandle = ModuleHandle of string * string
@@ -1363,15 +1394,23 @@ module Patterns =
 #else
     type ModuleHandle = System.ModuleHandle
 #endif
+#endif
+
    
 #if FX_NO_REFLECTION_METADATA_TOKENS // not available on Compact Framework
     [<StructuralEquality; NoComparison>]
     type ReflectedDefinitionTableKey = 
-        | Key of Type * int * Type[]
+        | Key of System.Type * int * System.Type[]
         static member GetKey(methodBase:MethodBase) = 
+#if FX_NO_REFLECTION_MODULES
+            Key(methodBase.DeclaringType,
+                (if methodBase.IsGenericMethod then methodBase.GetGenericArguments().Length else 0),
+                methodBase.GetParameters() |> Array.map (fun p -> p.ParameterType))
+#else
             Key(methodBase.DeclaringType.Module.ModuleHandle,
-                (if methodBase.IsGenericMethod then methodBase.GetGenericArguments().Length else 0), 
+                (if methodBase.IsGenericMethod then methodBase.GetGenericArguments().Length else 0),            
                 methodBase.GetParameters() |> Array.map (fun p -> p.Type))
+#endif                
 #else
     [<StructuralEquality; NoComparison>]
     type ReflectedDefinitionTableKey = 
@@ -1406,13 +1445,13 @@ module Patterns =
             if ok then Some(res) else
             //System.Console.WriteLine("Loading {0}", td.Assembly);
             let qdataResources = 
-#if FX_NO_REFLECTION_EMIT
-#else
                 // dynamic assemblies don't support the GetManifestResourceNames 
                 match assem with 
+#if FX_NO_REFLECTION_EMIT
+#else
                 | :? System.Reflection.Emit.AssemblyBuilder -> []
-                | _ -> 
 #endif
+                | _ -> 
                     (try assem.GetManifestResourceNames()  
                      // This raises NotSupportedException for dynamic assemblies
                      with :? NotSupportedException -> [| |])
@@ -1725,7 +1764,11 @@ module DerivedPatterns =
             (fun tm -> 
                match tm with
                | Call(obj,minfo2,args) 
+#if FX_NO_REFLECTION_METADATA_TOKENS
+                  when (minfo1.MethodHandle = minfo2.MethodHandle &&
+#else               
                   when (minfo1.MetadataToken = minfo2.MetadataToken &&
+#endif                  
                         if isg1 then 
                           minfo2.IsGenericMethod && gmd = minfo2.GetGenericMethodDefinition()
                         else
@@ -1760,7 +1803,7 @@ module ExprShape =
             | IfThenElseOp,[g;t;e]     -> mkIfThenElse(g,t,e)
             | LetRecOp,[e1]   -> mkLetRecRaw(e1)     
             | LetRecCombOp,_     -> mkLetRecCombRaw(args) 
-            | LetOp,[e1;e2]      -> mkLetRaw(e1,e2)      
+            | LetOp,[e1;e2]      -> mkLetRawWithCheck(e1,e2)      
             | NewRecordOp(ty),_     -> mkNewRecord(ty, args)
             | NewUnionCaseOp(unionCase),_    -> mkNewUnionCase(unionCase, args)
             | UnionCaseTestOp(unionCase),[arg]  -> mkUnionCaseTest(unionCase,arg)

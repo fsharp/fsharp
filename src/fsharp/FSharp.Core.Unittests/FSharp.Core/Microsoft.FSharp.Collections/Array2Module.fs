@@ -29,7 +29,7 @@ type Array2Module() =
                     if i = 0 then System.Math.Sin(arg) else System.Math.Cos(arg))
         let resultInt = Array2D.base1 intArr
         if resultInt <> 0 then Assert.Fail()
-#if SILVERLIGHT
+#if FX_NO_BASED_ARRAYS
 #else
         // string array 
         let strArr = Array2D.createBased 0 0 2 3 "goodboy" 
@@ -59,7 +59,7 @@ type Array2Module() =
         let resultInt = Array2D.base2 intArr
         if resultInt <> 0 then Assert.Fail()
         
-#if SILVERLIGHT
+#if FX_NO_BASED_ARRAYS
 #else
         // string array 
         let strArr = Array2D.createBased 0 0 2 3 "goodboy" 
@@ -76,7 +76,7 @@ type Array2Module() =
         let nullArr = null:string[,]    
         CheckThrowsNullRefException (fun () -> Array2D.base2  nullArr |> ignore)   
 
-#if SILVERLIGHT
+#if FX_NO_BASED_ARRAYS
 #else        
         // Verify printing format of non-zero based arrays
         let v : int[,] = Array2D.createBased 10 1 3 4 2
@@ -132,7 +132,7 @@ type Array2Module() =
         CheckThrowsArgumentException(fun () -> Array2D.blit  intArr 0 0 intArr2 0 10 2 2 |> ignore)  
         ()
 
-#if SILVERLIGHT
+#if FX_NO_BASED_ARRAYS
 #else
     [<Test>]
     member this.BlitWithNonZeroBase() =
@@ -232,7 +232,7 @@ type Array2Module() =
   
         ()  
 
-#if SILVERLIGHT
+#if FX_NO_BASED_ARRAYS
 #else
     [<Test>]
     member this.createBased() =
@@ -294,7 +294,7 @@ type Array2Module() =
         if strArr.[1,1] <> "1-1" then Assert.Fail()
         () 
         
-#if SILVERLIGHT
+#if FX_NO_BASED_ARRAYS
 #else
     [<Test>]
     member this.Init_Based() =
@@ -335,7 +335,7 @@ type Array2Module() =
         CheckThrowsArgumentNullException (fun () -> Array2D.iter funStr nullArr |> ignore)   
         ()
 
-#if SILVERLIGHT
+#if FX_NO_BASED_ARRAYS
 #else
     [<Test>]
     member this.IterNonZeroBased() =
@@ -475,7 +475,7 @@ type Array2Module() =
         
         () 
 
-#if SILVERLIGHT
+#if FX_NO_BASED_ARRAYS
 #else
     [<Test>]
     member this.Rebase() =

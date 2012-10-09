@@ -32,6 +32,24 @@ type LanguagePrimitivesModule() =
         Assert.AreEqual(y, y |> LanguagePrimitives.SByteWithMeasure<m> |> sbyte)
 
     [<Test>]
+    member this.MaxMinNan() =
+        Assert.IsTrue(Double.IsNaN(max nan 1.0))
+        Assert.IsTrue(Double.IsNaN(max 1.0 nan))
+        Assert.IsTrue(Double.IsNaN(max nan nan))
+
+        Assert.IsTrue(Single.IsNaN(max Single.NaN 1.0f))
+        Assert.IsTrue(Single.IsNaN(max 1.0f Single.NaN))
+        Assert.IsTrue(Single.IsNaN(max Single.NaN Single.NaN))
+        
+        Assert.IsTrue(Double.IsNaN(min nan 1.0))
+        Assert.IsTrue(Double.IsNaN(min 1.0 nan))
+        Assert.IsTrue(Double.IsNaN(min nan nan))
+
+        Assert.IsTrue(Single.IsNaN(min Single.NaN 1.0f))
+        Assert.IsTrue(Single.IsNaN(min 1.0f Single.NaN))
+        Assert.IsTrue(Single.IsNaN(min Single.NaN Single.NaN))
+
+    [<Test>]
     member this.DivideByInt() =
             
         // float32 
@@ -71,8 +89,11 @@ type LanguagePrimitivesModule() =
     member this.GuidToString() =
         let s = "F99D95E0-2A5E-47c4-9B92-6661D65AE6B3"
         let guid = new Guid(s)
+#if FX_NO_TO_LOWER_INVARIANT
+        Assert.AreEqual(s.ToLower(), (string guid).ToLower())
+#else        
         Assert.AreEqual(s.ToLower(Globalization.CultureInfo.InvariantCulture), (string guid).ToLower(Globalization.CultureInfo.InvariantCulture))
-
+#endif
     [<Test>]
     member this.GenericComparison() =
 
@@ -91,6 +112,9 @@ type LanguagePrimitivesModule() =
         ()   
 
 
+#if FX_ATLEAST_PORTABLE
+// TODO named #define ?
+#else
 #if SILVERLIGHT
 #else    
     [<Test>]
@@ -109,6 +133,7 @@ type LanguagePrimitivesModule() =
         Assert.AreEqual(resultRef,1)
         
         ()   
+#endif
 #endif
         
     [<Test>]
@@ -325,8 +350,11 @@ type LanguagePrimitivesModule() =
         CheckThrowsArgumentNullException2 "float32" (fun () -> float32 s |> ignore)
         CheckThrowsArgumentNullException2 "float" (fun () -> float s |> ignore)
         CheckThrowsArgumentNullException2 "decimal" (fun () -> decimal s |> ignore)
+        // SL and Portable Runtimes are compiled with FX_NO_CHAR_PARSE
+#if FX_NO_CHAR_PARSE
+#else        
         CheckThrowsArgumentNullException2 "char" (fun () -> char s |> ignore)
-        
+#endif        
     [<Test>]
     member this.PhysicalEquality() =
 
@@ -476,6 +504,10 @@ type UnitType() =
         let u:Unit = ()
         CheckThrowsNullRefException(fun() ->u.Equals(null) |>ignore) 
         
+
+#if FX_ATLEAST_PORTABLE
+// TODO named #define ?
+#else
 #if SILVERLIGHT
 #else        
 [<TestFixture>]
@@ -497,6 +529,7 @@ type CompilationRepresentationFlagsEnum() =
                         [|"None";"Static";"Instance";"ModuleSuffix";"UseNullAsTrueValue";"Event"|])
             
         ()
+#endif
 #endif
 
 [<TestFixture>]

@@ -20,6 +20,14 @@ how their events are fired.
 
 // ---------------------------------------------------
 
+
+type internal InternalDelegate = delegate of obj * unit -> unit
+type MultiArgDelegate2 = delegate of obj * int * string -> unit
+type MultiArgDelegate3 = delegate of obj * int * string * bool -> unit
+type MultiArgDelegate4 = delegate of obj * int * string * bool * int -> unit
+type MultiArgDelegate5 = delegate of obj * int * string * bool * int * string -> unit
+type MultiArgDelegate6 = delegate of obj * int * string * bool * int * string * bool -> unit
+
 [<TestFixture>]
 type EventModule() =
     
@@ -230,3 +238,28 @@ type EventModule() =
         Assert.AreEqual("Negative [-3][-3]", !lastResult)
         
         ()
+
+    [<Test>]
+    member this.InternalDelegate() = 
+        let event = new Event<InternalDelegate, unit>()
+        let p = event.Publish
+        use s = p.Subscribe(fun _ -> ())
+        event.Trigger(null, ())
+
+    [<Test>]
+    member this.MultipleArguments() =  
+        let count = ref 0
+        let test (evt : Event<_, _>) arg = 
+            let p = evt.Publish
+            use s = p.Subscribe(fun _ -> incr count)
+            evt.Trigger(null, arg)
+
+        test (new Event<MultiArgDelegate2, _>()) (1, "")
+        test (new Event<MultiArgDelegate3, _>()) (1, "", true)
+        test (new Event<MultiArgDelegate4, _>()) (1, "", true, 1)
+        test (new Event<MultiArgDelegate5, _>()) (1, "", true, 1, "")
+        test (new Event<MultiArgDelegate6, _>()) (1, "", true, 1, "", true)
+
+        Assert.AreEqual(5, !count)
+
+        

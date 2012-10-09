@@ -85,7 +85,7 @@ type CancellationType() =
                 r3.Dispose()
             with
             |   :? ObjectDisposedException -> odeThrown <- true
-            Assert.IsTrue(odeThrown)
+            Assert.IsFalse(odeThrown)
             
         let () =
             let mutable odeThrown = false
