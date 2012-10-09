@@ -105,7 +105,7 @@ type FscCommandLineBuilder() =
 //The goal is to have the most common/important flags available via the Fsc class, and the
 //rest can be "backdoored" through the .OtherFlags property.
 
-type [<Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly")>] Fsc() = 
+type [<Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly")>] Fsc() as this = 
     inherit ToolTask()
     let mutable baseAddress : string = null
     let mutable codePage : string = null
@@ -123,6 +123,7 @@ type [<Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:Iden
     let mutable outputAssembly : string = null 
     let mutable pdbFile : string = null
     let mutable platform : string = null
+    let mutable prefer32bit : bool = false
     let mutable references : ITaskItem[] = [||]
     let mutable referencePath : string = null
     let mutable resources : ITaskItem[] = [||]
@@ -143,12 +144,20 @@ type [<Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:Iden
     let mutable win32res : string = null
     let mutable win32manifest : string = null
     let mutable vserrors : bool = false
+    let mutable validateTypeProviders : bool = false
     let mutable vslcid : string = null
     let mutable utf8output : bool = false
+    let mutable subsystemVersion : string = null
+    let mutable highEntropyVA : bool = false
 
     let mutable capturedArguments : string list = []  // list of individual args, to pass to HostObject Compile()
     let mutable capturedFilenames : string list = []  // list of individual source filenames, to pass to HostObject Compile()
-    
+
+#if MONO
+#else
+    do
+        this.YieldDuringToolExecution <- true  // See bug 6483; this makes parallel build faster, and is fine to set unconditionally
+#endif
     // --baseaddress
     member fsc.BaseAddress
         with get() = baseAddress 
@@ -204,6 +213,7 @@ type [<Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:Iden
     member fsc.Tailcalls
         with get() = tailcalls
         and set(p) = tailcalls <- p
+    // REVIEW: decide whether to keep this, for now is handy way to deal with as-yet-unimplemented features
     member fsc.OtherFlags
         with get() = otherFlags
         and set(s) = otherFlags <- s
@@ -221,9 +231,14 @@ type [<Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:Iden
     //            x64
     //            Itanium
     //            anycpu
+    //            anycpu32bitpreferred
     member fsc.Platform
         with get() = platform 
         and set(s) = platform <- s 
+    // indicator whether anycpu32bitpreferred is applicable or not
+    member fsc.Prefer32Bit
+        with get() = prefer32bit 
+        and set(s) = prefer32bit <- s 
     // -r <string>: Reference an F# or .NET assembly.
     member fsc.References 
         with get() = references 
@@ -295,6 +310,10 @@ type [<Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:Iden
         with get() = vserrors
         and set(p) = vserrors <- p
 
+    member fsc.ValidateTypeProviders
+        with get() = validateTypeProviders
+        and set(p) = validateTypeProviders <- p
+
     member fsc.LCID
         with get() = vslcid
         and set(p) = vslcid <- p
@@ -302,6 +321,14 @@ type [<Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:Iden
     member fsc.Utf8Output
         with get() = utf8output
         and set(p) = utf8output <- p
+
+    member fsc.SubsystemVersion
+        with get() = subsystemVersion
+        and set(p) = subsystemVersion <- p
+
+    member fsc.HighEntropyVA
+        with get() = highEntropyVA
+        and set(p) = highEntropyVA <- p
         
     // ToolTask methods
     override fsc.ToolName = "fsc.exe" 
@@ -332,7 +359,14 @@ type [<Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:Iden
                                                 [| box baseCallDelegate; box (capturedArguments |> List.toArray); box (capturedFilenames |> List.toArray) |],
                                                 System.Globalization.CultureInfo.InvariantCulture)
                 unbox ret
-            with e ->
+            with 
+#if MONO
+#else
+            | :? System.Reflection.TargetInvocationException as tie when (match tie.InnerException with | :? Microsoft.Build.Exceptions.BuildAbortedException -> true | _ -> false) ->
+                fsc.Log.LogError(tie.InnerException.Message, [| |])
+                -1  // ok, this is what happens when VS IDE cancels the build, no need to assert, just log the build-canceled error and return -1 to denote task failed
+#endif
+            | e ->
                 System.Diagnostics.Debug.Assert(false, "HostObject received by Fsc task did not have a Compile method or the compile method threw an exception. "+(e.ToString()))
                 reraise()
            
@@ -379,12 +413,14 @@ type [<Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:Iden
         builder.AppendSwitchIfNotNull("--pdb:", pdbFile)
         // Platform
         builder.AppendSwitchIfNotNull("--platform:", 
-            if platform = null then null else
-                match platform.ToUpperInvariant() with
-                | "ANYCPU"  -> "anycpu"
-                | "X86"     -> "x86"
-                | "X64"     -> "x64"
-                | "ITANIUM" -> "Itanium"
+            let ToUpperInvariant (s:string) = if s = null then null else s.ToUpperInvariant()
+            match ToUpperInvariant(platform), prefer32bit, ToUpperInvariant(targetType) with
+                | "ANYCPU", true, "EXE"
+                | "ANYCPU", true, "WINEXE" -> "anycpu32bitpreferred"
+                | "ANYCPU",  _, _  -> "anycpu"
+                | "X86"   ,  _, _  -> "x86"
+                | "X64"   ,  _, _  -> "x64"
+                | "ITANIUM", _, _  -> "Itanium"
                 | _         -> null)
         // Resources
         for item in resources do
@@ -425,6 +461,7 @@ type [<Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:Iden
             
         // WarningsAsErrors
         // Change warning 76, HashReferenceNotAllowedInNonScript/HashDirectiveNotAllowedInNonScript/HashIncludeNotAllowedInNonScript, into an error
+        // REVIEW: why is this logic here? In any case these are errors already by default!
         let warningsAsErrorsArray =
             match warningsAsErrors with
             | null -> [|"76"|]
@@ -441,7 +478,11 @@ type [<Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:Iden
         
         // VisualStudioStyleErrors 
         if vserrors then
-            builder.AppendSwitch("--vserrors")           
+            builder.AppendSwitch("--vserrors")      
+
+        // ValidateTypeProviders 
+        if validateTypeProviders then
+            builder.AppendSwitch("--validate-type-providers")           
 
         builder.AppendSwitchIfNotNull("--LCID:", vslcid)
         
@@ -455,6 +496,12 @@ type [<Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:Iden
         // When building using the fsc task, also emit "flaterrors" to ensure that multi-line error messages
         // aren't trimmed
         builder.AppendSwitch("--flaterrors")
+
+        builder.AppendSwitchIfNotNull("--subsystemversion:", subsystemVersion)
+        if highEntropyVA then
+            builder.AppendSwitch("--highentropyva+")
+        else
+            builder.AppendSwitch("--highentropyva-")
         
         // OtherFlags - must be second-to-last
         builder.AppendSwitchUnquotedIfNotNull("", otherFlags)

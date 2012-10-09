@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2011 Microsoft Corporation. 
+// Copyright (c) 2002-2012 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -37,15 +37,16 @@ open System.Collections.Generic
 
 let codeLabelOrder = ComparisonIdentity.Structural<ILCodeLabel>
 
-
 // Convert the output of convCustomAttr
 #if SILVERLIGHT
 let wrapCustomAttr setCustomAttr (cinfo, cinfoBuilder) =
     setCustomAttr(cinfoBuilder cinfo)
 #else
+open Microsoft.FSharp.Compiler.AbstractIL.ILAsciiWriter 
 let wrapCustomAttr setCustomAttr (cinfo, bytes) =
     setCustomAttr(cinfo, bytes)
 #endif
+
 
 //----------------------------------------------------------------------------
 // logging to enable debugging
@@ -76,7 +77,7 @@ type System.Reflection.Emit.AssemblyBuilder with
         let modB = asmB.DefineDynamicModule(a,b)
 #else    
         let modB = asmB.DefineDynamicModule(a,b,c)
-#endif        
+#endif
         if logRefEmitCalls then printfn "let moduleBuilder%d = assemblyBuilder%d.DefineDynamicModule(%A,%A,%A)" (abs <| hash modB) (abs <| hash asmB) a b c
         modB
         
@@ -349,43 +350,50 @@ let convAssemblyRef (aref:ILAssemblyRef) =
 type cenv = 
     { ilg: ILGlobals; 
       generatePdb: bool;
-      resolvePath: ILAssemblyRef->string option }
+      resolvePath: (ILAssemblyRef -> Choice<string,System.Reflection.Assembly> option) }
 
 /// Convert an Abstract IL type reference to Reflection.Emit System.Type value
+// REVIEW: This ought to be an adequate substitute for this whole function, but it needs 
+// to be thoroughly tested.
+//    Type.GetType(tref.QualifiedName) 
+// []              ,name -> name
+// [ns]            ,name -> ns+name
+// [ns;typeA;typeB],name -> ns+typeA+typeB+name
 let getTRefType (cenv:cenv) (tref:ILTypeRef) = 
 
-    let prefix = 
-        match tref.Enclosing with
-        | []             -> ""
-        | enclosingNames -> String.concat "+" enclosingNames ^ "+"
-    let qualifiedName = prefix ^ tref.Name (* e.g. Name.Space.Class+NestedClass, assembly *)
+    // If an inner nested type's name contains a space, the proper encoding is "\+" on both sides - otherwise,
+    // we use "+"
+    let rec collectPrefixParts (l : string list) (acc : string list) =
+        match l with
+        | h1 :: (h2 :: _ as tl) ->
+            collectPrefixParts tl 
+                (List.append
+                    acc
+                    [   yield h1
+                        if h1.Contains(" ") || h2.Contains(" ") then
+                            yield "\\+"
+                        else
+                            yield "+"])
+        | h :: [] -> List.append acc [h]
+        | _ -> acc
+
+    let prefix = collectPrefixParts tref.Enclosing [] |> List.fold (fun (s1 : string) (s2 : string) -> s1 + s2) ""
+    let qualifiedName = prefix + (if prefix <> "" then (if tref.Name.Contains(" ") then "\\+" else "+") else "") + tref.Name  // e.g. Name.Space.Class+NestedClass
     match tref.Scope with
     | ILScopeRef.Assembly asmref ->
         let assembly = 
             match cenv.resolvePath asmref with
-            | Some(path) ->
 #if SILVERLIGHT
-                        ignore path
-                        Assembly.Load(asmref.QualifiedName)
 #else                        
-                #if FX_ATLEAST_40_COMPILER_LOCATION
-                        Assembly.UnsafeLoadFrom(path)
-                #else
-                        Assembly.LoadFrom(path)
-                #endif
+            | Some (Choice1Of2 path) ->
+                FileSystem.AssemblyLoadFrom(path)
 #endif                
+            | Some (Choice2Of2 assembly) ->
+                assembly
             | None ->
-#if SILVERLIGHT
-                let loadFromPath = asmref.QualifiedName
-                // TODO: will only work for local assemblies
-                Assembly.Load(loadFromPath)
-#else                                       
                 let asmName    = convAssemblyRef asmref
-                let currentDom = System.AppDomain.CurrentDomain
-                currentDom.Load(asmName)
-#endif                
-        let nm = prefix ^ tref.Name 
-        let typT       = assembly.GetType(nm)
+                FileSystem.AssemblyLoad(asmName)
+        let typT       = assembly.GetType(qualifiedName)
         typT |> nonNull "GetTRefType" 
     | ILScopeRef.Module _ 
     | ILScopeRef.Local _ ->
@@ -403,9 +411,9 @@ type emEnv =
       emMethMap  : Zmap<ILMethodRef,MethodBuilder>;
       emFieldMap : Zmap<ILFieldRef,FieldBuilder>;
       emPropMap  : Zmap<ILPropertyRef,PropertyBuilder>;
-      emLocals   : LocalBuilder array;
+      emLocals   : LocalBuilder[];
       emLabels   : Zmap<IL.ILCodeLabel,Label>;
-      emTyvars   : Type array list; // stack
+      emTyvars   : Type[] list; // stack
       emEntryPts : (TypeBuilder * string) list }
   
 let orderILTypeRef      = ComparisonIdentity.Structural<ILTypeRef>
@@ -436,7 +444,6 @@ let envUpdateCreatedTypeRef emEnv (tref:ILTypeRef) =
     let typT,typB,typeDef,_createdTypOpt = Zmap.force tref emEnv.emTypMap "envGetTypeDef: failed"
     if typB.IsCreated() then
         let typ = typB.CreateTypeAndLog()
-
 #if SILVERLIGHT
 #else
         // Bug DevDev2 40395: Mono 2.6 and 2.8 has a bug where executing code that includes an array type
@@ -546,11 +553,11 @@ let convCallConv (Callconv (hasThis,basic)) =
 
 let rec convTypeSpec cenv emEnv preferCreated (tspec:ILTypeSpec) =
     let typT   = envGetTypT cenv emEnv preferCreated tspec.TypeRef 
-    let tyargs = List.map (convTypeAux cenv emEnv preferCreated) tspec.GenericArgs
-    match tyargs,typT.IsGenericType with
-    | tyargs,true  -> typT.MakeGenericType(Array.ofList tyargs)    |> nonNull "convTypeSpec: generic" 
-    | []    ,false -> typT                                          |> nonNull "convTypeSpec: non generic" 
-    | h::_  ,false -> failwithf "- convTypeSpec: non-generic type '%O' has type instance of length %d and head %O?" typT tyargs.Length h
+    let tyargs = ILList.map (convTypeAux cenv emEnv preferCreated) tspec.GenericArgs
+    match ILList.isEmpty tyargs,typT.IsGenericType with
+    | _   ,true  -> typT.MakeGenericType(ILList.toArray tyargs)   |> nonNull "convTypeSpec: generic" 
+    | true,false -> typT                                          |> nonNull "convTypeSpec: non generic" 
+    | _   ,false -> failwithf "- convTypeSpec: non-generic type '%O' has type instance of length %d?" typT tyargs.Length 
       
 and convTypeAux cenv emEnv preferCreated typ =
     match typ with
@@ -573,6 +580,7 @@ and convTypeAux cenv emEnv preferCreated typ =
     | ILType.Byref eltType      -> let baseT = convTypeAux cenv emEnv preferCreated eltType |> nonNull "convType: byref eltType"
                                    baseT.MakeByRefType()                               |> nonNull "convType: byref" 
     | ILType.TypeVar tv         -> envGetTyvar emEnv tv                                |> nonNull "convType: tyvar" 
+  // XXX: REVIEW: complete the following cases.                                                        
     | ILType.FunctionPointer _callsig -> failwith "convType: fptr"
     | ILType.Modified _   -> failwith "convType: modified"
 
@@ -588,15 +596,16 @@ and convTypeAux cenv emEnv preferCreated typ =
 // convCreatedType ensures created types are used where possible.
 // Note: typeBuilder.CreateType() freezes the type and makes a proper Type for the collected information.
 //------  
+// REVIEW: "convType becomes convCreatedType", the functions could be combined.
 // If convCreatedType replaced convType functions like convMethodRef, convConstructorSpec, ... (and more?)
 // will need to be fixed for emitted types to handle both TypeBuilder and later Type proper.
   
 /// Uses TypeBuilder/TypeBuilderInstantiation for emitted types
 let convType cenv emEnv typ = convTypeAux cenv emEnv false typ
 
-let convTypes cenv emEnv typs = List.map (convType cenv emEnv) typs
+let convTypes cenv emEnv (typs:ILTypes) = ILList.map (convType cenv emEnv) typs
 
-let convTypesToArray cenv emEnv typs = convTypes cenv emEnv typs |> List.toArray
+let convTypesToArray cenv emEnv (typs:ILTypes) = convTypes cenv emEnv typs |> ILList.toArray 
 
 /// Uses the .CreateType() for emitted type (if available)
 let convCreatedType cenv emEnv typ = convTypeAux cenv emEnv true typ 
@@ -622,7 +631,6 @@ let convFieldInit x =
     | ILFieldInit.Single ieee32 -> box ieee32 
     | ILFieldInit.Double ieee64 -> box ieee64 
     | ILFieldInit.Null            -> (null :> Object)
-
 
 #if SILVERLIGHT
 //----------------------------------------------------------------------------
@@ -657,30 +665,13 @@ let rec convAttribElem cenv emEnv = function
 // Some types require hard work...
 //----------------------------------------------------------------------------
 
-/// The internal System.Type for transient generic instantiation types, which
-/// do not support GetMethods, GetMethod etc.
-/// 
-/// If the name of the internal mscorlib type changes in a CLI implementation, 
-/// then TypeBuilderInstantiationT will be null. This means we will get failing 
-/// lookups on transient type instantiations more often. These will be caught
-/// and a failsafe path will be used instead. See below.
-let TypeBuilderInstantiationT = 
-    let ty = 
-        if runningOnMono then 
-            Type.GetType("System.Reflection.MonoGenericClass")
-        else
-            Type.GetType("System.Reflection.Emit.TypeBuilderInstantiation")
-    assert (not (isNull ty))
-    ty
-    
-/// Approximately determine which types support the fast lookups GetMethods, GetMethod etc. 
-///
-/// This check may not be accurate (i.e. returns "true" too often, indicating a type is queryable when
-/// it actually isn't) if the names of the internal types above change.
-/// In that case, an exception will be raised by queryableTypeGetMethod, for example. In that case we
-/// catch the exception and revert to the lookup technique for non-queryable types.
-let typeIsQueryable (typ : Type) =
-    not (typ :? TypeBuilder) && not ((typ.GetType()).Equals(TypeBuilderInstantiationT))
+// This is gross. TypeBuilderInstantiation should really be a public type, since we
+// have to use alternative means for various Method/Field/Constructor lookups.  However since 
+// it isn't we resort to this technique...
+let TypeBuilderInstantiationT = Type.GetType("System.Reflection.Emit.TypeBuilderInstantiation" )
+
+let typeIsNotQueryable (typ : Type) =
+    (typ :? TypeBuilder) || ((typ.GetType()).Equals(TypeBuilderInstantiationT))
 
 //----------------------------------------------------------------------------
 // convFieldSpec
@@ -703,25 +694,20 @@ let convFieldSpec cenv emEnv fspec =
         let fieldB = envGetFieldB emEnv fref
         nonQueryableTypeGetField parentTI fieldB
     else
-        let useNonQueryableTechnique() = 
+        // Prior type.
+        if typeIsNotQueryable parentTI then 
             let parentT = getTypeConstructor parentTI
             let fieldInfo = queryableTypeGetField emEnv parentT  fref 
             nonQueryableTypeGetField parentTI fieldInfo
-        if typeIsQueryable parentTI then 
-            try 
-                queryableTypeGetField emEnv parentTI fspec.FieldRef
-            with _ -> 
-                // See note on typeIsQueryable.
-                useNonQueryableTechnique()
         else 
-            useNonQueryableTechnique()
+            queryableTypeGetField emEnv parentTI fspec.FieldRef
 
 //----------------------------------------------------------------------------
 // convMethodRef
 //----------------------------------------------------------------------------
 
 let queryableTypeGetMethodBySearch cenv emEnv parentT (mref:ILMethodRef) =
-    assert(typeIsQueryable(parentT));
+    assert(not (typeIsNotQueryable(parentT)));
     let cconv = (if mref.CallingConv.IsStatic then BindingFlags.Static else BindingFlags.Instance)
     let methInfos = parentT.GetMethods(cconv ||| BindingFlags.Public ||| BindingFlags.NonPublic) |> Array.toList
       (* First, filter on name, if unique, then binding "done" *)
@@ -743,14 +729,12 @@ let queryableTypeGetMethodBySearch cenv emEnv parentT (mref:ILMethodRef) =
                 argTs,resT 
           
           (* methInfo implied Types *)
-            let haveArgTs = 
-              let parameters = Array.toList (methInfo.GetParameters())
-              parameters |> List.map (fun param -> param.ParameterType) 
+            let haveArgTs = methInfo.GetParameters() |> Array.toList |> List.map (fun param -> param.ParameterType) 
          
             let haveResT  = methInfo.ReturnType
           (* check for match *)
             if argTs.Length <> haveArgTs.Length then false (* method argument length mismatch *) else
-            let res = equalTypeLists (resT::argTs) (haveResT::haveArgTs) 
+            let res = equalTypes resT haveResT && equalTypeLists (ILList.toList argTs) haveArgTs
             res
        
         match List.tryFind select methInfos with
@@ -759,7 +743,7 @@ let queryableTypeGetMethodBySearch cenv emEnv parentT (mref:ILMethodRef) =
                            |> nonNull "convMethodRef"
           
 let queryableTypeGetMethod cenv emEnv parentT (mref:ILMethodRef) =
-    assert(typeIsQueryable(parentT));
+    assert(not (typeIsNotQueryable(parentT)));
     if mref.GenericArity = 0 then 
         let tyargTs = getGenericArgumentsOfType parentT      
         let argTs,resT = 
@@ -799,19 +783,13 @@ let convMethodRef cenv emEnv (parentTI:Type) (mref:ILMethodRef) =
         nonQueryableTypeGetMethod parentTI methB
         |> nonNull "convMethodRef (emitted)"
     else
-        let useNonQueryableTechnique() = 
+        // Prior type.
+        if typeIsNotQueryable parentTI then 
             let parentT = getTypeConstructor parentTI
             let methInfo = queryableTypeGetMethod cenv emEnv parentT mref 
             nonQueryableTypeGetMethod parentTI methInfo
-        // Prior type.
-        if typeIsQueryable parentTI then 
-            try 
-               queryableTypeGetMethod cenv emEnv parentTI mref 
-            with _ -> 
-                // See note on typeIsQueryable.
-                useNonQueryableTechnique()
         else 
-            useNonQueryableTechnique()
+            queryableTypeGetMethod cenv emEnv parentTI mref 
 
 //----------------------------------------------------------------------------
 // convMethodSpec
@@ -821,7 +799,7 @@ let convMethodSpec cenv emEnv (mspec:ILMethodSpec) =
     let typT     = convType cenv emEnv mspec.EnclosingType       (* (instanced) parent Type *)
     let methInfo = convMethodRef cenv emEnv typT mspec.MethodRef (* (generic)   method of (generic) parent *)
     let methInfo =
-        if mspec.GenericArgs = [] then 
+        if mspec.GenericArgs.Length = 0 then 
             methInfo // non generic 
         else 
             let minstTs  = convTypesToArray cenv emEnv mspec.GenericArgs
@@ -855,19 +833,13 @@ let convConstructorSpec cenv emEnv (mspec:ILMethodSpec) =
         let consB = envGetConsB emEnv mref
         nonQueryableTypeGetConstructor parentTI consB |> nonNull "convConstructorSpec: (emitted)"
     else
-        let useNonQueryableTechnique() =
+        // Prior type.
+        if typeIsNotQueryable parentTI then 
             let parentT  = getTypeConstructor parentTI       
             let ctorG = queryableTypeGetConstructor cenv emEnv parentT mref 
             nonQueryableTypeGetConstructor parentTI ctorG
-        // Prior type.
-        if typeIsQueryable parentTI then 
-            try
-                queryableTypeGetConstructor cenv emEnv parentTI mref 
-            with _ -> 
-                // See note on typeIsQueryable.
-                useNonQueryableTechnique()
         else
-            useNonQueryableTechnique()
+            queryableTypeGetConstructor cenv emEnv parentTI mref 
 
 //----------------------------------------------------------------------------
 // emitLabelMark, defineLabel
@@ -933,6 +905,7 @@ let emitSilverlightCheck (ilG:ILGenerator) =
         let methWL = typeof<Microsoft.FSharp.Silverlight>.GetMethod("CheckInterrupt", BindingFlags.Static ||| BindingFlags.Public ||| BindingFlags.NonPublic, null, [||], null)
         ilG.EmitCall(OpCodes.Call, methWL, [||])
 #else
+    ignore ilG
     ()
 #endif
 
@@ -945,7 +918,6 @@ let emitInstrCall cenv emEnv (ilG:ILGenerator) opCall tail (mspec:ILMethodSpec) 
             | Some _vartyps -> failwith "emitInstrCall: .ctor and varargs"
         else
             let minfo = convMethodSpec cenv emEnv mspec
-
 #if SILVERLIGHT
             let fullName = minfo.DeclaringType.FullName + "." + minfo.Name
             let minfo =
@@ -1213,7 +1185,7 @@ let rec emitInstr cenv (modB : ModuleBuilder) emEnv (ilG:ILGenerator) instr =
                                       | DT_U4  -> failwith "emitInstr cenv: stelem U4"
                                       | DT_U8  -> failwith "emitInstr cenv: stelem U8"
                                       | DT_REF -> ilG.EmitAndLog(OpCodes.Stelem_Ref))
-    | I_ldelema (ro,shape,typ)     -> 
+    | I_ldelema (ro,_isNativePtr,shape,typ)     -> 
         if (ro = ReadonlyAddress) then ilG.EmitAndLog(OpCodes.Readonly);
         if (shape = ILArrayShape.SingleDimensional) 
         then ilG.EmitAndLog(OpCodes.Ldelema,convType cenv emEnv  typ)
@@ -1355,8 +1327,12 @@ let emitLocal cenv emEnv (ilG : ILGenerator) (local: ILLocal) =
     ilG.DeclareLocalAndLog(ty,local.IsPinned)
 
 let emitILMethodBody cenv modB emEnv (ilG:ILGenerator) ilmbody =
-    let localBs = List.map (emitLocal cenv emEnv ilG) ilmbody.Locals
-    let emEnv = envSetLocals emEnv (Array.ofList localBs)
+    // XXX - REVIEW:
+    //      NoInlining: bool;
+    //      SourceMarker: source option }
+    // emit locals and record emEnv
+    let localBs = Array.map (emitLocal cenv emEnv ilG) (ILList.toArray ilmbody.Locals)
+    let emEnv = envSetLocals emEnv localBs
     emitCode cenv modB emEnv ilG ilmbody.Code 
 
 
@@ -1381,7 +1357,6 @@ let convCustomAttr cenv emEnv cattr =
        match convConstructorSpec cenv emEnv cattr.Method with 
        | null -> failwithf "convCustomAttr: %+A" cattr.Method
        | res -> res
-
 // In Silverlight, we cannot use the byte[] data to generate attributes (security restriction).
 // Instead, we return a function which creates a CustomAttributeBuilder to be used for SetCustomAttributes.
 #if SILVERLIGHT
@@ -1423,17 +1398,17 @@ let buildGenParamsPass1b cenv emEnv (genArgs : Type array) (gps : ILGenericParam
         let gpB = genpBs.[i]
         // the Constraints are either the parent (base) type or interfaces.
         let constraintTs = convTypes cenv emEnv gp.Constraints
-        let interfaceTs,baseTs = List.partition (fun (typ:System.Type) -> typ.IsInterface) constraintTs
+        let interfaceTs,baseTs = List.partition (fun (typ:System.Type) -> typ.IsInterface) (ILList.toList constraintTs)
         // set base type constraint
         (match baseTs with
-            []      -> () // Q: should a baseType be set? It is in some samples. Should this be a failure case?
-          | [baseT] -> gpB.SetBaseTypeConstraint(baseT)
+            [ ]      -> () // Q: should a baseType be set? It is in some samples. Should this be a failure case?
+          | [ baseT ] -> gpB.SetBaseTypeConstraint(baseT)
           | _       -> failwith "buildGenParam: multiple base types"
         );
         // set interface contraints (interfaces that instances of gp must meet)
         gpB.SetInterfaceConstraints(Array.ofList interfaceTs);
-
         gp.CustomAttrs |> emitCustomAttrs cenv emEnv (wrapCustomAttr gpB.SetCustomAttribute)
+
         let flags = GenericParameterAttributes.None 
         let flags =
            match gp.Variance with
@@ -1516,11 +1491,15 @@ let convMethodImplFlags mdef =
 //----------------------------------------------------------------------------
   
 let rec buildMethodPass2 cenv tref (typB:TypeBuilder) emEnv (mdef : ILMethodDef) =
+   // remaining REVIEW:
+   // SecurityDecls: Permissions;
+   // IsUnmanagedExport: bool; (* -- The method is exported to unmanaged code using COM interop. *)
+   // IsMustRun: bool; (* Whidbey feature: SafeHandle finalizer must be run *)
     let attrs = convMethodAttributes mdef
     let implflags = convMethodImplFlags mdef
     let cconv = convCallConv mdef.CallingConv
     let mref = mkRefToILMethod (tref,mdef)   
-    let emEnv = if mdef.IsEntryPoint && mdef.ParameterTypes=[] then 
+    let emEnv = if mdef.IsEntryPoint && mdef.ParameterTypes.Length = 0 then 
                     (* Bug 2209:
                         Here, we collect the entry points generated by ilxgen corresponding to the top-level effects.
                         Users can (now) annotate their own functions with EntryPoint attributes.
@@ -1614,9 +1593,9 @@ let rec buildMethodPass3 cenv tref modB (typB:TypeBuilder) emEnv (mdef : ILMetho
           assert isNil mdef.GenericParams
           // Value parameters       
           let defineParameter (i,attr,name) = consB.DefineParameterAndLog(i+1,attr,name)
-          mdef.Parameters |> List.iteri (emitParameter cenv emEnv defineParameter);
+          mdef.Parameters |> ILList.iteri (emitParameter cenv emEnv defineParameter);
           // Body
-          emitMethodBody cenv modB emEnv consB.GetILGeneratorAndLog mdef.Name mdef.mdBody;
+          emitMethodBody cenv modB emEnv consB.GetILGenerator mdef.Name mdef.mdBody;
           emitCustomAttrs cenv emEnv (wrapCustomAttr consB.SetCustomAttribute) mdef.CustomAttrs;
           ()
      | _name ->
@@ -1634,7 +1613,7 @@ let rec buildMethodPass3 cenv tref modB (typB:TypeBuilder) emEnv (mdef : ILMetho
 
           // Value parameters
           let defineParameter (i,attr,name) = methB.DefineParameterAndLog(i+1,attr,name) 
-          mdef.Parameters |> List.iteri (fun a b -> emitParameter cenv emEnv defineParameter a b);
+          mdef.Parameters |> ILList.iteri (fun a b -> emitParameter cenv emEnv defineParameter a b);
           // Body
           if not isPInvoke then 
               emitMethodBody cenv modB emEnv methB.GetILGeneratorAndLog mdef.Name mdef.mdBody;
@@ -1865,7 +1844,7 @@ let rec buildTypeDefPass2 cenv nesting emEnv (tdef : ILTypeDef) =
     let typB  = envGetTypB emEnv tref
     let emEnv = envPushTyvars emEnv (getGenericArgumentsOfType typB)
     // add interface impls
-    tdef.Implements |> convTypes cenv emEnv |> List.iter (fun implT -> typB.AddInterfaceImplementationAndLog(implT));
+    tdef.Implements |> convTypes cenv emEnv |> ILList.iter (fun implT -> typB.AddInterfaceImplementationAndLog(implT));
     // add methods, properties
     let emEnv = List.fold (buildMethodPass2      cenv tref typB) emEnv tdef.Methods.AsList 
     let emEnv = List.fold (buildFieldPass2       cenv tref typB) emEnv tdef.Fields.AsList  
@@ -1927,8 +1906,8 @@ let rec getTypeRefsInType valueTypesOnly typ acc =
     | ILType.Void | ILType.TypeVar _                              -> acc
     | ILType.Ptr eltType | ILType.Byref eltType -> getTypeRefsInType valueTypesOnly eltType acc
     | ILType.Array (_,eltType) -> if valueTypesOnly then acc else getTypeRefsInType valueTypesOnly eltType acc
-    | ILType.Value tspec -> tspec.TypeRef :: List.foldBack (getTypeRefsInType valueTypesOnly) tspec.GenericArgs acc
-    | ILType.Boxed tspec -> if valueTypesOnly then acc else tspec.TypeRef :: List.foldBack (getTypeRefsInType valueTypesOnly) tspec.GenericArgs acc
+    | ILType.Value tspec -> tspec.TypeRef :: ILList.foldBack (getTypeRefsInType valueTypesOnly) tspec.GenericArgs acc
+    | ILType.Boxed tspec -> if valueTypesOnly then acc else tspec.TypeRef :: ILList.foldBack (getTypeRefsInType valueTypesOnly) tspec.GenericArgs acc
     | ILType.FunctionPointer _callsig -> failwith "getTypeRefsInType: fptr"
     | ILType.Modified _   -> failwith "getTypeRefsInType: modified"
 
@@ -1944,9 +1923,9 @@ let createTypeRef (visited : Dictionary<_,_>, created : Dictionary<_,_>) emEnv t
         // are resolved overly eagerly by reflection emit's CreateType. 
         if priority >= 1 then 
             if verbose2 then dprintf "buildTypeDefPass4: Doing type typar constraints of %s\n" tdef.Name; 
-            tdef.GenericParams |> List.iter (fun gp -> gp.Constraints |> List.iter (traverseType false 2));
+            tdef.GenericParams |> List.iter (fun gp -> gp.Constraints |> ILList.iter (traverseType false 2));
             if verbose2 then dprintf "buildTypeDefPass4: Doing method constraints of %s\n" tdef.Name; 
-            tdef.Methods.AsList |> Seq.iter   (fun md -> md.GenericParams |> List.iter (fun gp -> gp.Constraints |> List.iter (traverseType false 2)));
+            tdef.Methods.AsList |> Seq.iter   (fun md -> md.GenericParams |> List.iter (fun gp -> gp.Constraints |> ILList.iter (traverseType false 2)));
             
         // We absolutely need the parent type...
         if priority >= 1 then 
@@ -1956,13 +1935,13 @@ let createTypeRef (visited : Dictionary<_,_>, created : Dictionary<_,_>) emEnv t
         // We absolutely need the interface types...
         if priority >= 1 then 
             if verbose2 then dprintf "buildTypeDefPass4: Creating Interface Chain of %s\n" tdef.Name; 
-            tdef.Implements |> List.iter (traverseType false priority);
+            tdef.Implements |> ILList.iter (traverseType false priority);
             
         // We have to define all struct types in all methods before a class is defined. This only has any effect when there is a struct type
         // being defined simultaneously with this type.
         if priority >= 1 then 
             if verbose2 then dprintf "buildTypeDefPass4: Doing value types in method signatures of %s, #mdefs = %d\n" tdef.Name tdef.Methods.AsList.Length; 
-            tdef.Methods |> Seq.iter   (fun md -> md.Parameters |> List.iter (fun p -> p.Type |> (traverseType true 1))
+            tdef.Methods |> Seq.iter   (fun md -> md.Parameters |> ILList.iter (fun p -> p.Type |> (traverseType true 1))
                                                   md.Return.Type |> traverseType true 1);
         
         if priority >= 1 then 
@@ -2051,7 +2030,6 @@ let buildModuleFragment cenv emEnv (asmB : AssemblyBuilder) (modB : ModuleBuilde
     tdefs |> List.iter (buildModuleTypePass4  (visited,created) emEnv) 
     let emEnv = Seq.fold envUpdateCreatedTypeRef emEnv created.Keys // update typT with the created typT
     emitCustomAttrs cenv emEnv modB.SetCustomAttributeAndLog m.CustomAttrs;    
-
     m.Resources.AsList |> List.iter (fun r -> 
         let attribs = (match r.Access with ILResourceAccess.Public -> ResourceAttributes.Public | ILResourceAccess.Private -> ResourceAttributes.Private) 
         match r.Location with 
@@ -2071,7 +2049,7 @@ let buildModuleFragment cenv emEnv (asmB : AssemblyBuilder) (modB : ModuleBuilde
 // test hook
 //----------------------------------------------------------------------------
 
-let mkDynamicAssemblyAndModule assemblyName optimize debugInfo =
+let mkDynamicAssemblyAndModule (assemblyName, optimize, debugInfo) =
     let filename = assemblyName ^ ".dll"
     let currentDom  = System.AppDomain.CurrentDomain
 #if SILVERLIGHT
@@ -2095,18 +2073,18 @@ let mkDynamicAssemblyAndModule assemblyName optimize debugInfo =
 #endif    
     asmB,modB
 
-    
 #if SILVERLIGHT
 type EntryDelegate = delegate of unit -> unit 
 #endif
 
-let emitModuleFragment ilg emEnv (asmB : AssemblyBuilder) (modB : ModuleBuilder) (modul : IL.ILModuleDef) (debugInfo : bool) resolvePath =
+let emitModuleFragment (ilg, emEnv, asmB : AssemblyBuilder, modB : ModuleBuilder, modul : IL.ILModuleDef, debugInfo : bool, resolvePath) =
     let cenv = { ilg = ilg ; generatePdb = debugInfo; resolvePath=resolvePath }
 
     let emEnv = buildModuleFragment cenv emEnv asmB modB modul
     match modul.Manifest with 
     | None -> ()
     | Some mani ->  
+       // REVIEW: remainder of manifest
        emitCustomAttrs cenv emEnv asmB.SetCustomAttributeAndLog mani.CustomAttrs;    
     // invoke entry point methods
     let execEntryPtFun ((typB : TypeBuilder),methodName) () =

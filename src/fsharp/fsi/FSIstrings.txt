@@ -1,18 +1,6 @@
-# ****************************************************************************
-#
-# Copyright (c) 2002-2011 Microsoft Corporation. 
-#
-# This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
-# copy of the license can be found in the License.html file at the root of this distribution. 
-# By using this source code in any fashion, you are agreeing to be bound 
-# by the terms of the Apache License, Version 2.0.
-#
-# You must not remove this notice, or any other, from this software.
-# ***************************************************************************
-#
 # fsi.exe resource strings
 stoppedDueToError,"Stopped due to error\n"
-fsiUsage,"Usage: fsi.exe <options> [script.fsx [<arguments>]]"
+fsiUsage,"Usage: %s <options> [script.fsx [<arguments>]]"
 fsiInputFiles,"- INPUT FILES -"
 fsiCodeGeneration,"- CODE GENERATION -"
 fsiErrorsAndWarnings,"- ERRORS AND WARNINGS -"
@@ -58,4 +46,4 @@ fsiTurnedTimingOff,"--> Timing now off"
 fsiUnexpectedThreadAbortException,"- Unexpected ThreadAbortException (Ctrl-C) during event handling: Trying to restart..."
 fsiFailedToResolveAssembly,"Failed to resolve assembly '%s'"
 fsiBindingSessionTo,"Binding session to '%s'..."
-fsiProductName,"Microsoft (R) F# 2.0 Interactive build %s"
+fsiProductName,"Microsoft (R) F# 3.0 Interactive version %s"

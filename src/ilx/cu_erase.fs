@@ -1,6 +1,5 @@
 //----------------------------------------------------------------------------
-//
-// Copyright (c) 2002-2011 Microsoft Corporation. 
+// Copyright (c) 2002-2012 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -59,7 +58,6 @@ type DiscriminationTechnique =
 type UnionReprDecisions<'Union,'Alt,'Type>
           (getAlternatives: 'Union->'Alt[],
            nullPermitted:'Union->bool,
-           isGeneric:'Union -> bool,
            isNullary:'Alt->bool,
            isList:'Union->bool,
            nameOfAlt : 'Alt -> string,
@@ -155,7 +153,7 @@ type UnionReprDecisions<'Union,'Alt,'Type>
 
 
 let baseTyOfUnionSpec (cuspec : IlxUnionSpec) = 
-    mkILBoxedTy cuspec.TypeRef cuspec.GenericArgs
+    mkILBoxedTyRaw cuspec.TypeRef cuspec.GenericArgs
 
 let mkMakerName (cuspec: IlxUnionSpec) nm = 
     match cuspec.HasHelpers with
@@ -169,19 +167,17 @@ let cuspecRepr =
     UnionReprDecisions
         ((fun (cuspec:IlxUnionSpec) -> cuspec.AlternativesArray),
          (fun (cuspec:IlxUnionSpec) -> cuspec.IsNullPermitted), 
-         (fun cuspec -> nonNil cuspec.GenericArgs),
          (fun (alt:IlxUnionAlternative) -> alt.IsNullary),
          (fun cuspec -> cuspec.HasHelpers = IlxUnionHasHelpers.SpecialFSharpListHelpers),
          (fun (alt:IlxUnionAlternative) -> alt.Name),
-         (fun cuspec -> mkILBoxedTy cuspec.TypeRef cuspec.GenericArgs),
-         (fun (cuspec,nm) -> mkILBoxedTy (mkILTyRefInTyRef (mkCasesTypeRef cuspec, nm)) cuspec.GenericArgs))
+         (fun cuspec -> mkILBoxedTyRaw cuspec.TypeRef cuspec.GenericArgs),
+         (fun (cuspec,nm) -> mkILBoxedTyRaw (mkILTyRefInTyRef (mkCasesTypeRef cuspec, nm)) cuspec.GenericArgs))
 
 type NoTypesGeneratedViaThisReprDecider = NoTypesGeneratedViaThisReprDecider
 let cudefRepr = 
     UnionReprDecisions
         ((fun (_enc,_td,cud) -> cud.cudAlternatives),
          (fun (_enc,_td,cud) -> cud.cudNullPermitted), 
-         (fun (_enc,td,_cud) -> nonNil td.GenericParams),
          (fun (alt:IlxUnionAlternative) -> alt.IsNullary),
          (fun (_enc,_td,cud) -> cud.cudHasHelpers = IlxUnionHasHelpers.SpecialFSharpListHelpers),
          (fun (alt:IlxUnionAlternative) -> alt.Name),
@@ -199,21 +195,16 @@ let mkBasicBlock2 (a,b) =
 let mkTesterName nm = "Is" + nm
 let tagPropertyName = "Tag"
 
-let mkLowerName (nm: string) =
+let mkUnionCaseFieldId (fdef: IlxUnionField) = 
     // Use the lower case name of a field or constructor as the field/parameter name if it differs from the uppercase name
-    let lowerName = String.uncapitalize nm
-    if lowerName = nm then "_" + nm else lowerName
+    fdef.LowerName, fdef.Type
 
-let mkUnionCaseFieldId (fdef: ILFieldDef) = 
-    // Use the lower case name of a field or constructor as the field/parameter name if it differs from the uppercase name
-    mkLowerName fdef.Name, fdef.Type
+let refToFieldInTy ty (nm, fldTy) = mkILFieldSpecInTy (ty, nm, fldTy)
 
-let refToFieldInTy tspec (nm, fldTy) = mkILFieldSpecInTy (tspec, nm, fldTy)
-
-let formalTypeArgs (baseTy:ILType) = List.mapi (fun i _ -> mkILTyvarTy (uint16 i)) baseTy.GenericArgs
+let formalTypeArgs (baseTy:ILType) = ILList.mapi (fun i _ -> mkILTyvarTy (uint16 i)) baseTy.GenericArgs
 let constFieldName nm = "_unique_" + nm 
 let constFormalFieldTy (baseTy:ILType) = 
-    ILType.Boxed (mkILTySpec (baseTy.TypeRef, formalTypeArgs baseTy))
+    ILType.Boxed (mkILTySpecRaw (baseTy.TypeRef, formalTypeArgs baseTy))
 
 let mkConstFieldSpecFromId (baseTy:ILType) constFieldId = 
     refToFieldInTy baseTy constFieldId
@@ -232,12 +223,9 @@ let mkTagFieldId ilg cuspec = "_tag", mkTagFieldType ilg cuspec
 let mkTailOrNullId baseTy = "tail", constFormalFieldTy baseTy
 
 
-let altInfoOfUnionSpec (cuspec:IlxUnionSpec) cidx =
-    let alt = 
-        try cuspec.Alternative cidx 
-        with _ -> failwith ("alternative " + string cidx + " not found") 
-    let altTy = tyForAlt cuspec alt
-    alt.Name, altTy, alt
+let altOfUnionSpec (cuspec:IlxUnionSpec) cidx =
+    try cuspec.Alternative cidx 
+    with _ -> failwith ("alternative " + string cidx + " not found") 
 
 // Nullary cases on types with helpers do not reveal their underlying type even when 
 // using runtime type discrimination, because the underlying type is never needed from 
@@ -275,13 +263,13 @@ let adjustFieldName hasHelpers nm =
     | _ -> nm
 
 let mkLdData avoidHelpers cuspec cidx fidx = 
-     let _, altTy, alt = altInfoOfUnionSpec cuspec cidx
-     let fieldDef = alt.FieldDef fidx
-     if avoidHelpers then 
-         let fldName,fldTy = mkUnionCaseFieldId fieldDef
-         mkNormalLdfld (mkILFieldSpecInTy(altTy,fldName,fldTy)) 
-     else
-         mkNormalCall (mkILNonGenericInstanceMethSpecInTy(altTy,"get_" + adjustFieldName cuspec.HasHelpers fieldDef.Name,[],fieldDef.Type)) 
+    let alt = altOfUnionSpec cuspec cidx
+    let altTy = tyForAlt cuspec alt
+    let fieldDef = alt.FieldDef fidx
+    if avoidHelpers then 
+        mkNormalLdfld (mkILFieldSpecInTy(altTy,fieldDef.LowerName, fieldDef.Type)) 
+    else
+        mkNormalCall (mkILNonGenericInstanceMethSpecInTy(altTy,"get_" + adjustFieldName cuspec.HasHelpers fieldDef.Name,[],fieldDef.Type)) 
 
 let mkGetTailOrNull avoidHelpers cuspec = 
     mkLdData avoidHelpers cuspec 1 1 (* tail is in alternative 1, field number 1 *)
@@ -317,7 +305,10 @@ let mkTagDiscriminateThen cenv cuspec cidx after =
     @ mkCeqThen after
 
 let convNewDataInstrInternal cenv cuspec cidx = 
-    let altName, altTy, alt = altInfoOfUnionSpec cuspec cidx
+    let alt = altOfUnionSpec cuspec cidx
+    let altTy = tyForAlt cuspec alt
+    let altName = alt.Name
+
     if cuspecRepr.OptimizeAlternativeToNull (cuspec,alt) then 
         [ AI_ldnull  ]
     elif cuspecRepr.MaintainPossiblyUniqueConstantFieldForAlternative (cuspec,alt) then 
@@ -329,9 +320,9 @@ let convNewDataInstrInternal cenv cuspec cidx =
             match cuspecRepr.DiscriminationTechnique cuspec with
             | IntegerTag -> [ mkLdcInt32 cidx ], [mkTagFieldType cenv.ilg cuspec]
             | _ -> [], []
-        instrs @ [ mkNormalNewobj(mkILCtorMethSpecForTy (baseTy,(alt.FieldTypes @ tagfields))) ]
+        instrs @ [ mkNormalNewobj(mkILCtorMethSpecForTy (baseTy,(Array.toList alt.FieldTypes @ tagfields))) ]
     else 
-        [ mkNormalNewobj(mkILCtorMethSpecForTy (altTy,alt.FieldTypes)) ]
+        [ mkNormalNewobj(mkILCtorMethSpecForTy (altTy,Array.toList alt.FieldTypes)) ]
 
 let rec convInstr cenv (tmps: ILLocalsAllocator) inplab outlab instr = 
     match instr with 
@@ -339,7 +330,8 @@ let rec convInstr cenv (tmps: ILLocalsAllocator) inplab outlab instr =
         match (destIlxExtInstr e) with 
         |  (EI_newdata (cuspec, cidx)) ->
 
-            let altName, _altTypeSpec, alt = altInfoOfUnionSpec cuspec cidx
+            let alt = altOfUnionSpec cuspec cidx
+            let altName = alt.Name
             let baseTy = baseTyOfUnionSpec cuspec
             let i = 
                 // If helpers exist, use them
@@ -352,7 +344,7 @@ let rec convInstr cenv (tmps: ILLocalsAllocator) inplab outlab instr =
                     elif alt.IsNullary then 
                         [ mkNormalCall (mkILNonGenericStaticMethSpecInTy (baseTy, "get_" + altName, [], constFormalFieldTy baseTy)) ]
                     else
-                        [ mkNormalCall (mkILNonGenericStaticMethSpecInTy (baseTy, mkMakerName cuspec altName, alt.FieldTypes, constFormalFieldTy baseTy)) ]
+                        [ mkNormalCall (mkILNonGenericStaticMethSpecInTy (baseTy, mkMakerName cuspec altName, Array.toList alt.FieldTypes, constFormalFieldTy baseTy)) ]
 
                 | NoHelpers -> 
                     if cuspecRepr.MaintainPossiblyUniqueConstantFieldForAlternative (cuspec,alt) then 
@@ -362,42 +354,44 @@ let rec convInstr cenv (tmps: ILLocalsAllocator) inplab outlab instr =
                     else
                         convNewDataInstrInternal cenv cuspec cidx 
 
-            Choice1Of2 i
+            InstrMorph i
 
         |  (EI_stdata (cuspec, cidx,fidx)) ->
-            let _, altTy, alt = altInfoOfUnionSpec cuspec cidx
+            let alt = altOfUnionSpec cuspec cidx
+            let altTy = tyForAlt cuspec alt
             let fieldDef = alt.FieldDef fidx
-            let fldName,fldTy = mkUnionCaseFieldId fieldDef
-            Choice1Of2 [ mkNormalStfld (mkILFieldSpecInTy(altTy,fldName,fldTy)) ]
+            InstrMorph [ mkNormalStfld (mkILFieldSpecInTy(altTy,fieldDef.LowerName, fieldDef.Type)) ]
               
         |  (EI_lddata (avoidHelpers, cuspec,cidx,fidx)) ->
                             // The stdata instruction is only ever used for the F# "List" type within FSharp.Core.dll
-            Choice1Of2 [ mkLdData avoidHelpers cuspec cidx fidx ]
+            InstrMorph [ mkLdData avoidHelpers cuspec cidx fidx ]
 
         |  (EI_lddatatag (avoidHelpers,cuspec)) -> 
                 // If helpers exist, use them
             match cuspec.HasHelpers with
             | SpecialFSharpListHelpers 
             | AllHelpers  
-                     when not avoidHelpers -> Choice1Of2 [ mkGetTagFromHelpers cenv cuspec ]
+                     when not avoidHelpers -> InstrMorph [ mkGetTagFromHelpers cenv cuspec ]
             | _ -> 
                     
                 let alts = cuspec.Alternatives
                 match cuspecRepr.DiscriminationTechnique cuspec with
                 | TailOrNull ->
                     // leaves 1 if cons, 0 if not
-                    Choice1Of2 [ mkGetTailOrNull avoidHelpers cuspec; AI_ldnull; AI_cgt_un ] 
+                    InstrMorph [ mkGetTailOrNull avoidHelpers cuspec; AI_ldnull; AI_cgt_un ] 
                 | IntegerTag -> 
                     let baseTy = baseTyOfUnionSpec cuspec
-                    Choice1Of2 (mkGetTagFromField cenv cuspec baseTy)
+                    InstrMorph (mkGetTagFromField cenv cuspec baseTy)
                 | SingleCase -> 
-                        Choice1Of2 [ AI_pop; (AI_ldc (DT_I4, ILConst.I4 0)) ] 
+                        InstrMorph [ AI_pop; (AI_ldc (DT_I4, ILConst.I4 0)) ] 
                 | RuntimeTypes -> 
                         let baseTy = baseTyOfUnionSpec cuspec
                         let locn = tmps.AllocLocal (mkILLocal baseTy)
 
                         let mkCase last inplab cidx failLab = 
-                            let altName, altTy, alt = altInfoOfUnionSpec cuspec cidx
+                            let alt = altOfUnionSpec cuspec cidx
+                            let altTy = tyForAlt cuspec alt
+                            let altName = alt.Name
                             let internalLab = generateCodeLabel ()
                             let cmpNull = cuspecRepr.OptimizeAlternativeToNull (cuspec, alt)
                             if last then 
@@ -412,7 +406,7 @@ let rec convInstr cenv (tmps: ILLocalsAllocator) inplab outlab instr =
                                         mkRuntimeTypeDiscriminateThen cenv avoidHelpers cuspec alt altName altTy test
                                 mkGroupBlock 
                                   ([internalLab],
-                                   [ mkBasicBlock2 (inplab, I_ldloc locn ::test_block);
+                                   [ mkBasicBlock2 (inplab, mkLdloc locn ::test_block);
                                      mkBasicBlock2 (internalLab,[(AI_ldc(DT_I4,ILConst.I4(cidx))); I_br outlab ]) ]) 
 
                         // Make the block for the last test. 
@@ -434,18 +428,19 @@ let rec convInstr cenv (tmps: ILLocalsAllocator) inplab outlab instr =
                             (1,lastInpLab, lastBlock)
 
                         // Add on a branch to the first input label.  This gets optimized away by the printer/emitter. 
-                        Choice2Of2 
+                        InstrMorph 
                           (mkGroupBlock
                              ([firstInpLab],
-                             [ mkBasicBlock2 (inplab, [ I_stloc locn; I_br firstInpLab ]);
+                             [ mkBasicBlock2 (inplab, [ mkStloc locn; I_br firstInpLab ]);
                            overallBlock ]))
                 
         |  (EI_castdata (canfail,cuspec,cidx)) ->
-            let _, altTy, alt = altInfoOfUnionSpec cuspec cidx
+            let alt = altOfUnionSpec cuspec cidx
+            let altTy = tyForAlt cuspec alt
             if cuspecRepr.OptimizeAlternativeToNull (cuspec,alt) then 
               if canfail then 
                   let internal1 = generateCodeLabel ()
-                  Choice2Of2 
+                  InstrMorph 
                     (mkGroupBlock  
                        ([internal1],
                        [ mkBasicBlock2 (inplab,
@@ -457,47 +452,51 @@ let rec convInstr cenv (tmps: ILLocalsAllocator) inplab outlab instr =
                        ] ))
               else 
                   // If it can't fail, it's still verifiable just to leave the value on the stack unchecked 
-                  Choice1Of2 [] 
+                  InstrMorph [] 
                   
             elif cuspecRepr.OptimizeAlternativeToRootClass (cuspec,alt) then 
-                Choice1Of2 []
+                InstrMorph []
 
-            else Choice1Of2 [ I_castclass altTy ] 
+            else InstrMorph [ I_castclass altTy ] 
               
         |  (EI_brisdata (avoidHelpers, cuspec,cidx,tg,failLab)) ->
-            let altName, altTy, alt = altInfoOfUnionSpec cuspec cidx
+            let alt = altOfUnionSpec cuspec cidx
+            let altTy = tyForAlt cuspec alt
+            let altName = alt.Name
             if cuspecRepr.OptimizeAlternativeToNull (cuspec,alt) then 
-                Choice1Of2 [ I_brcmp (BI_brtrue,failLab,tg) ] 
+                InstrMorph [ I_brcmp (BI_brtrue,failLab,tg) ] 
             elif cuspecRepr.OptimizeSingleNonNullaryAlternativeToRootClassAndAnyOtherAlternativesToNull (cuspec,alt) then 
                 // in this case we can use a null test
-                Choice1Of2 [ I_brcmp (BI_brfalse,failLab,tg) ] 
+                InstrMorph [ I_brcmp (BI_brfalse,failLab,tg) ] 
             else
                 match cuspecRepr.DiscriminationTechnique cuspec  with 
-                | SingleCase -> Choice1Of2 [ I_br tg ]
-                | RuntimeTypes ->  Choice1Of2 (mkRuntimeTypeDiscriminateThen cenv avoidHelpers cuspec alt altName altTy (I_brcmp (BI_brfalse,failLab,tg)))
-                | IntegerTag -> Choice1Of2 (mkTagDiscriminateThen cenv cuspec cidx (I_brcmp (BI_brfalse,failLab,tg)))
+                | SingleCase -> InstrMorph [ I_br tg ]
+                | RuntimeTypes ->  InstrMorph (mkRuntimeTypeDiscriminateThen cenv avoidHelpers cuspec alt altName altTy (I_brcmp (BI_brfalse,failLab,tg)))
+                | IntegerTag -> InstrMorph (mkTagDiscriminateThen cenv cuspec cidx (I_brcmp (BI_brfalse,failLab,tg)))
                 | TailOrNull -> 
                     match cidx with 
-                    | TagNil -> Choice1Of2 [ mkGetTailOrNull avoidHelpers cuspec; I_brcmp (BI_brtrue,failLab,tg) ] 
-                    | TagCons -> Choice1Of2 [ mkGetTailOrNull avoidHelpers cuspec; I_brcmp (BI_brfalse,failLab,tg) ] 
+                    | TagNil -> InstrMorph [ mkGetTailOrNull avoidHelpers cuspec; I_brcmp (BI_brtrue,failLab,tg) ] 
+                    | TagCons -> InstrMorph [ mkGetTailOrNull avoidHelpers cuspec; I_brcmp (BI_brfalse,failLab,tg) ] 
                     | _ -> failwith "unexpected"
 
         |  (EI_isdata (avoidHelpers, cuspec, cidx)) ->
-            let altName, altTy, alt = altInfoOfUnionSpec cuspec cidx
+            let alt = altOfUnionSpec cuspec cidx
+            let altTy = tyForAlt cuspec alt
+            let altName = alt.Name
             if cuspecRepr.OptimizeAlternativeToNull (cuspec,alt) then 
-                Choice1Of2 [ AI_ldnull; AI_ceq ] 
+                InstrMorph [ AI_ldnull; AI_ceq ] 
             elif cuspecRepr.OptimizeSingleNonNullaryAlternativeToRootClassAndAnyOtherAlternativesToNull (cuspec,alt) then 
                 // in this case we can use a null test
-                Choice1Of2 [ AI_ldnull; AI_cgt_un ] 
+                InstrMorph [ AI_ldnull; AI_cgt_un ] 
             else 
                 match cuspecRepr.DiscriminationTechnique cuspec with 
-                | SingleCase -> Choice1Of2 [ mkLdcInt32 1 ] 
-                | RuntimeTypes -> Choice1Of2 (mkRuntimeTypeDiscriminate cenv avoidHelpers cuspec alt altName  altTy)
-                | IntegerTag -> Choice1Of2 (mkTagDiscriminate cenv cuspec (baseTyOfUnionSpec cuspec) cidx)
+                | SingleCase -> InstrMorph [ mkLdcInt32 1 ] 
+                | RuntimeTypes -> InstrMorph (mkRuntimeTypeDiscriminate cenv avoidHelpers cuspec alt altName  altTy)
+                | IntegerTag -> InstrMorph (mkTagDiscriminate cenv cuspec (baseTyOfUnionSpec cuspec) cidx)
                 | TailOrNull -> 
                     match cidx with 
-                    | TagNil -> Choice1Of2 [ mkGetTailOrNull avoidHelpers cuspec; AI_ldnull; AI_ceq ] 
-                    | TagCons -> Choice1Of2 [ mkGetTailOrNull avoidHelpers cuspec; AI_ldnull; AI_cgt_un  ] 
+                    | TagNil -> InstrMorph [ mkGetTailOrNull avoidHelpers cuspec; AI_ldnull; AI_ceq ] 
+                    | TagCons -> InstrMorph [ mkGetTailOrNull avoidHelpers cuspec; AI_ldnull; AI_cgt_un  ] 
                     | _ -> failwith "unexpected"
               
         |  (EI_datacase (avoidHelpers, cuspec, cases, cont)) ->
@@ -507,14 +506,16 @@ let rec convInstr cenv (tmps: ILLocalsAllocator) inplab outlab instr =
             | RuntimeTypes ->  
                 let locn = tmps.AllocLocal (mkILLocal baseTy)
                 let mkCase _last inplab (cidx,tg) failLab = 
-                    let altName, altTy, alt = altInfoOfUnionSpec cuspec cidx
+                    let alt = altOfUnionSpec cuspec cidx
+                    let altTy = tyForAlt cuspec alt
+                    let altName = alt.Name
                     let _internalLab = generateCodeLabel ()
                     let cmpNull = cuspecRepr.OptimizeAlternativeToNull (cuspec,alt)
      
                     let test = 
                         let testInstr = I_brcmp ((if cmpNull then BI_brfalse else BI_brtrue),tg,failLab) 
 
-                        [ I_ldloc locn ] @
+                        [ mkLdloc locn ] @
                         (if cmpNull || cuspecRepr.OptimizeSingleNonNullaryAlternativeToRootClass (cuspec,alt) then 
                              [ testInstr ]
                          else 
@@ -544,10 +545,10 @@ let rec convInstr cenv (tmps: ILLocalsAllocator) inplab outlab instr =
 
                 // Add on a branch to the first input label.  This gets optimized 
                 // away by the printer/emitter. 
-                Choice2Of2 
+                InstrMorph 
                   (mkGroupBlock
                      ([firstInpLab],
-                     [ mkBasicBlock2 (inplab, [ I_stloc locn; I_br firstInpLab ]);
+                     [ mkBasicBlock2 (inplab, [ mkStloc locn; I_br firstInpLab ]);
                        overallBlock ]))
             | IntegerTag -> 
                 // Use a dictionary to avoid quadratic lookup in case list
@@ -559,25 +560,25 @@ let rec convInstr cenv (tmps: ILLocalsAllocator) inplab outlab instr =
                     if ok then res else cont
 
                 let dests = List.mapi mkCase cuspec.Alternatives
-                Choice1Of2 (mkGetTag cenv cuspec @ [ I_switch (dests,cont) ])
+                InstrMorph (mkGetTag cenv cuspec @ [ I_switch (dests,cont) ])
             | SingleCase ->
                 match cases with 
-                | [(0,tg)] -> Choice1Of2 [ AI_pop; I_br tg ]
-                | [] -> Choice1Of2 [ AI_pop; I_br cont ]
+                | [(0,tg)] -> InstrMorph [ AI_pop; I_br tg ]
+                | [] -> InstrMorph [ AI_pop; I_br cont ]
                 | _ -> failwith "unexpected: strange switch on single-case unions should not be present"
             | TailOrNull -> 
                 failwith "unexpected: switches on lists should have been eliminated to brisdata tests"
                 
-        | _ -> Choice1Of2 [instr] 
+        | _ -> InstrMorph [instr] 
 
-    | _ -> Choice1Of2 [instr] 
+    | _ -> InstrMorph [instr] 
 
 
 let convILMethodBody cenv il = 
     let tmps = ILLocalsAllocator il.Locals.Length
     let code= morphExpandILInstrsInILCode (convInstr cenv tmps) il.Code
     {il with
-          Locals = il.Locals @ tmps.Close();
+          Locals = ILList.ofList (ILList.toList il.Locals @ tmps.Close());
           Code=code; 
           MaxStack=il.MaxStack+2 }
 
@@ -595,7 +596,7 @@ let mkHiddenGeneratedStaticFieldDef ilg (a,b,c,d,e) =
             |> addFieldGeneratedAttrs ilg
 
 
-let mkMethodsAndPropertiesForFields cenv access attr hasHelpers (typ: ILType) (fields: ILFieldDef[]) = 
+let mkMethodsAndPropertiesForFields cenv access attr hasHelpers (typ: ILType) (fields: IlxUnionField[]) = 
     let basicProps = 
         fields 
         |> Array.map (fun field -> 
@@ -607,8 +608,8 @@ let mkMethodsAndPropertiesForFields cenv access attr hasHelpers (typ: ILType) (f
               CallingConv=ILThisConvention.Instance;
               Type=field.Type;          
               Init=None;
-              Args=[];
-              CustomAttrs= field.CustomAttrs; }
+              Args=mkILTypes [];
+              CustomAttrs= field.ILField.CustomAttrs; }
             |> addPropertyGeneratedAttrs cenv.ilg
         )
         |> Array.toList
@@ -616,15 +617,14 @@ let mkMethodsAndPropertiesForFields cenv access attr hasHelpers (typ: ILType) (f
     let basicMethods = 
 
         [ for field in fields do 
-              let fldName,fldTy = mkUnionCaseFieldId field
-              let fspec = mkILFieldSpecInTy(typ,fldName,fldTy)
+              let fspec = mkILFieldSpecInTy(typ,field.LowerName,field.Type)
               yield 
                   mkILNonGenericInstanceMethod
                      ("get_" + adjustFieldName hasHelpers field.Name,
-                      access, [], mkILReturn fldTy,
-                      mkMethodBody(true,[],2,
+                      access, [], mkILReturn field.Type,
+                      mkMethodBody(true,emptyILLocals,2,
                               nonBranchingInstrsToCode 
-                                [ I_ldarg 0us;
+                                [ mkLdarg 0us;
                                   mkNormalLdfld fspec ], attr))
                   |> convMethodDef cenv
                   |> addMethodGeneratedAttrs cenv.ilg  ]
@@ -662,7 +662,7 @@ let convAlternativeDef cenv num (td:ILTypeDef) cud info cuspec (baseTy:ILType) (
                      mkILNonGenericStaticMethod
                            (methName,
                             cud.cudReprAccess,[],mkILReturn(baseTy),
-                            mkMethodBody(true,[],fields.Length,
+                            mkMethodBody(true,emptyILLocals,fields.Length,
                                     nonBranchingInstrsToCode 
                                       [ I_ldsfld (Nonvolatile,mkConstFieldSpec altName baseTy) ], attr))
                          |> convMethodDef cenv
@@ -687,7 +687,7 @@ let convAlternativeDef cenv num (td:ILTypeDef) cud info cuspec (baseTy:ILType) (
                          ("get_" + mkTesterName altName,
                           cud.cudHelpersAccess,[],
                           mkILReturn cenv.ilg.typ_bool,
-                          mkMethodBody(true,[],2,nonBranchingInstrsToCode 
+                          mkMethodBody(true,emptyILLocals,2,nonBranchingInstrsToCode 
                                     [ mkLdarg0;
                                       (mkIlxInstr (EI_isdata (true,cuspec, num))) ], attr))
                       |> convMethodDef cenv
@@ -700,7 +700,7 @@ let convAlternativeDef cenv num (td:ILTypeDef) cud info cuspec (baseTy:ILType) (
                         CallingConv=ILThisConvention.Instance;
                         Type=cenv.ilg.typ_bool;          
                         Init=None;
-                        Args=[];
+                        Args=mkILTypes [];
                         CustomAttrs=emptyILCustomAttrs; }
                       |> addPropertyGeneratedAttrs cenv.ilg
                       |> addPropertyNeverAttrs cenv.ilg ]
@@ -715,7 +715,7 @@ let convAlternativeDef cenv num (td:ILTypeDef) cud info cuspec (baseTy:ILType) (
                         mkILNonGenericStaticMethod
                           ("get_" + altName,
                            cud.cudHelpersAccess, [], mkILReturn baseTy,
-                           mkMethodBody(true,[],fields.Length, nonBranchingInstrsToCode (convNewDataInstrInternal cenv cuspec num), attr))
+                           mkMethodBody(true,emptyILLocals,fields.Length, nonBranchingInstrsToCode (convNewDataInstrInternal cenv cuspec num), attr))
                         |> convMethodDef cenv
                         |> addMethodGeneratedAttrs cenv.ilg
                         |> addAltAttribs
@@ -730,7 +730,7 @@ let convAlternativeDef cenv num (td:ILTypeDef) cud info cuspec (baseTy:ILType) (
                           CallingConv=ILThisConvention.Static;
                           Type=baseTy;          
                           Init=None;
-                          Args=[];
+                          Args=mkILTypes [];
                           CustomAttrs=emptyILCustomAttrs; }
                         |> addPropertyGeneratedAttrs cenv.ilg
                         |> addPropertyNeverAttrs cenv.ilg
@@ -742,11 +742,11 @@ let convAlternativeDef cenv num (td:ILTypeDef) cud info cuspec (baseTy:ILType) (
                          mkILNonGenericStaticMethod
                            (mkMakerName cuspec altName,
                             cud.cudHelpersAccess,
-                            fields |> Array.map (fun fd -> mkILParamNamed (mkLowerName fd.Name, fd.Type)) |> Array.toList,
+                            fields |> Array.map (fun fd -> mkILParamNamed (fd.LowerName, fd.Type)) |> Array.toList,
                             mkILReturn baseTy,
-                            mkMethodBody(true,[],fields.Length,
+                            mkMethodBody(true,emptyILLocals,fields.Length,
                                     nonBranchingInstrsToCode 
-                                      (Array.toList (Array.mapi (fun i _ -> I_ldarg (uint16 i)) fields) @
+                                      (Array.toList (Array.mapi (fun i _ -> mkLdarg (uint16 i)) fields) @
                                        (convNewDataInstrInternal cenv cuspec num)), attr))
                          |> convMethodDef cenv
                          |> addMethodGeneratedAttrs cenv.ilg
@@ -781,7 +781,7 @@ let convAlternativeDef cenv num (td:ILTypeDef) cud info cuspec (baseTy:ILType) (
                   else
                     
                     let debugProxyTypeName = altTy.TypeSpec.Name + "@DebugTypeProxy"
-                    let debugProxyTy = mkILBoxedTy (mkILNestedTyRef(altTy.TypeSpec.Scope,altTy.TypeSpec.Enclosing, debugProxyTypeName)) altTy.GenericArgs
+                    let debugProxyTy = mkILBoxedTyRaw (mkILNestedTyRef(altTy.TypeSpec.Scope,altTy.TypeSpec.Enclosing, debugProxyTypeName)) altTy.GenericArgs
                     let debugProxyFieldName = "_obj"
                     
                     let debugProxyFields = 
@@ -791,12 +791,12 @@ let convAlternativeDef cenv num (td:ILTypeDef) cud info cuspec (baseTy:ILType) (
                         mkILCtor(ILMemberAccess.Public (* must always be public - see jared parson blog entry on implementing debugger type proxy *),
                                 [ mkILParamNamed ("obj",altTy) ],
                                 mkMethodBody
-                                  (false,[],3,
+                                  (false,emptyILLocals,3,
                                    nonBranchingInstrsToCode
                                      [ yield mkLdarg0 
                                        yield mkNormalCall (mkILCtorMethSpecForTy (cenv.ilg.typ_Object,[]))  
                                        yield mkLdarg0 
-                                       yield I_ldarg 1us;
+                                       yield mkLdarg 1us;
                                        yield mkNormalStfld (mkILFieldSpecInTy (debugProxyTy,debugProxyFieldName,altTy)); ],None))
 
                         |> addMethodGeneratedAttrs cenv.ilg
@@ -809,7 +809,7 @@ let convAlternativeDef cenv num (td:ILTypeDef) cud info cuspec (baseTy:ILType) (
                                ("get_" + field.Name,
                                 ILMemberAccess.Public,[],
                                 mkILReturn field.Type,
-                                mkMethodBody(true,[],2,
+                                mkMethodBody(true,emptyILLocals,2,
                                         nonBranchingInstrsToCode 
                                           [ mkLdarg0;
                                             mkNormalLdfld (mkILFieldSpecInTy (debugProxyTy,debugProxyFieldName,altTy)); 
@@ -829,8 +829,8 @@ let convAlternativeDef cenv num (td:ILTypeDef) cud info cuspec (baseTy:ILType) (
                               CallingConv=ILThisConvention.Instance;
                               Type=fdef.Type;          
                               Init=None;
-                              Args=[];
-                              CustomAttrs= fdef.CustomAttrs; }
+                              Args=mkILTypes [];
+                              CustomAttrs= fdef.ILField.CustomAttrs; }
                             |> addPropertyGeneratedAttrs cenv.ilg)
                         |> Array.toList
                     let debugProxyTypeDef = 
@@ -910,13 +910,17 @@ let rec convClassUnionDef cenv enc td cud =
     let repr = cudefRepr 
     let isTotallyImmutable = (cud.cudHasHelpers <> SpecialFSharpListHelpers)
 
-    let _, baseMethsFromAlt, basePropsFromAlt, altUniqObjMeths, altTypeDefs, altDebugTypeDefs, altNullaryFields = 
-        Array.fold 
-          (fun (num, bmsofar, bpsofar, msofar, csofar, dsofar, fsofar) alt -> 
-              let bms, bps, ms, cls, dcls, flds = convAlternativeDef cenv num td cud info cuspec baseTy alt
-              (num+1, bms@bmsofar, bps@bpsofar, msofar@ms, csofar@cls, dsofar@dcls, fsofar@flds)) 
-          (0,[],[],[],[],[],[])
-          cud.cudAlternatives
+    let results = 
+        cud.cudAlternatives 
+        |> List.ofArray 
+        |> List.mapi (fun i alt -> convAlternativeDef cenv i td cud info cuspec baseTy alt)
+
+    let baseMethsFromAlt = results |> List.collect (fun (a,_,_,_,_,_) -> a) 
+    let basePropsFromAlt = results |> List.collect (fun (_,a,_,_,_,_) -> a) 
+    let altUniqObjMeths  = results |> List.collect (fun (_,_,a,_,_,_) -> a) 
+    let altTypeDefs      = results |> List.collect (fun (_,_,_,a,_,_) -> a) 
+    let altDebugTypeDefs = results |> List.collect (fun (_,_,_,_,a,_) -> a) 
+    let altNullaryFields = results |> List.collect (fun (_,_,_,_,_,a) -> a) 
        
     let tagFieldsInObject = 
         match repr.DiscriminationTechnique info with 
@@ -1002,7 +1006,7 @@ let rec convClassUnionDef cenv enc td cud =
                      cud.cudHelpersAccess,
                      [mkILParamAnon baseTy],
                      mkILReturn tagFieldType,
-                     mkMethodBody(true,[],2,
+                     mkMethodBody(true,emptyILLocals,2,
                              nonBranchingInstrsToCode 
                                  [ mkLdarg0;
                                    (mkIlxInstr (EI_lddatatag (true, cuspec))) ], 
@@ -1016,7 +1020,7 @@ let rec convClassUnionDef cenv enc td cud =
                     ("get_" + tagPropertyName,
                      cud.cudHelpersAccess,[],
                      mkILReturn tagFieldType,
-                     mkMethodBody(true,[],2,
+                     mkMethodBody(true,emptyILLocals,2,
                              nonBranchingInstrsToCode 
                                  [ mkLdarg0;
                                    (mkIlxInstr (EI_lddatatag (true, cuspec))) ], 
@@ -1032,7 +1036,7 @@ let rec convClassUnionDef cenv enc td cud =
                   CallingConv=ILThisConvention.Instance;
                   Type=tagFieldType;          
                   Init=None;
-                  Args=[];
+                  Args=mkILTypes [];
                   CustomAttrs=emptyILCustomAttrs; }
                 |> addPropertyGeneratedAttrs cenv.ilg 
                 |> addPropertyNeverAttrs cenv.ilg  ]
@@ -1085,7 +1089,7 @@ let rec convClassUnionDef cenv enc td cud =
                   Layout=ILTypeDefLayout.Auto; 
                   IsSpecialName=false;
                   Encoding=ILDefaultPInvokeEncoding.Ansi;
-                  Implements = [];
+                  Implements = mkILTypes [];
                   Extends= Some cenv.ilg.typ_Object ;
                   Methods= emptyILMethods;
                   SecurityDecls=emptyILSecurityDecls;

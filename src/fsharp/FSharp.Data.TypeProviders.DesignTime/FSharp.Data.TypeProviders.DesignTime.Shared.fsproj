@@ -1,0 +1,48 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <DefineConstants>$(DefineConstants);TPEMIT_INTERNAL_AND_MINIMAL_FOR_TYPE_CONTAINERS</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Xml.Linq" />
+  </ItemGroup>  
+  <ItemGroup>
+    <Compile Include="$(FSharpSourcesRoot)\..\extras\extenders\shared\Util.fsi">
+      <Link>Util.fsi</Link>
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="$(FSharpSourcesRoot)\..\extras\extenders\shared\Util.fs">
+      <Link>Util.fs</Link>
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="$(FSharpSourcesRoot)\..\extras\extenders\shared\Restable.fsi">
+      <Link>Restable.fsi</Link>
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="$(FSharpSourcesRoot)\..\extras\extenders\shared\Restable.fs">
+      <Link>Restable.fs</Link>
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="$(FSharpSourcesRoot)\..\extras\extenders\shared\TypeProviderEmit.fsi">
+      <Link>TypeProviderEmit.fsi</Link>
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="$(FSharpSourcesRoot)\..\extras\extenders\shared\TypeProviderEmit.fs">
+      <Link>TypeProviderEmit.fs</Link>
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="$(FSharpSourcesRoot)\fsharp\FSharp.Data.TypeProviders\TypeProvidersImpl.fs">
+      <Link>TypeProvidersImpl.fs</Link>
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="$(FSharpSourcesRoot)\fsharp\FSharp.Data.TypeProviders\TypeProviders.fs">
+      <Link>TypeProviders.fs</Link>
+      <Visible>true</Visible>
+    </Compile>
+
+  </ItemGroup>  
+</Project>

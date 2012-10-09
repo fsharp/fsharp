@@ -1,6 +1,5 @@
 //----------------------------------------------------------------------------
-//
-// Copyright (c) 2002-2011 Microsoft Corporation. 
+// Copyright (c) 2002-2012 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -154,7 +153,6 @@ namespace Microsoft.FSharp.Collections
                             e1.Dispose() 
                         finally
                             e2.Dispose()
-
               }
 
 
@@ -270,7 +268,7 @@ namespace Microsoft.FSharp.Collections
           let start() = if not !started then (started := true) 
 
           let dispose() = readAndClear state |> Option.iter closef
-          let finish() = (try dispose() finally curr := None)
+          let finish() = (try dispose() finally curr := None) 
           {  new IEnumerator<'U> with 
                  member x.Current = getCurr()
              interface IEnumerator with 
@@ -334,7 +332,7 @@ namespace Microsoft.FSharp.Collections
                 member x.Current = (e :> IEnumerator).Current
                 member x.MoveNext() = e.MoveNext()
                 member x.Reset() = noReset()
-            interface IDisposable with
+            interface System.IDisposable with
                 member x.Dispose() = 
                     try
                         e.Dispose()  
@@ -364,13 +362,6 @@ namespace Microsoft.FSharp.Collections
             | None -> () 
             | Some f -> f()
         
-        let chainDisposeG d1 (g:Generator<'T>) =
-            let app = g.Apply
-            let disp = match g.Disposer with Some f2 -> Some(fun () -> f2(); d1()) | None -> Some d1
-            { new Generator<_> with 
-                  member x.Apply = app 
-                  member x.Disposer = disp }
-
         let appG (g:Generator<_>) =
             //System.Console.WriteLine("{0}.appG", box g)
             let res = g.Apply()
@@ -745,6 +736,8 @@ namespace Microsoft.FSharp.Core.CompilerServices
             (FinallyEnumerable(compensation, (fun () -> rest)) :> seq<_>)
 
         let CreateEvent (add : 'Delegate -> unit) (remove : 'Delegate -> unit) (create : (obj -> 'Args -> unit) -> 'Delegate ) :IEvent<'Delegate,'Args> = 
+            // Note, we implement each interface explicitly: this works around a bug in the CLR 
+            // implementation on CompactFramework 3.7, used on Windows Phone 7
             { new obj() with
                   member x.ToString() = "<published event>"
               interface IEvent<'Delegate,'Args> 
@@ -838,6 +831,11 @@ namespace Microsoft.FSharp.Collections
     [<RequireQualifiedAccess>]
     [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
     module Seq = 
+    
+#if FX_NO_ICLONEABLE
+        open Microsoft.FSharp.Core.ICloneableExtensions            
+#else
+#endif    
 
         open Microsoft.FSharp.Core.CompilerServices.RuntimeHelpers
         
@@ -921,6 +919,9 @@ namespace Microsoft.FSharp.Collections
         let filter f source      = 
             checkNonNull "source" source
             revamp  (IEnumerator.filter f) source
+
+        [<CompiledName("Where")>]
+        let where f source      = filter f source
 
         [<CompiledName("Map")>]
         let map    f source      = 
@@ -1420,6 +1421,23 @@ namespace Microsoft.FSharp.Collections
                     accv <- currv
             accv
 
+(*
+        [<CompiledName("MinValueBy")>]
+        let inline minValBy (f : 'T -> 'U) (source: seq<'T>) : 'U = 
+            checkNonNull "source" source
+            use e = source.GetEnumerator() 
+            if not (e.MoveNext()) then 
+                invalidArg "source" InputSequenceEmptyString;
+            let first = e.Current
+            let mutable acc = f first
+            while e.MoveNext() do
+                let currv = e.Current
+                let curr = f currv
+                if curr < acc then
+                    acc <- curr
+            acc
+
+*)
         [<CompiledName("Max")>]
         let inline max (source: seq<_>) = 
             checkNonNull "source" source
@@ -1450,6 +1468,24 @@ namespace Microsoft.FSharp.Collections
                     accv <- currv
             accv
 
+
+(*
+        [<CompiledName("MaxValueBy")>]
+        let inline maxValBy (f : 'T -> 'U) (source: seq<'T>) : 'U = 
+            checkNonNull "source" source
+            use e = source.GetEnumerator() 
+            if not (e.MoveNext()) then 
+                invalidArg "source" InputSequenceEmptyString;
+            let first = e.Current
+            let mutable acc = f first
+            while e.MoveNext() do
+                let currv = e.Current
+                let curr = f currv
+                if curr > acc then
+                    acc <- curr
+            acc
+
+*)
         [<CompiledName("TakeWhile")>]
         let takeWhile p (source: seq<_>) = 
             checkNonNull "source" source
@@ -1510,3 +1546,27 @@ namespace Microsoft.FSharp.Collections
             if (e.MoveNext()) then e.Current
             else invalidArg "source" InputSequenceEmptyString
 
+        [<CompiledName("Last")>]
+        let last (source : seq<_>) =
+            checkNonNull "source" source
+            use e = source.GetEnumerator() 
+            if e.MoveNext() then 
+                let mutable res = e.Current
+                while (e.MoveNext()) do res <- e.Current
+                res
+            else
+                invalidArg "source" InputSequenceEmptyString
+
+
+        [<CompiledName("ExactlyOne")>]
+        let exactlyOne (source : seq<_>) =
+            checkNonNull "source" source
+            use e = source.GetEnumerator() 
+            if e.MoveNext() then 
+                let v = e.Current 
+                if e.MoveNext() then 
+                    invalidArg "source" (SR.GetString(SR.inputSequenceTooLong))
+                else
+                    v
+            else
+                invalidArg "source" InputSequenceEmptyString

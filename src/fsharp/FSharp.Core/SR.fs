@@ -18,6 +18,7 @@ module internal SR =
     let inputMustBeNonNegative = "inputMustBeNonNegative"
     let enumerationPastIntMaxValue = "enumerationPastIntMaxValue"
     let inputSequenceEmpty = "inputSequenceEmpty"
+    let inputSequenceTooLong = "inputSequenceTooLong"
     let mapCannotBeMutated = "mapCannotBeMutated"
     let notComparable = "notComparable"
     let outOfRange = "outOfRange"
@@ -138,6 +139,15 @@ module internal SR =
     let QfailedToBindAssembly = "QfailedToBindAssembly"
     let QtypeArgumentOutOfRange = "QtypeArgumentOutOfRange"
     let controlContinuationInvokedMultipleTimes = "controlContinuationInvokedMultipleTimes"
+    let invalidRecordTypeConstructorNotDefined = "invalidRecordTypeConstructorNotDefined"
+    let invalidTupleTypeConstructorNotDefined = "invalidTupleTypeConstructorNotDefined"
+    let thenByError = "thenByError"
+    let failDueToUnsupportedInputTypeInSumByOrAverageBy = "failDueToUnsupportedInputTypeInSumByOrAverageBy"
+    let unsupportedIfThenElse = "unsupportedIfThenElse"
+    let unsupportedQueryConstruct = "unsupportedQueryConstruct"
+    let unsupportedQueryConstructKind = "unsupportedQueryConstructKind"
+    let unsupportedQueryCall = "unsupportedQueryCall"
+    let unsupportedQueryProperty = "unsupportedQueryProperty"
     
     let GetString(name:System.String) : System.String = 
         resources.GetString(name, System.Globalization.CultureInfo.CurrentUICulture)

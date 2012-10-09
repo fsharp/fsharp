@@ -1,6 +1,5 @@
 //----------------------------------------------------------------------------
-//
-// Copyright (c) 2002-2011 Microsoft Corporation. 
+// Copyright (c) 2002-2012 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -187,6 +186,8 @@ module Printf =
     [<CompiledName("PrintFormatLineToTextWriter")>]
     val fprintfn : textWriter:TextWriter -> format:TextWriterFormat<'T> -> 'T
 
+#if FX_NO_SYSTEM_CONSOLE
+#else    
     /// <summary>Formatted printing to stderr</summary>
     /// <param name="format">The input formatter.</param>
     /// <returns>The return type and arguments of the formatter.</returns>
@@ -210,7 +211,7 @@ module Printf =
     /// <returns>The return type and arguments of the formatter.</returns>
     [<CompiledName("PrintFormatLine")>]
     val printfn  :                format:TextWriterFormat<'T> -> 'T
-
+#endif
     /// <summary>Print to a string via an internal string buffer and return 
     /// the result as a string. Helper printers must return strings.</summary>
     /// <param name="format">The input formatter.</param>
@@ -259,6 +260,7 @@ module Printf =
     /// <returns>The arguments of the formatter.</returns>
     [<CompiledName("PrintFormatToStringThenFail")>]
     val failwithf: format:StringFormat<'T,'Result> -> 'T
-    
+#if EXTRAS_FOR_SILVERLIGHT_COMPILER
     val setWriter: System.IO.TextWriter -> unit
     val setError:  System.IO.TextWriter -> unit
+#endif

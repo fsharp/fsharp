@@ -1,6 +1,5 @@
 //----------------------------------------------------------------------------
-//
-// Copyright (c) 2002-2011 Microsoft Corporation. 
+// Copyright (c) 2002-2012 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -20,6 +19,10 @@ open Microsoft.FSharp.Core.Operators
 open System.Diagnostics.CodeAnalysis                                    
 open System.Collections.Generic
 open System.Runtime.InteropServices
+#if FX_NO_ICLONEABLE
+open Microsoft.FSharp.Core.ICloneableExtensions            
+#else
+#endif  
 
 
 module internal List = 
@@ -474,6 +477,83 @@ module internal List =
     
 module internal Array = 
 
+    open System
+    open System.Collections.Generic
+
+#if FX_NO_ARRAY_KEY_SORT
+    // Mimic behavior of BCL QSort routine, used under the hood by various array sorting APIs
+    let qsort<'Key,'Value>(keys : 'Key[], values : 'Value[], start : int, last : int, comparer : IComparer<'Key>) =  
+            let valuesExist = 
+                match values with
+                | null -> false
+                | _ -> true
+                
+            let swap (p1, p2) =
+                let tk = keys.[p1]
+                keys.[p1] <- keys.[p2]
+                keys.[p2] <- tk
+                if valuesExist then
+                    let tv = values.[p1]
+                    values.[p1] <- values.[p2]
+                    values.[p2] <- tv
+                    
+            let partition (left, right, pivot) =
+                let value = keys.[pivot]
+                swap (pivot, right)
+                let mutable store = left
+                
+                for i in left..(right - 1) do
+                    if comparer.Compare(keys.[i],value) < 0 then
+                        swap(i, store)
+                        store <- store + 1
+
+                swap (store, right)
+                store
+            
+            let rec qs (left, right) =
+                if left < right then
+                    let pivot = left + (right-left)/2
+                    let newpivot = partition(left,right,pivot)
+                    qs(left,newpivot - 1)
+                    qs(newpivot+1,right)
+            
+            qs(start, last)
+            
+    type System.Array with
+        static member Sort<'Key,'Value when 'Key : comparison>(keys : 'Key[], values : 'Value[], comparer : IComparer<'Key>) =
+            let valuesExist = 
+                match values with
+                | null -> false
+                | _ -> true
+            match keys,values with
+            | null,_ -> raise (ArgumentNullException())
+            | _,_ when valuesExist && (keys.Length <> values.Length) -> raise (ArgumentException())
+            | _,_ ->
+            let comparer = match comparer with null -> LanguagePrimitives.FastGenericComparer<'Key> | _ -> comparer
+            qsort(keys, values, 0, keys.Length-1, comparer)
+        static member Sort<'Key,'Value  when 'Key : comparison>(keys : 'Key[], values : 'Value[]) =
+            let valuesExist = 
+                match values with
+                | null -> false
+                | _ -> true
+            match keys,values with
+            | null,_ -> raise (ArgumentNullException())
+            | _,_ when valuesExist && (keys.Length <> values.Length) -> raise (ArgumentException())
+            | _,_ ->   
+            qsort(keys,values,0,keys.Length-1,LanguagePrimitives.FastGenericComparer<'Key>)
+        static member Sort<'Key,'Value when 'Key : comparison>(keys : 'Key[], values : 'Value[], start : int, last : int) =
+            match keys with
+            | null -> raise (ArgumentNullException())
+            | _ ->        
+            qsort(keys,values,start,last,LanguagePrimitives.FastGenericComparer<'Key>)
+        static member Sort<'Key,'Value when 'Key : comparison>(keys : 'Key[], values : 'Value[], start : int, last : int, comparer : IComparer<'Key>) =
+            match keys with
+            | null -> raise (ArgumentNullException())
+            | _ ->        
+            let comparer = match comparer with null -> LanguagePrimitives.FastGenericComparer<'Key> | _ -> comparer
+            qsort(keys,values,start,last,comparer)
+#else
+#endif
 
     // The input parameter should be checked by callers if necessary
     let inline zeroCreateUnchecked (count:int) = 

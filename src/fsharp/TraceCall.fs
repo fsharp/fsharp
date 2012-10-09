@@ -1,10 +1,8 @@
 namespace Internal.Utilities.Debug
 
-open Internal.Utilities
 open System
 open System.IO
 open System.Threading
-open Microsoft.FSharp.Compiler.AbstractIL.Diagnostics 
 open System.Diagnostics
 open System.Runtime.InteropServices
 
@@ -28,6 +26,10 @@ type internal Trace private() =
 #if DEBUG_WITH_TIME_AND_THREAD_INFO
     static let TMinusZero = DateTime.Now
 #endif    
+    static let noopDisposable =
+        {   new IDisposable with
+                member this.Dispose() = ()
+        }
     static let mutable out = Console.Out
     [<ThreadStatic>] [<DefaultValue>] static val mutable private indent:int    
     [<ThreadStatic>] [<DefaultValue>] static val mutable private threadName:string
@@ -117,33 +119,34 @@ type internal Trace private() =
                                        functionName)}
 #endif
         else 
-            null : IDisposable  
+            noopDisposable : IDisposable  
         #else
-            null : IDisposable  
+            ignore(loggingClass,functionName,descriptionFunc,threadName)
+            noopDisposable : IDisposable  
         #endif                                       
                 
     /// Log a method as its called.
-    static member Call(loggingClass,functionName,descriptionFunc) = Trace.CallImpl(loggingClass,functionName,descriptionFunc,None)
+    static member Call(loggingClass:string,functionName:string,descriptionFunc:unit->string) = Trace.CallImpl(loggingClass,functionName,descriptionFunc,None)
     /// Log a method as its called. Expected always to be called on the same thread which will be named 'threadName'
-    static member CallByThreadNamed(loggingClass,functionName,threadName,descriptionFunc) = Trace.CallImpl(loggingClass,functionName,descriptionFunc,Some(threadName))
+    static member CallByThreadNamed(loggingClass:string,functionName:string,threadName:string,descriptionFunc:unit->string) = Trace.CallImpl(loggingClass,functionName,descriptionFunc,Some(threadName))
     /// Log a message by logging class.
-    static member PrintLine(loggingClass, messageFunc) = 
+    static member PrintLine(loggingClass:string, messageFunc:unit->string) = 
     #if DEBUG
         if Trace.ShouldLog(loggingClass) then 
-            let message = try messageFunc() with _-> "    No message because of exception.\n"
-            Trace.LogMessage(sprintf "    %s%s" message System.Environment.NewLine)
+            let message = try messageFunc() with _-> "No message because of exception.\n"
+            Trace.LogMessage(sprintf "%s%s" message System.Environment.NewLine)
     #else
-        ()
+        ignore(loggingClass,messageFunc)
     #endif            
 
     /// Log a message by logging class.
-    static member Print(loggingClass, messageFunc) = 
+    static member Print(loggingClass:string, messageFunc:unit->string) = 
     #if DEBUG
         if Trace.ShouldLog(loggingClass) then 
             let message = try messageFunc() with _-> "No message because of exception.\n"
             Trace.LogMessage(message)
     #else
-        ()
+        ignore(loggingClass,messageFunc)
     #endif
             
     /// Make a beep when the given loggingClass is matched.
@@ -152,16 +155,16 @@ type internal Trace private() =
         if Trace.ShouldLog(loggingClass) then 
             TraceInterop.MessageBeep(beeptype) |> ignore
     #else
-        ()
+        ignore(loggingClass,beeptype)
     #endif                    
         
     /// Make the "OK" sound when the given loggingClass is matched.
-    static member BeepOk(loggingClass) = Trace.BeepHelper(loggingClass,TraceInterop.MessageBeepType.Ok)
+    static member BeepOk(loggingClass:string) = Trace.BeepHelper(loggingClass,TraceInterop.MessageBeepType.Ok)
             
     /// Make the "Error" sound when the given loggingClass is matched. 
-    static member BeepError(loggingClass) = Trace.BeepHelper(loggingClass,TraceInterop.MessageBeepType.Error)
+    static member BeepError(loggingClass:string) = Trace.BeepHelper(loggingClass,TraceInterop.MessageBeepType.Error)
         
     /// Make the default sound when the given loggingClass is matched. 
-    static member Beep(loggingClass) = Trace.BeepHelper(loggingClass,TraceInterop.MessageBeepType.Default)
+    static member Beep(loggingClass:string) = Trace.BeepHelper(loggingClass,TraceInterop.MessageBeepType.Default)
             
             

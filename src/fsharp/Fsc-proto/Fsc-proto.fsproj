@@ -2,10 +2,10 @@
 <!--
 # Copyright (c) 2002-2011 Microsoft Corporation. 
 #
-# This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
-# copy of the license can be found in the License.html file at the root of this distribution. 
-# By using this source code in any fashion, you are agreeing to be bound 
-# by the terms of the Apache License, Version 2.0.
+# 
+# 
+# 
+#
 #
 # You must not remove this notice, or any other, from this software.
 -->
@@ -29,21 +29,9 @@
     <ProjectGuid>{9D7C9060-9263-40EB-8FE3-1E4E3C6D941C}</ProjectGuid>
     <AllowCrossTargeting>true</AllowCrossTargeting>
     <OtherFlags>$(OtherFlags) --stackReserveSize:4096000</OtherFlags>
-    <TargetFrameworkVersion Condition="'$(TargetFramework)'=='cli\2.0' or '$(TargetFramework)'=='mono\2.0'">v2.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion Condition="'$(TargetFramework)'=='net20' or '$(TargetFramework)'=='mono20'">v2.0</TargetFrameworkVersion>
   </PropertyGroup>
   <ItemGroup>
-	  <FsSrGen Include="..\FSCstrings.txt">
-		  <Link>FSCstrings.txt</Link>
-	  </FsSrGen>
-	  <Compile Include="..\..\utils\filename.fsi">
-		  <Link>filename.fsi</Link>
-	  </Compile>
-	  <Compile Include="..\..\utils\filename.fs">
-		  <Link>filename.fs</Link>
-	  </Compile>
-	  <Compile Include="..\fsc.fs">
-      <Link>fsc.fs</Link>
-    </Compile>
     <Compile Include="..\fscmain.fs">
       <Link>fscmain.fs</Link>
     </Compile>
@@ -54,6 +42,7 @@
     <Reference Include="System" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Runtime.Remoting" />
+    <Reference Include="System.Numerics" Condition="'$(TargetFramework)' == 'net40' OR '$(TargetFramework)' == 'mono40'" />
     <ProjectReference Include="..\FSharp.Compiler-proto\FSharp.Compiler-proto.fsproj">
       <Project>{33E0FB8C-93DC-4AD7-9DCD-9FBDA6C2F061}</Project>
       <Name>FSharp.Compiler-proto</Name>
