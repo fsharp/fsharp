@@ -2,7 +2,7 @@ This is the open source F# compiler and core library. It uses the Apache 2.0 lic
 
 The "master" branch is for the latest version of F#, currently F# 3.0
 
-The "2.0" branch is for F# 3.0.
+The "2.0" branch is for F# 2.0.
 
 To bootstrap the compiler, binaries built from an earlier version of this project are used.
 
