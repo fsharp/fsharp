@@ -15,6 +15,7 @@ DEFINES += \
 	--define:BUILDING_WITH_LKG \
 	--define:BUILDING_PROTO \
 	--define:COMPILER \
+    --define:NO_STRONG_NAMES \
 	--define:INCLUDE_METADATA_READER \
 	--define:INCLUDE_METADATA_WRITER
 
