@@ -26,7 +26,8 @@ sources = \
 	../InternalCollections.fsi \
 	../InternalCollections.fs \
 	console.fs \
-	fsi.fs
+	fsi.fs \
+    fsimain.fs
 
 RESOURCES = \
 	$(tmpdir)FSIstrings.resources

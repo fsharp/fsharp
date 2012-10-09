@@ -16,8 +16,7 @@ DEFINES += \
 	--define:BUILDING_PROTO \
 	--define:COMPILER \
 	--define:INCLUDE_METADATA_READER \
-	--define:INCLUDE_METADATA_WRITER \
-	--define:TRYING_TO_FIX_4577
+	--define:INCLUDE_METADATA_WRITER
 
 REFERENCES += \
 	-r:$(bootstrapdir)FSharp.Core.dll \
@@ -27,9 +26,9 @@ REFERENCES += \
 
 
 sources = \
-	$(tmpdir)FSComp.fs \
-	../../assemblyinfo/assemblyinfo.FSharp.Compiler.dll.fs \
-	../../utils/sformat.fsi \
+    $(tmpdir)FSComp.fs \
+    ../../assemblyinfo/assemblyinfo.FSharp.Compiler.dll.fs \
+    ../../utils/sformat.fsi \
 	../../utils/sformat.fs \
 	../sr.fsi \
 	../sr.fs \
@@ -45,8 +44,8 @@ sources = \
 	../../utils/TaggedCollections.fs \
     ../FlatList.fs \
     ../../absil/illib.fs \
-	../../utils/filename.fsi \
-	../../utils/filename.fs \
+    ../../utils/filename.fsi \
+    ../../utils/filename.fs \
 	../../absil/zmap.fsi \
 	../../absil/zmap.fs \
 	../../absil/zset.fsi \
@@ -88,6 +87,7 @@ sources = \
 	../../ilx/ilxsettings.fs \
 	../../ilx/pubclo.fsi \
 	../../ilx/pubclo.fs \
+    ../../ilx/cu_erase.fsi \
 	../../ilx/cu_erase.fs \
     ../InternalFileSystemUtils.fsi \
     ../InternalFileSystemUtils.fs \

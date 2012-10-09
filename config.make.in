@@ -41,13 +41,12 @@ FLAGS = \
 	--nowarn:9
 
 FINAL_FLAGS = \
+    --define:STRONG_NAME_AND_DELAY_SIGN_FSHARP_COMPILER_WITH_MSFT_KEY \
 	--delaysign+ \
 	--keyfile:$(topdir)msfinal.pub
 
 DEFINES_GENERAL = \
-	--define:NO_STRONG_NAMES \
 	--define:TRACE \
-	--define:FX_ATLEAST_35 \
 	--define:MONO
 	
 DEFINES_DEBUG = \
@@ -57,17 +56,27 @@ DEFINES_DEBUG = \
 DEFINES_2_0 = \
 	$(DEFINES_GENERAL) \
 	$(DEFINES_DEBUG) \
-	--define:FX_FSLIB_STRUCTURAL_EQUALITY \
-	--define:FX_FSLIB_IOBSERVABLE \
-	--define:FX_FSLIB_TUPLE \
-	--define:FX_FSLIB_LAZY \
+	--define:FX_NO_STRUCTURAL_EQUALITY \
+	--define:FX_NO_IOBSERVABLE \
+	--define:FX_NO_TUPLE \
+    --define:FX_ATLEAST_35 \
+	--define:FX_NO_LAZY \
 	--define:FX_NO_CANCELLATIONTOKEN_CLASSES \
-	--define:FX_NO_TASK
+    --define:FX_NO_MONITOR_REPORTS_LOCKTAKEN \
+    --define:FX_NO_TPL_PARALLEL \
+    --define:FX_NO_CUSTOMATTRIBUTEDATA \
+	--define:FX_NO_TASK \
+    --define:FX_NO_BIGINT
 
 DEFINES_4_0 = \
 	$(DEFINES_GENERAL) \
 	$(DEFINES_DEBUG) \
-	--define:FX_ATLEAST_40 \
+    --define:FX_NO_BIGINT_CULTURE_PARSE \
+    --define:FX_ATLEAST_40 \
+    --define:FX_ATLEAST_35 \
+    --define:QUERIES_IN_FSLIB \
+    --define:PUT_TYPE_PROVIDERS_IN_FSCORE \
+    --define:FX_ATLEAST_LINQ \
 	--define:BE_SECURITY_TRANSPARENT
 
 REFERENCES_2_0 = \
