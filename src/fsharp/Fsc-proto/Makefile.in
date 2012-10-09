@@ -23,17 +23,6 @@ REFERENCES += \
 	-r:$(monolibdir)System.Windows.Forms.dll
 
 sources = \
-	$(tmpdir)FSCstrings.fs \
-	../../utils/filename.fsi \
-	../../utils/filename.fs \
-	../fsc.fs \
 	../fscmain.fs
-
-RESOURCES = \
-	$(tmpdir)FSCstrings.resources
-
-$(tmpdir)FSCstrings.resources: $(srcdir)../FSCstrings.txt
-	mono --debug $(FSSRGEN) $< $(@:.resources=.fs) $(@:.resources=.resx)
-	resgen $(@:.resources=.resx) $@
 
 include $(topdir)/src/fsharp/targets.make
