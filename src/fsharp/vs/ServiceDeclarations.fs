@@ -197,7 +197,10 @@ module internal ItemDescriptionsImpl =
 
     // Provided type definitions do not have a useful F# CCU for the purposes of goto-definition.
     let computeCcuOfTyconRef (tcref:TyconRef) = 
-        if tcref.IsProvided then None else ccuOfTyconRef tcref
+#if EXTENSIONTYPING
+        if tcref.IsProvided then None else 
+#endif
+        ccuOfTyconRef tcref
 
     let rec ccuOfItem g d = 
         match d with

@@ -1,4 +1,7 @@
 namespace Microsoft.FSharp.Compiler
+
+#if EXTENSIONTYPING
+
 open System
 open Microsoft.FSharp.Compiler.Range
 open Microsoft.FSharp.Core.CompilerServices
@@ -161,3 +164,6 @@ module internal Tainted =
         t1.PUntaintNoFailure(fun t1 -> t1 === t2.AccessObjectDirectly)
 
     let GetHashCodeTainted (t:Tainted<'T>) = t.PUntaintNoFailure(fun t -> hash t)
+    
+#endif
+    
