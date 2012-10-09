@@ -10,13 +10,21 @@ FSC=$(protodir)fsc-proto.exe
 
 FLAGS_2_0 += \
 	$(FINAL_FLAGS) \
-	--target:library \
-	--compiling-fslib
+	--compiling-fslib \
+    --nowarn:75,1204 \
+    --target:library \
+    --define:FX_NO_BIGINT \
+    --compiling-fslib-20:$(monolibdir)mscorlib.dll \
+    --extraoptimizationloops:1 
 
 FLAGS_4_0 += \
 	$(FINAL_FLAGS) \
-	$(FLAGS_2_0) \
-	--compiling-fslib-mscorlib40:$(monolibdir)mscorlib.dll
+    --compiling-fslib \
+    --nowarn:75,1204 \
+    --target:library \
+    --define:FX_NO_BIGINT_CULTURE_PARSE \
+    --compiling-fslib-40 \
+    --extraoptimizationloops:1 
 
 DEFINES += \
 	--define:RUNTIME
@@ -67,6 +75,13 @@ sources = \
 	nativeptr.fs \
 	control.fsi \
 	control.fs \
+    Linq.fsi \
+    Linq.fs \
+    MutableTuple.fs \
+    QueryExtensions.fs \
+    Query.fsi \
+    Query.fs \
+    SI.fs \
 	fslib-extra-pervasives.fsi \
 	fslib-extra-pervasives.fs \
 	../../assemblyinfo/assemblyinfo.FSharp.Core.dll.fs
