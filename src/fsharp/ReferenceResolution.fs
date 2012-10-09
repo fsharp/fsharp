@@ -205,10 +205,13 @@ module internal MSBuildResolver =
 #if BUILDING_WITH_LKG
         ignore targetProcessorArchitecture
 #else       
+#if MONO
+#else
         rar.TargetedRuntimeVersion <- typeof<obj>.Assembly.ImageRuntimeVersion
-        rar.TargetProcessorArchitecture <- targetProcessorArchitecture
         rar.CopyLocalDependenciesWhenParentReferenceInGac <- true
+#endif
 #endif        
+        rar.TargetProcessorArchitecture <- targetProcessorArchitecture
         rar.Assemblies <- [|for (referenceName,baggage) in references -> 
                                         let item = new Microsoft.Build.Utilities.TaskItem(referenceName)
                                         item.SetMetadata("Baggage", baggage)
