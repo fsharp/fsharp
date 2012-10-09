@@ -320,7 +320,11 @@ type FsiStdinSyphon(errorWriter: TextWriter) =
 
     /// Clears the syphon text
     member x.Reset () = 
+#if FX_ATLEAST_40
         syphonText.Clear() |> ignore
+#else
+        syphonText.Remove(0,syphonText.Length) |> ignore
+#endif
 
     /// Adds a new line to the syphon text
     member x.Add (str:string) = 
@@ -433,7 +437,11 @@ type FsiCommandLineOptions(argv: string[], tcConfigB, fsiConsoleOutput: FsiConso
     let mutable enableConsoleKeyProcessing = 
        // Mono on Win32 doesn't implement correct console processing
        not (runningOnMono && System.Environment.OSVersion.Platform = System.PlatformID.Win32NT) 
+#if MONO
+    let mutable gui        = false // override via "--gui", on by default
+#else
     let mutable gui        = true // override via "--gui", on by default
+#endif
 #if DEBUG
     let mutable showILCode = false // show modul il code 
 #endif
@@ -1414,7 +1422,11 @@ module MagicAssemblyResolution =
     //  It is an explicit user trust decision to load an assembly with #r. Scripts are not run automatically (for example, by double-clicking in explorer).
     //  We considered setting loadFromRemoteSources in fsi.exe.config but this would transitively confer unsafe loading to the code in the referenced 
     //  assemblies. Better to let those assemblies decide for themselves which is safer.
+#if FX_ATLEAST_40
         Assembly.UnsafeLoadFrom(path)
+#else
+        Assembly.LoadFrom(path)
+#endif
 #endif // SILVERLIGHT
     let ResolveAssembly(m,tcConfigB, tcImports: TcImports, fsiDynamicCompiler: FsiDynamicCompiler, fsiConsoleOutput: FsiConsoleOutput, fullAssemName:string) = 
            try 
@@ -1468,9 +1480,11 @@ module MagicAssemblyResolution =
                    | Some (OkResult (warns,[r])) -> OkResult (warns, Choice1Of2 r.resolvedPath)
                    | _ -> 
 
+#if EXTENSIONTYPING
                    match tcImports.TryFindProviderGeneratedAssemblyByName(simpleAssemName) with
                    | Some(assembly) -> OkResult([],Choice2Of2 assembly)
                    | None -> 
+#endif
                    
                    // Try to find the reference without an extension
                    match tcImports.TryFindExistingFullyQualifiedPathFromAssemblyRef(ILAssemblyRef.Create(simpleAssemName,None,None,false,None,None)) with
@@ -2233,9 +2247,11 @@ type internal FsiEvaluationSession (argv:string[], inReader:TextReader, outWrite
 
 #if SILVERLIGHT
 #else
+#if FX_ATLEAST_40
     // set platform depending on whether the current process is a 64-bit process.
     // BUG 429882 : FsiAnyCPU.exe issues warnings (x64 v MSIL) when referencing 64-bit assemblies
     do tcConfigB.platform <- if System.Environment.Is64BitProcess then Some AMD64 else Some X86
+#endif
 #endif
 
     let fsiStdinSyphon = new FsiStdinSyphon(errorWriter)
@@ -2339,9 +2355,11 @@ type internal FsiEvaluationSession (argv:string[], inReader:TextReader, outWrite
 
 #else
     let resolveType _fsiDynamicCompiler (aref: ILAssemblyRef) = 
+#if EXTENSIONTYPING
         match tcImports.TryFindProviderGeneratedAssemblyByName aref.Name with
         | Some assembly -> Some (Choice2Of2 assembly)
         | None -> 
+#endif
         match tcImports.TryFindExistingFullyQualifiedPathFromAssemblyRef aref with
         | Some resolvedPath -> Some (Choice1Of2 resolvedPath)
         | None -> None
