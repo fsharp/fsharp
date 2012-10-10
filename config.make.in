@@ -10,6 +10,7 @@ monolibdir35 := $(monodir)3.5/
 monolibdir4 := $(monodir)4.0/
 tooldir := $(topdir)lib/bootstrap/2.0/
 
+MONO_OPTIONS += --gc=sgen
 bootstrapdir = $(bootstrap)/$(TARGET)/
 tmpdir = .libs/
 objdir = $(tmpdir)$(TARGET)/
