@@ -2,9 +2,9 @@ all: do-proto do-2-0 do-4-0
 clean: clean-2-0 clean-4-0
 
 do-proto:
-	$(MAKE) -C FSharp.Build-proto $@
-	$(MAKE) -C FSharp.Compiler-proto $@
-	$(MAKE) -C Fsc-proto $@
+	$(MAKE) -C FSharp.Build-proto all
+	$(MAKE) -C FSharp.Compiler-proto all
+	$(MAKE) -C Fsc-proto all
 
 do-2-0 do-4-0 clean-2-0 clean-4-0:
 	$(MAKE) -C FSharp.Core $@
