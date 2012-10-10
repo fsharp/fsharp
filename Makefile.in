@@ -1,6 +1,6 @@
 include $(topsrcdir)config.make
 
-all clean install do-2-0 do-4-0 clean-2-0 clean-4-0:
+all clean install do-proto do-2-0 do-4-0 clean-2-0 clean-4-0:
 	$(MAKE) -C src/fsharp $@
 
 dist:
