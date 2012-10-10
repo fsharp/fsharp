@@ -89,6 +89,13 @@ install-bin-2: TARGET := $(TARGET_2_0)
 install-bin-2: VERSION := 2
 install-bin-4: TARGET := $(TARGET_4_0)
 
+# The XBuild targets file gets installed into the place(s) expected for standard F# project
+# files. For F# 2.0 project files this is
+#     .../Microsoft F#/v4.0/Microsoft.FSharp.targets
+# For F# 3.0 project files this is
+#     .../Microsoft SDKs/F#/3.0/Framework/v4.0/Microsoft.FSharp.targets
+
+
 install-lib-2 install-lib-4:
 	@echo "Installing $(ASSEMBLY)"
 	@mkdir -p $(DESTDIR)/$(libdir)
@@ -102,10 +109,13 @@ install-lib-2 install-lib-4:
 		$(INSTALL_LIB) $(outdir)$(NAME).optdata $(DESTDIR)/$(libdir)mono/gac/$(NAME)/$(VERSION)__$(TOKEN); \
 		ln -fs ../gac/$(NAME)/$(VERSION)__$(TOKEN)/$(NAME).optdata $(DESTDIR)/$(libdir)mono/$(TARGET)/; \
 	fi
-	mkdir -p $(DESTDIR)/$(libdir)mono/Microsoft\ F#/v$(TARGET)/
-	ln -fs $(DESTDIR)/$(libdir)mono/$(TARGET)/$(ASSEMBLY) $(DESTDIR)/$(libdir)mono/Microsoft\ F#/v$(TARGET)/$(ASSEMBLY)
 	$(INSTALL_LIB) $(outdir)Microsoft.FSharp.targets $(DESTDIR)/$(libdir)mono/$(TARGET)/;
+	@mkdir -p $(DESTDIR)/$(libdir)mono/Microsoft\ F#/v$(TARGET)/
+	@mkdir -p $(DESTDIR)/$(libdir)mono/Microsoft\ SDKs/F#/3.0/Framework/v$(TARGET)/
+	ln -fs $(DESTDIR)/$(libdir)mono/$(TARGET)/$(ASSEMBLY) $(DESTDIR)/$(libdir)mono/Microsoft\ F#/v$(TARGET)/$(ASSEMBLY)
+	ln -fs $(DESTDIR)/$(libdir)mono/$(TARGET)/$(ASSEMBLY) $(DESTDIR)/$(libdir)mono/Microsoft\ SDKs/F#/3.0/Framework/v$(TARGET)/$(ASSEMBLY)
 	ln -fs $(DESTDIR)/$(libdir)mono/$(TARGET)/Microsoft.FSharp.targets $(DESTDIR)/$(libdir)mono/Microsoft\ F#/v$(TARGET)/Microsoft.FSharp.Targets
+	ln -fs $(DESTDIR)/$(libdir)mono/$(TARGET)/Microsoft.FSharp.targets $(DESTDIR)/$(libdir)mono/Microsoft\ SDKs/F#/3.0/Framework/v$(TARGET)/Microsoft.FSharp.Targets
 
 install-lib-4-5: install-lib-4
 	@if test -e $(DESTDIR)$(libdir)mono/4.5/; then \
