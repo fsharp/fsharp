@@ -22,8 +22,6 @@ DEFINES_4_0 += \
 
 REFERENCES += \
 	-r:$(outdir)FSharp.Core.dll \
-	-r:Mono.Security.dll \
-    -r:$(monolibdir)System.Runtime.Remoting.dll \
     -r:$(monolibdir)System.Drawing.dll \
     -r:$(monolibdir)System.Windows.Forms.dll
 
