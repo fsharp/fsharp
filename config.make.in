@@ -23,8 +23,8 @@ FSYACC := $(tooldir)fsyacc.exe
 CONFIG := debug
 DISTVERSION := 201011
 
-VERSION_2_0 := 2.0.0.0
-VERSION_4_0 := 4.0.0.0
+VERSION_2_0 := 2.3.0.0
+VERSION_4_0 := 4.3.0.0
 TARGET_2_0 := 2.0
 TARGET_4_0 := 4.0
 TOKEN := b03f5f7f11d50a3a
