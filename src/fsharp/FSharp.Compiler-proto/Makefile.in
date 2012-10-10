@@ -21,8 +21,6 @@ DEFINES += \
 
 REFERENCES += \
 	-r:$(bootstrapdir)FSharp.Core.dll \
-	-r:Mono.Security.dll \
-    -r:$(monolibdir)System.Runtime.Remoting.dll \
     -r:$(monolibdir)System.Windows.Forms.dll
 
 
