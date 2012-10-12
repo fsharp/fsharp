@@ -1,4 +1,5 @@
 #!/usr/bin/env sh
 which autoreconf > /dev/null || (echo "Please install autoconf" && exit 1)
-aclocal -I /opt/local/share/aclocal
+# on OSX autoconf may need a little help with these paths
+aclocal -I /opt/local/share/aclocal -I /usr/local/share/aclocal
 autoreconf && ./configure $@
