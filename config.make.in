@@ -22,9 +22,9 @@ objdir = $(tmpdir)$(TARGET)/
 protodir = $(builddir)/lib/proto/4.0/
 outdir = $(builddir)lib/$(CONFIG)/$(TARGET)/
 
-FSSRGEN := $(tooldir)fssrgen.exe
-FSLEX := $(tooldir)fslex.exe
-FSYACC := $(tooldir)fsyacc.exe
+FSSRGEN := $(tooldir)../2.0/fssrgen.exe
+FSLEX := $(tooldir)../2.0/fslex.exe
+FSYACC := $(tooldir)../2.0/fsyacc.exe
 
 CONFIG := debug
 DISTVERSION := 201011
