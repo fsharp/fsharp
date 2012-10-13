@@ -11,21 +11,28 @@ FSC=$(protodir)fsc-proto.exe
 FLAGS_2_0 += \
 	$(FINAL_FLAGS) \
 	--compiling-fslib \
-    --nowarn:75,1204 \
-    --target:library \
-    --compiling-fslib-20:$(monolibdir)../4.0/mscorlib.dll \
-    --extraoptimizationloops:1 
+	--nowarn:75,1204 \
+	--target:library \
+	--compiling-fslib-20:$(monolibdir)../4.0/mscorlib.dll \
+	--extraoptimizationloops:1 
+
+FLAGS_2_1 += \
+	$(FINAL_FLAGS) \
+	--compiling-fslib \
+	--nowarn:75,1204 \
+	--target:library \
+	--extraoptimizationloops:1 
 
 FLAGS_4_0 += \
 	$(FINAL_FLAGS) \
-    --compiling-fslib \
-    --nowarn:75,1204 \
-    --target:library \
-    --compiling-fslib-40 \
-    --define:BE_SECURITY_TRANSPARENT \
-    --define:QUERIES_IN_FSLIB \
-    --define:PUT_TYPE_PROVIDERS_IN_FSCORE \
-    --extraoptimizationloops:1 
+	--compiling-fslib \
+	--nowarn:75,1204 \
+	--target:library \
+	--compiling-fslib-40 \
+	--define:BE_SECURITY_TRANSPARENT \
+	--define:QUERIES_IN_FSLIB \
+	--define:PUT_TYPE_PROVIDERS_IN_FSCORE \
+	--extraoptimizationloops:1 
 
 DEFINES += \
 	--define:RUNTIME
@@ -76,13 +83,13 @@ sources = \
 	nativeptr.fs \
 	control.fsi \
 	control.fs \
-    Linq.fsi \
-    Linq.fs \
-    MutableTuple.fs \
-    QueryExtensions.fs \
-    Query.fsi \
-    Query.fs \
-    SI.fs \
+	Linq.fsi \
+	Linq.fs \
+	MutableTuple.fs \
+	QueryExtensions.fs \
+	Query.fsi \
+	Query.fs \
+	SI.fs \
 	fslib-extra-pervasives.fsi \
 	fslib-extra-pervasives.fs \
 	../../assemblyinfo/assemblyinfo.FSharp.Core.dll.fs

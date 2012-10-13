@@ -15,7 +15,7 @@ DEFINES += \
 	--define:BUILDING_PROTO \
 	--define:BUILDING_WITH_LKG \
 	--define:COMPILER \
-    --define:NO_STRONG_NAMES
+	--define:NO_STRONG_NAMES
 
 REFERENCES += \
 	-r:$(bootstrapdir)FSharp.Core.dll \
@@ -25,5 +25,7 @@ REFERENCES += \
 
 sources = \
 	../fscmain.fs
+
+do-proto: do-4-0
 
 include $(topdir)/src/fsharp/targets.make
