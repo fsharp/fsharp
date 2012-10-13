@@ -6,16 +6,20 @@ libdir := ${prefix}/lib/
 bindir := ${prefix}/bin/
 monodir := @MONODIR@/
 monolibdir2 := $(monodir)2.0/
+
+#For now this is hardwired, it should be optionally detected by configure.ac
+monolibdir21 := /Developer/MonoAndroid/usr/lib/mono/2.1/
+
 monolibdir35 := $(monodir)3.5/
 monolibdir4 := $(monodir)4.0/
-tooldir := $(topdir)lib/bootstrap/2.0/
+tooldir := $(topdir)lib/bootstrap/4.0/
 
 #MONO_OPTIONS += --gc=sgen
 
-bootstrapdir = $(bootstrap)/$(TARGET)/
+bootstrapdir = $(bootstrap)/4.0/
 tmpdir = .libs/
 objdir = $(tmpdir)$(TARGET)/
-protodir = $(builddir)/lib/proto/$(TARGET)/
+protodir = $(builddir)/lib/proto/4.0/
 outdir = $(builddir)lib/$(CONFIG)/$(TARGET)/
 
 FSSRGEN := $(tooldir)fssrgen.exe
@@ -26,8 +30,10 @@ CONFIG := debug
 DISTVERSION := 201011
 
 VERSION_2_0 := 2.3.0.0
+VERSION_2_1 := 2.3.1.0
 VERSION_4_0 := 4.3.0.0
 TARGET_2_0 := 2.0
+TARGET_2_1 := 2.1
 TARGET_4_0 := 4.0
 TOKEN := b03f5f7f11d50a3a
 
@@ -43,7 +49,7 @@ FLAGS = \
 	--nowarn:9
 
 FINAL_FLAGS = \
-    --define:STRONG_NAME_AND_DELAY_SIGN_FSHARP_COMPILER_WITH_MSFT_KEY \
+	--define:STRONG_NAME_AND_DELAY_SIGN_FSHARP_COMPILER_WITH_MSFT_KEY \
 	--delaysign+ \
 	--keyfile:$(topdir)msfinal.pub
 
@@ -61,22 +67,33 @@ DEFINES_2_0 = \
 	--define:FX_NO_STRUCTURAL_EQUALITY \
 	--define:FX_NO_IOBSERVABLE \
 	--define:FX_NO_TUPLE \
-    --define:FX_ATLEAST_35 \
+	--define:FX_ATLEAST_35 \
 	--define:FX_NO_LAZY \
 	--define:FX_NO_CANCELLATIONTOKEN_CLASSES \
-    --define:FX_NO_MONITOR_REPORTS_LOCKTAKEN \
-    --define:FX_NO_TPL_PARALLEL \
-    --define:FX_NO_CUSTOMATTRIBUTEDATA \
+	--define:FX_NO_MONITOR_REPORTS_LOCKTAKEN \
+	--define:FX_NO_TPL_PARALLEL \
+	--define:FX_NO_CUSTOMATTRIBUTEDATA \
 	--define:FX_NO_TASK \
-    --define:FX_NO_BIGINT
+	--define:FX_NO_BIGINT
+
+DEFINES_2_1 = \
+	$(DEFINES_GENERAL) \
+	$(DEFINES_DEBUG) \
+	--define:FX_NO_STRUCTURAL_EQUALITY \
+	--define:FX_NO_CUSTOMATTRIBUTEDATA \
+	--define:FX_NO_BIGINT_CULTURE_PARSE \
+	--define:FX_ATLEAST_40 \
+	--define:FX_ATLEAST_35 \
+	--define:FX_ATLEAST_LINQ \
+	--define:FX_NO_BIGINT
 
 DEFINES_4_0 = \
 	$(DEFINES_GENERAL) \
 	$(DEFINES_DEBUG) \
-    --define:FX_NO_BIGINT_CULTURE_PARSE \
-    --define:FX_ATLEAST_40 \
-    --define:FX_ATLEAST_35 \
-    --define:FX_ATLEAST_LINQ
+	--define:FX_NO_BIGINT_CULTURE_PARSE \
+	--define:FX_ATLEAST_40 \
+	--define:FX_ATLEAST_35 \
+	--define:FX_ATLEAST_LINQ
 
 REFERENCES_2_0 = \
 	-r:$(monolibdir)Microsoft.Build.Engine.dll \
@@ -86,6 +103,11 @@ REFERENCES_2_0 = \
 	-r:$(monolibdir)mscorlib.dll \
 	-r:$(monolibdir)System.Core.dll \
 	-r:$(monolibdir)System.dll
+
+REFERENCES_2_1 = \
+	-r:$(monolibdir21)mscorlib.dll \
+	-r:$(monolibdir21)System.Core.dll \
+	-r:$(monolibdir21)System.dll
 
 REFERENCES_4_0 = \
 	-r:$(monolibdir)Microsoft.Build.Engine.dll \

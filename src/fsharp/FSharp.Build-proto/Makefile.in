@@ -32,5 +32,7 @@ $(tmpdir)FSBuild.resources: $(srcdir)../FSharp.Build/FSBuild.txt
 	mono --debug $(FSSRGEN) $< $(@:.resources=.fs) $(@:.resources=.resx)
 	resgen $(@:.resources=.resx) $@
 
+do-proto: do-4-0
+
 include $(topdir)/src/fsharp/targets.make
 

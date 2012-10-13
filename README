@@ -1,6 +1,6 @@
-This is the open source F# compiler and core library. It uses the Apache 2.0 license.
+This is the F# compiler, core library and core tools (open source edition). It uses the Apache 2.0 license.
 
-The "master" branch is for the latest version of F#, currently F# 3.0
+The "master" branch is for the latest version of F# (currently F# 3.0)
 
 The "2.0" branch is for F# 2.0.
 
@@ -13,6 +13,9 @@ Requires mono 2.9 or higher.
 ======= BUILDING =======
 
 To build, run ./autogen.sh, then make in the usual way.
+
+To build the experimental FSharp.Core.dll for MonoAndroid or MonoTouch, use
+   make do-2-1
 
 ======= NOTES =======
 
