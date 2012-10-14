@@ -14,7 +14,7 @@ h1, h2, h3, h4, h5, h6
     margin-top: 15px;
 }
 
-h1, h2, h3 { text-transform: lowercase; }
+h1, h2, h3 {  }
 h4, h5, h6 { font-weight: normal; text-transform: uppercase; }
 
 h1 { font-size: 56px; margin-top: 40px; color: #1BA1E2; }
