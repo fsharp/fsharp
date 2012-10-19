@@ -1781,6 +1781,8 @@ type BackgroundCompiler(notifyFileTypeCheckStateIsDirty:NotifyFileTypeCheckState
     let CreateOneIncrementalBuilder (options:CheckOptions) = 
         use t = Trace.Call("Reactor","CreateOneIncrementalBuilder", fun () -> sprintf "options = %+A" options)
         let builder, errorsAndWarnings = 
+            // PROBLEM: This call can currently fail if an error happens while setting up the TcConfig
+            // This leaves us completely horked.
             IncrementalFSharpBuild.IncrementalBuilder.CreateBackgroundBuilderForProjectOptions
                   (scriptClosure.TryGet options, Array.toList options.ProjectFileNames, 
                    Array.toList options.ProjectOptions, options.ProjectDirectory, 
