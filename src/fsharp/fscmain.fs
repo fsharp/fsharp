@@ -189,7 +189,12 @@ module FSharpResidentCompiler =
                                     if onWindows then 
                                         Path.Combine(Path.GetDirectoryName (typeof<Object>.Assembly.Location), @"..\..\..\bin\mono.exe"), false
                                     else
-                                        "mono", true
+                                        // create some garbage
+                                        for i in 0..1000 do [ 0 .. i ] |> ignore
+                                        // test if we're using mono-sgen
+                                        let usingMonoSGEN =   (System.GC.CollectionCount(0) = System.GC.CollectionCount(1)) 
+                                        let target = if usingMonoSGEN then "mono" else "mono-sgen"
+                                        target, true
                                 | path -> path, false
                                      
                             // e.g. "C:\Program Files\Mono-2.6.1\lib\mono20\mscorlib.dll" --> "C:\Program Files\Mono-2.6.1\bin\mono.exe"
