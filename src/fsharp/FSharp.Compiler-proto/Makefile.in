@@ -156,24 +156,34 @@ RESOURCES= \
 	$(tmpdir)FSComp.resources
 
 $(tmpdir)FSComp.resources: $(srcdir)../FSComp.txt
-	mono --debug $(FSSRGEN) $< $(@:.resources=.fs) $(@:.resources=.resx)
+	mono $(MONO_OPTIONS) $(FSSRGEN) $< $(@:.resources=.fs) $(@:.resources=.resx)
 	resgen $(@:.resources=.resx) $@
 
 $(tmpdir)FSStrings.resources: $(srcdir)../FSStrings.resx
 	resgen $< $@
 
 $(tmpdir)lex.fs: $(srcdir)../lex.fsl
-	mono --debug $(FSLEX) $< -o $@ --lexlib Internal.Utilities.Text.Lexing --unicode
+	mono $(MONO_OPTIONS) $(FSLEX) $< -o $@ --lexlib Internal.Utilities.Text.Lexing --unicode
+	@-mkdir -p ../FSharp.Compiler/.libs/
+	cp -p $(tmpdir)lex.fs* ../FSharp.Compiler/.libs/
 
 $(tmpdir)illex.fs: $(srcdir)../../absil/illex.fsl
-	mono --debug $(FSLEX) $< -o $@ --lexlib Internal.Utilities.Text.Lexing --unicode
+	mono $(MONO_OPTIONS) $(FSLEX) $< -o $@ --lexlib Internal.Utilities.Text.Lexing --unicode
+	@-mkdir -p ../FSharp.Compiler/.libs/
+	cp -p $(tmpdir)illex.fs* ../FSharp.Compiler/.libs/
 
 $(tmpdir)pars.fs: $(srcdir)../pars.fsy
-	mono --debug $(FSYACC) $< -o $@ --internal --open Microsoft.FSharp.Compiler --module Microsoft.FSharp.Compiler.Parser --lexlib Internal.Utilities.Text.Lexing --parslib Internal.Utilities.Text.Parsing
+	mono $(MONO_OPTIONS) $(FSYACC) $< -o $@ --internal --open Microsoft.FSharp.Compiler --module Microsoft.FSharp.Compiler.Parser --lexlib Internal.Utilities.Text.Lexing --parslib Internal.Utilities.Text.Parsing
+	@-mkdir -p ../FSharp.Compiler/.libs/
+	cp -p $(tmpdir)pars.fs* ../FSharp.Compiler/.libs/
 
 $(tmpdir)ilpars.fs: $(srcdir)../../absil/ilpars.fsy
-	mono --debug $(FSYACC) $< -o $@ --internal --module Microsoft.FSharp.Compiler.AbstractIL.Internal.AsciiParser --lexlib Internal.Utilities.Text.Lexing --parslib Internal.Utilities.Text.Parsing
+	mono $(MONO_OPTIONS) $(FSYACC) $< -o $@ --internal --module Microsoft.FSharp.Compiler.AbstractIL.Internal.AsciiParser --lexlib Internal.Utilities.Text.Lexing --parslib Internal.Utilities.Text.Parsing
+	@-mkdir -p ../FSharp.Compiler/.libs/
+	cp -p $(tmpdir)ilpars.fs* ../FSharp.Compiler/.libs/
 
 do-proto: do-4-0
+
+clean: clean-4-0
 
 include $(topdir)/src/fsharp/targets.make
