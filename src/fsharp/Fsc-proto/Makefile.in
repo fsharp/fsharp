@@ -28,6 +28,8 @@ sources = \
 
 do-proto: do-4-0 $(protodir)FSharp.Core.dll
 
+clean: clean-4-0
+
 include $(topdir)/src/fsharp/targets.make
 
 $(protodir)FSharp.Core.dll: $(bootstrapdir)FSharp.Core.dll

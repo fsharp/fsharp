@@ -102,5 +102,9 @@ $(tmpdir)FSCore.resources: $(srcdir)FSCore.resx
 
 include $(topdir)/src/fsharp/targets.make
 
+do-final: do-4-0 do-2-0
+
+clean: clean-4-0 clean-2-1 clean-2-0
+
 install: install-lib-2 install-lib-4 install-lib-4-5
 

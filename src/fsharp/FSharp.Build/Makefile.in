@@ -33,5 +33,9 @@ $(tmpdir)FSBuild.resources: $(srcdir)FSBuild.txt
 
 include $(topdir)/src/fsharp/targets.make
 
-install: install-lib-2 install-lib-4
+do-final: do-4-0 
+
+clean: clean-4-0
+
+install: install-lib-4
 

@@ -178,26 +178,31 @@ RESOURCES= \
 	$(tmpdir)FSComp.resources
 
 $(tmpdir)FSComp.resources: $(srcdir)../FSComp.txt
-	mono --debug $(FSSRGEN) $< $(@:.resources=.fs) $(@:.resources=.resx)
+	mono $(MONO_OPTIONS)  $(FSSRGEN) $< $(@:.resources=.fs) $(@:.resources=.resx)
 	resgen $(@:.resources=.resx) $@
 
 $(tmpdir)FSStrings.resources: $(srcdir)../FSStrings.resx
 	resgen $< $@
 
 $(tmpdir)lex.fs: $(srcdir)../lex.fsl
-	mono --debug $(FSLEX) $< -o $@ --lexlib Internal.Utilities.Text.Lexing --unicode
+	mono $(MONO_OPTIONS)  $(FSLEX) $< -o $@ --lexlib Internal.Utilities.Text.Lexing --unicode
 
 $(tmpdir)illex.fs: $(srcdir)../../absil/illex.fsl
-	mono --debug $(FSLEX) $< -o $@ --lexlib Internal.Utilities.Text.Lexing --unicode
+	mono $(MONO_OPTIONS)  $(FSLEX) $< -o $@ --lexlib Internal.Utilities.Text.Lexing --unicode
 
 $(tmpdir)pars.fs: $(srcdir)../pars.fsy
-	mono --debug $(FSYACC) $< -o $@ --internal --open Microsoft.FSharp.Compiler --module Microsoft.FSharp.Compiler.Parser --lexlib Internal.Utilities.Text.Lexing --parslib Internal.Utilities.Text.Parsing
+	mono $(MONO_OPTIONS)  $(FSYACC) $< -o $@ --internal --open Microsoft.FSharp.Compiler --module Microsoft.FSharp.Compiler.Parser --lexlib Internal.Utilities.Text.Lexing --parslib Internal.Utilities.Text.Parsing
 
 $(tmpdir)ilpars.fs: $(srcdir)../../absil/ilpars.fsy
-	mono --debug $(FSYACC) $< -o $@ --internal --module Microsoft.FSharp.Compiler.AbstractIL.Internal.AsciiParser --lexlib Internal.Utilities.Text.Lexing --parslib Internal.Utilities.Text.Parsing
+	mono $(MONO_OPTIONS)  $(FSYACC) $< -o $@ --internal --module Microsoft.FSharp.Compiler.AbstractIL.Internal.AsciiParser --lexlib Internal.Utilities.Text.Lexing --parslib Internal.Utilities.Text.Parsing
 
 include $(topdir)/src/fsharp/targets.make
 
-install: install-lib-2 install-lib-4
+do-final: do-4-0 
+
+clean: clean-4-0
+
+install: install-lib-4
+
 
 
