@@ -45,8 +45,12 @@ do-2-0: monolibdir = $(monolibdir2)
 do-2-0: $(objdir) $(objdir)$(TARGET_2_0) $(objdir)$(TARGET_4_0) $(objdir)$(TARGET_2_0)/$(ASSEMBLY)
 	@mkdir -p $(outdir)
 	@cp $(objdir)$(ASSEMBLY) $(outdir)
-	@-cp $(objdir)$(NAME).xml $(outdir)
-	@-cp $(objdir)$(ASSEMBLY).mdb $(outdir)
+	@if test -e $(objdir)$(ASSEMBLY).xml; then \
+	    cp $(objdir)$(NAME).xml $(outdir); \
+	fi
+	@if test -e $(objdir)$(ASSEMBLY).mdb; then \
+	    cp $(objdir)$(ASSEMBLY).mdb $(outdir); \
+	fi
 	@if test -e $(objdir)$(NAME).sigdata; then \
 		cp $(objdir)$(NAME).sigdata $(outdir); \
 	fi
@@ -54,7 +58,7 @@ do-2-0: $(objdir) $(objdir)$(TARGET_2_0) $(objdir)$(TARGET_4_0) $(objdir)$(TARGE
 		cp $(objdir)$(NAME).optdata $(outdir); \
 	fi
 	@if test "x$(SIGN)" = "x1"; \
-		then sn -R $(outdir)$(ASSEMBLY) $(srcdir)../../../mono.snk; \
+		then sn -q -R $(outdir)$(ASSEMBLY) $(srcdir)../../../mono.snk; \
 	fi
 	@if test -e Microsoft.FSharp.targets; then \
 		mono subst.exe $(REPLACE_ARGS) Microsoft.FSharp.targets > $(outdir)Microsoft.FSharp.targets; \
@@ -69,8 +73,12 @@ do-2-1: monolibdir = $(monolibdir2)
 do-2-1: $(objdir) $(objdir)$(TARGET_2_1) $(objdir)$(TARGET_4_0) $(objdir)$(TARGET_2_1)/$(ASSEMBLY)
 	@mkdir -p $(outdir)
 	@cp $(objdir)$(ASSEMBLY) $(outdir)
-	@-cp $(objdir)$(NAME).xml $(outdir)
-	@-cp $(objdir)$(ASSEMBLY).mdb $(outdir)
+	@if test -e $(objdir)$(ASSEMBLY).xml; then \
+	    cp $(objdir)$(NAME).xml $(outdir); \
+	fi
+	@if test -e $(objdir)$(ASSEMBLY).mdb; then \
+	    cp $(objdir)$(ASSEMBLY).mdb $(outdir); \
+	fi
 	@if test -e $(objdir)$(NAME).sigdata; then \
 		cp $(objdir)$(NAME).sigdata $(outdir); \
 	fi
@@ -78,7 +86,7 @@ do-2-1: $(objdir) $(objdir)$(TARGET_2_1) $(objdir)$(TARGET_4_0) $(objdir)$(TARGE
 		cp $(objdir)$(NAME).optdata $(outdir); \
 	fi
 	@if test "x$(SIGN)" = "x1"; \
-		then sn -R $(outdir)$(ASSEMBLY) $(srcdir)../../../mono.snk; \
+		then sn -q -R $(outdir)$(ASSEMBLY) $(srcdir)../../../mono.snk; \
 	fi
 	@if test -e Microsoft.FSharp.targets; then \
 		mono subst.exe $(REPLACE_ARGS) Microsoft.FSharp.targets > $(outdir)Microsoft.FSharp.targets; \
@@ -93,8 +101,12 @@ do-4-0: monolibdir = $(monolibdir4)
 do-4-0: $(objdir) $(objdir)$(TARGET_2_0) $(objdir)$(TARGET_4_0) $(objdir)$(TARGET_4_0)/$(ASSEMBLY)
 	@mkdir -p $(outdir)
 	@cp $(objdir)$(ASSEMBLY) $(outdir)
-	@-cp $(objdir)$(NAME).xml $(outdir)
-	@-cp $(objdir)$(ASSEMBLY).mdb $(outdir)
+	@if test -e $(objdir)$(ASSEMBLY).xml; then \
+	    cp $(objdir)$(NAME).xml $(outdir); \
+	fi
+	@if test -e $(objdir)$(ASSEMBLY).mdb; then \
+	    cp $(objdir)$(ASSEMBLY).mdb $(outdir); \
+	fi
 	@if test -e $(objdir)$(NAME).sigdata; then \
 		cp $(objdir)$(NAME).sigdata $(outdir); \
 	fi
@@ -102,7 +114,7 @@ do-4-0: $(objdir) $(objdir)$(TARGET_2_0) $(objdir)$(TARGET_4_0) $(objdir)$(TARGE
 		cp $(objdir)$(NAME).optdata $(outdir); \
 	fi
 	@if test "x$(SIGN)" = "x1"; \
-		then sn -R $(outdir)$(ASSEMBLY) $(srcdir)../../../mono.snk; \
+		then sn -q -R $(outdir)$(ASSEMBLY) $(srcdir)../../../mono.snk; \
 	fi
 	@if test -e Microsoft.FSharp.targets; then \
 		mono subst.exe $(REPLACE_ARGS) Microsoft.FSharp.targets > $(outdir)Microsoft.FSharp.targets; \
@@ -138,11 +150,16 @@ install-lib-2 install-lib-2-1 install-lib-4:
 	@echo "Installing $(ASSEMBLY)"
 	@mkdir -p $(DESTDIR)/$(libdir)
 	@mkdir -p $(DESTDIR)/$(libdir)mono/$(TARGET)
-	@mkdir -p $(DESTDIR)/$(libdir)mono/Microsoft\ F#/v$(TARGET)/
-	@mkdir -p $(DESTDIR)/$(libdir)mono/Microsoft\ SDKs/F#/3.0/Framework/v$(TARGET)/
 	gacutil -i $(outdir)$(ASSEMBLY) -root $(DESTDIR)/$(libdir) -package $(TARGET)
-	ln -fs $(DESTDIR)/$(libdir)mono/$(TARGET)/$(ASSEMBLY) $(DESTDIR)/$(libdir)mono/Microsoft\ F#/v$(TARGET)/$(ASSEMBLY)
-	ln -fs $(DESTDIR)/$(libdir)mono/$(TARGET)/$(ASSEMBLY) $(DESTDIR)/$(libdir)mono/Microsoft\ SDKs/F#/3.0/Framework/v$(TARGET)/$(ASSEMBLY)
+	@if test -e $(outdir)Microsoft.FSharp.targets; then \
+	    mkdir -p $(DESTDIR)/$(libdir)mono/Microsoft\ F#/v$(TARGET)/; \
+	    mkdir -p $(DESTDIR)/$(libdir)mono/Microsoft\ SDKs/F#/3.0/Framework/v$(TARGET)/; \
+	    ln -fs $(DESTDIR)/$(libdir)mono/$(TARGET)/$(ASSEMBLY) $(DESTDIR)/$(libdir)mono/Microsoft\ F#/v$(TARGET)/$(ASSEMBLY); \
+	    ln -fs $(DESTDIR)/$(libdir)mono/$(TARGET)/$(ASSEMBLY) $(DESTDIR)/$(libdir)mono/Microsoft\ SDKs/F#/3.0/Framework/v$(TARGET)/$(ASSEMBLY); \
+	    $(INSTALL_LIB) $(outdir)Microsoft.FSharp.targets $(DESTDIR)/$(libdir)mono/$(TARGET)/; \
+	    ln -fs $(DESTDIR)/$(libdir)mono/$(TARGET)/Microsoft.FSharp.targets $(DESTDIR)/$(libdir)mono/Microsoft\ F#/v$(TARGET)/Microsoft.FSharp.Targets; \
+	    ln -fs $(DESTDIR)/$(libdir)mono/$(TARGET)/Microsoft.FSharp.targets $(DESTDIR)/$(libdir)mono/Microsoft\ SDKs/F#/3.0/Framework/v$(TARGET)/Microsoft.FSharp.Targets; \
+	fi
 	@if test -e $(outdir)$(NAME).sigdata; then \
 		$(INSTALL_LIB) $(outdir)$(NAME).sigdata $(DESTDIR)/$(libdir)mono/gac/$(NAME)/$(VERSION)__$(TOKEN); \
 		ln -fs  ../gac/$(NAME)/$(VERSION)__$(TOKEN)/$(NAME).sigdata $(DESTDIR)/$(libdir)mono/$(TARGET)/$(NAME).sigdata; \
@@ -151,9 +168,6 @@ install-lib-2 install-lib-2-1 install-lib-4:
 		$(INSTALL_LIB) $(outdir)$(NAME).optdata $(DESTDIR)/$(libdir)mono/gac/$(NAME)/$(VERSION)__$(TOKEN); \
 		ln -fs ../gac/$(NAME)/$(VERSION)__$(TOKEN)/$(NAME).optdata $(DESTDIR)/$(libdir)mono/$(TARGET)/$(NAME).optdata; \
 	fi
-	$(INSTALL_LIB) $(outdir)Microsoft.FSharp.targets $(DESTDIR)/$(libdir)mono/$(TARGET)/;
-	ln -fs $(DESTDIR)/$(libdir)mono/$(TARGET)/Microsoft.FSharp.targets $(DESTDIR)/$(libdir)mono/Microsoft\ F#/v$(TARGET)/Microsoft.FSharp.Targets
-	ln -fs $(DESTDIR)/$(libdir)mono/$(TARGET)/Microsoft.FSharp.targets $(DESTDIR)/$(libdir)mono/Microsoft\ SDKs/F#/3.0/Framework/v$(TARGET)/Microsoft.FSharp.Targets
 
 install-lib-4-5: install-lib-4
 	@if test -e $(DESTDIR)$(libdir)mono/4.5/; then \
