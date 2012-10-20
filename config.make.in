@@ -30,7 +30,7 @@ FSSRGEN := $(tooldir)../2.0/fssrgen.exe
 FSLEX := $(tooldir)../2.0/fslex.exe
 FSYACC := $(tooldir)../2.0/fsyacc.exe
 
-CONFIG := debug
+CONFIG := release
 DISTVERSION := 201011
 
 VERSION_2_0 := 2.3.0.0
