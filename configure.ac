@@ -12,14 +12,14 @@ if test "x$PKG_CONFIG" = "xno"; then
         AC_MSG_ERROR([You need to install pkg-config])
 fi
 
-PKG_CHECK_MODULES([MONO], [mono >= 2.9])
-
-PKG_CHECK_MODULES([MONO_2_12],
-	[mono >= 2.11.5], HAVE_MONO_2_12_OR_HIGHER=yes, HAVE_MONO_2_12_OR_HIGHER=no)
-
-if test "x$HAVE_MONO_2_12_OR_HIGHER" = "xno" ; then
-	AC_MSG_WARN([Mono 2.11.5 or higher is recommended, for better MSBuild (xbuild) compatibility])
-fi
+# PKG_CHECK_MODULES([MONO], [mono >= 2.9])
+# 
+# PKG_CHECK_MODULES([MONO_2_12],
+# 	[mono >= 2.11.5], HAVE_MONO_2_12_OR_HIGHER=yes, HAVE_MONO_2_12_OR_HIGHER=no)
+# 
+# if test "x$HAVE_MONO_2_12_OR_HIGHER" = "xno" ; then
+# 	AC_MSG_WARN([Mono 2.11.5 or higher is recommended, for better MSBuild (xbuild) compatibility])
+# fi
 
 # Checks for libraries.
 
