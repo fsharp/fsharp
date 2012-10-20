@@ -20,6 +20,10 @@ $(objdir)$(TARGET_4_0)/policy.2.0.FSharp.Core.dll: policy.2.0.FSharp.Core.dll.co
 	cp policy.2.0.FSharp.Core.dll.config $(@D)
 	al /link:policy.2.0.FSharp.Core.dll.config /out:$@ /delaysign /keyfile:$(topdir)msfinal.pub /version:$(VERSION_4_0)
 
+do-final: do-2-0 do-4-0 
+
+clean: clean-2-0 clean-4-0
+
 install: install-lib-2 install-lib-4
 
 

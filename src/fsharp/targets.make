@@ -6,15 +6,9 @@ REPLACE_ARGS := {LkgVersion} $(LKG_VERSION) {BuildSuffix} "" {FSharpTargetsDir} 
 
 .PHONY: install install-bin install-bin-2 install-bin-4 install-lib
 
-all: do-4-0 do-2-0
-
-install:
-
-clean: clean-4-0 clean-2-1 clean-2-0
-	@-rm -f $(tmpdir)*
-
 clean-2-0: TARGET := $(TARGET_2_0)
 clean-2-0:
+	@-rm -rf $(tmpdir)
 	@-rm -rf $(objdir)
 	@-rm -f $(outdir)$(ASSEMBLY)
 	@-rm -f $(outdir)$(ASSEMBLY).mdb
@@ -24,6 +18,7 @@ clean-2-0:
 
 clean-2-1: TARGET := $(TARGET_2_1)
 clean-2-1:
+	@-rm -rf $(tmpdir)
 	@-rm -rf $(objdir)
 	@-rm -f $(outdir)$(ASSEMBLY)
 	@-rm -f $(outdir)$(ASSEMBLY).mdb
@@ -33,6 +28,7 @@ clean-2-1:
 
 clean-4-0: TARGET := $(TARGET_4_0)
 clean-4-0:
+	@-rm -rf $(tmpdir)
 	@-rm -rf $(objdir)
 	@-rm -f $(outdir)$(ASSEMBLY)
 	@-rm -f $(outdir)$(ASSEMBLY).mdb
@@ -129,13 +125,15 @@ install-bin-2-1: VERSION := 2.1
 
 install-bin-4: TARGET := $(TARGET_4_0)
 
-# The XBuild targets file gets installed into the place(s) expected for standard F# project
+
+# Install the library binaries in the GAC and the framework directory, 
+# Install .optdata/.sigdata if they exist (they go alongside FSharp.Core)
+# Install the .targets file. The XBuild targets file gets installed into the place(s) expected for standard F# project
 # files. For F# 2.0 project files this is
 #     .../Microsoft F#/v4.0/Microsoft.FSharp.targets
 # For F# 3.0 project files this is
 #     .../Microsoft SDKs/F#/3.0/Framework/v4.0/Microsoft.FSharp.targets
-
-
+# 
 install-lib-2 install-lib-2-1 install-lib-4:
 	@echo "Installing $(ASSEMBLY)"
 	@mkdir -p $(DESTDIR)/$(libdir)
@@ -151,7 +149,7 @@ install-lib-2 install-lib-2-1 install-lib-4:
 	fi
 	@if test -e $(outdir)$(NAME).optdata; then \
 		$(INSTALL_LIB) $(outdir)$(NAME).optdata $(DESTDIR)/$(libdir)mono/gac/$(NAME)/$(VERSION)__$(TOKEN); \
-		ln -fs ../gac/$(NAME)/$(VERSION)__$(TOKEN)/$(NAME).optdata $(DESTDIR)/$(libdir)mono/$(TARGET)/; \
+		ln -fs ../gac/$(NAME)/$(VERSION)__$(TOKEN)/$(NAME).optdata $(DESTDIR)/$(libdir)mono/$(TARGET)/$(NAME).optdata; \
 	fi
 	$(INSTALL_LIB) $(outdir)Microsoft.FSharp.targets $(DESTDIR)/$(libdir)mono/$(TARGET)/;
 	ln -fs $(DESTDIR)/$(libdir)mono/$(TARGET)/Microsoft.FSharp.targets $(DESTDIR)/$(libdir)mono/Microsoft\ F#/v$(TARGET)/Microsoft.FSharp.Targets
@@ -164,7 +162,9 @@ install-lib-4-5: install-lib-4
 		ln -fs $(DESTDIR)$(libdir)mono/4.0/$(NAME).optdata $(DESTDIR)$(libdir)mono/4.5/$(NAME).optdata; \
 	fi
 
-install-bin-2 install-bin-2-1 install-bin-4:
+# The binaries fsc.exe and fsi.exe only get installed for Mono 4.0 profile
+# This also installs 'fsharpc' and 'fsharpi'
+install-bin-4:
 	sed -e 's,[@]DIR[@],$(libdir)mono/$(TARGET),g' -e 's,[@]TOOL[@],$(ASSEMBLY),g' < $(topdir)launcher.in > $(outdir)$(subst fs,fsharp,$(NAME))$(VERSION)
 	chmod +x $(outdir)$(subst fs,fsharp,$(NAME))$(VERSION)
 	@mkdir -p $(DESTDIR)/$(libdir)
@@ -172,10 +172,6 @@ install-bin-2 install-bin-2-1 install-bin-4:
 	$(INSTALL_LIB) $(outdir)$(ASSEMBLY) $(DESTDIR)$(libdir)mono/$(TARGET)
 	$(INSTALL_BIN) $(outdir)$(subst fs,fsharp,$(NAME))$(VERSION) $(DESTDIR)/$(bindir)
 
-install-bin-4-5: install-bin-4
-	@if test -e $(DESTDIR)$(libdir)mono/4.5/; then \
-		ln -fs $(DESTDIR)$(libdir)mono/4.0/$(ASSEMBLY) $(DESTDIR)$(libdir)mono/4.5/$(ASSEMBLY); \
-	fi
 
 $(objdir) $(objdir)$(TARGET_2_0) $(objdir)$(TARGET_2_1) $(objdir)$(TARGET_4_0):
 	mkdir -p $@
