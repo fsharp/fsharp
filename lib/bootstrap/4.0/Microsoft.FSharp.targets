@@ -23,13 +23,14 @@ Copyright (C) Microsoft Corporation. All rights reserved.
 
     <PropertyGroup>
         <!-- FSharpTargetsDir is the directory where the targets file lives -->
-        <FSharpTargetsDir Condition="'$(FSharpTargetsDir)'==''">$(MSBuildExtensionsPath32)\FSharp\1.0\</FSharpTargetsDir>
+        <FSharpTargetsDir Condition="'$(FSharpTargetsDir)'==''">unused</FSharpTargetsDir>
         <!-- FSharpTargetsFullPath is the full path (dir + filename) of the targets file -->
         <FSharpTargetsFullPath Condition="'$(FSharpTargetsDir)'!=''">$(FSharpTargetsDir)\Microsoft.FSharp.targets</FSharpTargetsFullPath>
         <MSBuildAllProjects>$(MSBuildAllProjects);$(FSharpTargetsFullPath)</MSBuildAllProjects>
         <DefaultLanguageSourceExtension>.fs</DefaultLanguageSourceExtension>
         <Language>F#</Language>
         <Tailcalls Condition="'$(Tailcalls)'==''">$(Optimize)</Tailcalls>
+        <FrameworkRegistryBase Condition="'$(TargetFrameworkIdentifier)'=='Silverlight'">Software\Microsoft\Microsoft SDKs\$(TargetFrameworkIdentifier)</FrameworkRegistryBase>
         <!-- Visual studio requires a non-empty RootNamespace value for "Add New Item" to work. -->
         <RootNamespace Condition="'$(RootNamespace)'==''">RootNamespace</RootNamespace>
     </PropertyGroup>
@@ -174,6 +175,7 @@ Copyright (C) Microsoft Corporation. All rights reserved.
               ToolPath="$(FscToolPath)"
               TreatWarningsAsErrors="$(TreatWarningsAsErrors)"
               Utf8Output="$(Utf8Output)"
+              ValidateTypeProviders="$(ValidateTypeProviders)"
               VersionFile="$(VersionFile)"
               VisualStudioStyleErrors="$(VisualStudioStyleErrors)"
               WarningLevel="$(WarningLevel)"
