@@ -32,6 +32,7 @@ clean: clean-4-0
 
 include $(topdir)/src/fsharp/targets.make
 
+# We need the bootstrap's FSharp.Core to run the proto
 $(protodir)FSharp.Core.dll: $(bootstrapdir)FSharp.Core.dll
 	@-mkdir $(protodir)
 	cp -p $(bootstrapdir)FSharp.Core.dll $(protodir)FSharp.Core.dll
