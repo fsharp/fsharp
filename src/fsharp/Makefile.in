@@ -1,4 +1,11 @@
-all: do-proto do-final
+
+# Make the proto using the bootstrap, then make the final compiler using the proto
+# We call MAKE sequentially because we don't want do-final to explicitly depend on do-proto,
+# as that causes a complete recompilation of both proto and final everytime you touch the 
+# compiler sources.
+all:
+	$(MAKE) do-proto
+	$(MAKE) do-final
 
 do-proto:
 	$(MAKE) -C FSharp.Build-proto $@
