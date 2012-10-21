@@ -27,14 +27,14 @@ sources = \
 	../InternalCollections.fs \
 	console.fs \
 	fsi.fs \
-    fsimain.fs
+	fsimain.fs
 
 RESOURCES = \
 	$(tmpdir)FSIstrings.resources
 
-$(tmpdir)FSIstrings.resources: $(srcdir)/FSIstrings.txt
-	mono --debug $(FSSRGEN) $< $(@:.resources=.fs) $(@:.resources=.resx)
-	resgen $(@:.resources=.resx) $@
+$(tmpdir)FSIstrings.fs $(tmpdir)FSIstrings.resources: $(srcdir)../FSIstrings.txt
+	mono $(MONO_OPTIONS) $(FSSRGEN) $< $(tmpdir)FSIstrings.fs $(tmpdir)FSIstrings.resx
+	resgen $(tmpdir)FSIstrings.resx $(tmpdir)FSIstrings.resources
 
 include $(topdir)/src/fsharp/targets.make
 

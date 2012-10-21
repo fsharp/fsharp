@@ -22,13 +22,6 @@ sources = \
 	../fsiaux.fs \
 	../fsiattrs.fs
 
-RESOURCES= \
-	$(tmpdir)FSInteractiveSettings.resources
-
-$(tmpdir)FSInteractiveSettings.resources: $(srcdir)../FSInteractiveSettings.txt
-	mono --debug $(FSSRGEN) $< $(@:.resources=.fs) $(@:.resources=.resx)
-	resgen $(@:.resources=.resx) $@
-
 include $(topdir)/src/fsharp/targets.make
 
 do-final: do-4-0 

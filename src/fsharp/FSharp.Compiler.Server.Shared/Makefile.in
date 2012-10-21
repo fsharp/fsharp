@@ -21,13 +21,6 @@ sources = \
 	../../assemblyinfo/assemblyinfo.FSharp.Compiler.Server.Shared.dll.fs \
 	../fsiserver/fsiserver.fs
 
-RESOURCES= \
-	$(tmpdir)FSServerShared.resources
-
-$(tmpdir)FSServerShared.resources: $(srcdir)../fsiserver/FSServerShared.txt
-	mono --debug $(FSSRGEN) $< $(@:.resources=.fs) $(@:.resources=.resx)
-	resgen $(@:.resources=.resx) $@
-
 include $(topdir)/src/fsharp/targets.make
 
 do-final: do-4-0 

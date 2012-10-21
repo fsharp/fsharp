@@ -155,9 +155,9 @@ RESOURCES= \
 	$(tmpdir)FSStrings.resources \
 	$(tmpdir)FSComp.resources
 
-$(tmpdir)FSComp.resources: $(srcdir)../FSComp.txt
-	mono $(MONO_OPTIONS) $(FSSRGEN) $< $(@:.resources=.fs) $(@:.resources=.resx)
-	resgen $(@:.resources=.resx) $@
+$(tmpdir)FSComp.fs $(tmpdir)FSComp.resources: $(srcdir)../FSComp.txt
+	mono $(MONO_OPTIONS) $(FSSRGEN) $< $(tmpdir)FSComp.fs $(tmpdir)FSComp.resx
+	resgen $(tmpdir)FSComp.resx $(tmpdir)FSComp.resources
 
 $(tmpdir)FSStrings.resources: $(srcdir)../FSStrings.resx
 	resgen $< $@
