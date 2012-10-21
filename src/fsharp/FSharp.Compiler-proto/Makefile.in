@@ -155,29 +155,29 @@ RESOURCES= \
 	$(tmpdir)FSStrings.resources \
 	$(tmpdir)FSComp.resources
 
-$(tmpdir)FSComp.fs $(tmpdir)FSComp.resources: $(srcdir)../FSComp.txt
+$(tmpdir)FSComp.fs $(tmpdir)FSComp.resources: ../FSComp.txt
 	mono $(MONO_OPTIONS) $(FSSRGEN) $< $(tmpdir)FSComp.fs $(tmpdir)FSComp.resx
 	resgen $(tmpdir)FSComp.resx $(tmpdir)FSComp.resources
 
-$(tmpdir)FSStrings.resources: $(srcdir)../FSStrings.resx
+$(tmpdir)FSStrings.resources: ../FSStrings.resx
 	resgen $< $@
 
-$(tmpdir)lex.fs: $(srcdir)../lex.fsl
+$(tmpdir)lex.fs: ../lex.fsl
 	mono $(MONO_OPTIONS) $(FSLEX) $< -o $@ --lexlib Internal.Utilities.Text.Lexing --unicode
 	@-mkdir -p ../FSharp.Compiler/.libs/
 	cp -p $(tmpdir)lex.fs* ../FSharp.Compiler/.libs/
 
-$(tmpdir)illex.fs: $(srcdir)../../absil/illex.fsl
+$(tmpdir)illex.fs: ../../absil/illex.fsl
 	mono $(MONO_OPTIONS) $(FSLEX) $< -o $@ --lexlib Internal.Utilities.Text.Lexing --unicode
 	@-mkdir -p ../FSharp.Compiler/.libs/
 	cp -p $(tmpdir)illex.fs* ../FSharp.Compiler/.libs/
 
-$(tmpdir)pars.fs: $(srcdir)../pars.fsy
+$(tmpdir)pars.fs: ../pars.fsy
 	mono $(MONO_OPTIONS) $(FSYACC) $< -o $@ --internal --open Microsoft.FSharp.Compiler --module Microsoft.FSharp.Compiler.Parser --lexlib Internal.Utilities.Text.Lexing --parslib Internal.Utilities.Text.Parsing
 	@-mkdir -p ../FSharp.Compiler/.libs/
 	cp -p $(tmpdir)pars.fs* ../FSharp.Compiler/.libs/
 
-$(tmpdir)ilpars.fs: $(srcdir)../../absil/ilpars.fsy
+$(tmpdir)ilpars.fs: ../../absil/ilpars.fsy
 	mono $(MONO_OPTIONS) $(FSYACC) $< -o $@ --internal --module Microsoft.FSharp.Compiler.AbstractIL.Internal.AsciiParser --lexlib Internal.Utilities.Text.Lexing --parslib Internal.Utilities.Text.Parsing
 	@-mkdir -p ../FSharp.Compiler/.libs/
 	cp -p $(tmpdir)ilpars.fs* ../FSharp.Compiler/.libs/

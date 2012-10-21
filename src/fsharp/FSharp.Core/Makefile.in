@@ -97,7 +97,7 @@ sources = \
 RESOURCES = \
 	$(tmpdir)FSCore.resources
 
-$(tmpdir)FSCore.resources: $(srcdir)FSCore.resx
+$(tmpdir)FSCore.resources: FSCore.resx
 	resgen $< $@
 
 include $(topdir)/src/fsharp/targets.make

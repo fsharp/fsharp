@@ -28,7 +28,7 @@ sources= \
 RESOURCES = \
 	$(tmpdir)FSBuild.resources
 
-$(tmpdir)FSBuild.fs $(tmpdir)FSBuild.resources: $(srcdir)../FSharp.Build/FSBuild.txt
+$(tmpdir)FSBuild.fs $(tmpdir)FSBuild.resources: ../FSharp.Build/FSBuild.txt
 	mono $(MONO_OPTIONS) $(FSSRGEN) $< $(tmpdir)FSBuild.fs $(tmpdir)FSBuild.resx
 	resgen $(tmpdir)FSBuild.resx $(tmpdir)FSBuild.resources
 
