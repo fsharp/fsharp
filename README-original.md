@@ -3,13 +3,13 @@ F# 3.0 Compiler + Library Source Code Drop, matching Visual Studio 2012 (R) RTM 
 
 This directory contains a drop of the source code for an F# 3.0 compiler and core library. The code has been cleaned up "a little" to try to help ensure better stability as more development is done on the codebase.
 
-The compiler is normally compiled as a set of .NET 4.0 components. The compiler can also be hosted in a browser to implement websites like Try F#.
+The compiler is normally compiled as a set of .NET 4.0 components. The compiler can also be hosted in a browser to implement websites like [http://tryfsharp.org](Try F#).
 
 **Before we start, are sure you're in the right place?**
 
-* To get a free F# environment for Windows, go to [http://fsharp.net](fsharp.net) 
-* To get a free F# environment for Linux or Mac, go to [http://fsxplat.codeplex.com](fsxplat.codeplex.com)
-* To learn what F# is and why it's interesting, go to [http://fsharp.net](fsharp.net) or [http://tryfsharp.org](tryfsharp.org)
+* To get a free F# environment for Windows, go to [http://fsharp.net](fsharp.net).
+* To get a free F# environment for Linux or Mac, go to [http://fsxplat.codeplex.com](fsxplat.codeplex.com).
+* To learn what F# is and why it's interesting, go to [http://fsharp.net](fsharp.net) or [http://tryfsharp.org](tryfsharp.org).
 * If you want to to use F# in Visual Studio 2010 (R) or Visual Studio 2012 (R), go to [http://fsharp.net](fsharp.net).
 * Looking for F# coding samples? Go to [http://fsharp.net](fsharp.net) or [http://tryfsharp.org](tryfsharp.org) or [http://fssnip.net](fssnip.net). While the code has its nice points, it is not a model F# codebase and should not be used as guidance for F# coding style - there are plenty of things we would change if we had all the time in the world.
 
@@ -17,7 +17,7 @@ To emphasize, this distribution should not be seen as a way to "get" an F# compi
 
 **License:** subject to terms and conditions of the Apache License, Version 2.0. A copy of the license can be found in the License.html file at the root of this distribution. By using this source code in any fashion, you are agreeing to be bound by the terms of the Apache License, Version 2.0. You must not remove this notice, or any other, from this software.
 
-**Questions?** If you have questions about the source code, please ask at the F# Open Source Google Group. Please do not ask the F# team at Microsoft for help with this source code: they like to be friendly, but they are very busy working on improving F# and need to focus on that.
+**Questions?** If you have questions about the source code, please ask at the [http://groups.google.com/group/fsharp-opensource](F# Open Source Google Group). Please do not ask the F# team at Microsoft for help with this source code: they like to be friendly, but they are very busy working on improving F# and need to focus on that.
 
 **Updates?** The F# team do not do active development in open repositories, though some changes such as cleanup or additional tools may be submitted. They aspire to update the code drop when future versions of F# compilers are released from Microsoft, usually at or around the RTM stage.
 
@@ -28,7 +28,7 @@ To emphasize, this distribution should not be seen as a way to "get" an F# compi
 
 When you build the compiler using the standard instructions below, you get `fsc.exe`, `fsi.exe`, `FSharp.Core.dll`, `FSharp.Compiler.dll` and some related DLLs.
 
-The compiler binaries produced are "private" and strong-named signed with a test key (`src\fsharp\test.snk`). They use CLI assembly version nunmber 2.9.9.999. You can place these components in the GAC but they will not replace the components used by normal Visual Studio or normal F# programs.
+The compiler binaries produced are "private" and strong-named signed with a test key (`src\fsharp\test.snk`). They use CLI assembly version nunmber **2.9.9.999**. You can place these components in the GAC but they will not replace the components used by normal Visual Studio or normal F# programs.
 
 
 ##Steps - Building a Proto Compiler
@@ -138,7 +138,7 @@ You can then go to the relevant directory and run `build.bat` and `run.bat`.
 
 ##Using the FSharp.Core you built
 
-The `FSharp.Core.dll` library produced uses the standard version number 4.3.0.0 and is delay signed with the Microsoft public key. This gives it the same identity as `FSharp.Core` for F# 3.0 in Visual Studio 2012. This means that if you have Visual Studio 2012 installed, the `FSharp.Core` you produce will not be used by default. You must replace the one in the GAC and skip strong-name verification for the DLL, e.g.
+The `FSharp.Core.dll` library produced uses the standard version number **4.3.0.0** and is delay signed with the Microsoft public key. This gives it the same identity as `FSharp.Core` for F# 3.0 in Visual Studio 2012. This means that if you have Visual Studio 2012 installed, the `FSharp.Core` you produce will not be used by default. You must replace the one in the GAC and skip strong-name verification for the DLL, e.g.
 
 ```
 sn -Vr FSharp.Core,*
@@ -239,8 +239,7 @@ del /q FSharp.Core.dll
 ```
 
 
-##Some alternative Steps - Other examples of building for Release mode
-###(choose some of these as you need)
+##Some alternative Steps - Other examples of building for Release mode (choose some of these as you need)
 
 ```
 msbuild fsharp-library-build.proj /p:Configuration=Release
