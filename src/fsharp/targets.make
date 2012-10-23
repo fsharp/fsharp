@@ -172,8 +172,15 @@ install-lib-2 install-lib-2-1 install-lib-4:
 install-lib-4-5: install-lib-4
 	@if test -e $(DESTDIR)$(libdir)mono/4.5/; then \
 		ln -fs $(DESTDIR)$(libdir)mono/4.0/$(ASSEMBLY) $(DESTDIR)$(libdir)mono/4.5/$(ASSEMBLY); \
-		ln -fs $(DESTDIR)$(libdir)mono/4.0/$(NAME).sigdata $(DESTDIR)$(libdir)mono/4.5/$(NAME).sigdata; \
-		ln -fs $(DESTDIR)$(libdir)mono/4.0/$(NAME).optdata $(DESTDIR)$(libdir)mono/4.5/$(NAME).optdata; \
+		if test -e $(DESTDIR)$(libdir)mono/4.0/$(ASSEMBLY).config; then \
+		    ln -fs $(DESTDIR)$(libdir)mono/4.0/$(ASSEMBLY).config $(DESTDIR)$(libdir)mono/4.5/$(ASSEMBLY).config; \
+		fi; \
+		if test -e $(DESTDIR)$(libdir)mono/4.0/$(NAME).sigdata; then \
+		    ln -fs $(DESTDIR)$(libdir)mono/4.0/$(NAME).sigdata $(DESTDIR)$(libdir)mono/4.5/$(NAME).sigdata; \
+		fi; \
+		if test -e $(DESTDIR)$(libdir)mono/4.0/$(NAME).optdata; then \
+		    ln -fs $(DESTDIR)$(libdir)mono/4.0/$(NAME).optdata $(DESTDIR)$(libdir)mono/4.5/$(NAME).optdata; \
+		fi; \
 	fi
 
 # The binaries fsc.exe and fsi.exe only get installed for Mono 4.0 profile
