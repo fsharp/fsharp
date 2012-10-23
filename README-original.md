@@ -3,21 +3,21 @@ F# 3.0 Compiler + Library Source Code Drop, matching Visual Studio 2012 (R) RTM 
 
 This directory contains a drop of the source code for an F# 3.0 compiler and core library. The code has been cleaned up "a little" to try to help ensure better stability as more development is done on the codebase.
 
-The compiler is normally compiled as a set of .NET 4.0 components. The compiler can also be hosted in a browser to implement websites like [http://tryfsharp.org](Try F#).
+The compiler is normally compiled as a set of .NET 4.0 components. The compiler can also be hosted in a browser to implement websites like [Try F#](http://tryfsharp.org).
 
 **Before we start, are sure you're in the right place?**
 
-* To get a free F# environment for Windows, go to [http://fsharp.net](fsharp.net).
-* To get a free F# environment for Linux or Mac, go to [http://fsxplat.codeplex.com](fsxplat.codeplex.com).
-* To learn what F# is and why it's interesting, go to [http://fsharp.net](fsharp.net) or [http://tryfsharp.org](tryfsharp.org).
-* If you want to to use F# in Visual Studio 2010 (R) or Visual Studio 2012 (R), go to [http://fsharp.net](fsharp.net).
-* Looking for F# coding samples? Go to [http://fsharp.net](fsharp.net) or [http://tryfsharp.org](tryfsharp.org) or [http://fssnip.net](fssnip.net). While the code has its nice points, it is not a model F# codebase and should not be used as guidance for F# coding style - there are plenty of things we would change if we had all the time in the world.
+* To get a free F# environment for Windows, go to [fsharp.net](http://fsharp.net).
+* To get a free F# environment for Linux or Mac, go to [fsxplat.codeplex.com](http://fsxplat.codeplex.com).
+* To learn what F# is and why it's interesting, go to [fsharp.net](http://fsharp.net) or [tryfsharp.org](http://tryfsharp.org).
+* If you want to to use F# in Visual Studio 2010 (R) or Visual Studio 2012 (R), go to [fsharp.net](http://fsharp.net).
+* Looking for F# coding samples? Go to [fsharp.net](http://fsharp.net) or [tryfsharp.org](http://tryfsharp.org) or [fssnip.net](http://fssnip.net). While the code has its nice points, it is not a model F# codebase and should not be used as guidance for F# coding style - there are plenty of things we would change if we had all the time in the world.
 
-To emphasize, this distribution should not be seen as a way to "get" an F# compiler for immediate use. For that you're better going to [http://fsharp.net](fsharp.net) or [http://fsxplat.codeplex.com](fsxplat.codeplex.com)
+To emphasize, this distribution should not be seen as a way to "get" an F# compiler for immediate use. For that you're better going to [fsharp.net](http://fsharp.net) or [fsxplat.codeplex.com](http://fsxplat.codeplex.com)
 
 **License:** subject to terms and conditions of the Apache License, Version 2.0. A copy of the license can be found in the License.html file at the root of this distribution. By using this source code in any fashion, you are agreeing to be bound by the terms of the Apache License, Version 2.0. You must not remove this notice, or any other, from this software.
 
-**Questions?** If you have questions about the source code, please ask at the [http://groups.google.com/group/fsharp-opensource](F# Open Source Google Group). Please do not ask the F# team at Microsoft for help with this source code: they like to be friendly, but they are very busy working on improving F# and need to focus on that.
+**Questions?** If you have questions about the source code, please ask at the [F# Open Source Google Group](http://groups.google.com/group/fsharp-opensource). Please do not ask the F# team at Microsoft for help with this source code: they like to be friendly, but they are very busy working on improving F# and need to focus on that.
 
 **Updates?** The F# team do not do active development in open repositories, though some changes such as cleanup or additional tools may be submitted. They aspire to update the code drop when future versions of F# compilers are released from Microsoft, usually at or around the RTM stage.
 
@@ -178,7 +178,7 @@ This is the way the assemblies are built in a source build of the canonical GitH
 
 The prerequisites and build command line for compiling the source (on Windows) are shown later in this README. Here's the logic of the build:
 
-* We first need an existing F# compiler, usually the one available from [http://fsharp.net](fsharp.net), although it could also be another. Let's assume this compiler has an `FSharp.Core.dll` with version X.
+* We first need an existing F# compiler, usually the one available from [fsharp.net](http://fsharp.net), although it could also be another. Let's assume this compiler has an `FSharp.Core.dll` with version X.
 * We use this compiler to compile the source in this distribution, to produce a "proto" compiler, in the `Proto` directory. When run, this compiler still relies on the `FSharp.Core.dll` with version X.
 * We use the proto compiler to compile the source for `FSharp.Core.dll` in this distribution, producing an `FSharp.Core.dll` with the version identified in `src\source-build-version`, usually **1.9.999**.
 * We use the proto compiler to compile the source for `FSharp.Compiler.dll`, `fsc.exe`, `fsi.exe` and other binaries found in this distribution. When run, these binaries will rely on the `FSharp.Core.dll` with version **1.9.999**. This is good, since it means the 1.9.999 binaries now form a consistent, bootstrapped compiler. If you like you should now be able to throw away the compiler with version X.
@@ -188,7 +188,7 @@ Some additional tools are required to build the compiler, notably `fslex.exe`, `
 
 ##Validation and Use
 
-Here are some simple tests to validate what you have built by checking fsi.exe (F# Interactive) starts up:
+Here are some simple tests to validate what you have built by checking `fsi.exe` (F# Interactive) starts up:
 
 ```
 ngen install ..\Debug\net40\bin\fsi.exe
@@ -261,7 +261,9 @@ msbuild fsharp-library-build.proj /p:TargetFramework=sl3-wp /p:Configuration=Rel
 msbuild fsharp-library-build.proj /p:TargetFramework=sl5 /p:Configuration=Release
 ```
 
-`msbuild fsharp-compiler-build.proj /p:TargetFramework=net20 /p:Configuration=Release`
+```
+msbuild fsharp-compiler-build.proj /p:TargetFramework=net20 /p:Configuration=Release
+```
 
 
 ##Editing and Building on Windows using Visual Studio 2012
