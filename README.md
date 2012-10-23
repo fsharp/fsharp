@@ -37,6 +37,6 @@ make do-2-1
 
 ## Notes
 
-Uses bootstrapping libraries, tools and f# compiler. The `lib/bootstrap/X.0` directories contain mono-built libraries, compiler and tools that can be used to bootstrap a build. You can also supply your own via the `--with-bootstrap` option.
+Uses bootstrapping libraries, tools and F# compiler. The `lib/bootstrap/X.0` directories contain mono-built libraries, compiler and tools that can be used to bootstrap a build. You can also supply your own via the `--with-bootstrap` option.
 
-F# original powerpack sources are available from [fsharppowerpack.codeplex.com](http://fsharppowerpack.codeplex.com)
+F# original powerpack sources are available from [fsharppowerpack.codeplex.com](http://fsharppowerpack.codeplex.com).
