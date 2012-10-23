@@ -43,14 +43,18 @@ Note: Make sure you run the .NET 4.0 `msbuild.exe`, e.g. `C:\Windows\Microsoft.N
 
 Optional: NGEN the Proto Compiler for faster future startup (optional)
 
-`ngen install ..\Proto\net40\bin\fsc-proto.exe`
+```
+ngen install ..\Proto\net40\bin\fsc-proto.exe
+```
 
 
 ##Steps - Building the F# Core Library
 
 This uses the proto compiler to build the FSharp.Core library, for Mono/.NET 4.0.
 
-`msbuild fsharp-library-build.proj /p:TargetFramework=net40`
+```
+msbuild fsharp-library-build.proj /p:TargetFramework=net40
+```
 
 Note: Make sure you run the .NET 4.0 `msbuild.exe`, e.g. `C:\Windows\Microsoft.NET\Framework\v4.0.30319\MSBuild.exe`.
 
@@ -59,7 +63,9 @@ Note: Make sure you run the .NET 4.0 `msbuild.exe`, e.g. `C:\Windows\Microsoft.N
 
 This uses the proto compiler to build the `FSharp.Compiler.dll` and `fsc.exe` to run on for Mono/.NET 4.0.
 
-`msbuild fsharp-compiler-build.proj /p:TargetFramework=net40`
+```
+msbuild fsharp-compiler-build.proj /p:TargetFramework=net40
+```
 
 Note: Make sure you run the .NET 4.0 `msbuild.exe`, e.g. `C:\Windows\Microsoft.NET\Framework\v4.0.30319\MSBuild.exe`.
 
@@ -104,7 +110,9 @@ Here **net20** gives a runtime for .NET 2.0-3.5, **sl3-wp** gives a runtime for 
 
 This uses the proto compiler to build the unit tests that check some parts of `FSharp.Core.dll` and `FSharp.Compiler.dll`. There is also another set of tests under `tests\fsharp`.
 
-`msbuild fsharp-library-unittests-build.proj /p:TargetFramework=net40`
+```
+msbuild fsharp-library-unittests-build.proj /p:TargetFramework=net40
+```
 
 *Note: You must have NUnit installed.*
 
@@ -131,7 +139,9 @@ C:\projects\openfsharp\Compiler\3.0\head\tests\fsharp\core\queriesOverIEnumerabl
 
 Some tests for LINQ queries require SQL Server be installed. A failing test will look like this:
 
-`ERRORLEVEL=1: in C:\projects\openfsharp\Compiler\3.0\head\tests\fsharp\core\csfromfs\build.bat`
+```
+ERRORLEVEL=1: in C:\projects\openfsharp\Compiler\3.0\head\tests\fsharp\core\csfromfs\build.bat
+```
 
 You can then go to the relevant directory and run `build.bat` and `run.bat`.
 
@@ -150,7 +160,7 @@ However, this is not recommended except in the rare case you are adding extra fu
 
 ##Preparing for inclusion in Mono
 
-Building for the **mono20** and **mono40** frameworks gives strong-named, delay-signed assemblies with the `msfinal.pub` key and standard version numbers such as 2.0.0.0, 2.3.0.0, 4.0.0.0 and 4.3.0.0. You complete the signing of these assemblies using [http://github.com/fsharp/fsharp/raw/master/mono.snk](http://github.com/fsharp/fsharp/raw/master/mono.snk). These assemblies will not run if you already have a version of them installed in your GAC (e.g. if you have Visual Studio 2012).
+Building for the **mono20** and **mono40** frameworks gives strong-named, delay-signed assemblies with the `msfinal.pub` key and standard version numbers such as **2.0.0.0**, **2.3.0.0**, **4.0.0.0** and **4.3.0.0**. You complete the signing of these assemblies using [http://github.com/fsharp/fsharp/raw/master/mono.snk](http://github.com/fsharp/fsharp/raw/master/mono.snk). These assemblies will not run if you already have a version of them installed in your GAC (e.g. if you have Visual Studio 2012).
 
 ```
 sn -R ..\Debug\mono40\bin\fsc.exe mono.snk
@@ -161,7 +171,7 @@ sn -R ..\Debug\mono40\bin\FSharp.Compiler.Server.Shared.dll mono.snk
 sn -R ..\Debug\mono40\bin\FSharp.Compiler.Interactive.Settings.dll mono.snk
 ```
 
-This is the way the assemblies are built in a source build of the canonical GitHub repository for fsharp and how the binaries are shipped in Mono binary distributions.
+This is the way the assemblies are built in a source build of the canonical GitHub repository for F# and how the binaries are shipped in Mono binary distributions.
 
 
 ##Notes on the build
@@ -169,9 +179,9 @@ This is the way the assemblies are built in a source build of the canonical GitH
 The prerequisites and build command line for compiling the source (on Windows) are shown later in this README. Here's the logic of the build:
 
 * We first need an existing F# compiler, usually the one available from [http://fsharp.net](fsharp.net), although it could also be another. Let's assume this compiler has an `FSharp.Core.dll` with version X.
-* We use this compiler to compile the source in this distribution, to produce a "proto" compiler, in the Proto directory. When run, this compiler still relies on the `FSharp.Core.dll` with version X.
-* We use the proto compiler to compile the source for `FSharp.Core.dll` in this distribution, producing an `FSharp.Core.dll` with the version identified in `src\source-build-version`, usually 1.9.999.
-* We use the proto compiler to compile the source for `FSharp.Compiler.dll`, `fsc.exe`, `fsi.exe` and other binaries found in this distribution. When run, these binaries will rely on the `FSharp.Core.dll` with version 1.9.999. This is good, since it means the 1.9.999 binaries now form a consistent, bootstrapped compiler. If you like you should now be able to throw away the compiler with version X.
+* We use this compiler to compile the source in this distribution, to produce a "proto" compiler, in the `Proto` directory. When run, this compiler still relies on the `FSharp.Core.dll` with version X.
+* We use the proto compiler to compile the source for `FSharp.Core.dll` in this distribution, producing an `FSharp.Core.dll` with the version identified in `src\source-build-version`, usually **1.9.999**.
+* We use the proto compiler to compile the source for `FSharp.Compiler.dll`, `fsc.exe`, `fsi.exe` and other binaries found in this distribution. When run, these binaries will rely on the `FSharp.Core.dll` with version **1.9.999**. This is good, since it means the 1.9.999 binaries now form a consistent, bootstrapped compiler. If you like you should now be able to throw away the compiler with version X.
 
 Some additional tools are required to build the compiler, notably `fslex.exe`, `fsyacc.exe`, `FSharp.PowerPack.Build.Tasks.dll`, `FsSrGen.exe`, `FSharp.SRGen.Build.Tasks.dll` and the other tools found in the `lkg` directory. These are "Last Known Good" binaries created from a version of the F# Power Pack on CodePlex. If you like you can throw away these binaries and use your own compiled versions of these. tools.
 
@@ -222,7 +232,9 @@ del /q FSharp.Core.dll
 
 ##Some alternative Steps - Building an optimized (Release) compiler for .NET 4.0 profile
 
-`msbuild fsharp-compiler-build.proj /p:TargetFramework=net40 /p:Configuration=Release`
+```
+msbuild fsharp-compiler-build.proj /p:TargetFramework=net40 /p:Configuration=Release
+```
 
 ```
 ngen install ..\Release\net40\bin\fsi.exe
