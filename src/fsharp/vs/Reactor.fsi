@@ -29,6 +29,12 @@ module internal Reactor =
         /// Start an operation and return immediately. Restart the most recent build after the operation is complete.
         member AsyncOp : op:Operation -> unit
     
+        /// Block while performing and operation. Restart the most recent build afterward.
+        member RunSyncOp : (unit -> 'T) -> 'T
+
+        /// Start an operation and return an async handle to its result. 
+        member RunAsyncOp : (unit -> 'T) -> Async<'T>
+
     /// Get the reactor for FSharp.Compiler.dll
     val Reactor : unit -> Reactor
   

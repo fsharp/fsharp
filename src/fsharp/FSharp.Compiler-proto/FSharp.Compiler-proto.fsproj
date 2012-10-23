@@ -1,11 +1,11 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <!--
 # Copyright (c) 2002-2011 Microsoft Corporation. 
 #
-# This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
-# copy of the license can be found in the License.html file at the root of this distribution. 
-# By using this source code in any fashion, you are agreeing to be bound 
-# by the terms of the Apache License, Version 2.0.
+# 
+# 
+# 
+#
 #
 # You must not remove this notice, or any other, from this software.
 -->
@@ -13,6 +13,9 @@
   <PropertyGroup>
     <FSharpSourcesRoot>..\..</FSharpSourcesRoot>
     <Configuration Condition=" '$(Configuration)' == '' ">Proto</Configuration>
+    <ProductVersion>10.0.0</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <UsePartialTypes>False</UsePartialTypes>
   </PropertyGroup>
   <Import Project="$(FSharpSourcesRoot)\FSharpSource.Settings.targets" />
   <PropertyGroup>
@@ -25,7 +28,7 @@
     <BuildWith>LKG</BuildWith>
     <AllowCrossTargeting>true</AllowCrossTargeting>
     <OtherFlags>$(OtherFlags) --warnon:1182</OtherFlags>
-    <TargetFrameworkVersion Condition="'$(TargetFramework)'=='cli\2.0' or '$(TargetFramework)'=='mono\2.0'">v2.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion Condition="'$(TargetFramework)'=='net20' or '$(TargetFramework)'=='mono20'">v2.0</TargetFrameworkVersion>
   </PropertyGroup>
   <ItemGroup>
     <FsSrGen Include="..\FSComp.txt">
@@ -97,17 +100,17 @@
     <Compile Include="..\..\utils\TaggedCollections.fs">
       <Link>TaggedCollections.fs</Link>
     </Compile>
-    <Compile Include="..\..\utils\filename.fsi">
-      <Link>filename.fsi</Link>
-    </Compile>
-    <Compile Include="..\..\utils\filename.fs">
-      <Link>filename.fs</Link>
-    </Compile>
     <Compile Include="..\FlatList.fs">
       <Link>FlatList.fs</Link>
     </Compile>
     <Compile Include="..\..\absil\illib.fs">
       <Link>illib.fs</Link>
+    </Compile>
+    <Compile Include="..\..\utils\filename.fsi">
+      <Link>filename.fsi</Link>
+    </Compile>
+    <Compile Include="..\..\utils\filename.fs">
+      <Link>filename.fs</Link>
     </Compile>
     <Compile Include="..\..\absil\zmap.fsi">
       <Link>zmap.fsi</Link>
@@ -134,7 +137,7 @@
       <Link>ildiag.fs</Link>
     </Compile>
     <Compile Include="..\ReferenceResolution.fs">
-          <Link>ReferenceResolution.fs</Link>
+      <Link>ReferenceResolution.fs</Link>
     </Compile>
     <Compile Include="..\..\absil\il.fsi">
       <Link>il.fsi</Link>
@@ -190,27 +193,26 @@
       <Link>range.fs</Link>
     </Compile>
     <Compile Include="..\ErrorLogger.fs">
-		  <Link>ErrorLogger.fs</Link>
-	</Compile>
-	  <Compile Include="..\InternalCollections.fsi">
+      <Link>ErrorLogger.fs</Link>
+    </Compile>
+    <Compile Include="..\InternalCollections.fsi">
       <Link>InternalCollections.fsi</Link>
     </Compile>
     <Compile Include="..\InternalCollections.fs">
       <Link>InternalCollections.fs</Link>
     </Compile>
-
     <Compile Include="..\..\absil\ilread.fsi">
       <Link>ilread.fsi</Link>
     </Compile>
     <Compile Include="..\..\absil\ilread.fs">
       <Link>ilread.fs</Link>
     </Compile>
-	  <Compile Include="..\..\absil\ilwrite.fsi">
-		  <Link>ilwrite.fsi</Link>
-	  </Compile>
-	  <Compile Include="..\..\absil\ilwrite.fs">
-		  <Link>ilwrite.fs</Link>
-	  </Compile>
+    <Compile Include="..\..\absil\ilwrite.fsi">
+      <Link>ilwrite.fsi</Link>
+    </Compile>
+    <Compile Include="..\..\absil\ilwrite.fs">
+      <Link>ilwrite.fs</Link>
+    </Compile>
     <Compile Include="..\..\absil\ilreflect.fs">
       <Link>ilreflect.fs</Link>
     </Compile>
@@ -223,14 +225,20 @@
     <Compile Include="..\..\ilx\ilxsettings.fs">
       <Link>ilxsettings.fs</Link>
     </Compile>
-	  <Compile Include="..\..\ilx\pubclo.fsi">
-		  <Link>pubclo.fsi</Link>
-	  </Compile>
-	  <Compile Include="..\..\ilx\pubclo.fs">
+    <Compile Include="..\..\ilx\pubclo.fsi">
+      <Link>pubclo.fsi</Link>
+    </Compile>
+    <Compile Include="..\..\ilx\pubclo.fs">
       <Link>pubclo.fs</Link>
     </Compile>
-	<Compile Include="..\..\ilx\cu_erase.fs">
+    <Compile Include="..\..\ilx\cu_erase.fs">
       <Link>cu_erase.fs</Link>
+    </Compile>
+    <Compile Include="..\InternalFileSystemUtils.fsi">
+      <Link>InternalFileSystemUtils.fsi</Link>
+    </Compile>
+    <Compile Include="..\InternalFileSystemUtils.fs">
+      <Link>InternalFileSystemUtils.fs</Link>
     </Compile>
     <Compile Include="..\unilex.fsi">
       <Link>unilex.fsi</Link>
@@ -244,23 +252,23 @@
     <Compile Include="..\layout.fs">
       <Link>layout.fs</Link>
     </Compile>
-	  <Compile Include="..\ast.fs">
-		  <Link>ast.fs</Link>
-	  </Compile>
-	  <Compile Include="pars.fs" />
-	  <Compile Include="..\lexhelp.fsi">
-		  <Link>lexhelp.fsi</Link>
-	  </Compile>
-	  <Compile Include="..\lexhelp.fs">
-		  <Link>lexhelp.fs</Link>
-	  </Compile>
-	  <Compile Include="lex.fs" />
-	  <Compile Include="..\sreflect.fsi">
-		  <Link>sreflect.fsi</Link>
-	  </Compile>
-	  <Compile Include="..\sreflect.fs">
-		  <Link>sreflect.fs</Link>
-	  </Compile>
+    <Compile Include="..\ast.fs">
+      <Link>ast.fs</Link>
+    </Compile>
+    <Compile Include="pars.fs" />
+    <Compile Include="..\lexhelp.fsi">
+      <Link>lexhelp.fsi</Link>
+    </Compile>
+    <Compile Include="..\lexhelp.fs">
+      <Link>lexhelp.fs</Link>
+    </Compile>
+    <Compile Include="lex.fs" />
+    <Compile Include="..\sreflect.fsi">
+      <Link>sreflect.fsi</Link>
+    </Compile>
+    <Compile Include="..\sreflect.fs">
+      <Link>sreflect.fs</Link>
+    </Compile>
     <Compile Include="..\QueueList.fs">
       <Link>QueueList.fs</Link>
     </Compile>
@@ -268,14 +276,14 @@
       <Link>tast.fs</Link>
     </Compile>
     <Compile Include="..\env.fs">
-		  <Link>env.fs</Link>
-	  </Compile>
-	  <Compile Include="..\tastops.fsi">
-		  <Link>tastops.fsi</Link>
-	  </Compile>
-	  <Compile Include="..\tastops.fs">
-		  <Link>tastops.fs</Link>
-	  </Compile>
+      <Link>env.fs</Link>
+    </Compile>
+    <Compile Include="..\tastops.fsi">
+      <Link>tastops.fsi</Link>
+    </Compile>
+    <Compile Include="..\tastops.fs">
+      <Link>tastops.fs</Link>
+    </Compile>
     <Compile Include="..\pickle.fsi">
       <Link>pickle.fsi</Link>
     </Compile>
@@ -285,14 +293,17 @@
     <Compile Include="..\lexfilter.fs">
       <Link>lexfilter.fs</Link>
     </Compile>
-	  <Compile Include="..\import.fsi">
-		  <Link>import.fsi</Link>
-	  </Compile>
-	  <Compile Include="..\import.fs">
+    <Compile Include="..\import.fsi">
+      <Link>import.fsi</Link>
+    </Compile>
+    <Compile Include="..\import.fs">
       <Link>import.fs</Link>
     </Compile>
     <Compile Include="..\infos.fs">
       <Link>infos.fs</Link>
+    </Compile>
+    <Compile Include="..\NicePrint.fs">
+      <Link>NicePrint.fs</Link>
     </Compile>
     <Compile Include="..\augment.fsi">
       <Link>augment.fsi</Link>
@@ -315,10 +326,10 @@
     <Compile Include="..\outcome.fs">
       <Link>outcome.fs</Link>
     </Compile>
-	  <Compile Include="..\csolve.fsi">
-		  <Link>csolve.fsi</Link>
-	  </Compile>
-	  <Compile Include="..\csolve.fs">
+    <Compile Include="..\csolve.fsi">
+      <Link>csolve.fsi</Link>
+    </Compile>
+    <Compile Include="..\csolve.fs">
       <Link>csolve.fs</Link>
     </Compile>
     <Compile Include="..\formats.fsi">
@@ -327,10 +338,10 @@
     <Compile Include="..\formats.fs">
       <Link>formats.fs</Link>
     </Compile>
-	  <Compile Include="..\nameres.fsi">
-		  <Link>nameres.fsi</Link>
-	  </Compile>
-	  <Compile Include="..\nameres.fs">
+    <Compile Include="..\nameres.fsi">
+      <Link>nameres.fsi</Link>
+    </Compile>
+    <Compile Include="..\nameres.fs">
       <Link>nameres.fs</Link>
     </Compile>
     <Compile Include="..\unsolved.fs">
@@ -360,10 +371,10 @@
     <Compile Include="..\opt.fs">
       <Link>opt.fs</Link>
     </Compile>
-	  <Compile Include="..\detuple.fsi">
-		  <Link>detuple.fsi</Link>
-	  </Compile>
-	  <Compile Include="..\detuple.fs">
+    <Compile Include="..\detuple.fsi">
+      <Link>detuple.fsi</Link>
+    </Compile>
+    <Compile Include="..\detuple.fs">
       <Link>detuple.fs</Link>
     </Compile>
     <Compile Include="..\tlr.fsi">
@@ -380,6 +391,9 @@
     </Compile>
     <Compile Include="..\ilxgen.fs">
       <Link>ilxgen.fs</Link>
+    </Compile>
+    <Compile Include="..\TraceCall.fsi">
+      <Link>TraceCall.fsi</Link>
     </Compile>
     <Compile Include="..\TraceCall.fs">
       <Link>TraceCall.fs</Link>
@@ -402,22 +416,26 @@
     <Compile Include="..\vs\IncrementalBuild.fs">
       <Link>IncrementalBuild.fs</Link>
     </Compile>
+    <Compile Include="..\fsc.fs">
+      <Link>fsc.fs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Reference Include="mscorlib" />
     <Reference Include="Fsharp.Core" />
     <Reference Include="System" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Runtime.Remoting" />
     <Reference Include="Microsoft.Build.Framework" />
     <Reference Include="Microsoft.Build.Engine" />
-
-    <Reference Include="Microsoft.Build.Utilities" Condition="'$(TargetFramework)' == 'cli\2.0'" />
-    <Reference Include="Microsoft.Build.Tasks" Condition="'$(TargetFramework)' == 'cli\2.0'" />
-
-    <Reference Include="ISymWrapper, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" Condition="'$(TargetFramework)'=='cli\4.0'" />
-    <Reference Include="Microsoft.Build" Condition="'$(TargetFramework)'=='cli\4.0'" />
-    <Reference Include="Microsoft.Build.Utilities.v4.0" Condition="'$(TargetFramework)'=='cli\4.0'" />
-    <Reference Include="Microsoft.Build.Tasks.v4.0" Condition="'$(TargetFramework)'=='cli\4.0'" />
-
+    <Reference Include="System.Numerics" Condition="'$(TargetFramework)' == 'net40' or '$(TargetFramework)' == 'mono40'" />
+    <Reference Include="Microsoft.Build.Utilities" Condition="'$(TargetFramework)' == 'net20'" />
+    <Reference Include="Microsoft.Build.Tasks" Condition="'$(TargetFramework)' == 'net20'" />
+    <Reference Include="ISymWrapper, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" Condition="'$(TargetFramework)'=='net40' or '$(TargetFramework)'=='mono40'" />
+    <Reference Include="Microsoft.Build" Condition="'$(TargetFramework)'=='net40' or '$(TargetFramework)'=='mono40'" />
+    <Reference Include="Microsoft.Build.Utilities.v4.0" Condition="'$(TargetFramework)'=='net40' or '$(TargetFramework)'=='mono40'" />
+    <Reference Include="Microsoft.Build.Tasks.v4.0" Condition="'$(TargetFramework)'=='net40' or '$(TargetFramework)'=='mono40'" />
   </ItemGroup>
   <Import Project="$(FSharpSourcesRoot)\FSharpSource.targets" />
   <Import Project="$(FSharpSourcesRoot)\..\lkg\FSharp-$(LkgVersion)\bin\FSharp.PowerPack.targets" />

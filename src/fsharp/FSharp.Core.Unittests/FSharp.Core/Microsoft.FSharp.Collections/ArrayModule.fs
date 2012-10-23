@@ -203,7 +203,8 @@ type ArrayModule() =
     member this.Choose() = 
         this.ChooseTester Array.choose Array.choose
 
-#if FX_ATLEAST_40       
+#if FX_NO_TPL_PARALLEL
+#else
     [<Test>]
     member this.``Parallel.Choose`` () = 
         this.ChooseTester Array.Parallel.choose Array.Parallel.choose
@@ -250,11 +251,12 @@ type ArrayModule() =
         Array.collect f [|1;2;3|] |> ignore
         Assert.AreEqual(3,!stamp)
         
-#if FX_ATLEAST_40           
+#if FX_NO_TPL_PARALLEL
+#else
     [<Test>]
     member this.``Parallel.Collect`` () =
         this.CollectTester Array.Parallel.collect Array.Parallel.collect
-#endif        
+#endif
         
     [<Test>]
     member this.Concat() =
@@ -762,11 +764,12 @@ type ArrayModule() =
         Array.init 10 f |> ignore
         Assert.AreEqual (10, !stamp)
         
-#if FX_ATLEAST_40           
+#if FX_NO_TPL_PARALLEL
+#else
     [<Test>]
     member this.``Parallel.Init``() = 
         this.InitTester Array.Parallel.init Array.Parallel.init
-#endif        
+#endif
 
     [<Test>]
     member this.IsEmpty() =
@@ -962,7 +965,8 @@ type ArrayModule() =
         Array.map f [| 1..100 |] |> ignore
         Assert.AreEqual(100,!stamp)
         
-#if FX_ATLEAST_40           
+#if FX_NO_TPL_PARALLEL
+#else
     [<Test>]
     member this.``Parallel.Map`` () =
         this.MapTester Array.Parallel.map Array.Parallel.map
@@ -1004,7 +1008,8 @@ type ArrayModule() =
         Assert.AreEqual(100,!stamp)
         ()
         
-#if FX_ATLEAST_40   
+#if FX_NO_TPL_PARALLEL
+#else
     [<Test>]
     member this.``Parallel.Mapi`` () =
         this.MapiTester Array.Parallel.mapi Array.Parallel.mapi
@@ -1074,7 +1079,7 @@ type ArrayModule() =
         CheckThrowsArgumentNullException (fun () -> Array.Parallel.iteri funStr nullArr |> ignore)  
         
         ()
-#endif    
+#endif
     
     member private this.PartitionTester partInt partString =
         // int array
@@ -1112,9 +1117,9 @@ type ArrayModule() =
     member this.Partition () =
         this.PartitionTester Array.partition Array.partition    
 
-#if FX_ATLEAST_40
+#if FX_NO_TPL_PARALLEL
+#else
     [<Test>]
     member this.``Parallel.Partition`` () =
         this.PartitionTester Array.Parallel.partition Array.Parallel.partition    
-    
-#endif
+#endif    

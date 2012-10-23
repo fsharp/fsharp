@@ -1,6 +1,5 @@
 //----------------------------------------------------------------------------
-//
-// Copyright (c) 2002-2011 Microsoft Corporation. 
+// Copyright (c) 2002-2012 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -38,6 +37,14 @@ type UnionCaseInfo =
     /// <param name="attributeType">The type of attributes to return.</param>
     /// <returns>An array of custom attributes.</returns>
     member GetCustomAttributes: attributeType:System.Type -> obj[]
+
+#if FX_NO_CUSTOMATTRIBUTEDATA
+#else
+    /// <summary>Returns the custom attributes data associated with the case.</summary>
+    /// <returns>An list of custom attribute data items.</returns>
+    member GetCustomAttributesData: unit -> System.Collections.Generic.IList<CustomAttributeData>
+
+#endif
 
     /// <summary>The fields associated with the case, represented by a PropertyInfo.</summary>
     /// <returns>The fields associated with the case.</returns>
@@ -347,7 +354,9 @@ type FSharpType =
     /// <returns>True if the type check is an F# exception.</returns>
     static member IsExceptionRepresentation: exceptionType:Type * ?bindingFlags:BindingFlags -> bool
 
-type public DynamicFunction<'T1,'T2> =
+#if SILVERLIGHT
+[<Class>]
+type DynamicFunction<'T1,'T2> =
     inherit FSharpFunc<obj -> obj, obj>
     new : unit -> DynamicFunction<'T1,'T2>
-
+#endif

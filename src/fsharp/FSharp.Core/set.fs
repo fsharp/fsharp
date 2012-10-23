@@ -1,6 +1,5 @@
 //----------------------------------------------------------------------------
-//
-// Copyright (c) 2002-2011 Microsoft Corporation. 
+// Copyright (c) 2002-2012 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -29,9 +28,55 @@ namespace Microsoft.FSharp.Collections
         | SetNode of 'T * SetTree<'T> *  SetTree<'T> * int    // height = int 
         | SetOne  of 'T                                     // height = 1   
             // OPTIMIZATION: store SetNode(k,SetEmpty,SetEmpty,1) --->  SetOne(k) 
+            // REVIEW: performance rumour has it that the data held in SetNode and SetOne should be
+            // exactly one cache line on typical architectures. They are currently 
+            // ~6 and 3 words respectively. 
+
 
     [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
     module internal SetTree = 
+        let rec countAux s acc = 
+            match s with 
+            | SetNode(_,l,r,_) -> countAux l (countAux r (acc+1))
+            | SetOne(_) -> acc+1
+            | SetEmpty -> acc           
+
+        let count s = countAux s 0
+
+    #if TRACE_SETS_AND_MAPS
+        let mutable traceCount = 0
+        let mutable numOnes = 0
+        let mutable numNodes = 0
+        let mutable numAdds = 0
+        let mutable numRemoves = 0
+        let mutable numLookups = 0
+        let mutable numUnions = 0
+        let mutable totalSizeOnNodeCreation = 0.0
+        let mutable totalSizeOnSetAdd = 0.0
+        let mutable totalSizeOnSetLookup = 0.0
+        let report() = 
+           traceCount <- traceCount + 1 
+           if traceCount % 10000 = 0 then 
+               System.Console.WriteLine("#SetOne = {0}, #SetNode = {1}, #Add = {2}, #Remove = {3}, #Unions = {4}, #Lookups = {5}, avSetSizeOnNodeCreation = {6}, avSetSizeOnSetCreation = {7}, avSetSizeOnSetLookup = {8}",numOnes,numNodes,numAdds,numRemoves,numUnions,numLookups,(totalSizeOnNodeCreation / float (numNodes + numOnes)),(totalSizeOnSetAdd / float numAdds),(totalSizeOnSetLookup / float numLookups))
+
+        let SetOne n = 
+            report(); 
+            numOnes <- numOnes + 1; 
+            totalSizeOnNodeCreation <- totalSizeOnNodeCreation + 1.0; 
+            SetTree.SetOne n
+
+        let SetNode (x,l,r,h) = 
+            report(); 
+            numNodes <- numNodes + 1; 
+            let n = SetTree.SetNode(x,l,r,h)
+            totalSizeOnNodeCreation <- totalSizeOnNodeCreation + float (count n); 
+            n
+    #else
+        let SetOne n = SetTree.SetOne n
+        let SetNode (x,l,r,h) = SetTree.SetNode(x,l,r,h)
+        
+    #endif
+    
 
         let height t = 
             match t with 
@@ -251,14 +296,6 @@ namespace Microsoft.FSharp.Collections
 
         let diff comparer a b = diffAux comparer b a
 
-        let rec countAux s acc = 
-            match s with 
-            | SetNode(_,l,r,_) -> countAux l (countAux r (acc+1))
-            | SetOne(_) -> acc+1
-            | SetEmpty -> acc           
-
-        let count s = countAux s 0
-
         let rec union comparer t1 t2 =
             // Perf: tried bruteForce for low heights, but nothing significant 
             match t1,t2 with               
@@ -310,29 +347,7 @@ namespace Microsoft.FSharp.Collections
             | SetOne(k2) -> MatchSetNode(k2,SetEmpty,SetEmpty)
             | SetEmpty -> MatchSetEmpty
         
-        let rec nextElemCont (comparer: IComparer<'T>) k s cont = 
-            match s with 
-            | MatchSetNode(k2,l,r) -> 
-                let c = comparer.Compare(k,k2) 
-                if   c < 0 then nextElemCont comparer k l (function None -> cont(Some(k2)) | res -> res)
-                elif c = 0 then cont(minimumElementOpt r) 
-                else nextElemCont comparer k r cont
-            | MatchSetEmpty -> cont(None)
-
-        and nextElem comparer k s = nextElemCont comparer k s (fun res -> res)
-        
-        and prevElemCont (comparer: IComparer<'T>) k s cont = 
-            match s with 
-            | MatchSetNode(k2,l,r) -> 
-                let c = comparer.Compare(k,k2) 
-                if   c > 0 then prevElemCont comparer k r (function None -> cont(Some(k2)) | res -> res)
-                elif c = 0 then cont(maximumElementOpt r) 
-                else prevElemCont comparer k l cont
-            | MatchSetEmpty -> cont(None)
-
-        and prevElem comparer k s = prevElemCont comparer k s (fun res -> res)
-        
-        and minimumElementAux s n = 
+        let rec minimumElementAux s n = 
             match s with 
             | SetNode(k,l,_,_) -> minimumElementAux l k
             | SetOne(k) -> k
@@ -537,6 +552,7 @@ namespace Microsoft.FSharp.Collections
 #else
         [<System.Runtime.Serialization.OnSerializingAttribute>]
         member __.OnSerializing(context: System.Runtime.Serialization.StreamingContext) =
+            ignore(context)
             serializedData <- SetTree.toArray tree
 
         // Do not set this to null, since concurrent threads may also be serializing the data
@@ -546,6 +562,7 @@ namespace Microsoft.FSharp.Collections
 
         [<System.Runtime.Serialization.OnDeserializedAttribute>]
         member __.OnDeserialized(context: System.Runtime.Serialization.StreamingContext) =
+            ignore(context)
             comparer <- LanguagePrimitives.FastGenericComparer<'T>
             tree <- SetTree.ofArray comparer serializedData
             serializedData <- null
@@ -565,10 +582,30 @@ namespace Microsoft.FSharp.Collections
 #endif
         static member Empty : Set<'T> = empty
 
-        member s.Add(x) : Set<'T> = new Set<'T>(s.Comparer,SetTree.add s.Comparer x s.Tree )
-        member s.Remove(x) : Set<'T> = new Set<'T>(s.Comparer,SetTree.remove s.Comparer x s.Tree)
+        member s.Add(x) : Set<'T> = 
+#if TRACE_SETS_AND_MAPS
+            SetTree.report()
+            SetTree.numAdds <- SetTree.numAdds + 1
+            SetTree.totalSizeOnSetAdd <- SetTree.totalSizeOnSetAdd + float (SetTree.count s.Tree)
+#endif
+            new Set<'T>(s.Comparer,SetTree.add s.Comparer x s.Tree )
+
+        member s.Remove(x) : Set<'T> = 
+#if TRACE_SETS_AND_MAPS
+            SetTree.report()
+            SetTree.numRemoves <- SetTree.numRemoves + 1
+#endif
+            new Set<'T>(s.Comparer,SetTree.remove s.Comparer x s.Tree)
+
         member s.Count = SetTree.count s.Tree
-        member s.Contains(x) = SetTree.mem s.Comparer  x s.Tree
+
+        member s.Contains(x) = 
+#if TRACE_SETS_AND_MAPS
+            SetTree.report()
+            SetTree.numLookups <- SetTree.numLookups + 1
+            SetTree.totalSizeOnSetLookup <- SetTree.totalSizeOnSetLookup + float (SetTree.count s.Tree)
+#endif
+            SetTree.mem s.Comparer  x s.Tree
         member s.Iterate(x) = SetTree.iter  x s.Tree
         member s.Fold f z  = SetTree.fold (fun x z -> f z x) z s.Tree 
 
@@ -607,6 +644,10 @@ namespace Microsoft.FSharp.Collections
 
         [<System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2225:OperatorOverloadsHaveNamedAlternates")>]
         static member (+) (a: Set<'T>, b: Set<'T>) = 
+#if TRACE_SETS_AND_MAPS
+            SetTree.report()
+            SetTree.numUnions <- SetTree.numUnions + 1
+#endif
             match b.Tree with 
             | SetEmpty -> a  (* A U 0 = A *)
             | _ -> 
@@ -649,8 +690,6 @@ namespace Microsoft.FSharp.Collections
         [<DebuggerBrowsable(DebuggerBrowsableState.Never)>]
 #endif
         member x.MaximumElement = SetTree.maximumElement x.Tree
-        member x.GetNextElement(e) = SetTree.nextElem x.Comparer e x.Tree
-        member x.GetPreviousElement(e) = SetTree.prevElem x.Comparer  e x.Tree
 
         member x.IsSubsetOf(y: Set<'T>) = SetTree.subset x.Comparer x.Tree y.Tree 
         member x.IsSupersetOf(y: Set<'T>) = SetTree.subset x.Comparer y.Tree x.Tree
@@ -684,9 +723,9 @@ namespace Microsoft.FSharp.Collections
             member this.CompareTo(that: obj) = SetTree.compare this.Comparer this.Tree ((that :?> Set<'T>).Tree)
           
         interface ICollection<'T> with 
-            member s.Add(x)      = raise (new System.NotSupportedException("ReadOnlyCollection"))
+            member s.Add(x)      = ignore(x); raise (new System.NotSupportedException("ReadOnlyCollection"))
             member s.Clear()     = raise (new System.NotSupportedException("ReadOnlyCollection"))
-            member s.Remove(x)   = raise (new System.NotSupportedException("ReadOnlyCollection"))
+            member s.Remove(x)   = ignore(x); raise (new System.NotSupportedException("ReadOnlyCollection"))
             member s.Contains(x) = SetTree.mem s.Comparer x s.Tree
             member s.CopyTo(arr,i) = SetTree.copyToArray s.Tree arr i
             member s.IsReadOnly = true

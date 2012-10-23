@@ -1,6 +1,5 @@
 //----------------------------------------------------------------------------
-//
-// Copyright (c) 2002-2011 Microsoft Corporation. 
+// Copyright (c) 2002-2012 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -279,7 +278,7 @@ namespace Microsoft.FSharp.Collections
         val exists2: predicate:('T1 -> 'T2 -> bool) -> source1:seq<'T1> -> source2:seq<'T2> -> bool
 
         /// <summary>Returns a new collection containing only the elements of the collection
-        /// for which the given predicate returns "true".</summary>
+        /// for which the given predicate returns "true". This is a synonym for Seq.where.</summary>
         ///
         /// <remarks>The returned sequence may be passed between threads safely. However, 
         /// individual IEnumerator values generated from the returned sequence should not be accessed concurrently.
@@ -294,6 +293,25 @@ namespace Microsoft.FSharp.Collections
         /// <exception cref="System.ArgumentNullException">Thrown when the input sequence is null.</exception>    
         [<CompiledName("Filter")>]
         val filter: predicate:('T -> bool) -> source:seq<'T> -> seq<'T>
+
+        /// <summary>Returns a new collection containing only the elements of the collection
+        /// for which the given predicate returns "true".</summary>
+        ///
+        /// <remarks>The returned sequence may be passed between threads safely. However, 
+        /// individual IEnumerator values generated from the returned sequence should not be accessed concurrently.
+        ///
+        /// Remember sequence is lazy, effects are delayed until it is enumerated.
+        /// 
+        /// A synonym for Seq.filter.</remarks>
+        ///
+        /// <param name="predicate">A function to test whether each item in the input sequence should be included in the output.</param>
+        /// <param name="source">The input sequence.</param>
+        ///
+        /// <returns>The result sequence.</returns>
+        ///
+        /// <exception cref="System.ArgumentNullException">Thrown when the input sequence is null.</exception>    
+        [<CompiledName("Where")>]
+        val where: predicate:('T -> bool) -> source:seq<'T> -> seq<'T>
 
         /// <summary>Returns the first element for which the given function returns <c>true</c>.</summary>
         ///
@@ -365,7 +383,7 @@ namespace Microsoft.FSharp.Collections
         val forall2: predicate:('T1 -> 'T2 -> bool) -> source1:seq<'T1> -> source2:seq<'T2> -> bool
 
         /// <summary>Applies a key-generating function to each element of a sequence and yields a sequence of 
-        /// unique keys. Each unique key has also contains a sequence of all elements that match 
+        /// unique keys. Each unique key contains a sequence of all elements that match 
         /// to this key.</summary>
         /// 
         /// <remarks>This function returns a sequence that digests the whole initial sequence as soon as 
@@ -390,6 +408,28 @@ namespace Microsoft.FSharp.Collections
         /// <exception cref="System.ArgumentException">Thrown when the input does not have any elements.</exception>
         [<CompiledName("Head")>]
         val head: source:seq<'T> -> 'T
+
+        /// <summary>Returns the last element of the sequence.</summary>
+        ///
+        /// <param name="source">The input sequence.</param>
+        ///
+        /// <returns>The last element of the sequence.</returns>
+        ///
+        /// <exception cref="System.ArgumentNullException">Thrown when the input sequence is null.</exception>
+        /// <exception cref="System.ArgumentException">Thrown when the input does not have any elements.</exception>
+        [<CompiledName("Last")>]
+        val last: source:seq<'T> -> 'T
+
+        /// <summary>Returns the only element of the sequence.</summary>
+        ///
+        /// <param name="source">The input sequence.</param>
+        ///
+        /// <returns>The last element of the sequence.</returns>
+        ///
+        /// <exception cref="System.ArgumentNullException">Thrown when the input sequence is null.</exception>
+        /// <exception cref="System.ArgumentException">Thrown when the input does not have precisely one element.</exception>
+        [<CompiledName("ExactlyOne")>]
+        val exactlyOne: source:seq<'T> -> 'T
 
         /// <summary>Returns true if the sequence contains no elements, false otherwise.</summary>
         ///
@@ -541,6 +581,20 @@ namespace Microsoft.FSharp.Collections
         [<CompiledName("MaxBy")>]
         val inline maxBy  : projection:('T -> 'U) -> source:seq<'T> -> 'T when 'U : comparison 
 
+(*
+        /// <summary>Returns the greatest function result from the elements of the sequence, compared via Operators.max.</summary>
+        ///
+        /// <param name="projection">A function to transform items from the input sequence into comparable keys.</param>
+        /// <param name="source">The input sequence.</param>
+        ///
+        /// <returns>The largest element of the sequence.</returns>
+        ///
+        /// <exception cref="System.ArgumentNullException">Thrown when the input sequence is null.</exception>
+        /// <exception cref="System.ArgumentException">Thrown when the input sequence is empty.</exception>
+        [<CompiledName("MaxValueBy")>]
+        val inline maxValBy  : projection:('T -> 'U) -> source:seq<'T> -> 'U when 'U : comparison 
+*)
+
         /// <summary>Returns the lowest of all elements of the sequence, compared via <c>Operators.min</c>.</summary>
         ///
         /// <param name="source">The input sequence.</param>
@@ -564,6 +618,20 @@ namespace Microsoft.FSharp.Collections
         [<CompiledName("MinBy")>]
         val inline minBy  : projection:('T -> 'U) -> source:seq<'T> -> 'T when 'U : comparison 
 
+(*
+        /// <summary>Returns the lowest function result from the elements of the sequence, compared via Operators.max.</summary>
+        ///
+        /// <param name="projection">A function to transform items from the input sequence into comparable keys.</param>
+        /// <param name="source">The input sequence.</param>
+        ///
+        /// <returns>The smallest element of the sequence.</returns>
+        ///
+        /// <exception cref="System.ArgumentNullException">Thrown when the input sequence is null.</exception>
+        /// <exception cref="System.ArgumentException">Thrown when the input sequence is empty.</exception>
+        [<CompiledName("MinValueBy")>]
+        val inline minValBy  : projection:('T -> 'U) -> source:seq<'T> -> 'U when 'U : comparison 
+*)
+
         /// <summary>Computes the nth element in the collection.</summary>
         ///
         /// <param name="index">The index of element to retrieve.</param>
@@ -584,7 +652,7 @@ namespace Microsoft.FSharp.Collections
         /// <returns>The result sequence.</returns>
         ///
         /// <exception cref="System.ArgumentNullException">Thrown when the input sequence is null.</exception>
-        val ofArray: source:'T array -> seq<'T>
+        val ofArray: source:'T[] -> seq<'T>
 
         [<CompiledName("OfList")>]
         /// <summary>Views the given list as a sequence.</summary>
@@ -791,7 +859,7 @@ namespace Microsoft.FSharp.Collections
         ///
         /// <exception cref="System.ArgumentNullException">Thrown when the input sequence is null.</exception>
         [<CompiledName("ToArray")>]
-        val toArray: source:seq<'T> -> 'T array
+        val toArray: source:seq<'T> -> 'T[]
 
         /// <summary>Builds a list from the given collection.</summary>
         ///

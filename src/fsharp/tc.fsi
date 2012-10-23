@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2011 Microsoft Corporation. 
+// Copyright (c) 2002-2012 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -27,6 +27,8 @@ open Microsoft.FSharp.Compiler.Tast
 open Microsoft.FSharp.Compiler.Tastops
 open Microsoft.FSharp.Compiler.Lib
 open Microsoft.FSharp.Compiler.Infos
+open Microsoft.FSharp.Compiler.Import
+open Microsoft.FSharp.Compiler.Env
 
 open System.Collections.Generic
 
@@ -36,10 +38,10 @@ type TcEnv =
     member NameEnv : Nameres.NameResolutionEnv
 
 (* Incremental construction of environments, e.g. for F# Interactive *)
-val internal CreateInitialTcEnv : Env.TcGlobals * Import.ImportMap * range * (CcuThunk * string list * bool) list -> TcEnv 
-val internal AddCcuToTcEnv      : Env.TcGlobals * Import.ImportMap * range * TcEnv * CcuThunk * autoOpens: string list * bool -> TcEnv 
-val internal AddLocalRootModuleOrNamespace : Env.TcGlobals -> Import.ImportMap -> range -> TcEnv -> ModuleOrNamespaceType -> TcEnv
-val internal TcOpenDecl         : Env.TcGlobals -> Import.ImportMap -> range -> range -> TcEnv -> Ast.LongIdent -> TcEnv 
+val internal CreateInitialTcEnv : TcGlobals * ImportMap * range * (CcuThunk * string list * bool) list -> TcEnv 
+val internal AddCcuToTcEnv      : TcGlobals * ImportMap * range * TcEnv * CcuThunk * autoOpens: string list * bool -> TcEnv 
+val internal AddLocalRootModuleOrNamespace : Nameres.TcResultsSink -> TcGlobals -> ImportMap -> range -> TcEnv -> ModuleOrNamespaceType -> TcEnv
+val internal TcOpenDecl         : Nameres.TcResultsSink  -> TcGlobals -> ImportMap -> range -> range -> TcEnv -> Ast.LongIdent -> TcEnv 
 
 type TopAttribs =
     { mainMethodAttrs : Attribs;
@@ -53,16 +55,16 @@ val internal EmptyTopAttrs : TopAttribs
 val internal CombineTopAttrs : TopAttribs -> TopAttribs -> TopAttribs
 
 val internal TypecheckOneImplFile : 
-      Env.TcGlobals * NiceNameGenerator * Import.ImportMap * CcuThunk * (unit -> bool) * ConditionalDefines * bool
+      TcGlobals * NiceNameGenerator * ImportMap * CcuThunk * (unit -> bool) * ConditionalDefines * Nameres.TcResultsSink
       -> TcEnv 
       -> Tast.ModuleOrNamespaceType option
-      -> ImplFile
+      -> ParsedImplFileInput
       -> Eventually<TopAttribs * Tast.TypedImplFile * TcEnv>
 
 val internal TypecheckOneSigFile : 
-      Env.TcGlobals * NiceNameGenerator * Import.ImportMap * CcuThunk  * (unit -> bool) * ConditionalDefines * bool
+      TcGlobals * NiceNameGenerator * ImportMap * CcuThunk  * (unit -> bool) * ConditionalDefines * Nameres.TcResultsSink 
       -> TcEnv                             
-      -> SigFile
+      -> ParsedSigFileInput
       -> Eventually<TcEnv * TcEnv * ModuleOrNamespaceType >
 
 //-------------------------------------------------------------------------
@@ -109,12 +111,12 @@ exception internal IntfImplInIntrinsicAugmentation of range
 exception internal IntfImplInExtrinsicAugmentation of range
 exception internal OverrideInIntrinsicAugmentation of range
 exception internal OverrideInExtrinsicAugmentation of range
-exception internal NonUniqueInferredAbstractSlot of Env.TcGlobals * DisplayEnv * string * MethInfo * MethInfo * range
+exception internal NonUniqueInferredAbstractSlot of TcGlobals * DisplayEnv * string * MethInfo * MethInfo * range
 exception internal StandardOperatorRedefinitionWarning of string * range
 exception internal ParameterlessStructCtor of range
 
-val IsSecurityAttribute : Env.TcGlobals -> Import.ImportMap -> Dictionary<Stamp,bool> -> Tast.Attrib -> Range.range -> bool
-val IsSecurityCriticalAttribute : Env.TcGlobals -> Tast.Attrib -> bool
 val internal TcFieldInit : range -> ILFieldInit -> Tast.Const
 
-
+val IsSecurityAttribute : TcGlobals -> ImportMap -> Dictionary<Stamp,bool> -> Attrib -> range -> bool
+val IsSecurityCriticalAttribute : TcGlobals -> Attrib -> bool
+val LightweightTcValForUsingInBuildMethodCall : g : TcGlobals -> vref:ValRef -> vrefFlags : ValUseFlag -> vrefTypeInst : TTypes -> m : range -> Expr * TType

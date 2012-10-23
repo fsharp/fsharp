@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2011 Microsoft Corporation. 
+// Copyright (c) 2002-2012 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -10,9 +10,7 @@
 // You must not remove this notice, or any other, from this software.
 //----------------------------------------------------------------------------
 
-//------------------------------------------------------------------------
 // Helper functions for the F# lexer lex.mll
-//-----------------------------------------------------------------------
 
 
 module internal Microsoft.FSharp.Compiler.Lexhelp
@@ -55,29 +53,27 @@ type LightSyntaxStatus(initial:bool,warn:bool) =
 /// Manage lexer resources (string interning)
 [<Sealed>]
 type LexResourceManager() =
-    let strings = new System.Collections.Generic.Dictionary<string,string>(100)
-    member x.InternString(s) = 
-        let mutable res = "" in
-        let ok = strings.TryGetValue(s,&res)  in
-        if ok then res 
-        else 
-            (strings.[s] <- s; s)
+    let strings = new System.Collections.Generic.Dictionary<string,Parser.token>(100)
+    member x.InternIdentifierToken(s) = 
+        let mutable res = Unchecked.defaultof<_> 
+        let ok = strings.TryGetValue(s,&res)  
+        if ok then res  else 
+        let res = IDENT s
+        (strings.[s] <- res; res)
               
 /// Lexer parameters 
 type lexargs =  
     { defines: string list;
       ifdefStack: LexerIfdefStack;
       resourceManager: LexResourceManager;
-      getSourceDirectory: (unit -> string); 
       lightSyntaxStatus : LightSyntaxStatus;
       errorLogger: ErrorLogger }
 
-let mkLexargs (srcdir,_filename,defines,lightSyntaxStatus,resourceManager,ifdefStack,errorLogger) =
+let mkLexargs (_filename,defines,lightSyntaxStatus,resourceManager,ifdefStack,errorLogger) =
     { defines = defines;
       ifdefStack= ifdefStack;
       lightSyntaxStatus=lightSyntaxStatus;
       resourceManager=resourceManager;
-      getSourceDirectory=srcdir; 
       errorLogger=errorLogger }
 
 /// Register the lexbuf and call the given function
@@ -87,13 +83,10 @@ let reusingLexbufForParsing lexbuf f =
     try
       f () 
     with e ->
-      raise (WrappedError(e,(try getLexerRange lexbuf with _ -> range0)))
+      raise (WrappedError(e,(try lexbuf.LexemeRange with _ -> range0)))
 
 let resetLexbufPos filename (lexbuf: UnicodeLexing.Lexbuf) = 
-    lexbuf.EndPos <- {lexbuf.EndPos with posFileIndex= fileIndexOfFile filename; 
-                                         posColumnOffset=0;
-                                         posOriginalLineNum = 0;
-                                         posLineNum=1 }
+    lexbuf.EndPos <- Position.FirstLine (fileIndexOfFile filename)
 
 /// Reset the lexbuf, configure the initial position with the given filename and call the given function
 let usingLexbufForParsing (lexbuf:UnicodeLexing.Lexbuf,filename) f =
@@ -203,6 +196,7 @@ module Keywords =
       ALWAYS, "base"       ,BASE;
       ALWAYS, "begin"      ,BEGIN;
       ALWAYS, "class"      ,CLASS;
+      FSHARP, "const"      ,CONST;
       FSHARP, "default"    ,DEFAULT;
       FSHARP, "delegate"   ,DELEGATE;
       ALWAYS, "do"         ,DO;
@@ -280,7 +274,7 @@ module Keywords =
     (*------- reserved keywords which are ml-compatibility ids *) 
     @ List.map (fun s -> (FSHARP,s,RESERVED)) 
         [ "atomic"; "break"; 
-          "checked"; "component"; "const"; "constraint"; "constructor"; "continue"; 
+          "checked"; "component"; "constraint"; "constructor"; "continue"; 
           "eager"; 
           "fixed"; "fori"; "functor"; 
           "include";  
@@ -303,42 +297,44 @@ module Keywords =
         keywordList |> List.map (fun (_, w, _) -> w) 
 
     let keywordTable = 
-        let tab = HashMultiMap(1000, HashIdentity.Structural)
-        List.iter (fun (_mode,keyword,token) -> tab.Add(keyword,token)) keywordList;
+        // TODO: this doesn't need to be a multi-map, a dictionary will do
+        let tab = System.Collections.Generic.Dictionary<string,token>(100)
+        for (_mode,keyword,token) in keywordList do tab.Add(keyword,token)
         tab
         
     let KeywordToken s = keywordTable.[s]
 
-    let permitFsharpKeywords = ref true
+    /// ++GLOBAL MUTABLE STATE. Note this is a deprecated, undocumented command line option anyway, we can ignore it.
+    let mutable permitFsharpKeywords = true
 
     let IdentifierToken args (lexbuf:UnicodeLexing.Lexbuf) (s:string) =
         if IsCompilerGeneratedName s then 
-            let m = getLexerRange lexbuf 
-            warning(Error(FSComp.SR.lexhlpIdentifiersContainingAtSymbolReserved(),m));
-        IDENT (args.resourceManager.InternString(s))
+            warning(Error(FSComp.SR.lexhlpIdentifiersContainingAtSymbolReserved(), lexbuf.LexemeRange));
+        args.resourceManager.InternIdentifierToken s
 
     let KeywordOrIdentifierToken args (lexbuf:UnicodeLexing.Lexbuf) s =
-        if not !permitFsharpKeywords && List.mem s unreserveWords then
+        if not permitFsharpKeywords && List.mem s unreserveWords then
+            // You can assume this condition never fires - this is a deprecated, undocumented command line option anyway, we can ignore it.
             IdentifierToken args lexbuf s
-        elif keywordTable.ContainsKey s then 
-            let v = KeywordToken s 
-            if (match v with RESERVED -> true | _ -> false) then
-                let m = getLexerRange lexbuf 
-                warning(ReservedKeyword(FSComp.SR.lexhlpIdentifierReserved(s),m));
-                IdentifierToken args lexbuf s
-            else v
-        else 
+        else
+          let mutable v = Unchecked.defaultof<_>
+          if keywordTable.TryGetValue(s, &v) then 
+              if (match v with RESERVED -> true | _ -> false) then
+                  warning(ReservedKeyword(FSComp.SR.lexhlpIdentifierReserved(s), lexbuf.LexemeRange));
+                  IdentifierToken args lexbuf s
+              else v
+          else 
             match s with 
             | "__SOURCE_DIRECTORY__" ->
-                let filename = fileOfFileIndex lexbuf.StartPos.posFileIndex
+                let filename = fileOfFileIndex lexbuf.StartPos.FileIndex
                 let dirname  = if filename = stdinMockFilename then
-                                   System.IO.Directory.GetCurrentDirectory()
+                                   System.IO.Directory.GetCurrentDirectory() // TODO: is this right for Silverlight?
                                else
-                                   filename |> System.IO.Path.SafeGetFullPath (* asserts that path is already absolute *)
+                                   filename |> FileSystem.SafeGetFullPath (* asserts that path is already absolute *)
                                             |> System.IO.Path.GetDirectoryName
                 KEYWORD_STRING dirname
             | "__SOURCE_FILE__" -> 
-               KEYWORD_STRING (System.IO.Path.GetFileName((fileOfFileIndex lexbuf.StartPos.posFileIndex)))
+               KEYWORD_STRING (System.IO.Path.GetFileName((fileOfFileIndex lexbuf.StartPos.FileIndex))) 
             | "__LINE__" -> 
                KEYWORD_STRING (string lexbuf.StartPos.Line)
             | _ -> 
@@ -346,10 +342,10 @@ module Keywords =
 
     /// A utility to help determine if an identifier needs to be quoted 
     let QuoteIdentifierIfNeeded (s : string) : string =
-        let isKeyword (n : string) : bool = List.exists ((=) n) keywordNames
-        if isKeyword s || not (String.forall IsLongIdentifierPartCharacter s) then 
-            "``" + s + "``"
-        else 
-            s
+        if not (String.forall IsIdentifierPartCharacter s)              // if it has funky chars
+            || s.Length > 0 && (not(IsIdentifierFirstCharacter s.[0]))  // or if it starts with a non-(letter-or-underscore)
+            || keywordTable.ContainsKey s                               // or if it's a language keyword like "type"
+        then "``"+s+"``"  // then it needs to be ``quoted``
+        else s
 
 

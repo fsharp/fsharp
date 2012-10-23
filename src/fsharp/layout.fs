@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2011 Microsoft Corporation. 
+// Copyright (c) 2002-2012 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -243,6 +243,8 @@ type render<'a,'b> =
     abstract Finish   : 'b -> 'a
       
 let renderL (rr: render<_,_>) layout =
+#if SILVERLIGHT
+// Use non-indirect-tailcalling version on silverlight
     let rec addL z pos i = function
         (* pos is tab level *)
       | Leaf (_,text,_)                 -> 
@@ -267,6 +269,34 @@ let renderL (rr: render<_,_>) layout =
     let z,i = rr.Start(),0 
     let z,_i = addL z pos i layout 
     rr.Finish z
+#else
+    let rec addL z pos i layout k = 
+      match layout with
+        (* pos is tab level *)
+      | Leaf (_,text,_)                 -> 
+          k(rr.AddText z (unbox text),i + (unbox<string> text).Length)
+      | Node (_,l,_,r,_,Broken indent) -> 
+          addL z pos i l <|
+            fun (z,_i) ->
+              let z,i = rr.AddBreak z (pos+indent),(pos+indent) 
+              addL z (pos+indent) i r k
+      | Node (_,l,jm,r,_,_)             -> 
+          addL z pos i l <|
+            fun (z, i) ->
+              let z,i = if jm then z,i else rr.AddText z " ",i+1 
+              let pos = i 
+              addL z pos i r k
+      | Attr (tag,attrs,l)                -> 
+          let z   = rr.AddTag z (tag,attrs,true) 
+          addL z pos i l <|
+            fun (z, i) ->
+              let z   = rr.AddTag z (tag,attrs,false) 
+              k(z,i)
+    let pos = 0 
+    let z,i = rr.Start(),0 
+    let z,_i = addL z pos i layout id
+    rr.Finish z
+#endif
 
 /// string render 
 let stringR =
@@ -298,11 +328,11 @@ let bufferR os =
       member r.AddTag z (tag,attrs,start) = z
       member r.Finish z = NoResult }
 
-/// html render - wraps HTML encoding and hyperlinks
+/// html render - wraps HTML encoding (REVIEW) and hyperlinks
 let htmlR (baseR : render<'Res,'State>) =
   { new render<'Res,'State> with 
       member r.Start () = baseR.Start()
-      member r.AddText z s = baseR.AddText z s;  
+      member r.AddText z s = baseR.AddText z s;  (* REVIEW: escape HTML chars *)
       member r.AddBreak z n = baseR.AddBreak z n
       member r.AddTag z (tag,attrs,start) =
          match tag,attrs with 
@@ -320,7 +350,7 @@ let indentR indent (baseR : render<'Res,'State>) =
           let z = baseR.Start() 
           let z = baseR.AddText z (spaces indent) 
           z
-      member r.AddText z s = baseR.AddText z s;  
+      member r.AddText z s = baseR.AddText z s;  (* REVIEW: escape HTML chars *)
       member r.AddBreak z n =  baseR.AddBreak z (n+indent);
       member r.AddTag z (tag,attrs,start)  = baseR.AddTag z (tag,attrs,start) 
       member r.Finish z = baseR.Finish z }

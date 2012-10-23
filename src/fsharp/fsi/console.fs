@@ -1,14 +1,4 @@
-//----------------------------------------------------------------------------
-//
-// Copyright (c) 2002-2011 Microsoft Corporation. 
-//
-// This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
-// copy of the license can be found in the License.html file at the root of this distribution. 
-// By using this source code in any fashion, you are agreeing to be bound 
-// by the terms of the Apache License, Version 2.0.
-//
-// You must not remove this notice, or any other, from this software.
-//----------------------------------------------------------------------------
+// Copyright (c) Microsoft Corporation. All rights reserved.
 
 
 namespace Microsoft.FSharp.Compiler.Interactive
@@ -16,6 +6,7 @@ namespace Microsoft.FSharp.Compiler.Interactive
 open System
 open System.Text
 open System.Collections.Generic
+open Internal.Utilities
 
 /// System.Console.ReadKey appears to return an ANSI character (not the expected the unicode character).
 /// When this fix flag is true, this byte is converted to a char using the System.Console.InputEncoding.
@@ -23,11 +14,10 @@ open System.Collections.Generic
 /// Fixes to System.Console.ReadKey may break this code around, hence the option here.
 module ConsoleOptions =
 
-  // Bug 4254 tracks making this fix up version specific, e.g. 
-  //   let fixupRequired = typeof<System.Console>.Assembly.GetName().Version.Major = 2
-  //
-  // Until we hear that this will be fixed in Dev10, we apply this fix always.
-  let fixNonUnicodeSystemConsoleReadKey = ref true
+  // Bug 4254 was fixed in Dev11 (Net4.5), so this flag tracks making this fix up version specific.
+  let fixupRequired = not FSharpEnvironment.IsRunningOnNetFx45OrAbove
+   
+  let fixNonUnicodeSystemConsoleReadKey = ref fixupRequired
   let readKeyFixup (c:char) =
     if !fixNonUnicodeSystemConsoleReadKey then
       // Assumes the c:char is actually a byte in the System.Console.InputEncoding.
@@ -160,10 +150,10 @@ type Anchor =
         let top = p.top + ( (p.left - inset) + index) / (Console.BufferWidth - inset)
         Cursor.ResetTo(top,left)
     
-type ReadLineConsole(complete: (string option * string -> seq<string>)) =
+type ReadLineConsole() =
     let history = new History()
-    let mutable complete = complete
-    member x.SetCompletion(v) = complete <- v
+    let mutable complete : (string option * string -> seq<string>) = fun (_s1,_s2) -> Seq.empty
+    member x.SetCompletionFunction f = complete <- f
 
     /// Inset all inputs by this amount
     member x.Prompt = "> "
@@ -231,7 +221,7 @@ type ReadLineConsole(complete: (string option * string -> seq<string>)) =
 
         // The caller writes the primary prompt.  If we are reading the 2nd and subsequent lines of the
         // input we're responsible for writing the secondary prompt.
-        checkLeftEdge(true);
+        checkLeftEdge true
 
         /// Cursor anchor - position of !anchor when the routine was called
         let anchor = ref (Anchor.Current(x.Inset));
@@ -244,12 +234,12 @@ type ReadLineConsole(complete: (string option * string -> seq<string>)) =
         
         let writeBlank() = 
             Console.Write(' ');
-            checkLeftEdge(false)
+            checkLeftEdge false
         let writeChar(c) = 
             if Console.CursorTop = Console.BufferHeight - 1 && Console.CursorLeft = Console.BufferWidth - 1 then 
                 //printf "bottom right!\n";
                 anchor := { !anchor with top = (!anchor).top - 1 };
-            checkLeftEdge(true);
+            checkLeftEdge true
             if (Char.IsControl(c)) then
                 let s = x.MapCharacter(c)
                 Console.Write(s);
@@ -257,7 +247,7 @@ type ReadLineConsole(complete: (string option * string -> seq<string>)) =
             else 
                 Console.Write(c);
                 rendered := !rendered + 1;
-            checkLeftEdge(true)
+            checkLeftEdge true
 
         /// The console input buffer.
         let input = new StringBuilder() 
@@ -355,6 +345,9 @@ type ReadLineConsole(complete: (string option * string -> seq<string>)) =
                 render();
         
         let insert(key: ConsoleKeyInfo) =
+            // REVIEW: is this F6 rewrite required? 0x1A looks like Ctrl-Z.
+            // REVIEW: the Ctrl-Z code is not recognised as EOF by the lexer.
+            // REVIEW: looks like a relic of the port of readline, which is currently removable.
             let c = if (key.Key = ConsoleKey.F6) then '\x1A' else key.KeyChar
             let c = ConsoleOptions.readKeyFixup c
             insertChar(c);
@@ -375,9 +368,9 @@ type ReadLineConsole(complete: (string option * string -> seq<string>)) =
                 line;
         
         let rec read() = 
-            let key = Console.ReadKey(true)
+            let key = Console.ReadKey true
 
-            match (key.Key) with
+            match key.Key with
             | ConsoleKey.Backspace ->  
                 backspace();
                 change() 
@@ -413,46 +406,46 @@ type ReadLineConsole(complete: (string option * string -> seq<string>)) =
                 (!anchor).PlaceAt(x.Inset,!rendered);
                 change()
             | _ ->
-                match (key.Modifiers, key.KeyChar) with
-                // Control-A
-                | (ConsoleModifiers.Control, '\001') ->
-                    current := 0;
-                    (!anchor).PlaceAt(x.Inset,0)
-                    change ()
-                // Control-E
-                | (ConsoleModifiers.Control, '\005') ->
-                    current := input.Length;
-                    (!anchor).PlaceAt(x.Inset,!rendered)
-                    change ()
-                // Control-B
-                | (ConsoleModifiers.Control, '\002') ->
-                    moveLeft()
-                    change ()
-                // Control-f
-                | (ConsoleModifiers.Control, '\006') ->
-                    moveRight()
-                    change ()
-                // Control-P
-                | (ConsoleModifiers.Control, '\020') ->
-                    setInput(history.Previous());
-                    change()
-                // Control-n
-                | (ConsoleModifiers.Control, '\016') ->
-                    setInput(history.Next());
-                    change()
-                // Control-d
-                | (ConsoleModifiers.Control, '\004') ->
-                    raise <| new System.IO.EndOfStreamException()
-                | _ ->
-                    // Note: If KeyChar=0, the not a proper char, e.g. it could be part of a multi key-press character,
-                    //       e.g. e-acute is ' and e with the French (Belgium) IME and US Intl KB.
-                    // Here: skip KeyChar=0 (except for F6 which maps to 0x1A (ctrl-Z?)).
-                    if key.KeyChar <> '\000' || key.Key = ConsoleKey.F6 then
-                      insert(key);
-                      change()
-                    else
-                      // Skip and read again.
-                      read()
+            match (key.Modifiers, key.KeyChar) with
+            // Control-A
+            | (ConsoleModifiers.Control, '\001') ->
+                current := 0;
+                (!anchor).PlaceAt(x.Inset,0)
+                change ()
+            // Control-E
+            | (ConsoleModifiers.Control, '\005') ->
+                current := input.Length;
+                (!anchor).PlaceAt(x.Inset,!rendered)
+                change ()
+            // Control-B
+            | (ConsoleModifiers.Control, '\002') ->
+                moveLeft()
+                change ()
+            // Control-f
+            | (ConsoleModifiers.Control, '\006') ->
+                moveRight()
+                change ()
+            // Control-P
+            | (ConsoleModifiers.Control, '\020') ->
+                setInput(history.Previous());
+                change()
+            // Control-n
+            | (ConsoleModifiers.Control, '\016') ->
+                setInput(history.Next());
+                change()
+            // Control-d
+            | (ConsoleModifiers.Control, '\004') ->
+                raise <| new System.IO.EndOfStreamException()
+            | _ ->
+                // Note: If KeyChar=0, the not a proper char, e.g. it could be part of a multi key-press character,
+                //       e.g. e-acute is ' and e with the French (Belgium) IME and US Intl KB.
+                // Here: skip KeyChar=0 (except for F6 which maps to 0x1A (ctrl-Z?)).
+                if key.KeyChar <> '\000' || key.Key = ConsoleKey.F6 then
+                  insert(key);
+                  change()
+                else
+                  // Skip and read again.
+                  read()
 
         and change() = 
            changed := true;

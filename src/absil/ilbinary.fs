@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2011 Microsoft Corporation. 
+// Copyright (c) 2002-2012 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -19,59 +19,59 @@ open Microsoft.FSharp.Compiler.AbstractIL.IL
 open Microsoft.FSharp.Compiler.AbstractIL.Internal 
 open Microsoft.FSharp.Compiler.AbstractIL.Internal.Library
 
-type TableName = 
-    | Table of int
-    member x.Index = (let (Table n) = x in n)
-    static member FromIndex n = Table n 
+[<Struct>]
+type TableName(idx: int) = 
+    member x.Index = idx
+    static member FromIndex n = TableName n 
 
 module TableNames = 
-    let Module               = Table 0  
-    let TypeRef              = Table 1  
-    let TypeDef              = Table 2  
-    let FieldPtr             = Table 3  
-    let Field                = Table 4  
-    let MethodPtr            = Table 5  
-    let Method               = Table 6  
-    let ParamPtr             = Table 7  
-    let Param                = Table 8  
-    let InterfaceImpl        = Table 9  
-    let MemberRef            = Table 10 
-    let Constant             = Table 11 
-    let CustomAttribute      = Table 12 
-    let FieldMarshal         = Table 13 
-    let Permission           = Table 14 
-    let ClassLayout          = Table 15 
-    let FieldLayout          = Table 16 
-    let StandAloneSig        = Table 17 
-    let EventMap             = Table 18 
-    let EventPtr             = Table 19 
-    let Event                = Table 20 
-    let PropertyMap          = Table 21 
-    let PropertyPtr          = Table 22 
-    let Property             = Table 23 
-    let MethodSemantics      = Table 24 
-    let MethodImpl           = Table 25 
-    let ModuleRef            = Table 26 
-    let TypeSpec             = Table 27 
-    let ImplMap              = Table 28 
-    let FieldRVA             = Table 29 
-    let ENCLog               = Table 30 
-    let ENCMap               = Table 31 
-    let Assembly             = Table 32 
-    let AssemblyProcessor    = Table 33 
-    let AssemblyOS           = Table 34 
-    let AssemblyRef          = Table 35 
-    let AssemblyRefProcessor = Table 36 
-    let AssemblyRefOS        = Table 37 
-    let File                 = Table 38 
-    let ExportedType         = Table 39 
-    let ManifestResource     = Table 40 
-    let Nested               = Table 41 
-    let GenericParam           = Table 42 
-    let MethodSpec           = Table 43 
-    let GenericParamConstraint = Table 44
+    let Module               = TableName 0  
+    let TypeRef              = TableName 1  
+    let TypeDef              = TableName 2  
+    let FieldPtr             = TableName 3  
+    let Field                = TableName 4  
+    let MethodPtr            = TableName 5  
+    let Method               = TableName 6  
+    let ParamPtr             = TableName 7  
+    let Param                = TableName 8  
+    let InterfaceImpl        = TableName 9  
+    let MemberRef            = TableName 10 
+    let Constant             = TableName 11 
+    let CustomAttribute      = TableName 12 
+    let FieldMarshal         = TableName 13 
+    let Permission           = TableName 14 
+    let ClassLayout          = TableName 15 
+    let FieldLayout          = TableName 16 
+    let StandAloneSig        = TableName 17 
+    let EventMap             = TableName 18 
+    let EventPtr             = TableName 19 
+    let Event                = TableName 20 
+    let PropertyMap          = TableName 21 
+    let PropertyPtr          = TableName 22 
+    let Property             = TableName 23 
+    let MethodSemantics      = TableName 24 
+    let MethodImpl           = TableName 25 
+    let ModuleRef            = TableName 26 
+    let TypeSpec             = TableName 27 
+    let ImplMap              = TableName 28 
+    let FieldRVA             = TableName 29 
+    let ENCLog               = TableName 30 
+    let ENCMap               = TableName 31 
+    let Assembly             = TableName 32 
+    let AssemblyProcessor    = TableName 33 
+    let AssemblyOS           = TableName 34 
+    let AssemblyRef          = TableName 35 
+    let AssemblyRefProcessor = TableName 36 
+    let AssemblyRefOS        = TableName 37 
+    let File                 = TableName 38 
+    let ExportedType         = TableName 39 
+    let ManifestResource     = TableName 40 
+    let Nested               = TableName 41 
+    let GenericParam           = TableName 42 
+    let MethodSpec           = TableName 43 
+    let GenericParamConstraint = TableName 44
 
-    let UserStrings           = Table 0x70 (* Special encoding of embedded UserString tokens - See 1.9 Partition III *) 
+    let UserStrings           = TableName 0x70 (* Special encoding of embedded UserString tokens - See 1.9 Partition III *) 
 
 /// Which tables are sorted and by which column 
 //
@@ -95,10 +95,11 @@ let sortedTableInfo =
     (TableNames.GenericParam, 2); 
     (TableNames.GenericParamConstraint, 0); ]
     
-type TypeDefOrRefTag = TypeDefOrRefOrSpecTag of int32
-let tdor_TypeDef = TypeDefOrRefOrSpecTag 0x00
-let tdor_TypeRef = TypeDefOrRefOrSpecTag 0x01
-let tdor_TypeSpec = TypeDefOrRefOrSpecTag 0x2
+[<Struct>]
+type TypeDefOrRefTag(tag: int32) = member x.Tag = tag
+let tdor_TypeDef = TypeDefOrRefTag 0x00
+let tdor_TypeRef = TypeDefOrRefTag 0x01
+let tdor_TypeSpec = TypeDefOrRefTag 0x2
 let mkTypeDefOrRefOrSpecTag x = 
     match x with 
     | 0x00 -> tdor_TypeDef // nb. avoid reallocation 
@@ -106,19 +107,21 @@ let mkTypeDefOrRefOrSpecTag x =
     | 0x02 -> tdor_TypeSpec
     | _ -> invalidArg "x" "mkTypeDefOrRefOrSpecTag"
 
-type HasConstantTag = HasConstantTag of int32
+[<Struct>]
+type HasConstantTag(tag: int32) = member x.Tag = tag
 let hc_FieldDef  = HasConstantTag 0x0
 let hc_ParamDef  = HasConstantTag 0x1
 let hc_Property = HasConstantTag 0x2
 
 let mkHasConstantTag x = 
     match x with 
-    | 0x00l -> hc_FieldDef
-    | 0x01l -> hc_ParamDef
-    | 0x02l -> hc_Property
+    | 0x00 -> hc_FieldDef
+    | 0x01 -> hc_ParamDef
+    | 0x02 -> hc_Property
     | _ -> invalidArg "x" "mkHasConstantTag"
 
-type HasCustomAttributeTag = HasCustomAttributeTag of int32
+[<Struct>]
+type HasCustomAttributeTag(tag: int32) = member x.Tag = tag
 let hca_MethodDef       = HasCustomAttributeTag 0x0
 let hca_FieldDef        = HasCustomAttributeTag 0x1
 let hca_TypeRef         = HasCustomAttributeTag 0x2
@@ -168,7 +171,8 @@ let mkHasCustomAttributeTag x =
     | 0x15 -> hca_MethodSpec 
     | _ -> HasCustomAttributeTag x
 
-type HasFieldMarshalTag = HasFieldMarshalTag of int32
+[<Struct>]
+type HasFieldMarshalTag(tag: int32) = member x.Tag = tag
 let hfm_FieldDef =  HasFieldMarshalTag 0x00
 let hfm_ParamDef =  HasFieldMarshalTag 0x01
 
@@ -178,7 +182,8 @@ let mkHasFieldMarshalTag x =
     | 0x01 -> hfm_ParamDef 
     | _ -> HasFieldMarshalTag x
 
-type HasDeclSecurityTag = HasDeclSecurityTag of int32
+[<Struct>]
+type HasDeclSecurityTag(tag: int32) = member x.Tag = tag
 let hds_TypeDef =  HasDeclSecurityTag 0x00
 let hds_MethodDef =  HasDeclSecurityTag 0x01
 let hds_Assembly =  HasDeclSecurityTag 0x02
@@ -190,7 +195,8 @@ let mkHasDeclSecurityTag x =
     | 0x02 -> hds_Assembly 
     | _ -> HasDeclSecurityTag x
 
-type MemberRefParentTag = MemberRefParentTag of int32
+[<Struct>]
+type MemberRefParentTag(tag: int32) = member x.Tag = tag
 let mrp_TypeRef = MemberRefParentTag 0x01
 let mrp_ModuleRef = MemberRefParentTag 0x02
 let mrp_MethodDef = MemberRefParentTag 0x03
@@ -204,7 +210,8 @@ let mkMemberRefParentTag x =
     | 0x04 -> mrp_TypeSpec  
     | _ -> MemberRefParentTag x
 
-type HasSemanticsTag = HasSemanticsTag of int32
+[<Struct>]
+type HasSemanticsTag(tag: int32) = member x.Tag = tag
 let hs_Event =  HasSemanticsTag 0x00
 let hs_Property =  HasSemanticsTag 0x01
 
@@ -214,7 +221,8 @@ let mkHasSemanticsTag x =
     | 0x01 -> hs_Property 
     | _ -> HasSemanticsTag x
 
-type MethodDefOrRefTag = MethodDefOrRefTag of int32
+[<Struct>]
+type MethodDefOrRefTag(tag: int32) = member x.Tag = tag
 let mdor_MethodDef =  MethodDefOrRefTag 0x00
 let mdor_MemberRef =  MethodDefOrRefTag 0x01
 let mdor_MethodSpec =  MethodDefOrRefTag 0x02
@@ -226,7 +234,8 @@ let mkMethodDefOrRefTag x =
     | 0x02 -> mdor_MethodSpec 
     | _ -> MethodDefOrRefTag x
 
-type MemberForwardedTag = MemberForwardedTag of int32
+[<Struct>]
+type MemberForwardedTag(tag: int32) = member x.Tag = tag
 let mf_FieldDef =  MemberForwardedTag 0x00
 let mf_MethodDef =  MemberForwardedTag 0x01
 
@@ -236,7 +245,8 @@ let mkMemberForwardedTag x =
     | 0x01 -> mf_MethodDef 
     | _ -> MemberForwardedTag x
 
-type ImplementationTag = ImplementationTag of int32
+[<Struct>]
+type ImplementationTag(tag: int32) = member x.Tag = tag
 let i_File =  ImplementationTag 0x00
 let i_AssemblyRef =  ImplementationTag 0x01
 let i_ExportedType =  ImplementationTag 0x02
@@ -248,7 +258,8 @@ let mkImplementationTag x =
     | 0x02 -> i_ExportedType 
     | _ -> ImplementationTag x
 
-type CustomAttributeTypeTag = CustomAttributeTypeTag of int32
+[<Struct>]
+type CustomAttributeTypeTag(tag: int32) = member x.Tag = tag
 let cat_MethodDef =  CustomAttributeTypeTag 0x02
 let cat_MemberRef =  CustomAttributeTypeTag 0x03
 
@@ -258,7 +269,8 @@ let mkILCustomAttributeTypeTag x =
     | 0x03 -> cat_MemberRef 
     | _ -> CustomAttributeTypeTag x
 
-type ResolutionScopeTag = ResolutionScopeTag of int32
+[<Struct>]
+type ResolutionScopeTag(tag: int32) = member x.Tag = tag
 let rs_Module =  ResolutionScopeTag 0x00
 let rs_ModuleRef =  ResolutionScopeTag 0x01
 let rs_AssemblyRef  =  ResolutionScopeTag 0x02
@@ -272,7 +284,8 @@ let mkResolutionScopeTag x =
     | 0x03 -> rs_TypeRef 
     | _ -> ResolutionScopeTag x
 
-type TypeOrMethodDefTag = TypeOrMethodDefTag of int32
+[<Struct>]
+type TypeOrMethodDefTag(tag: int32) = member x.Tag = tag
 let tomd_TypeDef = TypeOrMethodDefTag 0x00
 let tomd_MethodDef = TypeOrMethodDefTag 0x01
 
@@ -550,18 +563,18 @@ let noArgInstrs  =
           i_ldc_i4_7,           mk_ldc 7;
           i_ldc_i4_8,           mk_ldc 8;
           i_ldc_i4_m1,           mk_ldc (0-1);
-          0x0a,            (I_stloc (uint16 ( 0)));
-          0x0b,            (I_stloc (uint16 ( 1)));
-          0x0c,            (I_stloc (uint16 ( 2)));
-          0x0d,            (I_stloc (uint16 ( 3)));
-          0x06,            (I_ldloc (uint16 ( 0)));
-          0x07,            (I_ldloc (uint16 ( 1)));
-          0x08,            (I_ldloc (uint16 ( 2)));
-          0x09,            (I_ldloc (uint16 ( 3)));
-          0x02,            (I_ldarg (uint16 ( 0)));
-          0x03,            (I_ldarg (uint16 ( 1)));
-          0x04,            (I_ldarg (uint16 ( 2)));
-          0x05,            (I_ldarg (uint16 ( 3)));
+          0x0a,            (mkStloc (uint16 ( 0)));
+          0x0b,            (mkStloc (uint16 ( 1)));
+          0x0c,            (mkStloc (uint16 ( 2)));
+          0x0d,            (mkStloc (uint16 ( 3)));
+          0x06,            (mkLdloc (uint16 ( 0)));
+          0x07,            (mkLdloc (uint16 ( 1)));
+          0x08,            (mkLdloc (uint16 ( 2)));
+          0x09,            (mkLdloc (uint16 ( 3)));
+          0x02,            (mkLdarg (uint16 ( 0)));
+          0x03,            (mkLdarg (uint16 ( 1)));
+          0x04,            (mkLdarg (uint16 ( 2)));
+          0x05,            (mkLdarg (uint16 ( 3)));
           0x2a,              (I_ret);
           0x58,              (AI_add);
           0xd6,        (AI_add_ovf);
@@ -645,16 +658,16 @@ let noArgInstrs  =
           i_dup,   (AI_dup);   
           i_pop,   (AI_pop);
           i_ckfinite,   (AI_ckfinite);
-          i_nop,   (AI_nop);
-          i_break,   (I_break);
-          i_arglist,   (I_arglist);
-          i_endfilter,   (I_endfilter);
+          i_nop,   AI_nop;
+          i_break,   I_break;
+          i_arglist,   I_arglist;
+          i_endfilter,   I_endfilter;
           i_endfinally,   I_endfinally;
-          i_refanytype,   (I_refanytype);
-          i_localloc,   (I_localloc);
-          i_throw,   (I_throw);
-          i_ldlen,   (I_ldlen);
-          i_rethrow,       (I_rethrow); ];;
+          i_refanytype,   I_refanytype;
+          i_localloc,   I_localloc;
+          i_throw,   I_throw;
+          i_ldlen,   I_ldlen;
+          i_rethrow,       I_rethrow; ];;
 
 let isNoArgInstr i = 
   match i with 

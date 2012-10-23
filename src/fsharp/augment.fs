@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2011 Microsoft Corporation. 
+// Copyright (c) 2002-2012 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -80,6 +80,10 @@ let mkHashWithComparerTy g ty = (mkThisTy g ty) --> (g.mk_IEqualityComparer_ty -
 let mkRelBinOp g op m e1 e2 = mkAsmExpr ([ op  ],[],  [e1; e2],[g.bool_ty],m)
 let mkClt g m e1 e2 = mkRelBinOp g IL.AI_clt m e1 e2 
 let mkCgt g m e1 e2 = mkRelBinOp g IL.AI_cgt m e1 e2
+
+//-------------------------------------------------------------------------
+// REVIEW: make this a .constrained call, not a virtual call.
+//------------------------------------------------------------------------- 
 
 // for creating and using GenericComparer objects and for creating and using 
 // IStructuralComparable objects (Eg, Calling CompareTo(obj o, IComparer comp))
@@ -661,13 +665,13 @@ let canBeAugmentedWithCompare g (tycon:Tycon) =
 let getAugmentationAttribs g (tycon:Tycon) = 
     canBeAugmentedWithEquals g tycon,
     canBeAugmentedWithCompare g tycon,
-    TryFindBoolAttrib g g.attrib_NoEqualityAttribute tycon.Attribs,
-    TryFindBoolAttrib g g.attrib_CustomEqualityAttribute tycon.Attribs,
-    TryFindBoolAttrib g g.attrib_ReferenceEqualityAttribute tycon.Attribs,
-    TryFindBoolAttrib g g.attrib_StructuralEqualityAttribute tycon.Attribs,
-    TryFindBoolAttrib g g.attrib_NoComparisonAttribute tycon.Attribs,
-    TryFindBoolAttrib g g.attrib_CustomComparisonAttribute tycon.Attribs,
-    TryFindBoolAttrib g g.attrib_StructuralComparisonAttribute tycon.Attribs 
+    TryFindFSharpBoolAttribute g g.attrib_NoEqualityAttribute tycon.Attribs,
+    TryFindFSharpBoolAttribute g g.attrib_CustomEqualityAttribute tycon.Attribs,
+    TryFindFSharpBoolAttribute g g.attrib_ReferenceEqualityAttribute tycon.Attribs,
+    TryFindFSharpBoolAttribute g g.attrib_StructuralEqualityAttribute tycon.Attribs,
+    TryFindFSharpBoolAttribute g g.attrib_NoComparisonAttribute tycon.Attribs,
+    TryFindFSharpBoolAttribute g g.attrib_CustomComparisonAttribute tycon.Attribs,
+    TryFindFSharpBoolAttribute g g.attrib_StructuralComparisonAttribute tycon.Attribs 
 
 let CheckAugmentationAttribs isImplementation g amap (tycon:Tycon)= 
     let m = tycon.Range
@@ -852,29 +856,32 @@ let mkValSpec g (tcref:TyconRef) tmty vis  slotsig methn ty argData =
     let tps = tcref.Typars(m)
     let final = isUnionTy g tmty || isRecdTy g tmty || isStructTy g tmty 
     let membInfo = match slotsig with None -> nonVirtualMethod tcref | Some(slotsig) -> slotImplMethod(final,tcref,slotsig) 
-    let inl = OptionalInline
+    let inl = ValInline.Optional
     let args = ValReprInfo.unnamedTopArg :: argData
     let topValInfo = Some (ValReprInfo (ValReprInfo.InferTyparInfo tps, args, ValReprInfo.unnamedRetVal)) 
-    NewVal (methn, m, None, ty, Immutable, true, topValInfo, vis, ValNotInRecScope, Some(membInfo), NormalVal, [], inl, XmlDoc.Empty, true, false, false, false, false, None, Parent(tcref)) 
+    NewVal (methn, m, None, ty, Immutable, true, topValInfo, vis, ValNotInRecScope, Some(membInfo), NormalVal, [], inl, XmlDoc.Empty, true, false, false, false, false, false, None, Parent(tcref)) 
 
 let MakeValsForCompareAugmentation g (tcref:TyconRef) = 
+    let m = tcref.Range
     let _,tmty = mkMinimalTy g tcref
-    let tps = tcref.Typars(tcref.Range)
+    let tps = tcref.Typars m
     let vis = tcref.TypeReprAccessibility
 
     mkValSpec g tcref tmty vis  (Some(mkIComparableCompareToSlotSig g)) "CompareTo" (tps +-> (mkCompareObjTy g tmty)) unaryArg, 
     mkValSpec g tcref tmty vis  (Some(mkGenericIComparableCompareToSlotSig g tmty)) "CompareTo" (tps +-> (mkCompareTy g tmty)) unaryArg
     
 let MakeValsForCompareWithComparerAugmentation g (tcref:TyconRef) =
+    let m = tcref.Range
     let _,tmty = mkMinimalTy g tcref
-    let tps = tcref.Typars(tcref.Range)
+    let tps = tcref.Typars m
     let vis = tcref.TypeReprAccessibility
     mkValSpec g tcref tmty vis (Some(mkIStructuralComparableCompareToSlotSig g)) "CompareTo" (tps +-> (mkCompareWithComparerTy g tmty)) tupArg
 
 let MakeValsForEqualsAugmentation g (tcref:TyconRef) = 
+    let m = tcref.Range
     let _,tmty = mkMinimalTy g tcref
     let vis = tcref.TypeReprAccessibility
-    let tps = tcref.Typars(tcref.Range)
+    let tps = tcref.Typars m
 
     let objEqualsVal = mkValSpec g tcref tmty vis  (Some(mkEqualsSlotSig g)) "Equals" (tps +-> (mkEqualsObjTy g tmty)) unaryArg
     let nocEqualsVal = mkValSpec g tcref tmty vis  (if tcref.Deref.IsExceptionDecl then None else Some(mkGenericIEquatableEqualsSlotSig g tmty)) "Equals" (tps +-> (mkEqualsTy g tmty)) unaryArg
@@ -1032,13 +1039,15 @@ let MakeBindingsForEqualsAugmentation g (tycon:Tycon) =
     elif tycon.IsRecordTycon || tycon.IsStructOrEnumTycon then mkEquals mkRecdEquality 
     else []
 
-let rec ApproxTypeHasEquality g ty = 
-    if isAppTy g ty && HasAttrib g g.attrib_NoEqualityAttribute (tcrefOfAppTy g ty).Attribs then
+let rec TypeDefinitelyHasEquality g ty = 
+    if isAppTy g ty && HasFSharpAttribute g g.attrib_NoEqualityAttribute (tcrefOfAppTy g ty).Attribs then
         false
+    elif isTyparTy g ty &&  (destTyparTy g ty).Constraints |> List.exists (function TyparConstraint.SupportsEquality _ -> true | _ -> false) then
+        true
     else 
         match ty with 
         | SpecialEquatableHeadType g tinst -> 
-            tinst |> List.forall (ApproxTypeHasEquality g)
+            tinst |> List.forall (TypeDefinitelyHasEquality g)
         | SpecialNotEquatableHeadType g _ -> 
             false
         | _ -> 
@@ -1048,5 +1057,4 @@ let rec ApproxTypeHasEquality g ty =
            // Give a good error for structural types excluded from the equality relation because of their fields
            not (TyconIsCandidateForAugmentationWithEquals g tcref.Deref && isNone tcref.GeneratedHashAndEqualsWithComparerValues) &&
            // Check the (possibly inferred) structural dependencies
-           (tinst, tcref.TyparsNoRange) ||> List.lengthsEqAndForall2 (fun ty tp -> not tp.EqualityConditionalOn || ApproxTypeHasEquality  g ty)
-
+           (tinst, tcref.TyparsNoRange) ||> List.lengthsEqAndForall2 (fun ty tp -> not tp.EqualityConditionalOn || TypeDefinitelyHasEquality  g ty)

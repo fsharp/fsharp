@@ -1,6 +1,5 @@
 //----------------------------------------------------------------------------
-//
-// Copyright (c) 2002-2011 Microsoft Corporation. 
+// Copyright (c) 2002-2012 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -39,13 +38,12 @@ namespace Microsoft.FSharp.Core
         override x.Equals(obj:obj) = 
             match obj with null -> true | :? Unit -> true | _ -> false
         interface System.IComparable with 
-            member x.CompareTo(obj:obj) = 0
+            member x.CompareTo(_obj:obj) = 0
         
     and unit = Unit
 
 
-
-#if FX_FSLIB_STRUCTURAL_EQUALITY
+#if FX_NO_STRUCTURAL_EQUALITY
 namespace System.Collections
 
     open System
@@ -104,6 +102,18 @@ namespace Microsoft.FSharp.Core
        | UseNullAsTrueValue = 8  // Note if you change this then change CompilationRepresentationFlags_PermitNull further below
        | Event = 16
 
+#if FX_NO_ICLONEABLE
+    module ICloneableExtensions =
+        type System.Array with
+            member x.Clone() =
+               let ty = (x.GetType()).GetElementType()
+               let clone = System.Array.CreateInstance(ty,x.Length)
+               x.CopyTo(clone,0)
+               clone
+    
+    open ICloneableExtensions
+#else
+#endif    
 
     [<AttributeUsage(AttributeTargets.Class,AllowMultiple=false)>]
     type SealedAttribute(value:bool) =
@@ -145,6 +155,11 @@ namespace Microsoft.FSharp.Core
     [<AttributeUsage (AttributeTargets.Property,AllowMultiple=false)>]  
     [<Sealed>]
     type CLIEventAttribute() = 
+        inherit System.Attribute()
+
+    [<AttributeUsage (AttributeTargets.Class,AllowMultiple=false)>]  
+    [<Sealed>]
+    type CLIMutableAttribute() = 
         inherit System.Attribute()
 
     [<AttributeUsage (AttributeTargets.Class,AllowMultiple=false)>]  
@@ -200,7 +215,7 @@ namespace Microsoft.FSharp.Core
     type NoComparisonAttribute() = 
         inherit System.Attribute()
 
-    [<AttributeUsage (AttributeTargets.Method ||| AttributeTargets.Property ||| AttributeTargets.Constructor,AllowMultiple=false)>]  
+    [<AttributeUsage (AttributeTargets.Class ||| AttributeTargets.Method ||| AttributeTargets.Property ||| AttributeTargets.Constructor,AllowMultiple=false)>]  
     [<Sealed>]
     type ReflectedDefinitionAttribute() =
         inherit System.Attribute()
@@ -278,7 +293,7 @@ namespace Microsoft.FSharp.Core
     [<Sealed>]
     type ExperimentalAttribute(message:string) =
         inherit System.Attribute()
-        member x.Message = message
+        member x.Message = message    
 
     [<AttributeUsage(AttributeTargets.Method,AllowMultiple=false)>]
     [<Sealed>]
@@ -287,6 +302,32 @@ namespace Microsoft.FSharp.Core
         member x.Counts = 
            let unboxPrim(x:obj) = (# "unbox.any !0" type ('T) x : 'T #)
            (unboxPrim(counts.Clone()) : System.Collections.Generic.IEnumerable<int>)
+
+    [<AttributeUsage(AttributeTargets.Method,AllowMultiple=false)>]
+    [<Sealed>]
+    type CustomOperationAttribute(name:string) =
+        inherit System.Attribute()
+        let mutable isBinary = false
+        let mutable allowInto = false
+        let mutable isJoin = false
+        let mutable isGroupJoin = false
+        let mutable maintainsVarSpace = false
+        let mutable maintainsVarSpaceWithBind = false
+        let mutable joinOnWord = ""
+        member x.Name = name
+        member x.AllowIntoPattern with get() = allowInto and set v = allowInto <- v
+        member x.IsLikeZip with get() = isBinary and set v = isBinary <- v
+        member x.IsLikeJoin with get() = isJoin and set v = isJoin <- v
+        member x.IsLikeGroupJoin with get() = isGroupJoin and set v = isGroupJoin <- v
+        member x.JoinConditionWord with get() = joinOnWord and set v = joinOnWord <- v
+
+        member x.MaintainsVariableSpace with get() = maintainsVarSpace and set v = maintainsVarSpace <- v
+        member x.MaintainsVariableSpaceUsingBind with get() = maintainsVarSpaceWithBind and set v = maintainsVarSpaceWithBind <- v
+
+    [<AttributeUsage(AttributeTargets.Parameter,AllowMultiple=false)>]
+    [<Sealed>]
+    type ProjectionParameterAttribute() =
+        inherit System.Attribute()
 
     [<AttributeUsage(AttributeTargets.Class ||| AttributeTargets.Interface ||| AttributeTargets.Struct ||| AttributeTargets.Delegate ||| AttributeTargets.Enum,AllowMultiple=false)>]
     [<Sealed>]
@@ -343,13 +384,13 @@ namespace Microsoft.FSharp.Core
         member x.Path = path
         new() =  AutoOpenAttribute("")
 
-    [<MeasureAnnotatedAbbreviation>] type float<[<Measure>] 'u> = float 
-    [<MeasureAnnotatedAbbreviation>] type float32<[<Measure>] 'u> = float32
-    [<MeasureAnnotatedAbbreviation>] type decimal<[<Measure>] 'u> = decimal
-    [<MeasureAnnotatedAbbreviation>] type int<[<Measure>] 'u> = int
-    [<MeasureAnnotatedAbbreviation>] type sbyte<[<Measure>] 'u> = sbyte
-    [<MeasureAnnotatedAbbreviation>] type int16<[<Measure>] 'u> = int16
-    [<MeasureAnnotatedAbbreviation>] type int64<[<Measure>] 'u> = int64
+    [<MeasureAnnotatedAbbreviation>] type float<[<Measure>] 'Measure> = float 
+    [<MeasureAnnotatedAbbreviation>] type float32<[<Measure>] 'Measure> = float32
+    [<MeasureAnnotatedAbbreviation>] type decimal<[<Measure>] 'Measure> = decimal
+    [<MeasureAnnotatedAbbreviation>] type int<[<Measure>] 'Measure> = int
+    [<MeasureAnnotatedAbbreviation>] type sbyte<[<Measure>] 'Measure> = sbyte
+    [<MeasureAnnotatedAbbreviation>] type int16<[<Measure>] 'Measure> = int16
+    [<MeasureAnnotatedAbbreviation>] type int64<[<Measure>] 'Measure> = int64
 
 
     module BasicInlinedOperations =  
@@ -449,7 +490,7 @@ namespace Microsoft.FSharp.Core
                     i <- i + 1
             combineTupleHashes (get codes 0) (get codes 1)
    
-#if FX_FSLIB_TUPLE
+#if FX_NO_TUPLE
 namespace System
     open Microsoft.FSharp.Core.BasicInlinedOperations
     open System
@@ -738,8 +779,6 @@ namespace Microsoft.FSharp.Core
             let inline CreateInstance<'T when 'T : (new : unit -> 'T) >() = 
                  (System.Activator.CreateInstance() : 'T)
 
-            [<NoDynamicInvocation>]
-            let inline retype (x:'T) : 'U = (# "" x : 'U #)
 
             let inline GetArray (arr: 'T array) (n:int) =  (# "ldelem.any !0" type ('T) arr n : 'T #)  
             let inline SetArray (arr: 'T array) (n:int) (x:'T) =  (# "stelem.any !0" type ('T) arr n x #)  
@@ -920,10 +959,10 @@ namespace Microsoft.FSharp.Core
                    | (:? System.Array as arr1),_ -> 
                        match arr1,yobj with 
                        // Fast path
-                       | (:? (obj[]) as arr1) , (:? (obj[]) as arr2)      -> GenericComparisonObjArrayWithComparer comp arr1 arr2
+                       | (:? (obj[]) as arr1), (:? (obj[]) as arr2)      -> GenericComparisonObjArrayWithComparer comp arr1 arr2
                        // Fast path
                        | (:? (byte[]) as arr1), (:? (byte[]) as arr2)     -> GenericComparisonByteArray arr1 arr2
-                       | _                    , (:? System.Array as arr2) -> GenericComparisonArbArrayWithComparer comp arr1 arr2
+                       | _                   , (:? System.Array as arr2) -> GenericComparisonArbArrayWithComparer comp arr1 arr2
                        | _ -> FailGenericComparison xobj
                    // Check for IStructuralComparable
                    | (:? IStructuralComparable as x),_ ->
@@ -932,10 +971,10 @@ namespace Microsoft.FSharp.Core
                    | (:? System.IComparable as x),_ -> 
                        match xobj,yobj with 
                        | (:? float as x),(:? float as y) -> 
-                            if System.Double.IsNaN x && System.Double.IsNaN y && (comp.ThrowsOnPER()) then 
+                            if (System.Double.IsNaN x || System.Double.IsNaN y) && (comp.ThrowsOnPER()) then 
                                 raise NaNException
                        | (:? float32 as x),(:? float32 as y) -> 
-                            if System.Single.IsNaN x && System.Single.IsNaN y && (comp.ThrowsOnPER()) then 
+                            if (System.Single.IsNaN x || System.Single.IsNaN y) && (comp.ThrowsOnPER()) then 
                                 raise NaNException
                        | _ -> ()
                        x.CompareTo(yobj)
@@ -958,9 +997,13 @@ namespace Microsoft.FSharp.Core
                     let leny = y.Length 
                     let c = intOrder lenx leny 
                     if c <> 0 then c else
+                    let basex = (x.GetLowerBound(0))
+                    let basey = (y.GetLowerBound(0))
+                    let c = intOrder basex basey
+                    if c <> 0 then c else
                     let rec check i =
                        if i >= lenx then 0 else 
-                       let c = GenericCompare comp ((x.GetValue(i)),(y.GetValue(i)))
+                       let c = GenericCompare comp ((x.GetValue(i + basex)),(y.GetValue(i + basey)))
                        if c <> 0 then c else check (i + 1)
                     check 0
                 elif x.Rank = 2 && y.Rank = 2 then 
@@ -1025,9 +1068,13 @@ namespace Microsoft.FSharp.Core
                     let leny = y.LongLength 
                     let c = int64Order lenx leny 
                     if c <> 0 then c else
+                    let basex = int64 (x.GetLowerBound(0))
+                    let basey = int64 (y.GetLowerBound(0))
+                    let c = int64Order basex basey
+                    if c <> 0 then c else
                     let rec check i =
                        if i >=. lenx then 0 else 
-                       let c = GenericCompare comp ((x.GetValue(i)), (y.GetValue(i)))
+                       let c = GenericCompare comp ((x.GetValue(i +. basex)), (y.GetValue(i +. basey)))
                        if c <> 0 then c else check (i +. 1L)
                     check 0L
                 elif x.Rank = 2 && y.Rank = 2 then 
@@ -1163,6 +1210,7 @@ namespace Microsoft.FSharp.Core
                      // gives reliable results on null values.
                      System.String.CompareOrdinal((# "" x : string #) ,(# "" y : string #))
 #endif
+                 when ^T : decimal     = System.Decimal.Compare((# "" x:decimal #), (# "" y:decimal #))
 
 
             let GenericComparisonIntrinsic<'T> (x:'T) (y:'T) : int = 
@@ -1232,6 +1280,7 @@ namespace Microsoft.FSharp.Core
                      // gives reliable results on null values.
                      System.String.CompareOrdinal((# "" x : string #) ,(# "" y : string #))
 #endif
+                 when ^T : decimal     = System.Decimal.Compare((# "" x:decimal #), (# "" y:decimal #))
 
               
             let inline GenericLessThanFast (x:'T) (y:'T) = 
@@ -1251,6 +1300,7 @@ namespace Microsoft.FSharp.Core
                 when 'T : float  = (# "clt" x y : bool #) 
                 when 'T : float32= (# "clt" x y : bool #) 
                 when 'T : char   = (# "clt" x y : bool #)
+                when ^T : decimal     = System.Decimal.op_LessThan ((# "" x:decimal #), (# "" y:decimal #))
               
             let inline GenericGreaterThanFast (x:'T) (y:'T) = 
                 GenericGreaterThanIntrinsic x y
@@ -1269,6 +1319,7 @@ namespace Microsoft.FSharp.Core
                 when 'T : float      = (# "cgt" x y : bool #) 
                 when 'T : float32    = (# "cgt" x y : bool #) 
                 when 'T : char       = (# "cgt" x y : bool #)
+                when ^T : decimal     = System.Decimal.op_GreaterThan ((# "" x:decimal #), (# "" y:decimal #))
 
             let inline GenericLessOrEqualFast (x:'T) (y:'T) = 
                 GenericLessOrEqualIntrinsic x y
@@ -1287,6 +1338,7 @@ namespace Microsoft.FSharp.Core
                 when 'T : float      = not (# "cgt.un" x y : bool #) 
                 when 'T : float32    = not (# "cgt.un" x y : bool #) 
                 when 'T : char       = not(# "cgt" x y : bool #)
+                when ^T : decimal     = System.Decimal.op_LessThanOrEqual ((# "" x:decimal #), (# "" y:decimal #))
 
             let inline GenericGreaterOrEqualFast (x:'T) (y:'T) = 
                 GenericGreaterOrEqualIntrinsic x y
@@ -1305,9 +1357,7 @@ namespace Microsoft.FSharp.Core
                 when 'T : float      = not (# "clt.un" x y : bool #) 
                 when 'T : float32    = not (# "clt.un" x y : bool #)
                 when 'T : char       = not (# "clt" x y : bool #)
-
-            let GenericMinimumFast x y = if GenericLessThanFast x y then x else y
-            let GenericMaximumFast x y = if GenericLessThanFast x y then y else x
+                when ^T : decimal     = System.Decimal.op_GreaterThanOrEqual ((# "" x:decimal #), (# "" y:decimal #))
 
 
             //-------------------------------------------------------------------------
@@ -1420,7 +1470,7 @@ namespace Microsoft.FSharp.Core
                  | (:? System.Array as arr1),_ -> 
                      match arr1,yobj with 
                      // Fast path
-                     | (:? (obj[]) as arr1) ,    (:? (obj[]) as arr2)      -> GenericEqualityObjArray er iec arr1 arr2
+                     | (:? (obj[]) as arr1),    (:? (obj[]) as arr2)      -> GenericEqualityObjArray er iec arr1 arr2
                      // Fast path
                      | (:? (byte[]) as arr1),    (:? (byte[]) as arr2)     -> GenericEqualityByteArray arr1 arr2
                      | (:? (int32[]) as arr1),   (:? (int32[]) as arr2)   -> GenericEqualityInt32Array arr1 arr2
@@ -1428,7 +1478,7 @@ namespace Microsoft.FSharp.Core
                      | (:? (char[]) as arr1),    (:? (char[]) as arr2)     -> GenericEqualityCharArray arr1 arr2
                      | (:? (float32[]) as arr1), (:? (float32[]) as arr2) -> GenericEqualitySingleArray er arr1 arr2
                      | (:? (float[]) as arr1),   (:? (float[]) as arr2)     -> GenericEqualityDoubleArray er arr1 arr2
-                     | _                    ,    (:? System.Array as arr2) -> GenericEqualityArbArray er iec arr1 arr2
+                     | _                   ,    (:? System.Array as arr2) -> GenericEqualityArbArray er iec arr1 arr2
                      | _ -> xobj.Equals(yobj)
                  | (:? IStructuralEquatable as x1),_ -> x1.Equals(yobj,iec)
                  // Ensure ER NaN semantics on recursive calls
@@ -1449,7 +1499,10 @@ namespace Microsoft.FSharp.Core
                     let leny = y.Length 
                     (int32Eq lenx leny) &&
                     // check contents
-                    let rec check i = (i >= lenx) || (GenericEqualityObj er iec ((x.GetValue(i)),(y.GetValue(i))) && check (i + 1))
+                    let basex = x.GetLowerBound(0)
+                    let basey = y.GetLowerBound(0)
+                    (int32Eq basex basey) &&
+                    let rec check i = (i >= lenx) || (GenericEqualityObj er iec ((x.GetValue(basex + i)),(y.GetValue(basey + i))) && check (i + 1))
                     check 0                    
                 elif x.Rank = 2 && y.Rank = 2 then 
                     // check lengths 
@@ -1502,7 +1555,10 @@ namespace Microsoft.FSharp.Core
                     let leny = y.LongLength 
                     (int64Eq lenx leny) &&
                     // check contents
-                    let rec check i = (i >=. lenx) || (GenericEqualityObj er iec ((x.GetValue(i)),(y.GetValue(i))) && check (i +. 1L))
+                    let basex = int64 (x.GetLowerBound(0))
+                    let basey = int64 (y.GetLowerBound(0))
+                    (int64Eq basex basey) &&                    
+                    let rec check i = (i >=. lenx) || (GenericEqualityObj er iec ((x.GetValue(basex +. i)),(y.GetValue(basey +. i))) && check (i +. 1L))
                     check 0L                    
                 elif x.Rank = 2 && y.Rank = 2 then 
                     // check lengths 
@@ -1612,6 +1668,7 @@ namespace Microsoft.FSharp.Core
                         (# "ceq" x y : bool #)
                   when 'T : char    = (# "ceq" x y : bool #)
                   when 'T : string  = System.String.Equals((# "" x : string #),(# "" y : string #))
+                  when ^T : decimal     = System.Decimal.op_Equality((# "" x:decimal #), (# "" y:decimal #))
                                
             let inline GenericEqualityFast (x : 'T) (y : 'T) : bool = 
                   GenericEqualityIntrinsic x y
@@ -1631,6 +1688,7 @@ namespace Microsoft.FSharp.Core
                   when 'T : nativeint  = (# "ceq" x y : bool #)
                   when 'T : unativeint  = (# "ceq" x y : bool #)
                   when 'T : string  = System.String.Equals((# "" x : string #),(# "" y : string #))
+                  when ^T : decimal     = System.Decimal.op_Equality((# "" x:decimal #), (# "" y:decimal #))
                   
             // Note, because of the static optimization conditionals for float and float32, this operation has PER semantics
             let inline GenericEqualityWithComparerFast (comp : System.Collections.IEqualityComparer) (x : 'T) (y : 'T) : bool = 
@@ -1651,6 +1709,7 @@ namespace Microsoft.FSharp.Core
                   when 'T : nativeint  = (# "ceq" x y : bool #)
                   when 'T : unativeint  = (# "ceq" x y : bool #)
                   when 'T : string  = System.String.Equals((# "" x : string #),(# "" y : string #))                  
+                  when ^T : decimal     = System.Decimal.op_Equality((# "" x:decimal #), (# "" y:decimal #))
                   
             // Note, because of the static optimization conditionals for float and float32, this operation has ER semantics
             let inline GenericEqualityWithComparerERFast (comp : System.Collections.IEqualityComparer) (x : 'T) (y : 'T) : bool = 
@@ -1679,6 +1738,7 @@ namespace Microsoft.FSharp.Core
                         (# "ceq" x y : bool #)                  
                   when 'T : char    = (# "ceq" x y : bool #)
                   when 'T : string  = System.String.Equals((# "" x : string #),(# "" y : string #))
+                  when ^T : decimal     = System.Decimal.op_Equality((# "" x:decimal #), (# "" y:decimal #))
 
 
             let inline GenericInequalityFast (x:'T) (y:'T) = (not(GenericEqualityFast x y) : bool)
@@ -1794,6 +1854,7 @@ namespace Microsoft.FSharp.Core
                       | :? (int[]) as ba -> GenericHashInt32Array ba 
                       | :? (int64[]) as ba -> GenericHashInt64Array ba 
                       | _ -> GenericHashArbArray iec a 
+                  // REVIEW: System.Array implements IStructuralEquatable in Dev10
                   | :? IStructuralEquatable as a ->    
                       a.GetHashCode(iec)
                   | _ -> 
@@ -1956,8 +2017,19 @@ namespace Microsoft.FSharp.Core
         let inline GenericGreaterThan            x y = HashCompare.GenericGreaterThanFast            x y
         let inline GenericLessOrEqual            x y = HashCompare.GenericLessOrEqualFast            x y
         let inline GenericGreaterOrEqual         x y = HashCompare.GenericGreaterOrEqualFast         x y
-        let inline GenericMinimum                x y = if HashCompare.GenericLessThanFast x y then x else y
-        let inline GenericMaximum                x y = if HashCompare.GenericLessThanFast x y then y else x
+
+        let inline retype<'T,'U> (x:'T) : 'U = (# "" x : 'U #)
+
+        let inline GenericMinimum                (x:'T) (y:'T) = 
+                if HashCompare.GenericLessThanFast x y then x else y
+                when 'T : float         = (System.Math.Min : float * float -> float)(retype<_,float> x, retype<_,float> y)
+                when 'T : float32       = (System.Math.Min : float32 * float32 -> float32)(retype<_,float32> x, retype<_,float32> y)
+
+        let inline GenericMaximum                (x:'T) (y:'T) = 
+                if HashCompare.GenericLessThanFast x y then y else x
+                when 'T : float         = (System.Math.Max : float * float -> float)(retype<_,float> x, retype<_,float> y)
+                when 'T : float32       = (System.Math.Max : float32 * float32 -> float32)(retype<_,float32> x, retype<_,float32> y)
+
 
         let inline PhysicalEquality x y     = HashCompare.PhysicalEqualityFast x y
         let inline PhysicalHash x           = HashCompare.PhysicalHashFast x
@@ -2067,6 +2139,8 @@ namespace Microsoft.FSharp.Core
                 // ALSO: This must only be null if the values do not have identity, e.g. integers.
                 // That is, an unstable sort of the array must be the semantically the 
                 // same as a stable sort of the array. See Array.stableSortInPlace.
+                //
+                // REVIEW: in a future version we could extend this to include additional types 
                 | ty when ty.Equals(typeof<byte>)       -> null    
                 | ty when ty.Equals(typeof<char>)       -> null    
                 | ty when ty.Equals(typeof<sbyte>)      -> null     
@@ -2113,8 +2187,6 @@ namespace Microsoft.FSharp.Core
         let FastGenericComparerCanBeNull<'T> = FastGenericComparerTable<'T>.ValueCanBeNullIfDefaultSemantics
 
 
-        let inline retype (x:'T) : 'U = (# "" x : 'U #)
-
         let inline EnumOfValue (u : 'u) : 'e when 'e : enum<'u> = 
             unboxPrim<'e>(box u)
             when 'e : 'e = (retype u : 'e)
@@ -2126,13 +2198,13 @@ namespace Microsoft.FSharp.Core
             when 'e : 'e = (retype e : 'u)
 
 
-        let inline FloatWithMeasure (f : float) : float<'u> = retype f
-        let inline Float32WithMeasure (f : float32) : float32<'u> = retype f
-        let inline DecimalWithMeasure (f : decimal) : decimal<'u> = retype f
-        let inline Int32WithMeasure (f : int) : int<'u> = retype f
-        let inline Int16WithMeasure (f : int16) : int16<'u> = retype f
-        let inline SByteWithMeasure (f : sbyte) : sbyte<'u> = retype f
-        let inline Int64WithMeasure (f : int64) : int64<'u> = retype f
+        let inline FloatWithMeasure (f : float) : float<'Measure> = retype f
+        let inline Float32WithMeasure (f : float32) : float32<'Measure> = retype f
+        let inline DecimalWithMeasure (f : decimal) : decimal<'Measure> = retype f
+        let inline Int32WithMeasure (f : int) : int<'Measure> = retype f
+        let inline Int16WithMeasure (f : int16) : int16<'Measure> = retype f
+        let inline SByteWithMeasure (f : sbyte) : sbyte<'Measure> = retype f
+        let inline Int64WithMeasure (f : int64) : int64<'Measure> = retype f
 
         let inline formatError() = raise (new System.FormatException(SR.GetString(SR.badFormatString)))
 
@@ -2163,24 +2235,24 @@ namespace Microsoft.FSharp.Core
         let is0OXB (s:string) p l = 
             l >= p + 2 && charEq (s.Chars(p)) '0' && isOXB (s.Chars(p+1))
 
-        let get0OXB (s:string) p l = 
+        let get0OXB (s:string) (p:byref<int>)  l = 
             if is0OXB s p l
 #if FX_NO_TO_LOWER_INVARIANT
-            then p+2,System.Char.ToLower(s.Chars(p+1) )
+            then let r = System.Char.ToLower(s.Chars(p+1) ) in p <- p + 2;  r
 #else
-            then p+2,System.Char.ToLowerInvariant(s.Chars(p+1) )
+            then let r = System.Char.ToLowerInvariant(s.Chars(p+1)) in p <- p + 2; r
 #endif
-            else p,'d' 
+            else 'd' 
 
-        let getSign32 (s:string) p l = 
+        let getSign32 (s:string) (p:byref<int>) l = 
             if (l >= p + 1 && charEq (s.Chars(p)) '-') 
-            then 1,(-1) 
-            else 0,1 
+            then p <- p + 1; -1
+            else 1 
 
-        let getSign64 (s:string) p l = 
+        let getSign64 (s:string) (p:byref<int>) l = 
             if (l >= p + 1 && charEq (s.Chars(p)) '-') 
-            then 1, -1L
-            else 0,1L 
+            then p <- p + 1; -1L
+            else 1L 
 
         let parseOctalUInt64 (s:string) p l = 
             let rec parse n acc = if n < l then parse (n+1) (acc *.. 8UL +.. (let c = s.Chars(n) in if c >=... '0' && c <=... '7' then Convert.ToUInt64(c) -.. Convert.ToUInt64('0') else formatError())) else acc in
@@ -2195,8 +2267,8 @@ namespace Microsoft.FSharp.Core
                 raise( new System.ArgumentNullException("s") )
             let s = s.Trim() 
             let l = s.Length 
-            let p = 0 
-            let p,specifier = get0OXB s p l 
+            let mutable p = 0 
+            let specifier = get0OXB s &p l 
             if p >= l then formatError() else
             match specifier with 
             | 'x' -> UInt32.Parse( s.Substring(p), NumberStyles.AllowHexSpecifier,CultureInfo.InvariantCulture)
@@ -2212,9 +2284,9 @@ namespace Microsoft.FSharp.Core
                 raise( new System.ArgumentNullException("s") )
             let s = s.Trim() 
             let l = s.Length 
-            let p = 0 
-            let p,sign = getSign32 s p l 
-            let p,specifier = get0OXB s p l 
+            let mutable p = 0 
+            let sign = getSign32 s &p l 
+            let specifier = get0OXB s &p l 
             if p >= l then formatError() else
             match Char.ToLower(specifier,CultureInfo.InvariantCulture(*FxCop:1304*)) with 
             | 'x' -> sign * (int32OfUInt32 (Convert.ToUInt32(UInt64.Parse(s.Substring(p), NumberStyles.AllowHexSpecifier,CultureInfo.InvariantCulture))))
@@ -2227,9 +2299,9 @@ namespace Microsoft.FSharp.Core
                 raise( new System.ArgumentNullException("s") )
             let s = s.Trim() 
             let l = s.Length 
-            let p = 0 
-            let p,sign = getSign64 s p l 
-            let p,specifier = get0OXB s p l 
+            let mutable p = 0 
+            let sign = getSign64 s &p l 
+            let specifier = get0OXB s &p l 
             if p >= l then formatError() else
             match Char.ToLower(specifier,CultureInfo.InvariantCulture(*FxCop:1304*)) with 
             | 'x' -> sign *. Int64.Parse(s.Substring(p), NumberStyles.AllowHexSpecifier,CultureInfo.InvariantCulture)
@@ -2242,8 +2314,8 @@ namespace Microsoft.FSharp.Core
                 raise( new System.ArgumentNullException("s") )
             let s = s.Trim() 
             let l = s.Length 
-            let p = 0 
-            let p,specifier = get0OXB s p l 
+            let mutable p = 0 
+            let specifier = get0OXB s &p l 
             if p >= l then formatError() else
             match specifier with 
             | 'x' -> UInt64.Parse(s.Substring(p), NumberStyles.AllowHexSpecifier,CultureInfo.InvariantCulture)
@@ -2521,10 +2593,16 @@ namespace Microsoft.FSharp.Core
         let CheckedMultiplyDynamic<'T,'U,'V> x n  = CheckedMultiplyDynamicImplTable<'T,'U,'V>.Impl x n
 
 
-#if FX_FSLIB_LAZY
+#if TARGET_SILVERLIGHT_5_0
+    type internal PrivateEnvironment = 
+        static member internal GetResourceString(name:string,_arguments:obj[]) = name
+        static member internal GetResourceString(name:string) = name
+
+#endif
+#if FX_NO_LAZY
 
     type internal PrivateEnvironment = 
-        static member internal GetResourceString(name:string,arguments:obj[]) = name
+        static member internal GetResourceString(name:string,_arguments:obj[]) = name
         static member internal GetResourceString(name:string) = name
 
 #if USE_FX_40_LAZY_ON_FX_20
@@ -2556,7 +2634,7 @@ namespace System
     open Microsoft.FSharp.Core.LanguagePrimitives.IntrinsicOperators
     open Microsoft.FSharp.Core.LanguagePrimitives.IntrinsicFunctions
 
-#if FX_FSLIB_TUPLE
+#if FX_NO_TUPLE
     type Tuple<'T1> with 
         interface IStructuralComparable with
             override t.CompareTo (other:obj,comparer:System.Collections.IComparer) =
@@ -3033,6 +3111,8 @@ namespace Microsoft.FSharp.Core
 
 
     type FSharpFunc<'T,'Res> with
+#if FX_NO_CONVERTER
+#else    
         [<CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2225:OperatorOverloadsHaveNamedAlternates")>]
         static member op_Implicit(f : System.Converter<_,_>) : ('T -> 'Res) =  (fun t -> f.Invoke(t))
         [<CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2225:OperatorOverloadsHaveNamedAlternates")>]
@@ -3040,7 +3120,7 @@ namespace Microsoft.FSharp.Core
 
         static member FromConverter(f : System.Converter<_,_>) : ('T -> 'Res) =  (fun t -> f.Invoke(t))
         static member ToConverter( f : ('T -> 'Res) ) =  new System.Converter<'T,'Res>(f)
-
+#endif
         static member InvokeFast(f:FSharpFunc<_,_>,(t:'T),(u:'Res))       = OptimizedClosures.invokeFast2(f,t,u) 
         static member InvokeFast(f:FSharpFunc<_,_>,(t:'T),(u:'Res),v)     = OptimizedClosures.invokeFast3(f,t,u,v)
         static member InvokeFast(f:FSharpFunc<_,_>,(t:'T),(u:'Res),v,w)   = OptimizedClosures.invokeFast4(f,t,u,v,w)
@@ -3050,7 +3130,10 @@ namespace Microsoft.FSharp.Core
     [<Sealed>]
     type FuncConvert = 
         static member  ToFSharpFunc( f : Action<_>) = (fun t -> f.Invoke(t))
+#if FX_NO_CONVERTER
+#else        
         static member  ToFSharpFunc( f : Converter<_,_>) = (fun t -> f.Invoke(t))
+#endif        
         static member FuncFromTupled (f:'T1 * 'T2 -> 'Res) = (fun a b -> f (a, b))
         static member FuncFromTupled (f:'T1 * 'T2 * 'T3 -> 'Res) = (fun a b c -> f (a, b, c))
         static member FuncFromTupled (f:'T1 * 'T2 * 'T3 * 'T4 -> 'Res) = (fun a b c d -> f (a, b, c, d))
@@ -3543,6 +3626,7 @@ namespace Microsoft.FSharp.Core
              when ^T : byte        and ^U : byte       = (# "conv.u1" (# "add" x y : uint32 #) : byte #)
              when ^T : string      and ^U : string     = (# "" (System.String.Concat((# "" x : string #),(# "" y : string #))) : ^T #)
              when ^T : decimal     and ^U : decimal    = (# "" (System.Decimal.op_Addition((# "" x : decimal #),(# "" y : decimal #))) : ^V #)
+
              // According to the somewhat subtle rules of static optimizations,
              // this condition is used whenever ^T is resolved to a nominal type
              // That is, not in the generic implementation of '+'
@@ -3973,7 +4057,8 @@ namespace Microsoft.FSharp.Core
             (^T : (static member op_Explicit: ^T -> float32) (x))
              when ^T : string     = ParseSingle (castToString x)
              when ^T : float     = (# "conv.r4" x  : float32 #)
-             when ^T : float32   = (# "" x  : float32 #)
+             // NOTE: float32 should convert its argument to 32-bit float even when applied to a higher precision float stored in a register. See devdiv2#49888.
+             when ^T : float32   = (# "conv.r4" x  : float32 #)
              when ^T : int64     = (# "conv.r4" x  : float32 #)
              when ^T : int32     = (# "conv.r4" x  : float32 #)
              when ^T : int16     = (# "conv.r4" x  : float32 #)
@@ -3991,7 +4076,8 @@ namespace Microsoft.FSharp.Core
         let inline float (x: ^T) = 
             (^T : (static member op_Explicit: ^T -> float) (x))
              when ^T : string     = ParseDouble (castToString x)
-             when ^T : float     = (# "" x  : float #)
+             // NOTE: float should convert its argument to 64-bit float even when applied to a higher precision float stored in a register. See devdiv2#49888.
+             when ^T : float     = (# "conv.r8" x  : float #)
              when ^T : float32   = (# "conv.r8" x  : float #)
              when ^T : int64     = (# "conv.r8" x  : float #)
              when ^T : int32     = (# "conv.r8" x  : float #)
@@ -4131,16 +4217,24 @@ namespace Microsoft.FSharp.Core
             [<Dependency("FSharp.Core",LoadHint.Always)>] 
             [<assembly: System.Runtime.CompilerServices.DefaultDependency(System.Runtime.CompilerServices.LoadHint.Always)>] 
 #endif
+
+#if FX_NO_COMVISIBLE
+#else
             [<assembly: System.Runtime.InteropServices.ComVisible(false)>]
+#endif            
             [<assembly: System.CLSCompliant(true)>]
 
 #if BE_SECURITY_TRANSPARENT
             [<assembly: System.Security.SecurityTransparent>] // assembly is fully transparent
+#if MONO
+#else
             [<assembly: System.Security.SecurityRules(System.Security.SecurityRuleSet.Level2)>] // v4 transparency; soon to be the default, but not yet
+#endif
 #else
 #if FX_NO_SECURITY_PERMISSIONS
 #else
 #if FX_SIMPLE_SECURITY_PERMISSIONS
+            // REVIEW: Need to choose a specific permission for the action to be applied to
             [<assembly: System.Security.Permissions.SecurityPermission(System.Security.Permissions.SecurityAction.RequestMinimum)>]
 #else
 #endif
@@ -4148,7 +4242,14 @@ namespace Microsoft.FSharp.Core
 #endif
             do ()
 
-#if FX_ATLEAST_40
+#if FX_NO_MONITOR_REPORTS_LOCKTAKEN
+        [<CompiledName("Lock")>]
+        let inline lock (lockobj : 'T when 'T : not struct) f  = 
+            System.Threading.Monitor.Enter(lockobj);
+            try f()
+            finally
+                System.Threading.Monitor.Exit(lockobj)
+#else
         [<CompiledName("Lock")>]
         let inline lock (lockobj : 'T when 'T : not struct) f  = 
             let mutable lockTaken = false
@@ -4158,13 +4259,6 @@ namespace Microsoft.FSharp.Core
             finally
                 if lockTaken then
                     System.Threading.Monitor.Exit(lockobj)
-#else
-        [<CompiledName("Lock")>]
-        let inline lock (lockobj : 'T when 'T : not struct) f  = 
-            System.Threading.Monitor.Enter(lockobj);
-            try f()
-            finally
-                System.Threading.Monitor.Exit(lockobj)
 #endif
 
 
@@ -4177,6 +4271,8 @@ namespace Microsoft.FSharp.Core
         [<CompiledName("TypeOf")>]
         let inline typeof<'T> = BasicInlinedOperations.typeof<'T>
 
+        [<CompiledName("MethodHandleOf")>]
+        let methodhandleof (_call: ('T -> 'TResult)) : System.RuntimeMethodHandle = raise (Exception "may not call directly, should always be optimized away")
 
         [<CompiledName("TypeDefOf")>]
         let inline typedefof<'T> = BasicInlinedOperations.typedefof<'T>
@@ -4195,6 +4291,8 @@ namespace Microsoft.FSharp.Core
         [<CompiledName("Identity")>]
         let id x = x
 
+#if FX_NO_SYSTEM_CONSOLE
+#else
         // std* are TypeFunctions with the effect of reading the property on instantiation.
         // So, direct uses of stdout should capture the current System.Console.Out at that point.
         [<CompiledName("ConsoleIn")>]
@@ -4205,10 +4303,13 @@ namespace Microsoft.FSharp.Core
 
         [<CompiledName("ConsoleError")>]
         let stderr<'T> = System.Console.Error
-
+#endif
             
 
         module Unchecked = 
+
+            [<CompiledName("Unbox")>]
+            let inline unbox<'T> (v:obj) = unboxPrim<'T> v
 
             [<CompiledName("DefaultOf")>]
             let inline defaultof<'T> = unsafeDefault<'T>
@@ -4511,6 +4612,16 @@ namespace Microsoft.FSharp.Core
                  when ^T : char       = (# "conv.ovf.i.un" x  : nativeint #)
                  when ^T : unativeint = (# "conv.ovf.i.un" x  : nativeint #)
                  when ^T : byte     = (# "conv.ovf.i.un" x  : nativeint #)
+
+#if NAN_INFINITY_MEASURES
+        module Measure =
+
+            let infinity<[<Measure>] 'Measure> : float<'Measure> = LanguagePrimitives.FloatWithMeasure System.Double.PositiveInfinity
+            let nan<[<Measure>] 'Measure> : float<'Measure> = LanguagePrimitives.FloatWithMeasure System.Double.NaN
+
+            let infinityf<[<Measure>] 'Measure> : float32<'Measure> = LanguagePrimitives.Float32WithMeasure System.Single.PositiveInfinity
+            let nanf<[<Measure>] 'Measure> : float32<'Measure> = LanguagePrimitives.Float32WithMeasure System.Single.NaN
+#endif
 
         module OperatorIntrinsics =  begin
 
@@ -5495,7 +5606,7 @@ namespace Microsoft.FSharp.Core
 
 //============================================================================
 //============================================================================
-#if FX_FSLIB_LAZY
+#if FX_NO_LAZY
 #if USE_FX_40_LAZY_ON_FX_20
 namespace System.Threading
     open System.Diagnostics
@@ -5584,7 +5695,7 @@ namespace Microsoft.FSharp.Control
 
     module LazyExtensions = 
         type System.Lazy<'T> with
-#if FX_FSLIB_LAZY
+#if FX_NO_LAZY
             [<CompiledName("Create")>] // give the extension member a 'nice', unmangled compiled name, unique within this module
             static member Create(f : unit -> 'T) : Lazy<'T> = 
                 System.Lazy<'T> (value = Unchecked.defaultof<'T>, funcOrException = box(f) )
@@ -5626,7 +5737,7 @@ namespace Microsoft.FSharp.Control
 //============================================================================
 //============================================================================
 
-#if FX_FSLIB_IOBSERVABLE
+#if FX_NO_IOBSERVABLE
 namespace System
 
     open Microsoft.FSharp.Core
@@ -5747,7 +5858,7 @@ namespace Microsoft.FSharp.Control
     [<assembly: SuppressMessage("Microsoft.Design", "CA1034:NestedTypesShouldNotBeVisible", Scope="type", Target="Microsoft.FSharp.Collections.FSharpList`1+_Cons",Justification="Public discriminated unions compile to nested types with names containing underscores and are allowed in FSharp.Core.dll because they are used to implement language primitives")>]
     [<assembly: SuppressMessage("Microsoft.Design", "CA1034:NestedTypesShouldNotBeVisible", Scope="type", Target="Microsoft.FSharp.Collections.FSharpList`1+_Empty",Justification="Public discriminated unions compile to nested types with names containing underscores and are allowed in FSharp.Core.dll because they are used to implement language primitives")>]
 
-#if FX_FSLIB_TUPLE
+#if FX_NO_TUPLE
     [<assembly: SuppressMessage("Microsoft.Design", "CA1036:OverrideMethodsOnComparableTypes", Scope="type", Target="System.Tuple`1",Justification="This type matches the design of Dev10 tuples")>]
     [<assembly: SuppressMessage("Microsoft.Design", "CA1036:OverrideMethodsOnComparableTypes", Scope="type", Target="System.Tuple`2",Justification="This type matches the design of Dev10 tuples")>]
     [<assembly: SuppressMessage("Microsoft.Design", "CA1036:OverrideMethodsOnComparableTypes", Scope="type", Target="System.Tuple`3",Justification="This type matches the design of Dev10 tuples")>]

@@ -135,6 +135,8 @@ type BigIntType() =
         Assert.AreEqual(BigInteger.One,1I)
         
         ()
+#if FSHARP_CORE_PORTABLE
+#else
     [<Test>]
     member this.Parse() = 
         Assert.AreEqual(BigInteger.Parse("12345678901234567890"),
@@ -146,6 +148,7 @@ type BigIntType() =
         CheckThrowsFormatException(fun() -> BigInteger.Parse("") |> ignore)
         
         ()
+#endif
         
     [<Test>]
     member this.Pow() = 

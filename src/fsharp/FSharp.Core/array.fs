@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2011 Microsoft Corporation. 
+// Copyright (c) 2002-2012 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -22,6 +22,10 @@ namespace Microsoft.FSharp.Collections
     open Microsoft.FSharp.Core.LanguagePrimitives.IntrinsicOperators
     open Microsoft.FSharp.Core.SR
     open Microsoft.FSharp.Core.LanguagePrimitives.ErrorStrings
+#if FX_NO_ICLONEABLE
+    open Microsoft.FSharp.Core.ICloneableExtensions            
+#else
+#endif    
 
     /// Basic operations on arrays
     [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
@@ -668,7 +672,8 @@ namespace Microsoft.FSharp.Collections
                 target.[i] <- x
             
 
-#if FX_ATLEAST_40   
+#if FX_NO_TPL_PARALLEL
+#else
         module Parallel =
             open System.Threading.Tasks
             

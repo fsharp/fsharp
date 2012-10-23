@@ -1,6 +1,5 @@
 //----------------------------------------------------------------------------
-//
-// Copyright (c) 2002-2011 Microsoft Corporation. 
+// Copyright (c) 2002-2012 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -140,20 +139,23 @@ module ExtraTopLevelOperators =
     [<CompiledName("PrintFormatToTextWriter")>]
     let fprintf (os:TextWriter)  fp = Printf.fprintf os  fp 
 
+    [<CompiledName("PrintFormatLineToTextWriter")>]
+    let fprintfn (os:TextWriter) fp = Printf.fprintfn os fp 
+    
+#if FX_NO_SYSTEM_CONSOLE
+#else    
     [<CompiledName("PrintFormat")>]
     let printf      fp = Printf.printf      fp 
 
     [<CompiledName("PrintFormatToError")>]
     let eprintf     fp = Printf.eprintf     fp 
 
-    [<CompiledName("PrintFormatLineToTextWriter")>]
-    let fprintfn (os:TextWriter) fp = Printf.fprintfn os fp 
-
     [<CompiledName("PrintFormatLine")>]
     let printfn     fp = Printf.printfn     fp 
 
     [<CompiledName("PrintFormatLineToError")>]
     let eprintfn    fp = Printf.eprintfn    fp 
+#endif
 
     [<CompiledName("FailWith")>]
     let failwith s = raise (Failure s)
@@ -188,10 +190,140 @@ module ExtraTopLevelOperators =
     [<assembly: AutoOpen("Microsoft.FSharp.Core")>]
     [<assembly: AutoOpen("Microsoft.FSharp.Collections")>]
     [<assembly: AutoOpen("Microsoft.FSharp.Control")>]
+#if QUERIES_IN_FSLIB
+    [<assembly: AutoOpen("Microsoft.FSharp.Linq.QueryRunExtensions.LowPriority")>]
+    [<assembly: AutoOpen("Microsoft.FSharp.Linq.QueryRunExtensions.HighPriority")>]
+#endif
     do()
 
     [<CompiledName("LazyPattern")>]
     let (|Lazy|) (x:Lazy<_>) = x.Force()
+
+
+#if QUERIES_IN_FSLIB
+    let query = Microsoft.FSharp.Linq.QueryBuilder()
+#if EXTRA_DEBUG
+    let queryexpr = Microsoft.FSharp.Linq.QueryExprBuilder()
+    let queryexprpretrans = Microsoft.FSharp.Linq.QueryExprPreTransBuilder()
+    let queryexprpreelim = Microsoft.FSharp.Linq.QueryExprPreEliminateNestedBuilder()
+    let queryquote = Microsoft.FSharp.Linq.QueryQuoteBuilder()
+    let querylinqexpr = Microsoft.FSharp.Linq.QueryLinqExprBuilder()
+#endif
+
+
+#endif
+#if PUT_TYPE_PROVIDERS_IN_FSCORE
+namespace Microsoft.FSharp.Core.CompilerServices
+
+    open System
+    open System.Reflection
+    open System.Linq.Expressions
+    open System.Collections.Generic
+    open Microsoft.FSharp.Core
+
+
+    /// <summary>Represents the product of two measure expressions when returned as a generic argument of a provided type.</summary>
+    [<Sealed>]
+    type MeasureProduct<'Measure1, 'Measure2>() = class end
+
+    /// <summary>Represents the inverse of a measure expressions when returned as a generic argument of a provided type.</summary>
+    [<Sealed>]
+    type MeasureInverse<'Measure>  = class end
+
+    /// <summary>Represents the '1' measure expression when returned as a generic argument of a provided type.</summary>
+    [<Sealed>]
+    type MeasureOne  = class end
+
+    [<AttributeUsage(AttributeTargets.Class, AllowMultiple = false)>]
+    type TypeProviderAttribute() =
+        inherit System.Attribute()
+
+    [<AttributeUsage(AttributeTargets.Assembly, AllowMultiple = false)>]
+    type TypeProviderAssemblyAttribute(assemblyName : string) = 
+        inherit System.Attribute()
+        new () = TypeProviderAssemblyAttribute(null)
+        member __.AssemblyName = assemblyName
+
+    [<AttributeUsage(AttributeTargets.All, AllowMultiple = false)>]
+    type TypeProviderXmlDocAttribute(commentText: string) = 
+        inherit System.Attribute()
+        member __.CommentText = commentText
+
+    [<AttributeUsage(AttributeTargets.All, AllowMultiple = false)>]
+    type TypeProviderDefinitionLocationAttribute() = 
+        inherit System.Attribute()
+        let mutable filePath : string = null
+        let mutable line : int = 0
+        let mutable column : int = 0
+        member this.FilePath with get() = filePath and set v = filePath <- v
+        member this.Line with get() = line and set v = line <- v
+        member this.Column with get() = column and set v = column <- v
+
+    [<AttributeUsage(AttributeTargets.Class ||| AttributeTargets.Interface ||| AttributeTargets.Struct ||| AttributeTargets.Delegate, AllowMultiple = false)>]
+    type TypeProviderEditorHideMethodsAttribute() = 
+        inherit System.Attribute()
+
+    /// <summary>Additional type attribute flags related to provided types</summary>
+    type TypeProviderTypeAttributes =
+        | SuppressRelocate = 0x80000000
+        | IsErased = 0x40000000
+
+    type TypeProviderConfig( systemRuntimeContainsType : string -> bool ) =
+        let mutable resolutionFolder      : string   = null  
+        let mutable runtimeAssembly       : string   = null  
+        let mutable referencedAssemblies  : string[] = null  
+        let mutable temporaryFolder       : string   = null  
+        let mutable isInvalidationSupported : bool   = false 
+        let mutable useResolutionFolderAtRuntime : bool = false
+        let mutable systemRuntimeAssemblyVersion : System.Version = null
+        member this.ResolutionFolder         with get() = resolutionFolder        and set v = resolutionFolder <- v
+        member this.RuntimeAssembly          with get() = runtimeAssembly         and set v = runtimeAssembly <- v
+        member this.ReferencedAssemblies     with get() = referencedAssemblies    and set v = referencedAssemblies <- v
+        member this.TemporaryFolder          with get() = temporaryFolder         and set v = temporaryFolder <- v
+        member this.IsInvalidationSupported  with get() = isInvalidationSupported and set v = isInvalidationSupported <- v
+        member this.IsHostedExecution with get() = useResolutionFolderAtRuntime and set v = useResolutionFolderAtRuntime <- v
+        member this.SystemRuntimeAssemblyVersion  with get() = systemRuntimeAssemblyVersion and set v = systemRuntimeAssemblyVersion <- v
+        member this.SystemRuntimeContainsType (typeName : string) = systemRuntimeContainsType typeName
+
+#if FX_NO_CUSTOMATTRIBUTEDATA
+    type IProvidedCustomAttributeTypedArgument =
+        abstract ArgumentType: System.Type
+        abstract Value: System.Object
+
+    type IProvidedCustomAttributeNamedArgument =
+        abstract ArgumentType: System.Type
+        abstract MemberInfo: System.Reflection.MemberInfo
+        abstract TypedValue: IProvidedCustomAttributeTypedArgument
+
+    type IProvidedCustomAttributeData =
+        abstract Constructor: System.Reflection.ConstructorInfo
+        abstract ConstructorArguments: System.Collections.Generic.IList<IProvidedCustomAttributeTypedArgument>
+        abstract NamedArguments: System.Collections.Generic.IList<IProvidedCustomAttributeNamedArgument>
+#endif
+
+    type IProvidedNamespace =
+        abstract NamespaceName : string
+        abstract GetNestedNamespaces : unit -> IProvidedNamespace[] 
+        abstract GetTypes : unit -> Type[] 
+        abstract ResolveTypeName : typeName: string -> Type
+
+    type ITypeProvider =
+        inherit System.IDisposable
+        abstract GetNamespaces : unit -> IProvidedNamespace[] 
+        abstract GetStaticParameters : typeWithoutArguments:Type -> ParameterInfo[] 
+        abstract ApplyStaticArguments : typeWithoutArguments:Type * typePathWithArguments:string[] * staticArguments:obj[] -> Type 
+        abstract GetInvokerExpression : syntheticMethodBase:MethodBase * parameters:Microsoft.FSharp.Quotations.Expr[] -> Microsoft.FSharp.Quotations.Expr
+
+        [<CLIEvent>]
+        abstract Invalidate : Microsoft.FSharp.Control.IEvent<System.EventHandler, System.EventArgs>
+        abstract GetGeneratedAssemblyContents : assembly:System.Reflection.Assembly -> byte[]
+
+#if FX_NO_CUSTOMATTRIBUTEDATA
+        abstract GetMemberCustomAttributesData : assembly:System.Reflection.MemberInfo -> System.Collections.Generic.IList<IProvidedCustomAttributeData>
+        abstract GetParameterCustomAttributesData : assembly:System.Reflection.ParameterInfo -> System.Collections.Generic.IList<IProvidedCustomAttributeData>
+#endif
+
+#endif
 
 #if EXTRAS_FOR_SILVERLIGHT_COMPILER
 namespace Microsoft.FSharp
@@ -255,5 +387,4 @@ namespace Microsoft.FSharp
             printf "%s" (String.Format(format, arg0, arg1, arg2, arg3))
         static member Write(format: string, [<ParamArray>] arg: obj[]) =
             printf "%s" (String.Format(format, arg))
-
 #endif

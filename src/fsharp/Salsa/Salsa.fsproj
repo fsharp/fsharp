@@ -1,0 +1,86 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <FSharpSourcesRoot>..\..</FSharpSourcesRoot>
+  </PropertyGroup>
+  <Import Project="$(FSharpSourcesRoot)\FSharpTeam.Settings.targets" Condition=" Exists('$(FSharpSourcesRoot)\FSharpTeam.targets') " />
+  <Import Project="$(FSharpSourcesRoot)\FSharpSource.Settings.targets" Condition=" !Exists('$(FSharpSourcesRoot)\FSharpTeam.targets') " />
+  <PropertyGroup>
+    <ReferenceMSBuildAssemblies>true</ReferenceMSBuildAssemblies>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <SchemaVersion>2.0</SchemaVersion>
+    <AllowCrossTargeting>true</AllowCrossTargeting>
+    <TargetFrameworkVersion Condition=" '$(TargetFrameworkVersion)' == '' ">v3.5</TargetFrameworkVersion>
+    <ReferenceVsAssemblies>true</ReferenceVsAssemblies>
+    <ProjectGuid>{fbd4b354-dc6e-4032-8ec7-c81d8dfb1af7}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AssemblyName>Salsa</AssemblyName>
+    <NoWarn>$(NoWarn);45;47;52;58;75</NoWarn>
+    <OtherFlags>--maxerrors:100</OtherFlags>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\..\assemblyinfo\assemblyinfo.Salsa.dll.fs">
+      <Link>assemblyinfo.Salsa.dll.fs</Link>
+    </Compile>
+    <Compile Include="..\..\utils\CompilerLocationUtils.fs">
+      <Link>CompilerLocationUtils.fs</Link>
+    </Compile>
+    <Compile Include="..\unittests\TestLib.Utils.fs">
+      <Link>UnitTestUtils.fs</Link>
+    </Compile>
+    <Compile Include="InternalsVisibleTo.fs" />
+    <Compile Include="VsMocks.fs" />
+    <Compile Include="Salsa.fsi" />
+    <Compile Include="Salsa.fs" />
+    <Compile Include="SalsaUtils.fsi" />
+    <Compile Include="SalsaUtils.fs" />
+    <None Include="Salsa.dll.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="nunit.framework">
+      <Name>nunit.framework</Name>
+      <AssemblyName>nunit.framework.dll</AssemblyName>
+      <HintPath>..\..\..\tools\nunit\nunit.framework.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.ComponentModel.Composition" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="Microsoft.VisualStudio.Text.Data" />
+    <Reference Include="Microsoft.VisualStudio.CoreUtility" />
+    <ProjectReference Include="..\FSharp.Build\FSharp.Build.fsproj">
+      <Name>FSharp.Build</Name>
+      <Project>{702a7979-bcf9-4c41-853e-3adfc9897890}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\vs\FsPkgs\FSharp.LanguageService\FSharp.LanguageService.Base\FSharp.LanguageService.Base.csproj">
+      <Name>FSharp.LanguageService.Base</Name>
+      <Project>{1c5c163c-37ea-4a3c-8ccc-0d34b74bf8ef}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\vs\FsPkgs\FSharp.LanguageService\FSharp.LanguageService.fsproj">
+      <Name>FSharp.LanguageService</Name>
+      <Project>{ee85aab7-cda0-4c4e-bda0-a64ccc413e3f}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\vs\FsPkgs\FSharp.Project\Common.Source.CSharp\Project\ProjectSystem.Base.csproj">
+      <Name>ProjectSystem.Base</Name>
+      <Project>{b700e38b-f8c0-4e49-b5ec-db7b7ac0c4e7}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\FSharp.Compiler\FSharp.Compiler.fsproj">
+      <Name>FSharp.Compiler</Name>
+      <Project>{2E4D67B4-522D-4CF7-97E4-BA940F0B18F3}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\vs\FsPkgs\FSharp.Project\FS\ProjectSystem.fsproj">
+      <Name>ProjectSystem</Name>
+      <Project>{6196b0f8-caea-4cf1-af82-1b520f77fe44}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(FSharpSourcesRoot)\FSharpTeam.targets" />
+</Project>

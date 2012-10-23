@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2011 Microsoft Corporation. 
+// Copyright (c) 2002-2012 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -621,7 +621,8 @@ namespace Microsoft.FSharp.Collections
         [<CompiledName("Zip3")>]
         val zip3: array1:'T1[] -> array2:'T2[] -> array3:'T3[] -> ('T1 * 'T2 * 'T3)[]
 
-#if FX_ATLEAST_40
+#if FX_NO_TPL_PARALLEL
+#else
         /// <summary>Provides parallel operations on arrays </summary>
         module Parallel =
 

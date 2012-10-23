@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2011 Microsoft Corporation. 
+// Copyright (c) 2002-2012 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -27,6 +27,11 @@ type QuotationTranslationEnv =
 exception InvalidQuotedTerm of exn
 exception IgnoringPartOfQuotedTermWarning of string * Range.range
 
-val ConvExprPublic : Env.TcGlobals * Import.ImportMap * CcuThunk * bool -> QuotationTranslationEnv -> Expr -> TType list * Expr list * QuotationPickler.ExprData 
-val ConvMethodBase  : Env.TcGlobals * Import.ImportMap * CcuThunk * bool -> QuotationTranslationEnv ->  Val  -> QuotationPickler.MethodBaseData
+[<RequireQualifiedAccess>]
+type IsReflectedDefinition =
+|   Yes
+|   No
+val ConvExprPublic : Env.TcGlobals * Import.ImportMap * CcuThunk * IsReflectedDefinition -> QuotationTranslationEnv -> Expr -> TType list * Expr list * QuotationPickler.ExprData 
+val ConvMethodBase  : Env.TcGlobals * Import.ImportMap * CcuThunk -> QuotationTranslationEnv ->  string * Val  -> QuotationPickler.MethodBaseData
+
 

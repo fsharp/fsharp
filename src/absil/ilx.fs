@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2011 Microsoft Corporation. 
+// Copyright (c) 2002-2012 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -24,16 +24,30 @@ open Microsoft.FSharp.Compiler.AbstractIL.Internal.Library
 // Define an extension of the IL instruction algebra
 // -------------------------------------------------------------------- 
 
+let mkLowerName (nm: string) =
+    // Use the lower case name of a field or constructor as the field/parameter name if it differs from the uppercase name
+    let lowerName = String.uncapitalize nm
+    if lowerName = nm then "_" + nm else lowerName
+
+[<Sealed>]
+type IlxUnionField(fd: ILFieldDef) =
+    let lowerName = mkLowerName fd.Name
+    member x.ILField = fd
+    member x.Type = x.ILField.Type
+    member x.Name = x.ILField.Name
+    member x.LowerName = lowerName
+    
+
 type IlxUnionAlternative = 
     { altName: string;
-      altFields: ILFieldDef[];
+      altFields: IlxUnionField[];
       altCustomAttrs: ILAttributes }
 
     member x.FieldDefs = x.altFields
     member x.FieldDef n = x.altFields.[n]
     member x.Name = x.altName
     member x.IsNullary  = (x.FieldDefs.Length = 0)
-    member x.FieldTypes = x.FieldDefs |> Array.toList |> List.map (fun fd -> fd.Type) 
+    member x.FieldTypes = x.FieldDefs |> Array.map (fun fd -> fd.Type) 
 
 type IlxUnionHasHelpers = 
    | NoHelpers
@@ -42,11 +56,11 @@ type IlxUnionHasHelpers =
    | SpecialFSharpOptionHelpers 
    
 type IlxUnionRef = 
-    | IlxUnionRef of ILTypeRef * IlxUnionAlternative array * bool * (* hasHelpers: *) IlxUnionHasHelpers 
+    | IlxUnionRef of ILTypeRef * IlxUnionAlternative[] * bool * (* hasHelpers: *) IlxUnionHasHelpers 
 
 type IlxUnionSpec = 
     | IlxUnionSpec of IlxUnionRef * ILGenericArgs
-    member x.EnclosingType = let (IlxUnionSpec(IlxUnionRef(tref,_,_,_),inst)) = x in mkILBoxedTy tref inst
+    member x.EnclosingType = let (IlxUnionSpec(IlxUnionRef(tref,_,_,_),inst)) = x in mkILBoxedTyRaw tref inst
     member x.TypeRef = let (IlxUnionSpec(IlxUnionRef(tref,_,_,_),_)) = x in tref
     member x.GenericArgs = let (IlxUnionSpec(_,inst)) = x in inst
     member x.AlternativesArray = let (IlxUnionSpec(IlxUnionRef(_,alts,_,_),_)) = x in alts
@@ -54,7 +68,6 @@ type IlxUnionSpec =
     member x.HasHelpers = let (IlxUnionSpec(IlxUnionRef(_,_,_,b),_)) = x in b
     member x.Alternatives = Array.toList x.AlternativesArray
     member x.Alternative idx = x.AlternativesArray.[idx]
-
     member x.FieldDef idx fidx = x.Alternative(idx).FieldDef(fidx)
 
 
@@ -94,20 +107,23 @@ let mkILFreeVar (name,compgen,ty) =
 
 
 type IlxClosureRef = 
-    | IlxClosureRef of ILTypeRef * IlxClosureLambdas * IlxClosureFreeVar list 
-
+    | IlxClosureRef of ILTypeRef * IlxClosureLambdas * IlxClosureFreeVar[]
+    
 type IlxClosureSpec = 
-    | IlxClosureSpec of IlxClosureRef * ILGenericArgs
+    | IlxClosureSpec of IlxClosureRef * ILGenericArgs * ILType
     member x.TypeRef = let (IlxClosureRef(tref,_,_)) = x.ClosureRef in tref
-    member x.ClosureRef = let (IlxClosureSpec(cloref,_)) = x in cloref 
-    member x.FormalFreeVarType n = let (IlxClosureRef(_,_,fvs)) = x.ClosureRef in (List.nth fvs n).fvType
-    member x.ActualFreeVarType n = instILType x.GenericArgs (x.FormalFreeVarType n)
+    member x.ILType = let (IlxClosureSpec(_,_,ty)) = x in ty
+    member x.ClosureRef = let (IlxClosureSpec(cloref,_,_)) = x in cloref 
     member x.FormalFreeVars = let (IlxClosureRef(_,_,fvs)) = x.ClosureRef in fvs
-    member x.ActualFreeVars = List.map (fun fv -> {fv with fvType = instILType x.GenericArgs fv.fvType}) x.FormalFreeVars
-    member x.ActualLambdas = instLambdas x.GenericArgs x.FormalLambdas
     member x.FormalLambdas = let (IlxClosureRef(_,lambdas,_)) = x.ClosureRef in lambdas
-    member x.GenericArgs = let (IlxClosureSpec(_,inst)) = x in inst
-
+    member x.GenericArgs = let (IlxClosureSpec(_,inst,_)) = x in inst
+    static member Create (cloref, inst) = 
+        let (IlxClosureRef(tref,_,_)) = cloref
+        IlxClosureSpec(cloref, inst, mkILBoxedType (mkILTySpecRaw(tref, inst)))
+    member clospec.Constructor = 
+        let cloTy = clospec.ILType
+        let fields = clospec.FormalFreeVars
+        mkILCtorMethSpecForTy (cloTy,fields |> Array.map (fun fv -> fv.fvType) |> Array.toList)
 
 
 type IlxInstr = 
@@ -122,20 +138,12 @@ type IlxInstr =
   | EI_newdata of IlxUnionSpec * int
   
   // Closures
-  | EI_newclo of IlxClosureSpec
-  | EI_castclo of IlxClosureSpec
-  | EI_isclo of IlxClosureSpec
-  | EI_callclo of ILTailcall * IlxClosureSpec * IlxClosureApps
-  | EI_stclofld  of (IlxClosureSpec * int)  (* nb. leave these brackets *)
-  | EI_stenv  of int
-  | EI_ldenv  of int
-  | EI_ldenva  of int
   | EI_callfunc of ILTailcall * IlxClosureApps
 
 let destinations i =
   match i with 
   |  (EI_brisdata (_,_,_,l1,l2)) ->  [l1; l2]
-  |  (EI_callfunc (Tailcall,_)) |  (EI_callclo (Tailcall,_,_)) ->   []
+  |  (EI_callfunc (Tailcall,_)) ->   []
   |  (EI_datacase (_,_,ls,l)) -> l:: (List.foldBack (fun (_,l) acc -> ListSet.insert l acc) ls [])
   | _ -> []
 
@@ -147,7 +155,7 @@ let fallthrough i =
 
 let isTailcall i = 
   match i with 
-  |  (EI_callfunc (Tailcall,_)) |  (EI_callclo (Tailcall,_,_)) -> true
+  |  (EI_callfunc (Tailcall,_)) -> true
   | _ -> false
 
 let remapIlxLabels lab2cl i = 
@@ -168,7 +176,7 @@ let mkIlxInstr i = I_other (mkIlxExtInstr i)
 // Define an extension of the IL algebra of type definitions
 type IlxClosureInfo = 
     { cloStructure: IlxClosureLambdas;
-      cloFreeVars: IlxClosureFreeVar list;  
+      cloFreeVars: IlxClosureFreeVar[];  
       cloCode: Lazy<ILMethodBody>;
       cloSource: ILSourceMarker option}
 
@@ -198,7 +206,7 @@ let mkIlxTypeDefKind i = ILTypeDefKind.Other (mkIlxExtTypeDefKind i)
 
 let destTyFuncApp = function Apps_tyapp (b,c) -> b,c | _ -> failwith "destTyFuncApp"
 
-let mkILFormalCloRef gparams csig = IlxClosureSpec(csig, mkILFormalGenericArgs gparams)
+let mkILFormalCloRef gparams csig = IlxClosureSpec.Create(csig, mkILFormalGenericArgsRaw gparams)
 
 let actualTypOfIlxUnionField (cuspec : IlxUnionSpec) idx fidx =
   instILType cuspec.GenericArgs (cuspec.FieldDef idx fidx).Type
