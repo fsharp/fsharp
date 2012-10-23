@@ -26,9 +26,9 @@ To emphasize, this distribution should not be seen as a way to "get" an F# compi
 
 ##What do I get when I compile?
 
-When you build the compiler using the standard instructions below, you get fsc.exe, fsi.exe, FSharp.Core.dll, FSharp.Compiler.dll and some related DLLs.
+When you build the compiler using the standard instructions below, you get `fsc.exe`, `fsi.exe`, `FSharp.Core.dll`, `FSharp.Compiler.dll` and some related DLLs.
 
-The compiler binaries produced are "private" and strong-named signed with a test key (src\fsharp\test.snk). They use CLI assembly version nunmber 2.9.9.999. You can place these components in the GAC but they will not replace the components used by normal Visual Studio or normal F# programs.
+The compiler binaries produced are "private" and strong-named signed with a test key (`src\fsharp\test.snk`). They use CLI assembly version nunmber 2.9.9.999. You can place these components in the GAC but they will not replace the components used by normal Visual Studio or normal F# programs.
 
 
 ##Steps - Building a Proto Compiler
@@ -39,7 +39,7 @@ gacutil /i ..\lkg\FSharp-2.0.50726.900\bin\FSharp.Core.dll
 msbuild fsharp-proto-build.proj /p:TargetFramework=net40
 ```
 
-Note: Make sure you run the .NET 4.0 msbuild.exe, e.g. C:\Windows\Microsoft.NET\Framework\v4.0.30319\MSBuild.exe.
+Note: Make sure you run the .NET 4.0 `msbuild.exe`, e.g. `C:\Windows\Microsoft.NET\Framework\v4.0.30319\MSBuild.exe`.
 
 Optional: NGEN the Proto Compiler for faster future startup (optional)
 
@@ -52,7 +52,7 @@ This uses the proto compiler to build the FSharp.Core library, for Mono/.NET 4.0
 
 `msbuild fsharp-library-build.proj /p:TargetFramework=net40`
 
-Note: Make sure you run the .NET 4.0 msbuild.exe, e.g. C:\Windows\Microsoft.NET\Framework\v4.0.30319\MSBuild.exe.
+Note: Make sure you run the .NET 4.0 `msbuild.exe`, e.g. `C:\Windows\Microsoft.NET\Framework\v4.0.30319\MSBuild.exe`.
 
 
 ##Steps - Building the F# Compiler
@@ -68,13 +68,17 @@ Note: Make sure you run the .NET 4.0 `msbuild.exe`, e.g. `C:\Windows\Microsoft.N
 
 This builds `FSharp.Compiler.Silverlight.dll` which is a Silverlight 5.0 component for hosting in the browser.
 
--- Debug configuration for browser-hosted compiler for Silverlight 5.0:
-msbuild fsharp-library-build.proj  /p:TargetFramework=sl5-compiler
-msbuild fsharp-compiler-build.proj  /p:TargetFramework=sl5-compiler
+*Debug configuration for browser-hosted compiler for Silverlight 5.0:*
+```
+msbuild fsharp-library-build.proj /p:TargetFramework=sl5-compiler
+msbuild fsharp-compiler-build.proj /p:TargetFramework=sl5-compiler
+```
 
--- Release configuration for browser-hosted compiler for Silverlight 5.0:
-msbuild fsharp-library-build.proj  /p:TargetFramework=sl5-compiler /p:Configuration=Release
-msbuild fsharp-compiler-build.proj  /p:TargetFramework=sl5-compiler /p:Configuration=Release
+*Release configuration for browser-hosted compiler for Silverlight 5.0:*
+```
+msbuild fsharp-library-build.proj /p:TargetFramework=sl5-compiler /p:Configuration=Release
+msbuild fsharp-compiler-build.proj /p:TargetFramework=sl5-compiler /p:Configuration=Release
+```
 
 The binaries are placed in `Debug\sl5-compiler`, `Release\sl5-compiler`, `Debug\sl5-compiler` and/or `Release\sl5-compiler`. A custom `FSharp.Core.dll` is used for this configuration, be sure to reference it rather than any other `FSharp.Core.dll` for Silverlight. You may have to edit your project file by hand to ensure you get exactly the right reference to `FSharp.Core.dll`.
 
@@ -82,16 +86,18 @@ The binaries are placed in `Debug\sl5-compiler`, `Release\sl5-compiler`, `Debug\
 ##Building the F# core library for alternative CLI/.NET/CIL implementations
 
 ```
-msbuild fsharp-library-build.proj /p:TargetFramework=net20 
-msbuild fsharp-library-build.proj /p:TargetFramework=sl3-wp 
-msbuild fsharp-library-build.proj /p:TargetFramework=sl5  
+msbuild fsharp-library-build.proj /p:TargetFramework=net20
+msbuild fsharp-library-build.proj /p:TargetFramework=sl3-wp
+msbuild fsharp-library-build.proj /p:TargetFramework=sl5
+```
 
+```
 msbuild fsharp-library-build.proj /p:TargetFramework=net20 /p:Configuration=Release
 msbuild fsharp-library-build.proj /p:TargetFramework=sl3-wp /p:Configuration=Release
 msbuild fsharp-library-build.proj /p:TargetFramework=sl5 /p:Configuration=Release
 ```
 
-Here net20 gives a runtime for .NET 2.0-3.5, sl3-wp gives a runtime for Windows Phone 7, and sl5 gives a runtime for Silverlight 5.
+Here **net20** gives a runtime for .NET 2.0-3.5, **sl3-wp** gives a runtime for Windows Phone 7, and **sl5** gives a runtime for Silverlight 5.
 
 
 ##Steps - Building F# Core Unit Tests for .NET 4.x (optional)
@@ -100,7 +106,7 @@ This uses the proto compiler to build the unit tests that check some parts of `F
 
 `msbuild fsharp-library-unittests-build.proj /p:TargetFramework=net40`
 
-Note: You must have NUnit installed.
+*Note: You must have NUnit installed.*
 
 
 ##Steps - Running Compiler tests (on Windows)
@@ -139,12 +145,12 @@ sn -Vr FSharp.Core,*
 gacutil /i Debug\net40\bin\FSharp.Core.dll
 ```
 
-However, this is not recommended except in the rare case you are adding extra functionality to FSharp.Core - it is better to just continue to run with the `FSharp.Core` that comes with Visual Studio 2012.
+However, this is not recommended except in the rare case you are adding extra functionality to `FSharp.Core` - it is better to just continue to run with the `FSharp.Core` that comes with Visual Studio 2012.
 
 
 ##Preparing for inclusion in Mono
 
-Building for the *mono20* and *mono40* frameworks gives strong-named, delay-signed assemblies with the `msfinal.pub` key and standard version numbers such as 2.0.0.0, 2.3.0.0, 4.0.0.0 and 4.3.0.0. You complete the signing of these assemblies using [http://github.com/fsharp/fsharp/raw/master/mono.snk](http://github.com/fsharp/fsharp/raw/master/mono.snk). These assemblies will not run if you already have a version of them installed in your GAC (e.g. if you have Visual Studio 2012).
+Building for the **mono20** and **mono40** frameworks gives strong-named, delay-signed assemblies with the `msfinal.pub` key and standard version numbers such as 2.0.0.0, 2.3.0.0, 4.0.0.0 and 4.3.0.0. You complete the signing of these assemblies using [http://github.com/fsharp/fsharp/raw/master/mono.snk](http://github.com/fsharp/fsharp/raw/master/mono.snk). These assemblies will not run if you already have a version of them installed in your GAC (e.g. if you have Visual Studio 2012).
 
 ```
 sn -R ..\Debug\mono40\bin\fsc.exe mono.snk
@@ -233,7 +239,8 @@ del /q FSharp.Core.dll
 ```
 
 
-##Some alternative Steps - Other examples of building for Release mode (choose some of these as you need)
+##Some alternative Steps - Other examples of building for Release mode
+###(choose some of these as you need)
 
 ```
 msbuild fsharp-library-build.proj /p:Configuration=Release
