@@ -11,7 +11,7 @@ open NUnit.Framework
 
 /// Check that the lamda throws an exception of the given type. Otherwise
 /// calls Assert.Fail()
-let private CheckThrowsExn<'a when 'a :> exn> (f : unit -> unit) =
+let CheckThrowsExn<'a when 'a :> exn> (f : unit -> unit) =
     let funcThrowsAsExpected =
         try
             let _ = f ()
@@ -60,3 +60,10 @@ let VerifySeqsEqual seq1 seq2 =
     if zippedElements |> Seq.forall (fun (a, b) -> a = b) 
     then ()
     else Assert.Fail()
+    
+let sleep(n : int32) =        
+#if FX_NO_THREAD
+    async { do! Async.Sleep(n) } |> Async.RunSynchronously
+#else
+    System.Threading.Thread.Sleep(n)
+#endif       

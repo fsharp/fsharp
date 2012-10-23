@@ -1,6 +1,5 @@
 //----------------------------------------------------------------------------
-//
-// Copyright (c) 2002-2011 Microsoft Corporation. 
+// Copyright (c) 2002-2012 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -9,6 +8,7 @@
 //
 // You must not remove this notice, or any other, from this software.
 //----------------------------------------------------------------------------
+
 
 // This file is compiled 3(!) times in the codebase
 //    - as the internal implementation of printf '%A' formatting 
@@ -403,10 +403,15 @@ namespace Microsoft.FSharp.Text.StructuredFormat
         let string_of_int (i:int) = i.ToString()
 
         let typeUsesSystemObjectToString (typ:System.Type) =
+#if FX_ATLEAST_PORTABLE
+            try let methInfo = typ.GetMethod("ToString",[| |])
+                methInfo.DeclaringType = typeof<System.Object>
+            with e -> false
+#else        
             try let methInfo = typ.GetMethod("ToString",BindingFlags.Public ||| BindingFlags.Instance,null,[| |],null)
                 methInfo.DeclaringType = typeof<System.Object>
             with e -> false
-
+#endif
         /// If "str" ends with "ending" then remove it from "str", otherwise no change.
         let trimEnding (ending:string) (str:string) =
 #if FX_NO_CULTURE_INFO_ARGS
@@ -676,7 +681,7 @@ namespace Microsoft.FSharp.Text.StructuredFormat
             let braceL xs = (leftL "{") ^^ xs ^^ (rightL "}")
             braceL (sepListL (rightL ";")  (List.map itemL nameXs))
 
-        let makeRecordL nameXs = makeRecordVerticalL nameXs 
+        let makeRecordL nameXs = makeRecordVerticalL nameXs (* REVIEW: switch to makeRecordHorizontalL ? *)
 
         let makePropertiesL nameXs =
             let itemL (name,v) = 
@@ -707,12 +712,16 @@ namespace Microsoft.FSharp.Text.StructuredFormat
 
         let getProperty (obj: obj) name =
             let ty = obj.GetType()
+#if FX_ATLEAST_PORTABLE
+            let meth = ty.GetMethod(name, (BindingFlags.Instance ||| BindingFlags.Public ||| BindingFlags.NonPublic))
+            meth.Invoke(obj,[||])
+#else            
 #if FX_NO_CULTURE_INFO_ARGS
             ty.InvokeMember(name, (BindingFlags.GetProperty ||| BindingFlags.Instance ||| BindingFlags.Public ||| BindingFlags.NonPublic), null, obj, [| |])
 #else
             ty.InvokeMember(name, (BindingFlags.GetProperty ||| BindingFlags.Instance ||| BindingFlags.Public ||| BindingFlags.NonPublic), null, obj, [| |],CultureInfo.InvariantCulture)
 #endif
-
+#endif
         let formatChar isChar c = 
             match c with 
             | '\'' when isChar -> "\\\'"
@@ -733,6 +742,8 @@ namespace Microsoft.FSharp.Text.StructuredFormat
             let rec check i = i < s.Length && not (System.Char.IsControl(s,i)) && s.[i] <> '\"' && check (i+1) 
             let rec conv i acc = if i = s.Length then combine (List.rev acc) else conv (i+1) (formatChar false s.[i] :: acc)  
             "\"" + s + "\""
+            // REVIEW: should we check for the common case of no control characters? Reinstate the following?
+            //"\"" + (if check 0 then s else conv 0 []) + "\""
 
         let formatStringInWidth (width:int) (str:string) =
             // Return a truncated version of the string, e.g.
@@ -888,7 +899,7 @@ namespace Microsoft.FSharp.Text.StructuredFormat
 
                 | RecordValue items -> 
                     let itemL (name,x) =
-                      countNodes 1 // record labels are counted as nodes. 
+                      countNodes 1 // record labels are counted as nodes. [REVIEW: discussion under 4090].
                       (name,objL depthLim Precedence.BracketIfTuple x)
                     makeRecordL (List.map itemL items)
 
@@ -994,7 +1005,11 @@ namespace Microsoft.FSharp.Text.StructuredFormat
                             | _ -> ()
 
                     | :? System.Collections.IEnumerable as ie ->
-                         if opts.ShowIEnumerable then
+                         let showContent = 
+                            // do not display content of IQueryable since its execution may take significant time
+                            opts.ShowIEnumerable && (ie.GetType().GetInterfaces() |> Array.exists(fun ty -> ty.FullName = "System.Linq.IQueryable") |> not)
+
+                         if showContent then
                            let word = "seq"
                            let it = ie.GetEnumerator() 
                            try 
@@ -1019,10 +1034,18 @@ namespace Microsoft.FSharp.Text.StructuredFormat
                                                             // If the leafFormatter was directly here, then layout leaves could store strings.
                            match obj with 
                            | _ when opts.ShowProperties ->
+#if FX_ATLEAST_PORTABLE
+                              let props = ty.GetProperties(BindingFlags.Instance ||| BindingFlags.Public)
+#else                           
                               let props = ty.GetProperties(BindingFlags.GetField ||| BindingFlags.Instance ||| BindingFlags.Public)
+#endif                              
                               // massively reign in deep printing of properties 
                               let nDepth = depthLim/10
+#if FX_ATLEAST_PORTABLE
+                              System.Array.Sort((props),{ new System.Collections.Generic.IComparer<PropertyInfo> with member this.Compare(p1,p2) = compare (p1.Name) (p2.Name) } );
+#else                              
                               System.Array.Sort((props:>System.Array),{ new System.Collections.IComparer with member this.Compare(p1,p2) = compare ((p1 :?> PropertyInfo).Name) ((p2 :?> PropertyInfo).Name) } );
+#endif                              
                               if props.Length = 0 || (nDepth <= 0) then basicL 
                               else basicL --- 
                                      (props 

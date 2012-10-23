@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2011 Microsoft Corporation. 
+// Copyright (c) 2002-2012 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -40,88 +40,61 @@ type ILReaderOptions =
       ilGlobals: ILGlobals;
       optimizeForMemory: bool }
 
+#if STATISTICS
 let reportRef = ref (fun _oc -> ()) 
 let addReport f = let old = !reportRef in reportRef := (fun oc -> old oc; f oc) 
-let report (oc:TextWriter) = !reportRef oc
+let report (oc:TextWriter) = !reportRef oc ; reportRef := ref (fun _oc -> ()) 
+#endif
 
 let checking = false  
 let logging = false
 let _ = if checking then dprintn "warning : Ilread.checking is on"
 
-// SILVERLIGHT-TODO: Test :)
-#if SILVERLIGHT
+/// Read file into cached memory blocks to avoid taking any kind of a
+/// lock on the file, and avoid needing any cleanup of files.
+type MemChannel = 
+    { mutable mcPos: int;
+      mcBlocks: byte[] }
 
-// SILVERLIGHT-TODO: Use MemChannel instead
-module MemoryMapping = 
+    static member OpenIn f = 
+        let mcBlocks = FileSystem.ReadAllBytesShim f
+        { mcPos = 0; mcBlocks = mcBlocks }
 
-    open System
-    open System.IO
-    open Microsoft.FSharp.NativeInterop
+    static member OpenBytes f = 
+        let mcBlocks = f
+        { mcPos = 0; mcBlocks = mcBlocks }
 
-    type HANDLE = nativeint
-    type ADDR   = nativeint
-    type SIZE_T = nativeint
-    
-    //type mmap = { bytes : byte [] ref ; start : nativeint }
-    
-let bytesToWord ((b0 : byte) , (b1 : byte)) = 
-    (int16)b0 ||| ((int16)b1 <<< 8)
-let bytesToDWord ((b0 : byte) , (b1 : byte) , (b2 : byte) , (b3 : byte)) =  
-    (int)b0 ||| ((int)b1 <<< 8) ||| ((int)b2 <<< 16) ||| ((int)b3 <<< 24)
-let bytesToQWord ((b0 : byte) , (b1 : byte) , (b2 : byte) , (b3 : byte) , (b4 : byte) , (b5 : byte) , (b6 : byte) , (b7 : byte)) =
-    (int64)b0 ||| ((int64)b1 <<< 8) ||| ((int64)b2 <<< 16) ||| ((int64)b3 <<< 24) ||| ((int64)b4 <<< 32) ||| ((int64)b5 <<< 40) ||| ((int64)b6 <<< 48) ||| ((int64)b7 <<< 56)
-    
-let dwToBytes n = [| (byte)(n &&& 0xff) ; (byte)((n >>> 8) &&& 0xff) ; (byte)((n >>> 16) &&& 0xff) ; (byte)((n >>> 24) &&& 0xff) |], 4
-let wToBytes (n : int16) = [| (byte)(n &&& 0xffs) ; (byte)((n >>> 8) &&& 0xffs) |], 2
-
-    
-type MemoryMappedFile(hMap: MemoryMapping.HANDLE, start:nativeint, bytes:byte[]) =
-    
-    let mutable bytes = bytes
-    member m.Bytes = bytes        
-    
-    // SILVERLIGHT-TODO: For now, can only read files from the XAP    
-    // SILVERLIGHT-TODO: Dispose?
-    static member Create fileName  =
-        //printf "fileName = %s\n" fileName;
-        MemoryMappedFile(0n,0n,File.ReadAllBytesShim fileName)
-        
-    member m.derefByte (p:nativeint) =
-        m.Bytes.[(int)p]       
-        
-    member m.Addr (i:int) : nativeint = 
-       start + nativeint i
-
-    member m.ReadByte i = 
-        m.derefByte (m.Addr i)
-
-    member m.ReadBytes i len = 
-        let res = Bytes.zeroCreate len
-        Bytes.blit (m.Bytes) i res 0 len
+    member mc.InputByte() = 
+        let p = mc.mcPos
+        let res = mc.mcBlocks.[p]
+        mc.mcPos <- p + 1;
         res
-      
-    member m.ReadInt32 i =
-         bytesToDWord (((m.Bytes).[i]), ((m.Bytes).[i+1]), ((m.Bytes).[i+2]), ((m.Bytes).[i+3]))
-        //NativePtr.read (NativePtr.ofNativeInt<int32> (addr m i)) 
 
-    member m.ReadUInt16 i = 
-        bytesToWord (((m.Bytes).[i]), ((m.Bytes).[i+1])) |> uint16
-        //NativePtr.read (NativePtr.ofNativeInt<uint16> (addr m i)) |> uint16
+    member mc.InputBytes len = 
+        let p = mc.mcPos
+        let res = Array.sub mc.mcBlocks p len
+        mc.mcPos <- p + len;
+        res
 
-    member m.Close() = 
-        bytes <- Array.empty<byte>
+    member mc.InputInt32() = 
+         let b0 = mc.InputByte()
+         let b1 = mc.InputByte()
+         let b2 = mc.InputByte()
+         let b3 = mc.InputByte()
+         int b0 ||| (int b1 <<< 8) ||| (int b2 <<< 16) ||| (int b3 <<< 24)
 
-    member m.CountUtf8String i = 
-        let start = m.Addr i  
-        let mutable p = start 
-        while m.ReadByte ((int)p) <> 0uy do
-            p <- p + 1n
-        int (p - start) 
+    member mc.InputUInt16() = 
+        let b0 = mc.InputByte()
+        let b1 = mc.InputByte()
+        uint16 b0 ||| (uint16 b1 <<< 8) 
 
-    member m.ReadUTF8String i = 
-        let n = m.CountUtf8String i
-        let bytes = m.ReadBytes i n
-        System.Text.Encoding.UTF8.GetString(bytes,0,bytes.Length)
+    member mc.Seek addr = 
+        mc.mcPos <- addr
+
+    member mc.Close() = ()
+
+#if SILVERLIGHT
+type MMapChannel = MemChannel
 
 #else
 
@@ -230,7 +203,6 @@ type MemoryMappedFile(hMap: MemoryMapping.HANDLE, start:nativeint) =
         let n = m.CountUtf8String i
         new System.String(NativePtr.ofNativeInt (m.Addr i), 0, n, System.Text.Encoding.UTF8)
 
-#endif // SILVERLIGHT
 
 type MMapChannel = 
     { mutable mmPos: int;
@@ -266,31 +238,7 @@ type MMapChannel =
     member mc.Seek addr = mc.mmPos <- addr
     
     member mc.Close() = mc.mmMap.Close()
-
-/// Read file into cached memory blocks to avoid taking any kind of a
-/// lock on the file, and avoid needing any cleanup of files.
-type MemChannel = 
-    { mutable mcPos: int;
-      mcBlocks: byte[] }
-
-    static member OpenIn f = 
-        let mcBlocks = System.IO.File.ReadAllBytesShim f
-        { mcPos = 0; mcBlocks = mcBlocks }
-
-    member mc.InputByte() = 
-        let p = mc.mcPos
-        let res = mc.mcBlocks.[p]
-        mc.mcPos <- p + 1;
-        res
-
-    member mc.InputBytes len = 
-        let p = mc.mcPos
-        let res = Array.sub mc.mcBlocks p len
-        mc.mcPos <- p + len;
-        res
-
-    member mc.Seek addr = 
-        mc.mcPos <- addr
+#endif
 
 //---------------------------------------------------------------------
 // Read file from cached memory blocks or via 'seek'
@@ -341,12 +289,7 @@ let readInt32 is =
     | Chan (_,{contents=Some ic}) -> ic.ReadInt32()
     | Chan (s,_) -> failwith ("readBytes: input channel "+s+" was closed" )
     | MMap mm -> mm.InputInt32()
-    | Mem _ ->
-         let b0 = readByte is
-         let b1 = readByte is
-         let b2 = readByte is
-         let b3 = readByte is
-         int b0 ||| (int b1 <<< 8) ||| (int b2 <<< 16) ||| (int b3 <<< 24)
+    | Mem mm -> mm.InputInt32()
 
 
 //---------------------------------------------------------------------
@@ -403,14 +346,17 @@ let rec countUtf8String is n =
 
 let seekReadUTF8String is addr = 
     seek is addr;
+#if SILVERLIGHT
+#else
     match is with 
     | MMap mc -> 
       // optimized implementation 
       mc.PeekUTF8String()
     | _ -> 
-      let n = countUtf8String is 0
-      let bytes = seekReadBytes is addr (n)
-      System.Text.Encoding.UTF8.GetString (bytes, 0, bytes.Length)
+#endif
+    let n = countUtf8String is 0
+    let bytes = seekReadBytes is addr (n)
+    System.Text.Encoding.UTF8.GetString (bytes, 0, bytes.Length)
 
 let readBlob is = 
     let len = readCompressedUInt32 is
@@ -675,17 +621,17 @@ let mkStind dt = volatileOrUnalignedPrefix (fun (x,y) -> I_stind(x,y,dt))
 let mkLdind dt = volatileOrUnalignedPrefix (fun (x,y) -> I_ldind(x,y,dt))
 
 let instrs () = 
- [ i_ldarg_s,   I_u16_u8_instr (noPrefixes I_ldarg);
+ [ i_ldarg_s,   I_u16_u8_instr (noPrefixes mkLdarg);
    i_starg_s,   I_u16_u8_instr (noPrefixes I_starg);
    i_ldarga_s,  I_u16_u8_instr (noPrefixes I_ldarga);
-   i_stloc_s,   I_u16_u8_instr (noPrefixes I_stloc);
-   i_ldloc_s,   I_u16_u8_instr (noPrefixes I_ldloc);
+   i_stloc_s,   I_u16_u8_instr (noPrefixes mkStloc);
+   i_ldloc_s,   I_u16_u8_instr (noPrefixes mkLdloc);
    i_ldloca_s,  I_u16_u8_instr (noPrefixes I_ldloca);
-   i_ldarg,     I_u16_u16_instr (noPrefixes I_ldarg);
+   i_ldarg,     I_u16_u16_instr (noPrefixes mkLdarg);
    i_starg,     I_u16_u16_instr (noPrefixes I_starg);
    i_ldarga,    I_u16_u16_instr (noPrefixes I_ldarga);
-   i_stloc,     I_u16_u16_instr (noPrefixes I_stloc);
-   i_ldloc,     I_u16_u16_instr (noPrefixes I_ldloc);
+   i_stloc,     I_u16_u16_instr (noPrefixes mkStloc);
+   i_ldloc,     I_u16_u16_instr (noPrefixes mkLdloc);
    i_ldloca,    I_u16_u16_instr (noPrefixes I_ldloca); 
    i_stind_i,   I_none_instr (mkStind DT_I);
    i_stind_i1,  I_none_instr (mkStind DT_I1);
@@ -758,7 +704,7 @@ let instrs () =
    i_calli, I_sig_instr (tailPrefix (fun tl (x,y) -> I_calli (tl, x, y)));
    i_mkrefany, I_type_instr (noPrefixes I_mkrefany);
    i_refanyval, I_type_instr (noPrefixes I_refanyval);
-   i_ldelema, I_type_instr (readonlyPrefix (fun ro x -> I_ldelema (ro,ILArrayShape.SingleDimensional,x)));
+   i_ldelema, I_type_instr (readonlyPrefix (fun ro x -> I_ldelema (ro,false,ILArrayShape.SingleDimensional,x)));
    i_ldelem_any, I_type_instr (noPrefixes (fun x -> I_ldelem_any (ILArrayShape.SingleDimensional,x)));
    i_stelem_any, I_type_instr (noPrefixes (fun x -> I_stelem_any (ILArrayShape.SingleDimensional,x)));
    i_newarr, I_type_instr (noPrefixes (fun x -> I_newarr (ILArrayShape.SingleDimensional,x)));  
@@ -887,26 +833,26 @@ let kindIllegal                = RowKind [ ]
 // kind of element in that column.
 //---------------------------------------------------------------------
 
-let hcCompare (TaggedIndex(HasConstantTag t1, (idx1:int))) (TaggedIndex(HasConstantTag t2, idx2)) = 
-    if idx1 < idx2 then -1 elif idx1 > idx2 then 1 else compare t1 t2
+let hcCompare (TaggedIndex((t1: HasConstantTag), (idx1:int))) (TaggedIndex((t2: HasConstantTag), idx2)) = 
+    if idx1 < idx2 then -1 elif idx1 > idx2 then 1 else compare t1.Tag t2.Tag
 
-let hsCompare (TaggedIndex(HasSemanticsTag t1, (idx1:int))) (TaggedIndex(HasSemanticsTag t2, idx2)) = 
-    if idx1 < idx2 then -1 elif idx1 > idx2 then 1 else compare t1 t2
+let hsCompare (TaggedIndex((t1:HasSemanticsTag), (idx1:int))) (TaggedIndex((t2:HasSemanticsTag), idx2)) = 
+    if idx1 < idx2 then -1 elif idx1 > idx2 then 1 else compare t1.Tag t2.Tag
 
-let hcaCompare (TaggedIndex(HasCustomAttributeTag t1, (idx1:int))) (TaggedIndex(HasCustomAttributeTag t2, idx2)) = 
-    if idx1 < idx2 then -1 elif idx1 > idx2 then 1 else compare t1 t2
+let hcaCompare (TaggedIndex((t1:HasCustomAttributeTag), (idx1:int))) (TaggedIndex((t2:HasCustomAttributeTag), idx2)) = 
+    if idx1 < idx2 then -1 elif idx1 > idx2 then 1 else compare t1.Tag t2.Tag
 
-let mfCompare (TaggedIndex(MemberForwardedTag t1, (idx1:int))) (TaggedIndex(MemberForwardedTag t2, idx2)) = 
-    if idx1 < idx2 then -1 elif idx1 > idx2 then 1 else compare t1 t2
+let mfCompare (TaggedIndex((t1:MemberForwardedTag), (idx1:int))) (TaggedIndex((t2:MemberForwardedTag), idx2)) = 
+    if idx1 < idx2 then -1 elif idx1 > idx2 then 1 else compare t1.Tag t2.Tag
 
-let hdsCompare (TaggedIndex(HasDeclSecurityTag t1, (idx1:int))) (TaggedIndex(HasDeclSecurityTag t2, idx2)) = 
-    if idx1 < idx2 then -1 elif idx1 > idx2 then 1 else compare t1 t2
+let hdsCompare (TaggedIndex((t1:HasDeclSecurityTag), (idx1:int))) (TaggedIndex((t2:HasDeclSecurityTag), idx2)) = 
+    if idx1 < idx2 then -1 elif idx1 > idx2 then 1 else compare t1.Tag t2.Tag
 
-let hfmCompare (TaggedIndex(HasFieldMarshalTag t1, idx1)) (TaggedIndex(HasFieldMarshalTag t2, idx2)) = 
-    if idx1 < idx2 then -1 elif idx1 > idx2 then 1 else compare t1 t2
+let hfmCompare (TaggedIndex((t1:HasFieldMarshalTag), idx1)) (TaggedIndex((t2:HasFieldMarshalTag), idx2)) = 
+    if idx1 < idx2 then -1 elif idx1 > idx2 then 1 else compare t1.Tag t2.Tag
 
-let tomdCompare (TaggedIndex(TypeOrMethodDefTag t1, idx1)) (TaggedIndex(TypeOrMethodDefTag t2, idx2)) = 
-    if idx1 < idx2 then -1 elif idx1 > idx2 then 1 else compare t1 t2
+let tomdCompare (TaggedIndex((t1:TypeOrMethodDefTag), idx1)) (TaggedIndex((t2:TypeOrMethodDefTag), idx2)) = 
+    if idx1 < idx2 then -1 elif idx1 > idx2 then 1 else compare t1.Tag t2.Tag
 
 let simpleIndexCompare (idx1:int) (idx2:int) = 
     compare idx1 idx2
@@ -932,11 +878,13 @@ type GenericParamsIdx = GenericParamsIdx of int * TypeOrMethodDefTag * int
 // Polymorphic caches for row and heap readers
 //---------------------------------------------------------------------
 
-let mkCacheInt32 lowMem inbase nm _sz  =
+let mkCacheInt32 lowMem _inbase _nm _sz  =
     if lowMem then (fun f x -> f x) else
     let cache = ref null 
     let count = ref 0
-    addReport (fun oc -> if !count <> 0 then oc.WriteLine ((inbase + string !count + " "+ nm + " cache hits")  : string));
+#if STATISTICS
+    addReport (fun oc -> if !count <> 0 then oc.WriteLine ((_inbase + string !count + " "+ _nm + " cache hits")  : string));
+#endif
     fun f (idx:int32) ->
         let cache = 
             match !cache with
@@ -953,11 +901,13 @@ let mkCacheInt32 lowMem inbase nm _sz  =
             cache.[idx] <- res; 
             res 
 
-let mkCacheGeneric lowMem inbase nm _sz  =
+let mkCacheGeneric lowMem _inbase _nm _sz  =
     if lowMem then (fun f x -> f x) else
     let cache = ref null 
     let count = ref 0
-    addReport (fun oc -> if !count <> 0 then oc.WriteLine ((inbase + string !count + " " + nm + " cache hits") : string));
+#if STATISTICS
+    addReport (fun oc -> if !count <> 0 then oc.WriteLine ((_inbase + string !count + " " + _nm + " cache hits") : string));
+#endif
     fun f (idx :'T) ->
         let cache = 
             match !cache with
@@ -1082,15 +1032,19 @@ type ILModuleReader =
     member x.ILAssemblyRefs = x.ilAssemblyRefs.Force()
     
  
-type MethodData = ILType * ILCallingConv * string * ILType list * ILType * ILType list 
-type VarArgMethodData = ILType * ILCallingConv * string * ILType list * ILType list option * ILType * ILType list 
+type MethodData = MethodData of ILType * ILCallingConv * string * ILTypes * ILType * ILTypes
+type VarArgMethodData = VarArgMethodData of ILType * ILCallingConv * string * ILTypes * ILVarArgs * ILType * ILTypes
 
 [<NoEquality; NoComparison>]
 type ILReaderContext = 
   { ilg: ILGlobals;
     dataEndPoints: Lazy<int32 list>;
     sorted: int64;
+#if NO_PDB_READER
+    pdb: obj option;
+#else
     pdb: (PdbReader * (string -> ILSourceDocument)) option;
+#endif
     entryPointToken: TableName * int;
     getNumRows: TableName -> int; 
     textSegmentPhysicalLoc : int32; 
@@ -1181,9 +1135,9 @@ type ILReaderContext =
     seekReadSecurityDecl : SecurityDeclIdx -> ILPermission;
     seekReadTypeRef : int ->ILTypeRef;
     seekReadTypeRefAsType : TypeRefAsTypIdx -> ILType;
-    readBlobHeapAsPropertySig : BlobAsPropSigIdx -> ILThisConvention * ILType * ILType list;
+    readBlobHeapAsPropertySig : BlobAsPropSigIdx -> ILThisConvention * ILType * ILTypes;
     readBlobHeapAsFieldSig : BlobAsFieldSigIdx -> ILType;
-    readBlobHeapAsMethodSig : BlobAsMethodSigIdx -> bool * int32 * ILCallingConv * ILType * ILType list * ILType list option; 
+    readBlobHeapAsMethodSig : BlobAsMethodSigIdx -> bool * int32 * ILCallingConv * ILType * ILTypes * ILVarArgs; 
     readBlobHeapAsLocalsSig : BlobAsLocalSigIdx -> ILLocal list;
     seekReadTypeDefAsType : TypeDefAsTypIdx -> ILType;
     seekReadMethodDefAsMethodData : int -> MethodData;
@@ -1633,10 +1587,9 @@ let readBlobHeapAsDouble ctxt vidx = fst (sigptrGetDouble (readBlobHeap ctxt vid
 //        (e) the start of the native resources attached to the binary if any
 // ----------------------------------------------------------------------*)
 
-
-#if SILVERLIGHT
-let readNativeResources _ctxt = [] 
-#else  
+#if NO_PDB_READER
+let readNativeResources _ctxt = []
+#else
 let readNativeResources ctxt = 
     let nativeResources = 
         if ctxt.nativeResourcesSize = 0x0 || ctxt.nativeResourcesAddr = 0x0 then 
@@ -1645,8 +1598,8 @@ let readNativeResources ctxt =
             [ (lazy (let linkedResource = seekReadBytes ctxt.is (ctxt.anyV2P (ctxt.infile + ": native resources",ctxt.nativeResourcesAddr)) ctxt.nativeResourcesSize
                      unlinkResource ctxt.nativeResourcesAddr linkedResource)) ]
     nativeResources
+#endif
    
-#endif   
 let dataEndPoints ctxtH = 
     lazy
         let ctxt = getHole ctxtH
@@ -1711,7 +1664,7 @@ let rec rvaToData ctxt nm rva =
 
 let isSorted ctxt (tab:TableName) = ((ctxt.sorted &&& (int64 1 <<< tab.Index)) <> int64 0x0) 
 
-let rec seekReadModule ctxt (subsys,ilOnly,only32,only64,platform,isDll, alignVirt,alignPhys,imageBaseReal,ilMetadataVersion) idx =
+let rec seekReadModule ctxt (subsys,subsysversion,useHighEntropyVA, ilOnly,only32,is32bitpreferred,only64,platform,isDll, alignVirt,alignPhys,imageBaseReal,ilMetadataVersion) idx =
     let (_generation, nameIdx, _mvidIdx, _encidIdx, _encbaseidIdx) = seekReadModuleRow ctxt idx
     let ilModuleName = readStringHeap ctxt nameIdx
     let nativeResources = readNativeResources ctxt
@@ -1725,9 +1678,12 @@ let rec seekReadModule ctxt (subsys,ilOnly,only32,only64,platform,isDll, alignVi
       TypeDefs = mkILTypeDefsLazy (lazy (seekReadTopTypeDefs ctxt ()));
       SubSystemFlags = int32 subsys;
       IsILOnly = ilOnly;
+      SubsystemVersion = subsysversion
+      UseHighEntropyVA = useHighEntropyVA
       Platform = platform;
-      StackReserveSize = None;  
+      StackReserveSize = None;  // TODO
       Is32Bit = only32;
+      Is32BitPreferred = is32bitpreferred;
       Is64Bit = only64;
       IsDLL=isDll;
       VirtualAlignment = alignVirt;
@@ -1758,7 +1714,7 @@ and seekReadAssemblyManifest ctxt idx =
         end;
       ExportedTypes= seekReadTopExportedTypes ctxt ();
       EntrypointElsewhere=(if fst ctxt.entryPointToken = TableNames.File then Some (seekReadFile ctxt (snd ctxt.entryPointToken)) else None);
-      Retargetable = 0 <> (flags &&& 0xff);
+      Retargetable = 0 <> (flags &&& 0x100);
       DisableJitOptimizations = 0 <> (flags &&& 0x4000);
       JitTracking = 0 <> (flags &&& 0x8000); } 
      
@@ -1920,7 +1876,7 @@ and seekReadTypeDef ctxt toponly (idx:int) =
              IsSpecialName= (flags &&& 0x00000400) <> 0x0;
              Encoding=typeEncodingOfFlags flags;
              NestedTypes= nested;
-             Implements = impls;  
+             Implements = mkILTypes impls;  
              Extends = super; 
              Methods = mdefs; 
              SecurityDecls = sdecls;
@@ -1957,7 +1913,7 @@ and seekReadInterfaceImpls ctxt numtypars tidx =
                             fst,
                             simpleIndexCompare tidx,
                             isSorted ctxt TableNames.InterfaceImpl,
-                            (snd >> seekReadTypeDefOrRef ctxt numtypars AsObject (*ok*) [])) 
+                            (snd >> seekReadTypeDefOrRef ctxt numtypars AsObject (*ok*) ILList.empty)) 
 
 and seekReadGenericParams ctxt numtypars (a,b) : ILGenericParameterDefs = 
     ctxt.seekReadGenericParams (GenericParamsIdx(numtypars,a,b))
@@ -1981,7 +1937,7 @@ and seekReadGenericParamsUncached ctxtH (GenericParamsIdx(numtypars,a,b)) =
                  let constraints = seekReadGenericParamConstraintsUncached ctxt numtypars gpidx
                  let cas = seekReadCustomAttrs ctxt (TaggedIndex(hca_GenericParam,gpidx))
                  seq, {Name=readStringHeap ctxt nameIdx;
-                       Constraints=constraints;
+                       Constraints=mkILTypes constraints;
                        Variance=variance;  
                        CustomAttrs=cas;
                        HasReferenceTypeConstraint= (flags &&& 0x0004) <> 0;
@@ -1996,9 +1952,9 @@ and seekReadGenericParamConstraintsUncached ctxt numtypars gpidx =
          fst,
          simpleIndexCompare gpidx,
          isSorted ctxt TableNames.GenericParamConstraint,
-         (snd >>  seekReadTypeDefOrRef ctxt numtypars AsObject (*ok*) []))
+         (snd >>  seekReadTypeDefOrRef ctxt numtypars AsObject (*ok*) ILList.empty))
 
-and seekReadTypeDefAsType ctxt boxity ginst idx =
+and seekReadTypeDefAsType ctxt boxity (ginst:ILTypes) idx =
       ctxt.seekReadTypeDefAsType (TypeDefAsTypIdx (boxity,ginst,idx))
 
 and seekReadTypeDefAsTypeUncached ctxtH (TypeDefAsTypIdx (boxity,ginst,idx)) =
@@ -2029,12 +1985,12 @@ and seekReadTypeRefAsTypeUncached ctxtH (TypeRefAsTypIdx (boxity,ginst,idx)) =
      let ctxt = getHole ctxtH
      mkILTy boxity (ILTypeSpec.Create(seekReadTypeRef ctxt idx, ginst))
 
-and seekReadTypeDefOrRef ctxt numtypars boxity ginst (TaggedIndex(tag,idx) ) =
+and seekReadTypeDefOrRef ctxt numtypars boxity (ginst:ILTypes) (TaggedIndex(tag,idx) ) =
     match tag with 
     | tag when tag = tdor_TypeDef -> seekReadTypeDefAsType ctxt boxity ginst idx
     | tag when tag = tdor_TypeRef -> seekReadTypeRefAsType ctxt boxity ginst idx
     | tag when tag = tdor_TypeSpec -> 
-        if ginst <> [] then dprintn ("type spec used as type constructor for a generic instantiation: ignoring instantiation");
+        if ginst.Length > 0 then dprintn ("type spec used as type constructor for a generic instantiation: ignoring instantiation");
         readBlobHeapAsType ctxt numtypars (seekReadTypeSpecRow ctxt idx)
     | _ -> failwith "seekReadTypeDefOrRef ctxt"
 
@@ -2049,10 +2005,11 @@ and seekReadTypeDefOrRefAsTypeRef ctxt (TaggedIndex(tag,idx) ) =
 
 and seekReadMethodRefParent ctxt numtypars (TaggedIndex(tag,idx)) =
     match tag with 
-    | tag when tag = mrp_TypeRef -> seekReadTypeRefAsType ctxt AsObject (* not ok - no way to tell if a member ref parent ctxt.is a value type or not *) [] idx
+    | tag when tag = mrp_TypeRef -> seekReadTypeRefAsType ctxt AsObject (* not ok - no way to tell if a member ref parent ctxt.is a value type or not *) ILList.empty idx
     | tag when tag = mrp_ModuleRef -> mkILTypeForGlobalFunctions (ILScopeRef.Module (seekReadModuleRef ctxt idx))
     | tag when tag = mrp_MethodDef -> 
-        let mspec = mkILMethSpecInTy(seekReadMethodDefAsMethodData ctxt idx)
+        let (MethodData(enclTyp, cc, nm, argtys, retty, minst)) = seekReadMethodDefAsMethodData ctxt idx
+        let mspec = mkILMethSpecInTyRaw(enclTyp, cc, nm, argtys, retty, minst)
         mspec.EnclosingType
     | tag when tag = mrp_TypeSpec -> readBlobHeapAsType ctxt numtypars (seekReadTypeSpecRow ctxt idx)
     | _ -> failwith "seekReadMethodRefParent ctxt"
@@ -2060,20 +2017,25 @@ and seekReadMethodRefParent ctxt numtypars (TaggedIndex(tag,idx)) =
 and seekReadMethodDefOrRef ctxt numtypars (TaggedIndex(tag,idx)) =
     match tag with 
     | tag when tag = mdor_MethodDef -> 
-        let (enclTyp, cc, nm, argtys, retty,minst) = seekReadMethodDefAsMethodData ctxt idx
-        (enclTyp, cc, nm, argtys, None,retty,minst)
-    | tag when tag = mdor_MemberRef -> seekReadMemberRefAsMethodData ctxt numtypars idx
+        let (MethodData(enclTyp, cc, nm, argtys, retty,minst)) = seekReadMethodDefAsMethodData ctxt idx
+        VarArgMethodData(enclTyp, cc, nm, argtys, None,retty,minst)
+    | tag when tag = mdor_MemberRef -> 
+        seekReadMemberRefAsMethodData ctxt numtypars idx
     | _ -> failwith "seekReadMethodDefOrRef ctxt"
 
 and seekReadMethodDefOrRefNoVarargs ctxt numtypars x =
-     let (enclTyp, cc, nm, argtys, varargs,retty,minst)=     seekReadMethodDefOrRef ctxt numtypars x 
+     let (VarArgMethodData(enclTyp, cc, nm, argtys, varargs, retty, minst)) =     seekReadMethodDefOrRef ctxt numtypars x 
      if varargs <> None then dprintf "ignoring sentinel and varargs in ILMethodDef token signature";
-     (enclTyp, cc, nm, argtys, retty,minst)
+     MethodData(enclTyp, cc, nm, argtys, retty,minst)
 
 and seekReadCustomAttrType ctxt (TaggedIndex(tag,idx) ) =
     match tag with 
-    | tag when tag = cat_MethodDef -> (mkILMethSpecInTy (seekReadMethodDefAsMethodData ctxt idx))
-    | tag when tag = cat_MemberRef -> (mkILMethSpecInTy (seekReadMemberRefAsMethDataNoVarArgs ctxt 0 idx))
+    | tag when tag = cat_MethodDef -> 
+        let (MethodData(enclTyp, cc, nm, argtys, retty, minst)) = seekReadMethodDefAsMethodData ctxt idx
+        mkILMethSpecInTyRaw (enclTyp, cc, nm, argtys, retty, minst)
+    | tag when tag = cat_MemberRef -> 
+        let (MethodData(enclTyp, cc, nm, argtys, retty, minst)) = seekReadMemberRefAsMethDataNoVarArgs ctxt 0 idx
+        mkILMethSpecInTyRaw (enclTyp, cc, nm, argtys, retty, minst)
     | _ -> failwith "seekReadCustomAttrType ctxt"
     
 and seekReadImplAsScopeRef ctxt (TaggedIndex(tag,idx) ) =
@@ -2097,7 +2059,7 @@ and seekReadTypeRefScope ctxt (TaggedIndex(tag,idx) ) =
 
 and seekReadOptionalTypeDefOrRef ctxt numtypars boxity idx = 
     if idx = TaggedIndex(tdor_TypeDef, 0) then None
-    else Some (seekReadTypeDefOrRef ctxt numtypars boxity [] idx)
+    else Some (seekReadTypeDefOrRef ctxt numtypars boxity ILList.empty idx)
 
 and seekReadField ctxt (numtypars, hasLayout) (idx:int) =
      let (flags,nameIdx,typeIdx) = seekReadFieldRow ctxt idx
@@ -2111,7 +2073,7 @@ and seekReadField ctxt (numtypars, hasLayout) (idx:int) =
          IsInitOnly = (flags &&& 0x0020) <> 0;
          IsLiteral = (flags &&& 0x0040) <> 0;
          NotSerialized = (flags &&& 0x0080) <> 0;
-         IsSpecialName = (flags &&& 0x0200) <> 0 || (flags &&& 0x0400) <> 0; 
+         IsSpecialName = (flags &&& 0x0200) <> 0 || (flags &&& 0x0400) <> 0; (* REVIEW: RTSpecialName *)
          LiteralValue = if (flags &&& 0x8000) = 0 then None else Some (seekReadConstant ctxt (TaggedIndex(hc_FieldDef,idx)));
          Marshal = 
              if (flags &&& 0x1000) = 0 then None else 
@@ -2174,15 +2136,15 @@ and sigptrGetTy ctxt numtypars bytes sigptr =
         let tdorIdx, sigptr = sigptrGetTypeDefOrRefOrSpecIdx bytes sigptr
         let n, sigptr = sigptrGetZInt32 bytes sigptr
         let argtys,sigptr = sigptrFold (sigptrGetTy ctxt numtypars) n bytes sigptr
-        seekReadTypeDefOrRef ctxt numtypars (if b0 = et_CLASS then AsObject else AsValue) argtys tdorIdx,
+        seekReadTypeDefOrRef ctxt numtypars (if b0 = et_CLASS then AsObject else AsValue) (mkILTypes argtys) tdorIdx,
         sigptr
         
     elif b0 = et_CLASS then 
         let tdorIdx, sigptr = sigptrGetTypeDefOrRefOrSpecIdx bytes sigptr
-        seekReadTypeDefOrRef ctxt numtypars AsObject [] tdorIdx, sigptr
+        seekReadTypeDefOrRef ctxt numtypars AsObject ILList.empty tdorIdx, sigptr
     elif b0 = et_VALUETYPE then 
         let tdorIdx, sigptr = sigptrGetTypeDefOrRefOrSpecIdx bytes sigptr
-        seekReadTypeDefOrRef ctxt numtypars AsValue [] tdorIdx, sigptr
+        seekReadTypeDefOrRef ctxt numtypars AsValue ILList.empty tdorIdx, sigptr
     elif b0 = et_VAR then 
         let n, sigptr = sigptrGetZInt32 bytes sigptr
         ILType.TypeVar (uint16 n),sigptr
@@ -2227,7 +2189,7 @@ and sigptrGetTy ctxt numtypars bytes sigptr =
         let argtys,sigptr = sigptrFold (sigptrGetTy ctxt numtypars) ( numparams) bytes sigptr
         ILType.FunctionPointer
           { CallingConv=cc;
-            ArgTypes=argtys;
+            ArgTypes=mkILTypes argtys;
             ReturnType=retty }
           ,sigptr
     elif b0 = et_SENTINEL then failwith "varargs NYI"
@@ -2237,12 +2199,12 @@ and sigptrGetVarArgTys ctxt n numtypars bytes sigptr =
     sigptrFold (sigptrGetTy ctxt numtypars) n bytes sigptr 
 
 and sigptrGetArgTys ctxt n numtypars bytes sigptr acc = 
-    if n <= 0 then (List.rev acc,None),sigptr 
+    if n <= 0 then (mkILTypes  (List.rev acc),None),sigptr 
     else
       let b0,sigptr2 = sigptrGetByte bytes sigptr
       if b0 = et_SENTINEL then 
         let varargs,sigptr = sigptrGetVarArgTys ctxt n numtypars bytes sigptr2
-        (List.rev acc,Some(varargs)),sigptr
+        (mkILTypes  (List.rev acc),Some(mkILTypes varargs)),sigptr
       else
         let x,sigptr = sigptrGetTy ctxt numtypars bytes sigptr
         sigptrGetArgTys ctxt (n-1) numtypars bytes sigptr (x::acc)
@@ -2304,7 +2266,7 @@ and readBlobHeapAsPropertySigUncached ctxtH (BlobAsPropSigIdx (numtypars,blobIdx
     let numparams,sigptr = sigptrGetZInt32 bytes sigptr
     let retty,sigptr = sigptrGetTy ctxt numtypars bytes sigptr
     let argtys,_sigptr = sigptrFold (sigptrGetTy ctxt numtypars) ( numparams) bytes sigptr
-    hasthis,retty,argtys
+    hasthis,retty,mkILTypes argtys
       
 and readBlobHeapAsLocalsSig ctxt numtypars blobIdx  =
     ctxt.readBlobHeapAsLocalsSig (BlobAsLocalSigIdx (numtypars,blobIdx))
@@ -2337,7 +2299,7 @@ and byteAsCallConv b =
     let generic = (b &&& e_IMAGE_CEE_CS_CALLCONV_GENERIC) <> 0x0uy
     generic, Callconv (byteAsHasThis b,cc) 
       
-and seekReadMemberRefAsMethodData ctxt numtypars idx = 
+and seekReadMemberRefAsMethodData ctxt numtypars idx : VarArgMethodData = 
     ctxt.seekReadMemberRefAsMethodData (MemberRefAsMspecIdx (numtypars,idx))
 and seekReadMemberRefAsMethodDataUncached ctxtH (MemberRefAsMspecIdx (numtypars,idx)) = 
     let ctxt = getHole ctxtH
@@ -2345,29 +2307,29 @@ and seekReadMemberRefAsMethodDataUncached ctxtH (MemberRefAsMspecIdx (numtypars,
     let nm = readStringHeap ctxt nameIdx
     let enclTyp = seekReadMethodRefParent ctxt numtypars mrpIdx
     let _generic,genarity,cc,retty,argtys,varargs = readBlobHeapAsMethodSig ctxt enclTyp.GenericArgs.Length typeIdx
-    let minst =  List.init genarity (fun n -> mkILTyvarTy (uint16 (numtypars+n))) 
-    (enclTyp, cc, nm, argtys, varargs,retty,minst)
+    let minst =  ILList.init genarity (fun n -> mkILTyvarTy (uint16 (numtypars+n))) 
+    (VarArgMethodData(enclTyp, cc, nm, argtys, varargs,retty,minst))
 
-and seekReadMemberRefAsMethDataNoVarArgs ctxt numtypars idx =
-   let (enclTyp, cc, nm, argtys,varargs, retty,minst) =  seekReadMemberRefAsMethodData ctxt numtypars idx
+and seekReadMemberRefAsMethDataNoVarArgs ctxt numtypars idx : MethodData =
+   let (VarArgMethodData(enclTyp, cc, nm, argtys,varargs, retty,minst)) =  seekReadMemberRefAsMethodData ctxt numtypars idx
    if isSome varargs then dprintf "ignoring sentinel and varargs in ILMethodDef token signature";
-   (enclTyp, cc, nm, argtys, retty,minst)
+   (MethodData(enclTyp, cc, nm, argtys, retty,minst))
 
 and seekReadMethodSpecAsMethodData ctxt numtypars idx =  
     ctxt.seekReadMethodSpecAsMethodData (MethodSpecAsMspecIdx (numtypars,idx))
-and seekReadMethodSpec_as_mdataUncached ctxtH (MethodSpecAsMspecIdx (numtypars,idx)) = 
+and seekReadMethodSpecAsMethodDataUncached ctxtH (MethodSpecAsMspecIdx (numtypars,idx)) = 
     let ctxt = getHole ctxtH
     let (mdorIdx,instIdx) = seekReadMethodSpecRow ctxt idx
-    let (enclTyp, cc, nm, argtys, varargs,retty,_) = seekReadMethodDefOrRef ctxt numtypars mdorIdx
+    let (VarArgMethodData(enclTyp, cc, nm, argtys, varargs,retty,_)) = seekReadMethodDefOrRef ctxt numtypars mdorIdx
     let minst = 
         let bytes = readBlobHeap ctxt instIdx
         let sigptr = 0
         let ccByte,sigptr = sigptrGetByte bytes sigptr
         if ccByte <> e_IMAGE_CEE_CS_CALLCONV_GENERICINST then dprintn ("warning: method inst ILCallingConv was "+string ccByte+" instead of CC_GENERICINST");
         let numgpars,sigptr = sigptrGetZInt32 bytes sigptr
-        let argtys,_sigptr = sigptrFold (sigptrGetTy ctxt numtypars) ( numgpars) bytes sigptr
-        argtys
-    (enclTyp, cc, nm, argtys, varargs,retty, minst)
+        let argtys,_sigptr = sigptrFold (sigptrGetTy ctxt numtypars) numgpars bytes sigptr
+        mkILTypes argtys
+    VarArgMethodData(enclTyp, cc, nm, argtys, varargs,retty, minst)
 
 and seekReadMemberRefAsFieldSpec ctxt numtypars idx = 
    ctxt.seekReadMemberRefAsFieldSpec (MemberRefAsFspecIdx (numtypars,idx))
@@ -2406,12 +2368,12 @@ and seekReadMethodDefAsMethodDataUncached ctxtH idx =
    let _generic,_genarity,cc,retty,argtys,varargs = readBlobHeapAsMethodSig ctxt 0 typeIdx
    if varargs <> None then dprintf "ignoring sentinel and varargs in ILMethodDef token signature";
    // Create a formal instantiation if needed 
-   let finst = mkILFormalGenericArgs (seekReadGenericParams ctxt 0 (tomd_TypeDef,tidx))
-   let minst = mkILFormalGenericArgs (seekReadGenericParams ctxt finst.Length (tomd_MethodDef,idx))
+   let finst = mkILFormalGenericArgsRaw (seekReadGenericParams ctxt 0 (tomd_TypeDef,tidx))
+   let minst = mkILFormalGenericArgsRaw (seekReadGenericParams ctxt finst.Length (tomd_MethodDef,idx))
    // Read the method def parent. 
    let enclTyp = seekReadTypeDefAsType ctxt AsObject (* not ok: see note *) finst tidx
    // Return the constituent parts: put it together at the place where this is called. 
-   (enclTyp, cc, nm, argtys, retty,minst)
+   MethodData(enclTyp, cc, nm, argtys, retty, minst)
 
 
  (* Similarly for fields. *)
@@ -2434,7 +2396,7 @@ and seekReadFieldDefAsFieldSpecUncached ctxtH idx =
    // Read the field signature. 
    let retty = readBlobHeapAsFieldSig ctxt 0 typeIdx
    // Create a formal instantiation if needed 
-   let finst = mkILFormalGenericArgs (seekReadGenericParams ctxt 0 (tomd_TypeDef,tidx))
+   let finst = mkILFormalGenericArgsRaw (seekReadGenericParams ctxt 0 (tomd_TypeDef,tidx))
    // Read the field def parent. 
    let enclTyp = seekReadTypeDefAsType ctxt AsObject (* not ok: see note *) finst tidx
    // Put it together. 
@@ -2499,6 +2461,7 @@ and seekReadMethod ctxt numtypars (idx:int) =
        IsSpecialName=specialname;
        IsUnmanagedExport=export;
        IsSynchronized=synchronized;
+       IsNoInline=noinline;
        IsMustRun=mustrun;
        IsPreserveSig=preservesig;
        IsManaged = not unmanaged;
@@ -2527,18 +2490,19 @@ and seekReadParams ctxt (retty,argtys) pidx1 pidx2 =
     let retRes : ILReturn ref =  ref { Marshal=None; Type=retty; CustomAttrs=emptyILCustomAttrs }
     let paramsRes = 
         argtys 
-        |> Array.ofList 
-        |> Array.map (fun ty ->  { Name=None;
-                                   Default=None;
-                                   Marshal=None;
-                                   IsIn=false;
-                                   IsOut=false;
-                                   IsOptional=false;
-                                   Type=ty;
-                                   CustomAttrs=emptyILCustomAttrs })
+        |> ILList.toArray 
+        |> Array.map (fun ty ->  
+            { Name=None;
+              Default=None;
+              Marshal=None;
+              IsIn=false;
+              IsOut=false;
+              IsOptional=false;
+              Type=ty;
+              CustomAttrs=emptyILCustomAttrs })
     for i = pidx1 to pidx2 - 1 do
         seekReadParamExtras ctxt (retRes,paramsRes) i
-    !retRes, Array.toList paramsRes
+    !retRes, ILList.ofArray paramsRes
 
 and seekReadParamExtras ctxt (retRes,paramsRes) (idx:int) =
    let (flags,seq,nameIdx) = seekReadParamRow ctxt idx
@@ -2568,10 +2532,13 @@ and seekReadMethodImpls ctxt numtypars tidx =
       (lazy 
           let mimpls = seekReadIndexedRows (ctxt.getNumRows TableNames.MethodImpl,seekReadMethodImplRow ctxt,(fun (a,_,_) -> a),simpleIndexCompare tidx,isSorted ctxt TableNames.MethodImpl,(fun (_,b,c) -> b,c))
           mimpls |> List.map (fun (b,c) -> 
-              { OverrideBy=(mkILMethSpecInTy (seekReadMethodDefOrRefNoVarargs ctxt numtypars b));
+              { OverrideBy=
+                  let (MethodData(enclTyp, cc, nm, argtys, retty,minst)) = seekReadMethodDefOrRefNoVarargs ctxt numtypars b
+                  mkILMethSpecInTyRaw (enclTyp, cc, nm, argtys, retty,minst);
                 Overrides=
-                    (let mspec = (mkILMethSpecInTy (seekReadMethodDefOrRefNoVarargs ctxt numtypars c))
-                     OverridesSpec(mspec.MethodRef, mspec.EnclosingType)) }))
+                  let (MethodData(enclTyp, cc, nm, argtys, retty,minst)) = seekReadMethodDefOrRefNoVarargs ctxt numtypars c
+                  let mspec = mkILMethSpecInTyRaw (enclTyp, cc, nm, argtys, retty,minst)
+                  OverridesSpec(mspec.MethodRef, mspec.EnclosingType) }))
 
 and seekReadMultipleMethodSemantics ctxt (flags,id) =
     seekReadIndexedRows 
@@ -2580,7 +2547,9 @@ and seekReadMultipleMethodSemantics ctxt (flags,id) =
        (fun (_flags,_,c) -> c),
        hsCompare id,
        isSorted ctxt TableNames.MethodSemantics,
-       (fun (a,b,_c) -> a, (mkILMethSpecInTy (seekReadMethodDefAsMethodData ctxt b)).MethodRef))
+       (fun (a,b,_c) -> 
+           let (MethodData(enclTyp, cc, nm, argtys, retty, minst)) = seekReadMethodDefAsMethodData ctxt b
+           a, (mkILMethSpecInTyRaw (enclTyp, cc, nm, argtys, retty, minst)).MethodRef))
     |> List.filter (fun (flags2,_) -> flags = flags2) 
     |> List.map snd 
 
@@ -2608,7 +2577,7 @@ and seekReadEvent ctxt numtypars idx =
      OtherMethods = seekReadMultipleMethodSemantics ctxt (0x0004, TaggedIndex(hs_Event, idx));
      CustomAttrs=seekReadCustomAttrs ctxt (TaggedIndex(hca_Event,idx)) }
    
-// Note, we could substantially reduce numbers of EventMap and PropertyMap reads by first checking if the whole table is sorted according to ILTypeDef tokens and then doing a binary chop 
+  (* REVIEW: can substantially reduce numbers of EventMap and PropertyMap reads by first checking if the whole table is sorted according to ILTypeDef tokens and then doing a binary chop *)
 and seekReadEvents ctxt numtypars tidx =
    mkILEventsLazy 
       (lazy 
@@ -2681,9 +2650,9 @@ and seekReadCustomAttr ctxt (TaggedIndex(cat,idx),b) =
 and seekReadCustomAttrUncached ctxtH (CustomAttrIdx (cat,idx,valIdx)) = 
     let ctxt = getHole ctxtH
     { Method=seekReadCustomAttrType ctxt (TaggedIndex(cat,idx));
-    #if SILVERLIGHT
+#if SILVERLIGHT
       Arguments = [], []
-    #endif
+#endif
       Data=
         match readBlobHeapOption ctxt valIdx with
         | Some bytes -> bytes
@@ -2867,7 +2836,7 @@ and seekReadTopCode ctxt numtypars (sz:int) start seqpoints =
              elif !b = (i_constrained &&& 0xff) then 
                  let uncoded = seekReadUncodedToken ctxt.is (start + (!curr))
                  curr := !curr + 4;
-                 let typ = seekReadTypeDefOrRef ctxt numtypars AsObject [] (uncodedTokenToTypeDefOrRefOrSpec uncoded)
+                 let typ = seekReadTypeDefOrRef ctxt numtypars AsObject ILList.empty (uncodedTokenToTypeDefOrRefOrSpec uncoded)
                  prefixes.constrained <- Some typ
              else prefixes.tl <- Tailcall;
          end;
@@ -2928,7 +2897,7 @@ and seekReadTopCode ctxt numtypars (sz:int) start seqpoints =
        
              let (tab,idx) = seekReadUncodedToken ctxt.is (start + (!curr))
              curr := !curr + 4;
-             let  (enclTyp, cc, nm, argtys,varargs, retty, minst) =
+             let  (VarArgMethodData(enclTyp, cc, nm, argtys, varargs, retty, minst)) =
                if tab = TableNames.Method then 
                  seekReadMethodDefOrRef ctxt numtypars (TaggedIndex(mdor_MethodDef, idx))
                elif tab = TableNames.MemberRef then 
@@ -2941,16 +2910,16 @@ and seekReadTopCode ctxt numtypars (sz:int) start seqpoints =
                match nm with
                | "Get" -> I_ldelem_any(shape,ty)
                | "Set" ->  I_stelem_any(shape,ty)
-               | "Address" ->  I_ldelema(prefixes.ro, shape,ty)
+               | "Address" ->  I_ldelema(prefixes.ro,false,shape,ty)
                | ".ctor" ->  I_newarr(shape,ty)
                | _ -> failwith "bad method on array type"
              | _ ->
-               let mspec = mkILMethSpecInTy (enclTyp, cc, nm, argtys, retty, minst)
+               let mspec = mkILMethSpecInTyRaw (enclTyp, cc, nm, argtys, retty, minst)
                f prefixes (mspec,varargs)
          | I_type_instr f ->
              let uncoded = seekReadUncodedToken ctxt.is (start + (!curr))
              curr := !curr + 4;
-             let typ = seekReadTypeDefOrRef ctxt numtypars AsObject [] (uncodedTokenToTypeDefOrRefOrSpec uncoded)
+             let typ = seekReadTypeDefOrRef ctxt numtypars AsObject ILList.empty (uncodedTokenToTypeDefOrRefOrSpec uncoded)
              f prefixes typ
          | I_string_instr f ->
              let (tab,idx) = seekReadUncodedToken ctxt.is (start + (!curr))
@@ -2984,14 +2953,15 @@ and seekReadTopCode ctxt numtypars (sz:int) start seqpoints =
          | I_tok_instr f ->  
              let (tab,idx) = seekReadUncodedToken ctxt.is (start + (!curr))
              curr := !curr + 4;
-
+             (* REVIEW: this incorrectly labels all MemberRef tokens as ILMethod's: we should go look at the MemberRef sig to determine if it is a field or method *)        
              let token_info = 
-               if tab = TableNames.Method || tab = TableNames.MemberRef then 
-                 ILToken.ILMethod ((mkILMethSpecInTy (seekReadMethodDefOrRefNoVarargs ctxt numtypars (uncodedTokenToMethodDefOrRef (tab,idx)))))
+               if tab = TableNames.Method || tab = TableNames.MemberRef (* REVIEW:generics or tab = TableNames.MethodSpec *) then 
+                 let (MethodData(enclTyp, cc, nm, argtys, retty, minst)) = seekReadMethodDefOrRefNoVarargs ctxt numtypars (uncodedTokenToMethodDefOrRef (tab,idx))
+                 ILToken.ILMethod (mkILMethSpecInTyRaw (enclTyp, cc, nm, argtys, retty, minst))
                elif tab = TableNames.Field then 
                  ILToken.ILField (seekReadFieldDefAsFieldSpec ctxt idx)
                elif tab = TableNames.TypeDef || tab = TableNames.TypeRef || tab = TableNames.TypeSpec  then 
-                 ILToken.ILType (seekReadTypeDefOrRef ctxt numtypars AsObject [] (uncodedTokenToTypeDefOrRefOrSpec (tab,idx))) 
+                 ILToken.ILType (seekReadTypeDefOrRef ctxt numtypars AsObject ILList.empty (uncodedTokenToTypeDefOrRefOrSpec (tab,idx))) 
                else failwith "bad token for ldtoken" 
              f prefixes token_info
          | I_sig_instr f ->  
@@ -3000,7 +2970,7 @@ and seekReadTopCode ctxt numtypars (sz:int) start seqpoints =
              if tab <> TableNames.StandAloneSig then dprintn "strange table for callsig token";
              let generic,_genarity,cc,retty,argtys,varargs = readBlobHeapAsMethodSig ctxt numtypars (seekReadStandAloneSigRow ctxt idx)
              if generic then failwith "bad image: a generic method signature ctxt.is begin used at a calli instruction";
-             f prefixes (mkILCallSig (cc,argtys,retty), varargs)
+             f prefixes (mkILCallSigRaw (cc,argtys,retty), varargs)
          | I_switch_instr f ->  
              let n =  (seekReadInt32 ctxt.is (start + (!curr)))
              curr := !curr + 4;
@@ -3038,7 +3008,11 @@ and seekReadTopCode ctxt numtypars (sz:int) start seqpoints =
    let instrs = ibuf.ToArray()
    instrs,rawToLabel, lab2pc, raw2nextLab
 
+#if NO_PDB_READER
+and seekReadMethodRVA ctxt (_idx,nm,_internalcall,noinline,numtypars) rva = 
+#else
 and seekReadMethodRVA ctxt (idx,nm,_internalcall,noinline,numtypars) rva = 
+#endif
   mkMethBodyLazyAux 
    (lazy
      begin 
@@ -3048,10 +3022,9 @@ and seekReadMethodRVA ctxt (idx,nm,_internalcall,noinline,numtypars) rva =
        //    -- an overall range for the method 
        //    -- the sequence points for the method 
        let localPdbInfos, methRangePdbInfo, seqpoints = 
-#if SILVERLIGHT
-            ignore idx
-            [], None, []
-#else            
+#if NO_PDB_READER
+           [], None, []
+#else
            match ctxt.pdb with 
            | None -> 
                [], None, []
@@ -3102,14 +3075,13 @@ and seekReadMethodRVA ctxt (idx,nm,_internalcall,noinline,numtypars) rva =
                        //  this scope covers IL range: "+string a+"-"+string b)
                        let others = List.foldBack (scopes >> (@)) (Array.toList (pdbScopeGetChildren scp)) []
                        thisOne :: others
-                 let localPdbInfos = [] 
-
+                 let localPdbInfos = [] (* <REVIEW> scopes fail for mscorlib </REVIEW> scopes rootScope  *)
+                 // REVIEW: look through sps to get ranges?  Use GetRanges?? Change AbsIL?? 
                  (localPdbInfos,None,seqpoints)
                with e -> 
                    // "* Warning: PDB info for method "+nm+" could not be read and will be ignored: "+e.Message
                    [],None,[]
-         
-#endif // SILVERLIGHT       
+#endif // NO_PDB_READER         
        
        let baseRVA = ctxt.anyV2P("method rva",rva)
        // ": reading body of method "+nm+" at rva "+string rva+", phys "+string baseRVA
@@ -3126,7 +3098,7 @@ and seekReadMethodRVA ctxt (idx,nm,_internalcall,noinline,numtypars) rva =
              { IsZeroInit=false;
                MaxStack= 8;
                NoInlining=noinline;
-               Locals=[];
+               Locals=ILList.empty;
                SourceMarker=methRangePdbInfo; 
                Code=code }
 
@@ -3214,7 +3186,7 @@ and seekReadMethodRVA ctxt (idx,nm,_internalcall,noinline,numtypars) rva =
                     let handlerFinish = rawToLabel (st2 + sz2)
                     let clause = 
                       if kind = e_COR_ILEXCEPTION_CLAUSE_EXCEPTION then 
-                        ILExceptionClause.TypeCatch(seekReadTypeDefOrRef ctxt numtypars AsObject [] (uncodedTokenToTypeDefOrRefOrSpec (i32ToUncodedToken extra)), (handlerStart, handlerFinish) )
+                        ILExceptionClause.TypeCatch(seekReadTypeDefOrRef ctxt numtypars AsObject ILList.empty (uncodedTokenToTypeDefOrRefOrSpec (i32ToUncodedToken extra)), (handlerStart, handlerFinish) )
                       elif kind = e_COR_ILEXCEPTION_CLAUSE_FILTER then 
                         let filterStart = rawToLabel extra
                         let filterFinish = handlerStart
@@ -3251,7 +3223,7 @@ and seekReadMethodRVA ctxt (idx,nm,_internalcall,noinline,numtypars) rva =
              { IsZeroInit=initlocals;
                MaxStack= maxstack;
                NoInlining=noinline;
-               Locals=locals;
+               Locals=mkILLocals locals;
                Code=code;
                SourceMarker=methRangePdbInfo}
        else 
@@ -3407,11 +3379,10 @@ and seekReadTopExportedTypes ctxt () =
                    res := entry :: !res;
            done;
            List.rev !res)
-         
-let getPdbReader opts infile =  
-#if SILVERLIGHT
-    None
+
+#if NO_PDB_READER
 #else         
+let getPdbReader opts infile =  
     match opts.pdbPath with 
     | None -> None
     | Some pdbpath ->
@@ -3473,7 +3444,7 @@ let rec genOpenBinaryReader infile is opts =
     let _textAddr            = seekReadInt32 is (peOptionalHeaderPhysLoc + 20) (* e.g. 0x0002000 *)
      (* x86: 000000b0 *) 
     let dataSegmentAddr       = seekReadInt32 is (peOptionalHeaderPhysLoc + 24) (* e.g. 0x0000c000 *)
-    (*  We use the DWORD at offset 24 for x64.  This currently ok since fsc doesn't support true 64-bit image bases,
+    (*  REVIEW: For now, we'll use the DWORD at offset 24 for x64.  This currently ok since fsc doesn't support true 64-bit image bases,
         but we'll have to fix this up when such support is added. *)    
     let imageBaseReal = if only64 then dataSegmentAddr else seekReadInt32 is (peOptionalHeaderPhysLoc + 28)  (* Image Base Always 0x400000 (see Section 23.1). - QUERY : no it's not always 0x400000, e.g. 0x034f0000 *)
     let alignVirt      = seekReadInt32 is (peOptionalHeaderPhysLoc + 32)   (*  Section Alignment Always 0x2000 (see Section 23.1). *)
@@ -3483,16 +3454,21 @@ let rec genOpenBinaryReader infile is opts =
     let _osMinor     = seekReadUInt16 is (peOptionalHeaderPhysLoc + 42)   (* OS Minor Always 0 (see Section 23.1). *)
     let _userMajor   = seekReadUInt16 is (peOptionalHeaderPhysLoc + 44)   (* User Major Always 0 (see Section 23.1). *)
     let _userMinor   = seekReadUInt16 is (peOptionalHeaderPhysLoc + 46)   (* User Minor Always 0 (see Section 23.1). *)
-    let _subsysMajor = seekReadUInt16 is (peOptionalHeaderPhysLoc + 48)   (* SubSys Major Always 4 (see Section 23.1). *)
-    let _subsysMinor = seekReadUInt16 is (peOptionalHeaderPhysLoc + 50)   (* SubSys Minor Always 0 (see Section 23.1). *)
+    let subsysMajor = seekReadUInt16AsInt32 is (peOptionalHeaderPhysLoc + 48)   (* SubSys Major Always 4 (see Section 23.1). *)
+    let subsysMinor = seekReadUInt16AsInt32 is (peOptionalHeaderPhysLoc + 50)   (* SubSys Minor Always 0 (see Section 23.1). *)
      (* x86: 000000d0 *) 
     let _imageEndAddr   = seekReadInt32 is (peOptionalHeaderPhysLoc + 56)  (* Image Size: Size, in bytes, of image, including all headers and padding; shall be a multiple of Section Alignment. e.g. 0x0000e000 *)
     let _headerPhysSize = seekReadInt32 is (peOptionalHeaderPhysLoc + 60)  (* Header Size Combined size of MS-DOS Header, PE Header, PE Optional Header and padding; shall be a multiple of the file alignment. *)
     let subsys           = seekReadUInt16 is (peOptionalHeaderPhysLoc + 68)   (* SubSystem Subsystem required to run this image. Shall be either IMAGE_SUBSYSTEM_WINDOWS_CE_GUI (!0x3) or IMAGE_SUBSYSTEM_WINDOWS_GUI (!0x2). QUERY: Why is this 3 on the images ILASM produces??? *)
+    let useHighEnthropyVA = 
+        let n = seekReadUInt16 is (peOptionalHeaderPhysLoc + 70)
+        let highEnthropyVA = 0x20us
+        (n &&& highEnthropyVA) = highEnthropyVA
+
      (* x86: 000000e0 *) 
 
     (* WARNING: THESE ARE 64 bit ON x64/ia64 *)
-    (*  If we need these values for x64, we'll have to read them in as 64bit and fix up the rest of the offsets.
+    (*  REVIEW: If we ever decide that we need these values for x64, we'll have to read them in as 64bit and fix up the rest of the offsets.
         Then again, it should suffice to just use the defaults, and still not bother... *)
     (*  let stackReserve = seekReadInt32 is (peOptionalHeaderPhysLoc + 72) in *)  (* Stack Reserve Size Always 0x100000 (1Mb) (see Section 23.1). *)
     (*   let stackCommit = seekReadInt32 is (peOptionalHeaderPhysLoc + 76) in  *) (* Stack Commit Size Always 0x1000 (4Kb) (see Section 23.1). *)
@@ -3588,6 +3564,7 @@ let rec genOpenBinaryReader infile is opts =
     
     let ilOnly             = (cliFlags &&& 0x01) <> 0x00
     let only32             = (cliFlags &&& 0x02) <> 0x00
+    let is32bitpreferred   = (cliFlags &&& 0x00020003) <> 0x00
     let _strongnameSigned  = (cliFlags &&& 0x08) <> 0x00
     let _trackdebugdata     = (cliFlags &&& 0x010000) <> 0x00
     
@@ -3626,7 +3603,7 @@ let rec genOpenBinaryReader infile is opts =
 
     let tryFindStream name = 
       let rec look i pos = 
-        if i >= numStreams then notFound()
+        if i >= numStreams then None
         else
           let offset = seekReadInt32 is (pos + 0)
           let length = seekReadInt32 is (pos + 4)
@@ -3641,19 +3618,22 @@ let rec genOpenBinaryReader infile is opts =
               elif !n >= Array.length name || c <> name.[!n] then 
                   res := false;
               incr n
-          if !res then (offset + metadataPhysLoc,length) 
+          if !res then Some(offset + metadataPhysLoc,length) 
           else look (i+1) (align 0x04 (pos + 8 + (!n)))
       look 0 streamHeadersStart
 
     let findStream name = 
-        try tryFindStream name 
-        with :? KeyNotFoundException -> (0x0, 0x0)
+        match tryFindStream name with
+        | None -> (0x0, 0x0)
+        | Some positions ->  positions
 
     let (tablesStreamPhysLoc, tablesStreamSize) = 
-      try tryFindStream [| 0x23; 0x7e |] (* #~ *) 
-      with :? KeyNotFoundException -> 
-        try tryFindStream [| 0x23; 0x2d |] (* #-: at least one DLL I've seen uses this! *)  
-        with :? KeyNotFoundException -> 
+      match tryFindStream [| 0x23; 0x7e |] (* #~ *) with
+      | Some res -> res
+      | None -> 
+        match tryFindStream [| 0x23; 0x2d |] (* #-: at least one DLL I've seen uses this! *)   with
+        | Some res -> res
+        | None -> 
          dprintf "no metadata tables found under stream names '#~' or '#-', please report this\n";
          let firstStreamOffset = seekReadInt32 is (streamHeadersStart + 0)
          let firstStreamLength = seekReadInt32 is (streamHeadersStart + 4)
@@ -3891,7 +3871,7 @@ let rec genOpenBinaryReader infile is opts =
              if logging then dprintf "tablePhysLocations.[%d] = %d, offset from startOfTables = 0x%08x\n" i res.[i] (res.[i] -  startOfTables);
          res
     
-    let inbase = System.IO.Path.GetFileName infile + ": "
+    let inbase = Filename.fileNameOfPath infile + ": "
 
     // All the caches.  The sizes are guesstimates for the rough sharing-density of the assembly 
     let cacheAssemblyRef               = mkCacheInt32 opts.optimizeForMemory inbase "ILAssemblyRef"  (getNumRows TableNames.AssemblyRef)
@@ -3924,12 +3904,14 @@ let rec genOpenBinaryReader infile is opts =
     let cacheFieldMarshalRow    = mkCacheInt32 opts.optimizeForMemory inbase "FieldMarshal Rows" (getNumRows TableNames.FieldMarshal / 20 + 1)
     let cachePropertyMapRow     = mkCacheInt32 opts.optimizeForMemory inbase "PropertyMap Rows" (getNumRows TableNames.PropertyMap / 20 + 1)
 
-    let mkRowCounter nm  =
+    let mkRowCounter _nm  =
        let count = ref 0
 #if DEBUG
-       addReport (fun oc -> if !count <> 0 then oc.WriteLine (inbase+string !count + " "+nm+" rows read"));
+#if STATISTICS
+       addReport (fun oc -> if !count <> 0 then oc.WriteLine (inbase+string !count + " "+_nm+" rows read"));
+#endif
 #else
-       nm |> ignore
+       _nm |> ignore
 #endif
        count
 
@@ -3971,8 +3953,11 @@ let rec genOpenBinaryReader infile is opts =
    //-----------------------------------------------------------------------
    // Set up the PDB reader so we can read debug info for methods.
    // ----------------------------------------------------------------------
-
+#if NO_PDB_READER
+    let pdb = None
+#else
     let pdb = if runningOnMono then None else getPdbReader opts infile
+#endif
 
     let rowAddr (tab:TableName) idx = tablePhysLocations.[tab.Index] + (idx - 1) * tableRowSizes.[tab.Index]
 
@@ -4014,7 +3999,7 @@ let rec genOpenBinaryReader infile is opts =
                  seekReadFieldMarshalRow        = cacheFieldMarshalRow  (seekReadFieldMarshalRowUncached ctxtH);
                  seekReadPropertyMapRow         = cachePropertyMapRow  (seekReadPropertyMapRowUncached ctxtH);
                  seekReadAssemblyRef            = cacheAssemblyRef  (seekReadAssemblyRefUncached ctxtH);
-                 seekReadMethodSpecAsMethodData = cacheMethodSpecAsMethodData  (seekReadMethodSpec_as_mdataUncached ctxtH);
+                 seekReadMethodSpecAsMethodData = cacheMethodSpecAsMethodData  (seekReadMethodSpecAsMethodDataUncached ctxtH);
                  seekReadMemberRefAsMethodData  = cacheMemberRefAsMemberData  (seekReadMemberRefAsMethodDataUncached ctxtH);
                  seekReadMemberRefAsFieldSpec   = seekReadMemberRefAsFieldSpecUncached ctxtH;
                  seekReadCustomAttr             = cacheCustomAttr  (seekReadCustomAttrUncached ctxtH);
@@ -4083,9 +4068,10 @@ let rec genOpenBinaryReader infile is opts =
                  countGenericParamConstraint = countGenericParamConstraint;              
                  countMethodSpec             = countMethodSpec;  } 
     ctxtH := Some ctxt;
-    let mdstr = System.Text.Encoding.UTF8.GetString(ilMetadataVersion, 0, ilMetadataVersion.Length)
-    let ilModule = seekReadModule ctxt (subsys,ilOnly,only32,only64,platform,isDll, alignVirt,alignPhys,imageBaseReal,mdstr) 1
-    let ilAssemblyRefs = lazy [ for i in 1 .. getNumRows (TableNames.AssemblyRef) do yield seekReadAssemblyRef ctxt i ]
+     
+    let ilModule = seekReadModule ctxt (subsys, (subsysMajor, subsysMinor), useHighEnthropyVA, ilOnly,only32,is32bitpreferred,only64,platform,isDll, alignVirt,alignPhys,imageBaseReal,System.Text.Encoding.UTF8.GetString (ilMetadataVersion, 0, ilMetadataVersion.Length)) 1
+    let ilAssemblyRefs = lazy [ for i in 1 .. getNumRows TableNames.AssemblyRef do yield seekReadAssemblyRef ctxt i ]
+
     ilModule,ilAssemblyRefs,pdb
   
 let CloseILModuleReader x = x.dispose()
@@ -4095,6 +4081,14 @@ let defaults =
       pdbPath= None; 
       ilGlobals=ecmaILGlobals } 
 
+#if NO_PDB_READER
+let ClosePdbReader _x =  ()
+#else
+let ClosePdbReader pdb =  
+    match pdb with 
+    | Some (pdbr,_) -> pdbReadClose pdbr
+    | None -> ()
+#endif
 
 let OpenILModuleReader infile opts = 
 
@@ -4105,11 +4099,9 @@ let OpenILModuleReader infile opts =
           ilAssemblyRefs=ilAssemblyRefs;
           dispose = (fun () -> 
             mmap.Close();
-            match pdb with 
-            | Some (pdbr,_) -> pdbReadClose pdbr
-            | None -> ()) }
+            ClosePdbReader pdb) }
     with :? System.DllNotFoundException ->
-        let stream = System.IO.File.NewFileStreamShim infile
+        let stream = FileSystem.FileStreamReadShim infile
         let is = new BinaryReader(stream)
         let cell = ref (Some is)
         let modul,ilAssemblyRefs,pdb = genOpenBinaryReader infile (Chan (infile,cell)) opts
@@ -4118,9 +4110,7 @@ let OpenILModuleReader infile opts =
           dispose = (fun () -> 
             cell := None;
             is.Close();
-            match pdb with 
-            | Some (pdbr,_) -> pdbReadClose pdbr
-            | None -> ()) }
+            ClosePdbReader pdb) }
 
 // ++GLOBAL MUTABLE STATE
 let ilModuleReaderCache = 
@@ -4128,9 +4118,9 @@ let ilModuleReaderCache =
 
 
 let OpenILModuleReaderAfterReadingAllBytes infile opts = 
-    // Use GetDirectoryName and GetFileName to pseudo-normalize the paths.
+    // Pseudo-normalize the paths.
     let key,succeeded = 
-        try (Path.GetFullPathShim(infile), File.GetLastWriteTimeShim(infile)), true
+        try (FileSystem.GetFullPathShim(infile), FileSystem.GetLastWriteTimeShim(infile)), true
         with e -> 
             System.Diagnostics.Debug.Assert(false, "Failed to compute key in OpenILModuleReaderAfterReadingAllBytes cache. Falling back to uncached.") 
             ("",System.DateTime.Now), false
@@ -4146,13 +4136,22 @@ let OpenILModuleReaderAfterReadingAllBytes infile opts =
         let ilModuleReader = 
             { modul = modul; 
               ilAssemblyRefs = ilAssemblyRefs
-              dispose = (fun () -> 
-                match pdb with 
-                | Some (pdbr,_) -> pdbReadClose pdbr
-                | None -> ()) }
+              dispose = (fun () -> ClosePdbReader pdb) }
         if isNone pdb && succeeded then 
             ilModuleReaderCache.Put(key, ilModuleReader)
         ilModuleReader
+
+let OpenILModuleReaderFromBytes fileNameForDebugOutput bytes opts = 
+        assert opts.pdbPath.IsNone
+        let mc = MemChannel.OpenBytes bytes
+        let modul,ilAssemblyRefs,pdb = genOpenBinaryReader fileNameForDebugOutput (Mem mc) opts
+        let ilModuleReader = 
+            { modul = modul; 
+              ilAssemblyRefs = ilAssemblyRefs
+              dispose = (fun () -> ClosePdbReader pdb) }
+        ilModuleReader
+
+
 
 
 

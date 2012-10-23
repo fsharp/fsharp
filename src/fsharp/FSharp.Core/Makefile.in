@@ -10,13 +10,29 @@ FSC=$(protodir)fsc-proto.exe
 
 FLAGS_2_0 += \
 	$(FINAL_FLAGS) \
+	--compiling-fslib \
+	--nowarn:75,1204 \
 	--target:library \
-	--compiling-fslib
+	--compiling-fslib-20:$(monolibdir)../4.0/mscorlib.dll \
+	--extraoptimizationloops:1 
+
+FLAGS_2_1 += \
+	$(FINAL_FLAGS) \
+	--compiling-fslib \
+	--nowarn:75,1204 \
+	--target:library \
+	--extraoptimizationloops:1 
 
 FLAGS_4_0 += \
 	$(FINAL_FLAGS) \
-	$(FLAGS_2_0) \
-	--compiling-fslib-mscorlib40:$(monolibdir)mscorlib.dll
+	--compiling-fslib \
+	--nowarn:75,1204 \
+	--target:library \
+	--compiling-fslib-40 \
+	--define:BE_SECURITY_TRANSPARENT \
+	--define:QUERIES_IN_FSLIB \
+	--define:PUT_TYPE_PROVIDERS_IN_FSCORE \
+	--extraoptimizationloops:1 
 
 DEFINES += \
 	--define:RUNTIME
@@ -67,6 +83,13 @@ sources = \
 	nativeptr.fs \
 	control.fsi \
 	control.fs \
+	Linq.fsi \
+	Linq.fs \
+	MutableTuple.fs \
+	QueryExtensions.fs \
+	Query.fsi \
+	Query.fs \
+	SI.fs \
 	fslib-extra-pervasives.fsi \
 	fslib-extra-pervasives.fs \
 	../../assemblyinfo/assemblyinfo.FSharp.Core.dll.fs
@@ -74,10 +97,15 @@ sources = \
 RESOURCES = \
 	$(tmpdir)FSCore.resources
 
-$(tmpdir)FSCore.resources: $(srcdir)FSCore.resx
+$(tmpdir)FSCore.resources: FSCore.resx
 	resgen $< $@
 
 include $(topdir)/src/fsharp/targets.make
 
+do-final: do-4-0 do-2-0
+
+clean: clean-4-0 clean-2-1 clean-2-0
+
 install: install-lib-2 install-lib-4 install-lib-4-5
+install-2-1: install-lib-2-1
 

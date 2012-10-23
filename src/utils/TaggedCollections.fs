@@ -1,6 +1,5 @@
 //----------------------------------------------------------------------------
-//
-// Copyright (c) 2002-2011 Microsoft Corporation. 
+// Copyright (c) 2002-2012 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -9,6 +8,7 @@
 //
 // You must not remove this notice, or any other, from this software.
 //----------------------------------------------------------------------------
+
 
 
 namespace Internal.Utilities.Collections.Tagged
@@ -694,9 +694,9 @@ namespace Internal.Utilities.Collections.Tagged
         override this.GetHashCode() = this.ComputeHashCode()
           
         interface ICollection<'T> with 
-            member s.Add(x) = raise (new System.NotSupportedException("ReadOnlyCollection"))
+            member s.Add(_) = raise (new System.NotSupportedException("ReadOnlyCollection"))
             member s.Clear() = raise (new System.NotSupportedException("ReadOnlyCollection"))
-            member s.Remove(x) = raise (new System.NotSupportedException("ReadOnlyCollection"))
+            member s.Remove(_) = raise (new System.NotSupportedException("ReadOnlyCollection"))
             member s.Contains(x) = SetTree.contains comparer x tree
             member s.CopyTo(arr,i) = SetTree.copyToArray tree arr i
             member s.IsReadOnly = true

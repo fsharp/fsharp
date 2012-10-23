@@ -15,13 +15,14 @@ DEFINES += \
 	--define:BUILDING_WITH_LKG \
 	--define:BUILDING_PROTO \
 	--define:COMPILER \
+	--define:NO_STRONG_NAMES \
 	--define:INCLUDE_METADATA_READER \
-	--define:INCLUDE_METADATA_WRITER \
-	--define:TRYING_TO_FIX_4577
+	--define:INCLUDE_METADATA_WRITER
 
 REFERENCES += \
 	-r:$(bootstrapdir)FSharp.Core.dll \
-	-r:Mono.Security.dll
+	-r:$(monolibdir)System.Windows.Forms.dll
+
 
 sources = \
 	$(tmpdir)FSComp.fs \
@@ -40,10 +41,10 @@ sources = \
 	../../utils/HashMultiMap.fs \
 	../../utils/TaggedCollections.fsi \
 	../../utils/TaggedCollections.fs \
-	../../utils/filename.fsi \
-	../../utils/filename.fs \
 	../FlatList.fs \
 	../../absil/illib.fs \
+	../../utils/filename.fsi \
+	../../utils/filename.fs \
 	../../absil/zmap.fsi \
 	../../absil/zmap.fs \
 	../../absil/zset.fsi \
@@ -85,7 +86,10 @@ sources = \
 	../../ilx/ilxsettings.fs \
 	../../ilx/pubclo.fsi \
 	../../ilx/pubclo.fs \
+	../../ilx/cu_erase.fsi \
 	../../ilx/cu_erase.fs \
+	../InternalFileSystemUtils.fsi \
+	../InternalFileSystemUtils.fs \
 	../unilex.fsi \
 	../unilex.fs \
 	../layout.fsi \
@@ -108,6 +112,7 @@ sources = \
 	../import.fsi \
 	../import.fs \
 	../infos.fs \
+	../NicePrint.fs \
 	../augment.fsi \
 	../augment.fs \
 	../typrelns.fs \
@@ -143,29 +148,42 @@ sources = \
 	../fscopts.fsi \
 	../fscopts.fs \
 	../vs/IncrementalBuild.fsi \
-	../vs/IncrementalBuild.fs
+	../vs/IncrementalBuild.fs \
+	../fsc.fs
 
 RESOURCES= \
 	$(tmpdir)FSStrings.resources \
 	$(tmpdir)FSComp.resources
 
-$(tmpdir)FSComp.resources: $(srcdir)../FSComp.txt
-	mono --debug $(FSSRGEN) $< $(@:.resources=.fs) $(@:.resources=.resx)
-	resgen $(@:.resources=.resx) $@
+$(tmpdir)FSComp.fs $(tmpdir)FSComp.resources: ../FSComp.txt
+	mono $(MONO_OPTIONS) $(FSSRGEN) $< $(tmpdir)FSComp.fs $(tmpdir)FSComp.resx
+	resgen $(tmpdir)FSComp.resx $(tmpdir)FSComp.resources
 
-$(tmpdir)FSStrings.resources: $(srcdir)../FSStrings.resx
+$(tmpdir)FSStrings.resources: ../FSStrings.resx
 	resgen $< $@
 
-$(tmpdir)lex.fs: $(srcdir)../lex.fsl
-	mono --debug $(FSLEX) $< -o $@ --lexlib Internal.Utilities.Text.Lexing --unicode
+$(tmpdir)lex.fs: ../lex.fsl
+	mono $(MONO_OPTIONS) $(FSLEX) $< -o $@ --lexlib Internal.Utilities.Text.Lexing --unicode
+	@-mkdir -p ../FSharp.Compiler/.libs/
+	cp -p $(tmpdir)lex.fs* ../FSharp.Compiler/.libs/
 
-$(tmpdir)illex.fs: $(srcdir)../../absil/illex.fsl
-	mono --debug $(FSLEX) $< -o $@ --lexlib Internal.Utilities.Text.Lexing --unicode
+$(tmpdir)illex.fs: ../../absil/illex.fsl
+	mono $(MONO_OPTIONS) $(FSLEX) $< -o $@ --lexlib Internal.Utilities.Text.Lexing --unicode
+	@-mkdir -p ../FSharp.Compiler/.libs/
+	cp -p $(tmpdir)illex.fs* ../FSharp.Compiler/.libs/
 
-$(tmpdir)pars.fs: $(srcdir)../pars.fsy
-	mono --debug $(FSYACC) $< -o $@ --internal --open Microsoft.FSharp.Compiler --module Microsoft.FSharp.Compiler.Parser --lexlib Internal.Utilities.Text.Lexing --parslib Internal.Utilities.Text.Parsing
+$(tmpdir)pars.fs: ../pars.fsy
+	mono $(MONO_OPTIONS) $(FSYACC) $< -o $@ --internal --open Microsoft.FSharp.Compiler --module Microsoft.FSharp.Compiler.Parser --lexlib Internal.Utilities.Text.Lexing --parslib Internal.Utilities.Text.Parsing
+	@-mkdir -p ../FSharp.Compiler/.libs/
+	cp -p $(tmpdir)pars.fs* ../FSharp.Compiler/.libs/
 
-$(tmpdir)ilpars.fs: $(srcdir)../../absil/ilpars.fsy
-	mono --debug $(FSYACC) $< -o $@ --internal --module Microsoft.FSharp.Compiler.AbstractIL.Internal.AsciiParser --lexlib Internal.Utilities.Text.Lexing --parslib Internal.Utilities.Text.Parsing
+$(tmpdir)ilpars.fs: ../../absil/ilpars.fsy
+	mono $(MONO_OPTIONS) $(FSYACC) $< -o $@ --internal --module Microsoft.FSharp.Compiler.AbstractIL.Internal.AsciiParser --lexlib Internal.Utilities.Text.Lexing --parslib Internal.Utilities.Text.Parsing
+	@-mkdir -p ../FSharp.Compiler/.libs/
+	cp -p $(tmpdir)ilpars.fs* ../FSharp.Compiler/.libs/
+
+do-proto: do-4-0
+
+clean: clean-4-0
 
 include $(topdir)/src/fsharp/targets.make

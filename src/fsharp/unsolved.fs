@@ -34,7 +34,7 @@ type cenv =
 
 let accTy cenv _env ty =
     (freeInType CollectTyparsNoCaching (tryNormalizeMeasureInType cenv.g ty)).FreeTypars |> Zset.iter (fun tp -> 
-            if (tp.Rigidity <> TyparRigid) then 
+            if (tp.Rigidity <> TyparRigidity.Rigid) then 
                 cenv.unsolved <- tp :: cenv.unsolved) 
 
 let accTypeInst cenv env tyargs =
@@ -47,7 +47,7 @@ let accTypeInst cenv env tyargs =
 let rec accExpr   (cenv:cenv) (env:env) expr =     
     let expr = stripExpr expr 
     match expr with
-    | Expr.Seq (e1,e2,_,_,_) -> 
+    | Expr.Sequential (e1,e2,_,_,_) -> 
         accExpr cenv env e1; 
         accExpr cenv env e2
     | Expr.Let (bind,body,_,_) ->  
@@ -57,10 +57,11 @@ let rec accExpr   (cenv:cenv) (env:env) expr =
         accTy cenv env ty 
     
     | Expr.Val (_v,_vFlags,_m) -> ()
-    | Expr.Quote(ast,_,_m,ty) -> 
+    | Expr.Quote(ast,_,_,_m,ty) -> 
         accExpr cenv env ast;
         accTy cenv env ty;
-    | Expr.Obj (_,_typ,basev,basecall,overrides,iimpls,_m) -> 
+    | Expr.Obj (_,typ,basev,basecall,overrides,iimpls,_m) -> 
+        accTy cenv env typ
         accExpr cenv env basecall;
         accMethods cenv env basev overrides ;
         accIntfImpls cenv env basev iimpls;
@@ -71,6 +72,7 @@ let rec accExpr   (cenv:cenv) (env:env) expr =
         accTypeInst cenv env tyargs;
         accExpr cenv env f;
         accExprs cenv env argsl
+    // REVIEW: fold the next two cases together 
     | Expr.Lambda(_,_ctorThisValOpt,_baseValOpt,argvs,_body,m,rty) -> 
         let topValInfo = ValReprInfo ([],[argvs |> List.map (fun _ -> ValReprInfo.unnamedTopArg1)],ValReprInfo.unnamedRetVal) 
         let ty = mkMultiLambdaTy m argvs rty 
@@ -106,7 +108,9 @@ and accMethod cenv env _baseValOpt (TObjExprMethod(_slotsig,_attribs,_tps,vs,e,_
     accExpr cenv env e
 
 and accIntfImpls cenv env baseValOpt l = List.iter (accIntfImpl cenv env baseValOpt) l
-and accIntfImpl cenv env baseValOpt (_ty,overrides) = accMethods cenv env baseValOpt overrides 
+and accIntfImpl cenv env baseValOpt (ty,overrides) = 
+    accTy cenv env ty
+    accMethods cenv env baseValOpt overrides 
 
 and accOp cenv env (op,tyargs,args,_m) =
     // Special cases 
@@ -169,7 +173,7 @@ and accDiscrim cenv env d =
         accExpr cenv env exp;
         accTypeInst cenv env tys
 
-and accAttrib cenv env (Attrib(_,_k,args,props,_,_m)) = 
+and accAttrib cenv env (Attrib(_,_k,args,props,_,_,_m)) = 
     args |> List.iter (fun (AttribExpr(e1,_)) -> accExpr cenv env e1);
     props |> List.iter (fun (AttribNamedArg(_nm,_ty,_flg,AttribExpr(expr,_))) -> accExpr cenv env expr)
   

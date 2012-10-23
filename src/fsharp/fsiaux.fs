@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2011 Microsoft Corporation. 
+// Copyright (c) 2002-2012 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -125,17 +125,17 @@ type InteractiveSession()  =
 #else      
 [<assembly: CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1009:DeclareEventHandlersCorrectly", Scope="member", Target="Microsoft.FSharp.Compiler.Interactive.InteractiveSession.#ThreadException")>]
 do()
+#endif
   
-#endif  
   
 module Settings = 
     let fsi = new InteractiveSession()
 
 #if SILVERLIGHT
-#else
+#else      
     [<assembly: AutoOpen("Microsoft.FSharp.Compiler.Interactive.Settings")>]
-#endif    
     do()
+#endif
 
 module RuntimeHelpers = 
     open System
@@ -145,4 +145,6 @@ module RuntimeHelpers =
     let SaveIt (x:'T) = (savedIt := (typeof<'T>, box x))
     let internal GetSavedIt () = snd !savedIt
     let internal GetSavedItType () = fst !savedIt
+#if SILVERLIGHT
     let GetSimpleEventLoop() = new SimpleEventLoop() :> IEventLoop
+#endif

@@ -1,6 +1,5 @@
 //----------------------------------------------------------------------------
-//
-// Copyright (c) 2002-2011 Microsoft Corporation. 
+// Copyright (c) 2002-2012 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -9,6 +8,7 @@
 //
 // You must not remove this notice, or any other, from this software.
 //----------------------------------------------------------------------------
+
 
 #nowarn "47" // recursive initialization of LexBuffer
 
@@ -19,16 +19,22 @@ namespace Internal.Utilities.Text.Lexing
     open Microsoft.FSharp.Collections
     open System.Collections.Generic
 
-    type internal Position = 
-        { posFileIndex : int;
-          posLineNum : int;
+    // REVIEW: This type showed up on a parsing-intensive performance measurement. 
+    // REVIEW: Consider whether it can be smaller or can be a struct. 
+    type (* internal *) Position = 
+        { /// The file name index for the position, use fileOfFileIndex in range.fs to decode
+          posFileIndex: int;
+          /// The line number for the position
+          posLineNum: int;
+          /// The line number for the position in the original source file
           posOriginalLineNum : int;
-          posStartOfLineOffset : int;
-          posColumnOffset : int; }
+          /// The absolute offset of the beginning of the line
+          posStartOfLineOffset: int;
+          /// The absolute offset of the column for the position
+          posColumnOffset: int; }
         member x.FileIndex = x.posFileIndex
         member x.Line = x.posLineNum
         member x.OriginalLine = x.posOriginalLineNum
-        member x.Char = x.posColumnOffset
         member x.AbsoluteOffset = x.posColumnOffset
         member x.StartOfLine = x.posStartOfLineOffset
         member x.StartOfLineAbsoluteOffset = x.posStartOfLineOffset
@@ -38,8 +44,15 @@ namespace Internal.Utilities.Text.Lexing
                     posOriginalLineNum = pos.OriginalLine + 1;
                     posLineNum = pos.Line+1; 
                     posStartOfLineOffset = pos.AbsoluteOffset }
-        member pos.EndOfToken(n) = {pos with posColumnOffset=pos.posColumnOffset + n }
-        member pos.ShiftColumnBy(by) = {pos with posColumnOffset = pos.posColumnOffset + by}
+        member pos.EndOfToken n = {pos with posColumnOffset=pos.posColumnOffset + n }
+        member pos.ShiftColumnBy by = {pos with posColumnOffset = pos.posColumnOffset + by}
+        member pos.ColumnMinusOne = { pos with posColumnOffset = pos.posStartOfLineOffset-1 }
+
+        member pos.ApplyLineDirective (fileIdx, line) =
+            {pos with posFileIndex = fileIdx; 
+                      posStartOfLineOffset= pos.posColumnOffset;
+                      posLineNum=line };
+
         static member Empty = 
             { posFileIndex=0; 
               posLineNum= 0; 
@@ -47,15 +60,18 @@ namespace Internal.Utilities.Text.Lexing
               posStartOfLineOffset= 0; 
               posColumnOffset=0 }
 
-    type internal LexBufferFiller<'char> = 
-        { fillSync : (LexBuffer<'char> -> unit) option
-          fillAsync : (LexBuffer<'char> -> Async<unit>) option } 
+        static member FirstLine fileIdx = 
+            { posFileIndex= fileIdx; 
+              posStartOfLineOffset=0;
+              posColumnOffset=0;
+              posOriginalLineNum = 0;
+              posLineNum=1 }
+
+    type internal LexBufferFiller<'Char> = (LexBuffer<'Char> -> unit) 
         
     and [<Sealed>]
-        internal LexBuffer<'char>(filler: LexBufferFiller<'char>) as this = 
-        let context = new Dictionary<string,obj>(1) in 
-        let extendBufferSync = (fun () -> match filler.fillSync with Some refill -> refill this | None -> invalidOp "attempt to read synchronously from an asynchronous lex buffer")
-        let extendBufferAsync = (fun () -> match filler.fillAsync with Some refill -> refill this | None -> invalidOp "attempt to read asynchronously from a synchronous lex buffer")
+        (* internal *) LexBuffer<'Char>(filler: LexBufferFiller<'Char>) = 
+        let context = new Dictionary<string,obj>(1) 
         let mutable buffer=[||];
         /// number of valid charactes beyond bufferScanStart 
         let mutable bufferMaxScanLength=0;
@@ -94,24 +110,22 @@ namespace Internal.Utilities.Text.Lexing
 
         member lexbuf.StartPos
            with get() = startPos
-           and  set(b) =  startPos <- b
+           and  set b =  startPos <- b
            
         member lexbuf.EndPos 
            with get() = endPos
-           and  set(b) =  endPos <- b
+           and  set b =  endPos <- b
 
         member lexbuf.Lexeme         = Array.sub buffer bufferScanStart lexemeLength
         
         member lexbuf.BufferLocalStore = (context :> IDictionary<_,_>)
         member lexbuf.LexemeLength        with get() : int = lexemeLength    and set v = lexemeLength <- v
-        member internal lexbuf.Buffer              with get() : 'char[] = buffer              and set v = buffer <- v
-        member internal lexbuf.BufferMaxScanLength with get() = bufferMaxScanLength and set v = bufferMaxScanLength <- v
-        member internal lexbuf.BufferScanLength    with get() = bufferScanLength    and set v = bufferScanLength <- v
-        member internal lexbuf.BufferScanStart     with get() : int = bufferScanStart     and set v = bufferScanStart <- v
-        member internal lexbuf.BufferAcceptAction  with get() = bufferAcceptAction  and set v = bufferAcceptAction <- v
-        member internal lexbuf.RefillBuffer = extendBufferSync
-        member internal lexbuf.AsyncRefillBuffer = extendBufferAsync
-
+        member lexbuf.Buffer              with get() : 'Char[] = buffer              and set v = buffer <- v
+        member lexbuf.BufferMaxScanLength with get() = bufferMaxScanLength and set v = bufferMaxScanLength <- v
+        member lexbuf.BufferScanLength    with get() = bufferScanLength    and set v = bufferScanLength <- v
+        member lexbuf.BufferScanStart     with get() : int = bufferScanStart     and set v = bufferScanStart <- v
+        member lexbuf.BufferAcceptAction  with get() = bufferAcceptAction  and set v = bufferAcceptAction <- v
+        member lexbuf.RefillBuffer () = filler lexbuf
         static member LexemeString(lexbuf:LexBuffer<char>) = 
             new System.String(lexbuf.Buffer,lexbuf.BufferScanStart,lexbuf.LexemeLength)
 
@@ -119,7 +133,7 @@ namespace Internal.Utilities.Text.Lexing
            with get() = eof
            and  set(b) =  eof <- b
 
-        member lexbuf.DiscardInput() = discardInput ()
+        member lexbuf.DiscardInput () = discardInput ()
 
         member x.BufferScanPos = bufferScanStart + bufferScanLength
 
@@ -129,55 +143,36 @@ namespace Internal.Utilities.Text.Lexing
                 Array.blit buffer bufferScanStart repl bufferScanStart bufferScanLength;
                 buffer <- repl
 
-        static member FromReadFunctions (syncRead : ('char[] * int * int -> int) option, asyncRead : ('char[] * int * int -> Async<int>) option) : LexBuffer<'char> = 
-            let extension= Array.zeroCreate 4096
-            let fillers = 
-                { fillSync = 
-                    match syncRead with 
-                    | None -> None
-                    | Some read -> 
-                         Some (fun lexBuffer -> 
-                             let n = read(extension,0,extension.Length)
-                             lexBuffer.EnsureBufferSize n;
-                             Array.blit extension 0 lexBuffer.Buffer lexBuffer.BufferScanPos n;
-                             lexBuffer.BufferMaxScanLength <- lexBuffer.BufferScanLength + n); 
-                  fillAsync = 
-                    match asyncRead with 
-                    | None -> None
-                    | Some read -> 
-                         Some (fun lexBuffer -> 
-                                  async { 
-                                      let! n = read(extension,0,extension.Length)
-                                      lexBuffer.EnsureBufferSize n;
-                                      Array.blit extension 0 lexBuffer.Buffer lexBuffer.BufferScanPos n;
-                                      lexBuffer.BufferMaxScanLength <- lexBuffer.BufferScanLength + n }) }
-            new LexBuffer<_>(fillers)
 
         // A full type signature is required on this method because it is used at more specific types within its own scope
-        static member FromFunction (f : 'char[] * int * int -> int) : LexBuffer<'char> =  LexBuffer<_>.FromReadFunctions(Some(f),None)
+        static member FromFunction (f : 'Char[] * int * int -> int) : LexBuffer<'Char> = 
+            let extension= Array.zeroCreate 4096
+            let filler (lexBuffer: LexBuffer<'Char>) =
+                 let n = f (extension,0,extension.Length)
+                 lexBuffer.EnsureBufferSize n;
+                 Array.blit extension 0 lexBuffer.Buffer lexBuffer.BufferScanPos n;
+                 lexBuffer.BufferMaxScanLength <- lexBuffer.BufferScanLength + n
+            new LexBuffer<'Char>(filler)
               
         // A full type signature is required on this method because it is used at more specific types within its own scope
-        static member FromArray (s: 'char[]) : LexBuffer<'char> = 
-            let lexBuffer = 
-                new LexBuffer<_> 
-                    { fillSync = Some (fun _ -> ()); 
-                      fillAsync = Some (fun _ -> async { return () }) }
+        static member FromArray (s: 'Char[]) : LexBuffer<'Char> = 
+            let lexBuffer = new LexBuffer<'Char>(fun _ -> ())
             let buffer = Array.copy s 
             lexBuffer.Buffer <- buffer;
             lexBuffer.BufferMaxScanLength <- buffer.Length;
             lexBuffer
 
-        static member FromChars    (arr) = LexBuffer<char>.FromArray(arr) 
+        static member FromChars (arr:char[]) = LexBuffer.FromArray arr 
 
     module GenericImplFragments = 
-        let startInterpret(lexBuffer:LexBuffer<_>)= 
+        let startInterpret(lexBuffer:LexBuffer<char>)= 
             lexBuffer.BufferScanStart <- lexBuffer.BufferScanStart + lexBuffer.LexemeLength;
             lexBuffer.BufferMaxScanLength <- lexBuffer.BufferMaxScanLength - lexBuffer.LexemeLength;
             lexBuffer.BufferScanLength <- 0;
             lexBuffer.LexemeLength <- 0;
             lexBuffer.BufferAcceptAction <- -1;
 
-        let afterRefill (trans: uint16[] array,sentinel,lexBuffer:LexBuffer<_>,scanUntilSentinel,endOfScan,state,eofPos) = 
+        let afterRefill (trans: uint16[][],sentinel,lexBuffer:LexBuffer<char>,scanUntilSentinel,endOfScan,state,eofPos) = 
             // end of file occurs if we couldn't extend the buffer 
             if lexBuffer.BufferScanLength = lexBuffer.BufferMaxScanLength then  
                 let snew = int trans.[state].[eofPos] // == EOF 
@@ -191,7 +186,7 @@ namespace Internal.Utilities.Text.Lexing
             else 
                 scanUntilSentinel(lexBuffer, state)
 
-        let onAccept (lexBuffer:LexBuffer<_>,a) = 
+        let onAccept (lexBuffer:LexBuffer<char>,a) = 
             lexBuffer.LexemeLength <- lexBuffer.BufferScanLength;
             lexBuffer.BufferAcceptAction <- a;
 

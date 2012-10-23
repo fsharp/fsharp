@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2011 Microsoft Corporation. 
+// Copyright (c) 2002-2012 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -371,12 +371,12 @@ open GlobalUsageAnalysis
 let internalError str = raise(Failure(str))
 
 let mkLocalVal m name ty topValInfo =
-    let compgen    = false 
-    NewVal(name,m,None,ty,Immutable,compgen,topValInfo,taccessPublic,ValNotInRecScope,None,NormalVal,[],OptionalInline,XmlDoc.Empty,false,false,false,false,false,None,ParentNone) 
+    let compgen    = false in (* REVIEW: review: should this be true? *)
+    NewVal(name,m,None,ty,Immutable,compgen,topValInfo,taccessPublic,ValNotInRecScope,None,NormalVal,[],ValInline.Optional,XmlDoc.Empty,false,false,false,false,false,false,None,ParentNone) 
 
 let dprintTerm header expr =
   if false then
-    let str = Layout.showL (Layout.squashTo 192 (implFileL expr)) in  (* improve cxty! *)
+    let str = Layout.showL (Layout.squashTo 192 (implFileL expr)) (* improve cxty! *)
     dprintf "\n\n\n%s:\n%s\n" header str
   else
     ()
@@ -488,7 +488,7 @@ type TransformedFormal =
   //    - also menas that we keep the original formal arg
   | SameArg                          
 
-  // Indictes 
+  // Indicates 
   //    - the new formals for the transform
   //    - expr is tuple of the formals
   | NewArgs of Val list * Expr  
@@ -498,7 +498,7 @@ type TransformedFormal =
 /// - transformedVal       - replaces f.
 type Transform =
    { transformCallPattern : CallPattern;
-     transformedFormals   : TransformedFormal list; 
+     transformedFormals   : TransformedFormal list; (* REVIEW: could push these to fixup binding site *)
      transformedVal         : Val;
    }
 
@@ -668,7 +668,7 @@ let decideTransform g z v callPatterns (m,tps,vss:Val list list,rty) (* tys are 
 // For now, suppressing any transforms on these.
 // Later, could transform f and fix up local calls and provide an f wrapper for beyond. 
 let eligibleVal g (v:Val) =
-    let dllImportStubOrOtherNeverInline = (v.InlineInfo = NeverInline)
+    let dllImportStubOrOtherNeverInline = (v.InlineInfo = ValInline.Never)
     let mutableVal = v.IsMutable
     let byrefVal = isByrefLikeTy g v.Type
     not dllImportStubOrOtherNeverInline &&
@@ -798,6 +798,7 @@ and collapseArgs env bindings n (callPattern) args =
 // pass - app fixup
 //-------------------------------------------------------------------------
 
+// REVIEW: use mkLet etc. 
 let mkLets binds (body:Expr) = 
     (binds,body) ||> List.foldBack (fun b acc -> mkLetBind acc.Range b acc) 
 

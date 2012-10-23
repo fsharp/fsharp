@@ -14,7 +14,8 @@ FLAGS += --target:exe
 DEFINES += \
 	--define:BUILDING_PROTO \
 	--define:BUILDING_WITH_LKG \
-	--define:COMPILER
+	--define:COMPILER \
+	--define:NO_STRONG_NAMES
 
 REFERENCES += \
 	-r:$(bootstrapdir)FSharp.Core.dll \
@@ -23,17 +24,15 @@ REFERENCES += \
 	-r:$(monolibdir)System.Windows.Forms.dll
 
 sources = \
-	$(tmpdir)FSCstrings.fs \
-	../../utils/filename.fsi \
-	../../utils/filename.fs \
-	../fsc.fs \
 	../fscmain.fs
 
-RESOURCES = \
-	$(tmpdir)FSCstrings.resources
+do-proto: do-4-0 $(protodir)FSharp.Core.dll
 
-$(tmpdir)FSCstrings.resources: $(srcdir)../FSCstrings.txt
-	mono --debug $(FSSRGEN) $< $(@:.resources=.fs) $(@:.resources=.resx)
-	resgen $(@:.resources=.resx) $@
+clean: clean-4-0
 
 include $(topdir)/src/fsharp/targets.make
+
+# We need the bootstrap's FSharp.Core to run the proto
+$(protodir)FSharp.Core.dll: $(bootstrapdir)FSharp.Core.dll
+	@-mkdir $(protodir)
+	cp -p $(bootstrapdir)FSharp.Core.dll $(protodir)FSharp.Core.dll

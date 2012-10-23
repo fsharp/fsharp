@@ -1,6 +1,7 @@
 namespace FSharp.Core.Unittests.FSharp_Core.FSharp.Core
 open System
 open NUnit.Framework
+open FSharp.Core.Unittests.LibraryTestFx
 
 [<TestFixture>]
 type IntConversions() =
@@ -20,4 +21,8 @@ type IntConversions() =
         let f = uint32 (uint16 d)
         Assert.IsTrue (e <> f)                 
         ()
-        
+    
+    [<Test>]
+    member this.``Checked.UnsignedToSignedInt32``() =
+        let d = System.UInt16.MaxValue
+        CheckThrowsExn<OverflowException>(fun() -> Checked.int16 d |> ignore)

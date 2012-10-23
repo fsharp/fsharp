@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2011 Microsoft Corporation. 
+// Copyright (c) 2002-2012 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -51,15 +51,18 @@ exception ErrorFromAddingTypeEquation                   of TcGlobals * DisplayEn
 exception ErrorsFromAddingSubsumptionConstraint         of TcGlobals * DisplayEnv * TType * TType * exn * range
 exception ErrorFromAddingConstraint                     of DisplayEnv * exn * range
 exception UnresolvedConversionOperator                  of DisplayEnv * TType * TType * range
-exception UnresolvedOverloading                         of DisplayEnv * exn list * exn list * exn list * string * range
-exception PossibleOverload                              of DisplayEnv * string * range
+exception PossibleOverload                              of DisplayEnv * string * exn * range
+exception UnresolvedOverloading                         of DisplayEnv * exn list (* PossibleOverload list *) * string * range
 //exception PossibleBestOverload                              of DisplayEnv * string * range
 exception NonRigidTypar                                 of DisplayEnv * string option * range * TType * TType * range
 
+/// function type that denotes captured tcVal used in constraint solver
+type TcValF = (ValRef -> ValUseFlag -> TType list -> range -> Expr * TType)
+
 [<Sealed>]
 type ConstraintSolverState =
-    static member New: TcGlobals * Import.ImportMap * InfoReader -> ConstraintSolverState
-    
+    static member New: TcGlobals * Import.ImportMap * InfoReader * TcValF-> ConstraintSolverState
+
 type ConstraintSolverEnv 
 
 val BakedInTraitConstraintNames : string list
@@ -98,6 +101,8 @@ val AddCxTypeIsUnmanaged                      : DisplayEnv -> ConstraintSolverSt
 val AddCxTypeIsEnum                           : DisplayEnv -> ConstraintSolverState -> range -> OptionalTrace -> TType -> TType -> unit
 val AddCxTypeIsDelegate                       : DisplayEnv -> ConstraintSolverState -> range -> OptionalTrace -> TType -> TType -> TType -> unit
 
-val CodegenWitnessThatTypSupportsTraitConstraint : TcGlobals -> ImportMap -> range -> TraitConstraintInfo -> OperationResult<(MethInfo * TypeInst) option>
+val CodegenWitnessThatTypSupportsTraitConstraint : TcValF -> TcGlobals -> ImportMap -> range -> TraitConstraintInfo -> Expr list -> OperationResult<Expr option>
 
 val ChooseTyparSolutionAndSolve : ConstraintSolverState -> DisplayEnv -> Typar -> unit
+
+val IsApplicableMethApprox : TcGlobals -> ImportMap -> range -> MethInfo -> TType -> bool

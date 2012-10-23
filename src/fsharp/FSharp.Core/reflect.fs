@@ -1,6 +1,5 @@
 //----------------------------------------------------------------------------
-//
-// Copyright (c) 2002-2011 Microsoft Corporation. 
+// Copyright (c) 2002-2012 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -48,17 +47,24 @@ module internal Impl =
     let option = typedefof<obj option>
     let func = typedefof<(obj -> obj)>
 
-    let isOptionTy typ = equivHeadTypes typ (typeof<int option>)
+    let isOptionType typ = equivHeadTypes typ (typeof<int option>)
     let isFunctionType typ = equivHeadTypes typ (typeof<(int -> int)>)
     let isListType typ = equivHeadTypes typ (typeof<int list>)
 
     //-----------------------------------------------------------------
     // GENERAL UTILITIES
-    
+
+#if FX_ATLEAST_PORTABLE
+    let instancePropertyFlags = BindingFlags.Instance 
+    let staticPropertyFlags = BindingFlags.Static
+    let staticFieldFlags = BindingFlags.Static 
+    let staticMethodFlags = BindingFlags.Static 
+#else    
     let instancePropertyFlags = BindingFlags.GetProperty ||| BindingFlags.Instance 
     let staticPropertyFlags = BindingFlags.GetProperty ||| BindingFlags.Static
     let staticFieldFlags = BindingFlags.GetField ||| BindingFlags.Static 
     let staticMethodFlags = BindingFlags.Static 
+#endif
 
     let getInstancePropertyInfo (typ: Type,propName,bindingFlags) = typ.GetProperty(propName,instancePropertyFlags ||| bindingFlags) 
     let getInstancePropertyInfos (typ,names,bindingFlags) = names |> Array.map (fun nm -> getInstancePropertyInfo (typ,nm,bindingFlags)) 
@@ -66,36 +72,89 @@ module internal Impl =
     let getInstancePropertyReader (typ: Type,propName,bindingFlags) =
         match getInstancePropertyInfo(typ, propName, bindingFlags) with
         | null -> None
+#if FX_ATLEAST_PORTABLE
+        | prop -> Some(fun (obj:obj) -> prop.GetValue(obj,null))
+#else        
         | prop -> Some(fun (obj:obj) -> prop.GetValue(obj,instancePropertyFlags ||| bindingFlags,null,null,null))
-
+#endif
     //-----------------------------------------------------------------
     // ATTRIBUTE DECOMPILATION
+
 
     let tryFindCompilationMappingAttribute (attrs:obj[]) =
       match attrs with
       | null | [| |] -> None
-      | [| res |] -> Some (res :?> CompilationMappingAttribute)
+      | [| res |] -> let a = (res :?> CompilationMappingAttribute) in Some (a.SourceConstructFlags, a.SequenceNumber, a.VariantNumber)
       | _ -> raise <| System.InvalidOperationException (SR.GetString(SR.multipleCompilationMappings))
 
     let findCompilationMappingAttribute (attrs:obj[]) =
-      match attrs with
-      | null | [| |] -> failwith "no compilation mapping attribute"
-      | [| res |] -> (res :?> CompilationMappingAttribute)
-      | _ -> raise <| System.InvalidOperationException (SR.GetString(SR.multipleCompilationMappings))
+      match tryFindCompilationMappingAttribute attrs with
+      | None -> failwith "no compilation mapping attribute"
+      | Some a -> a
 
+#if FX_NO_CUSTOMATTRIBUTEDATA
     let tryFindCompilationMappingAttributeFromType       (typ:Type)        = tryFindCompilationMappingAttribute ( typ.GetCustomAttributes (typeof<CompilationMappingAttribute>,false))
     let tryFindCompilationMappingAttributeFromMemberInfo (info:MemberInfo) = tryFindCompilationMappingAttribute (info.GetCustomAttributes (typeof<CompilationMappingAttribute>,false))
     let    findCompilationMappingAttributeFromMemberInfo (info:MemberInfo) =    findCompilationMappingAttribute (info.GetCustomAttributes (typeof<CompilationMappingAttribute>,false))
+#else
+    let cmaName = typeof<CompilationMappingAttribute>.FullName
+    let assemblyName = typeof<CompilationMappingAttribute>.Assembly.GetName().Name 
+    let _ = assert (assemblyName = "FSharp.Core")
+    
+    let tryFindCompilationMappingAttributeFromData (attrs:System.Collections.Generic.IList<CustomAttributeData>) =
+        match attrs with
+        | null -> None
+        | _ -> 
+            let mutable res = None
+            for a in attrs do
+                if a.Constructor.DeclaringType.FullName = cmaName then 
+                    let args = a.ConstructorArguments
+                    let flags = 
+                         match args.Count  with 
+                         | 1 -> ((args.[0].Value :?> SourceConstructFlags), 0, 0)
+                         | 2 -> ((args.[0].Value :?> SourceConstructFlags), (args.[1].Value :?> int), 0)
+                         | 3 -> ((args.[0].Value :?> SourceConstructFlags), (args.[1].Value :?> int), (args.[2].Value :?> int))
+                         | _ -> (enum 0, 0, 0)
+                    res <- Some flags
+            res
 
-    let sequenceNumberOfMember          (x: MemberInfo) = (findCompilationMappingAttributeFromMemberInfo x).SequenceNumber
-    let variantNumberOfMember           (x: MemberInfo) = (findCompilationMappingAttributeFromMemberInfo x).VariantNumber
+    let findCompilationMappingAttributeFromData attrs =
+      match tryFindCompilationMappingAttributeFromData attrs with
+      | None -> failwith "no compilation mapping attribute"
+      | Some a -> a
+
+    let tryFindCompilationMappingAttributeFromType       (typ:Type)        = 
+        let assem = typ.Assembly
+        if assem <> null && assem.ReflectionOnly then 
+           tryFindCompilationMappingAttributeFromData ( typ.GetCustomAttributesData())
+        else
+           tryFindCompilationMappingAttribute ( typ.GetCustomAttributes (typeof<CompilationMappingAttribute>,false))
+
+    let tryFindCompilationMappingAttributeFromMemberInfo (info:MemberInfo) = 
+        let assem = info.DeclaringType.Assembly
+        if assem <> null && assem.ReflectionOnly then 
+           tryFindCompilationMappingAttributeFromData (info.GetCustomAttributesData())
+        else
+        tryFindCompilationMappingAttribute (info.GetCustomAttributes (typeof<CompilationMappingAttribute>,false))
+
+    let    findCompilationMappingAttributeFromMemberInfo (info:MemberInfo) =    
+        let assem = info.DeclaringType.Assembly
+        if assem <> null && assem.ReflectionOnly then 
+            findCompilationMappingAttributeFromData (info.GetCustomAttributesData())
+        else
+            findCompilationMappingAttribute (info.GetCustomAttributes (typeof<CompilationMappingAttribute>,false))
+
+#endif
+
+    let sequenceNumberOfMember          (x: MemberInfo) = let (_,n,_) = findCompilationMappingAttributeFromMemberInfo x in n
+    let variantNumberOfMember           (x: MemberInfo) = let (_,_,vn) = findCompilationMappingAttributeFromMemberInfo x in vn
 
     let sortFreshArray f arr = Array.sortInPlaceWith f arr; arr
 
     let isFieldProperty (prop : PropertyInfo) =
         match tryFindCompilationMappingAttributeFromMemberInfo(prop) with
         | None -> false
-        | Some attr -> (attr.SourceConstructFlags &&& SourceConstructFlags.KindMask) = SourceConstructFlags.Field
+        | Some (flags,_n,_vn) -> (flags &&& SourceConstructFlags.KindMask) = SourceConstructFlags.Field
 
     let allInstance  (ps : PropertyInfo[]) = (ps, false)
     let allStatic  (ps : PropertyInfo[]) = (ps, true)
@@ -103,7 +162,7 @@ module internal Impl =
     let tryFindSourceConstructFlagsOfType (typ:Type) = 
       match tryFindCompilationMappingAttributeFromType typ with 
       | None -> None
-      | Some attr -> Some attr.SourceConstructFlags 
+      | Some (flags,_n,_vn) -> Some flags
 
     //-----------------------------------------------------------------
     // UNION DECOMPILATION
@@ -128,18 +187,19 @@ module internal Impl =
             |> Array.choose (fun minfo -> 
                 match tryFindCompilationMappingAttributeFromMemberInfo(minfo) with
                 | None -> None
-                | Some attr -> if (attr.SourceConstructFlags &&& SourceConstructFlags.KindMask) = SourceConstructFlags.UnionCase then 
-                                   let nm = minfo.Name 
-                                   // chop "get_" or  "New" off the front 
-                                   let nm = 
-                                       if not (isListType typ) && not (isOptionTy typ) then 
-                                           if   nm.Length > 4 && nm.[0..3] = "get_" then nm.[4..] 
-                                           elif nm.Length > 3 && nm.[0..2] = "New" then nm.[3..]
-                                           else nm
-                                       else nm
-                                   Some (attr.SequenceNumber, nm)
-                               else
-                                   None) 
+                | Some (flags,n,_vn) -> 
+                    if (flags &&& SourceConstructFlags.KindMask) = SourceConstructFlags.UnionCase then 
+                        let nm = minfo.Name 
+                        // chop "get_" or  "New" off the front 
+                        let nm = 
+                            if not (isListType typ) && not (isOptionType typ) then 
+                                if   nm.Length > 4 && nm.[0..3] = "get_" then nm.[4..] 
+                                elif nm.Length > 3 && nm.[0..2] = "New" then nm.[3..]
+                                else nm
+                            else nm
+                        Some (n, nm)
+                    else
+                        None) 
         | _ -> 
             enumTyp.GetFields(staticFieldFlags ||| bindingFlags) 
             |> Array.filter (fun (f:FieldInfo) -> f.IsStatic && f.IsLiteral) 
@@ -160,14 +220,14 @@ module internal Impl =
             | _ -> caseTyp
 
     let getUnionTagConverter (typ:Type,bindingFlags) = 
-        if isOptionTy typ then (fun tag -> match tag with 0 -> "None" | 1 -> "Some" | _ -> invalidArg "tag" (SR.GetString(SR.outOfRange)))
+        if isOptionType typ then (fun tag -> match tag with 0 -> "None" | 1 -> "Some" | _ -> invalidArg "tag" (SR.GetString(SR.outOfRange)))
         elif isListType typ then (fun tag -> match tag with  0 -> "Empty" | 1 -> "Cons" | _ -> invalidArg "tag" (SR.GetString(SR.outOfRange)))
         else 
           let tagfieldmap = getUnionTypeTagNameMap (typ,bindingFlags) |> Map.ofSeq
           (fun tag -> tagfieldmap.[tag])
 
     let isUnionType (typ:Type,bindingFlags:BindingFlags) = 
-        isOptionTy typ || 
+        isOptionType typ || 
         isListType typ || 
         match tryFindSourceConstructFlagsOfType(typ) with 
         | None -> false
@@ -192,7 +252,7 @@ module internal Impl =
     let swap (x,y) = (y,x)
 
     let fieldsPropsOfUnionCase(typ:Type, tag:int, bindingFlags) =
-        if isOptionTy typ then 
+        if isOptionType typ then 
             match tag with 
             | 0 (* None *) -> getInstancePropertyInfos (typ,[| |],bindingFlags) 
             | 1 (* Some *) -> getInstancePropertyInfos (typ,[| "Value" |] ,bindingFlags) 
@@ -215,10 +275,13 @@ module internal Impl =
 
     let getUnionCaseRecordReader (typ:Type,tag:int,bindingFlags) = 
         let props = fieldsPropsOfUnionCase(typ,tag,bindingFlags)
+#if FX_ATLEAST_PORTABLE
+        (fun (obj:obj) -> props |> Array.map (fun prop -> prop.GetValue(obj,null)))
+#else        
         (fun (obj:obj) -> props |> Array.map (fun prop -> prop.GetValue(obj,bindingFlags,null,null,null)))
-
+#endif
     let getUnionTagReader (typ:Type,bindingFlags) : (obj -> int) = 
-        if isOptionTy typ then 
+        if isOptionType typ then 
             (fun (obj:obj) -> match obj with null -> 0 | _ -> 1)
         else
             let tagMap = getUnionTypeTagNameMap (typ, bindingFlags)
@@ -229,12 +292,20 @@ module internal Impl =
                 | Some reader -> (fun (obj:obj) -> reader obj :?> int)
                 | None -> 
                     (fun (obj:obj) -> 
+#if FX_ATLEAST_PORTABLE
+                        let m2b = typ.GetMethod("GetTag", [| typ |])
+#else                    
                         let m2b = typ.GetMethod("GetTag", BindingFlags.Static ||| bindingFlags, null, [| typ |], null)
+#endif                        
                         m2b.Invoke(null, [|obj|]) :?> int)
         
     let getUnionTagMemberInfo (typ:Type,bindingFlags) = 
         match getInstancePropertyInfo (typ,"Tag",bindingFlags) with
+#if FX_ATLEAST_PORTABLE
+        | null -> (typ.GetMethod("GetTag") :> MemberInfo)
+#else        
         | null -> (typ.GetMethod("GetTag",BindingFlags.Static ||| bindingFlags) :> MemberInfo)
+#endif        
         | info -> (info :> MemberInfo)
 
     let isUnionCaseNullary (typ:Type, tag:int, bindingFlags) = 
@@ -245,7 +316,7 @@ module internal Impl =
         let constrname = getUnionTagConverter (typ,bindingFlags) tag 
         let methname = 
             if isUnionCaseNullary (typ, tag, bindingFlags) then "get_"+constrname 
-            elif isListType typ || isOptionTy typ then constrname
+            elif isListType typ || isOptionType typ then constrname
             else "New"+constrname 
         match typ.GetMethod(methname, BindingFlags.Static  ||| bindingFlags) with
         | null -> raise <| System.InvalidOperationException (SR.GetString1(SR.constructorForUnionCaseNotFound, methname))
@@ -254,8 +325,11 @@ module internal Impl =
     let getUnionCaseConstructor (typ:Type,tag:int,bindingFlags) = 
         let meth = getUnionCaseConstructorMethod (typ,tag,bindingFlags)
         (fun args -> 
+#if FX_ATLEAST_PORTABLE
+            meth.Invoke(null,args))
+#else        
             meth.Invoke(null,BindingFlags.Static ||| BindingFlags.InvokeMethod ||| bindingFlags,null,args,null))
-
+#endif
     let checkUnionType(unionType,bindingFlags) =
         checkNonNull "unionType" unionType;
         if not (isUnionType (unionType,bindingFlags)) then 
@@ -334,8 +408,13 @@ module internal Impl =
         //   Item1, Item2, ..., Item<maxTuple-1>
         //   Item1, Item2, ..., Item<maxTuple-1>, Rest
         // The PropertyInfo may not come back in order, so ensure ordering here.
+#if FX_ATLEAST_PORTABLE
+#else
         assert(maxTuple < 10) // Alphasort will only works for upto 9 items: Item1, Item10, Item2, Item3, ..., Item9, Rest
+#endif
         let props = props |> Array.sortBy (fun p -> p.Name) // they are not always in alphabetic order
+#if FX_ATLEAST_PORTABLE  
+#else      
         assert(props.Length <= maxTuple)
         assert(let haveNames   = props |> Array.map (fun p -> p.Name)
                let expectNames = Array.init props.Length (fun i -> let j = i+1 // index j = 1,2,..,props.Length <= maxTuple
@@ -343,18 +422,30 @@ module internal Impl =
                                                                    elif j=maxTuple then "Rest"
                                                                    else (assert false; "")) // dead code under prior assert, props.Length <= maxTuple
                haveNames = expectNames)
+#endif               
         props
             
     let getTupleConstructorMethod(typ:Type,bindingFlags) =
           let props = typ.GetProperties() |> orderTupleProperties
+#if FX_ATLEAST_PORTABLE
+          let ctor = typ.GetConstructor(props |> Array.map (fun p -> p.PropertyType))
+          ignore bindingFlags
+#else          
           let ctor = typ.GetConstructor(BindingFlags.Instance ||| bindingFlags,null,props |> Array.map (fun p -> p.PropertyType),null)
-          checkNonNull "typ" ctor;
+#endif          
+          match ctor with
+          | null -> raise <| ArgumentException(SR.GetString1(SR.invalidTupleTypeConstructorNotDefined, typ.FullName))
+          | _ -> ()
           ctor
         
     let getTupleCtor(typ:Type,bindingFlags) =
           let ctor = getTupleConstructorMethod(typ,bindingFlags)
           (fun (args:obj[]) ->
+#if FX_ATLEAST_PORTABLE   
+              ctor.Invoke(args))
+#else
               ctor.Invoke(BindingFlags.InvokeMethod ||| BindingFlags.Instance ||| bindingFlags,null,args,null))
+#endif              
 
     let rec getTupleReader (typ:Type) = 
         let etys = typ.GetGenericArguments() 
@@ -459,14 +550,24 @@ module internal Impl =
 
     let getRecordConstructorMethod(typ:Type,bindingFlags) = 
         let props = fieldPropsOfRecordType(typ,bindingFlags)
+#if FX_ATLEAST_PORTABLE
+        let ctor = typ.GetConstructor(props |> Array.map (fun p -> p.PropertyType))
+#else        
         let ctor = typ.GetConstructor(BindingFlags.Instance ||| bindingFlags,null,props |> Array.map (fun p -> p.PropertyType),null)
-        checkNonNull "typ" ctor;
+#endif        
+        match ctor with
+        | null -> raise <| ArgumentException(SR.GetString1(SR.invalidRecordTypeConstructorNotDefined, typ.FullName))
+        | _ -> ()
         ctor
 
     let getRecordConstructor(typ:Type,bindingFlags) = 
         let ctor = getRecordConstructorMethod(typ,bindingFlags)
         (fun (args:obj[]) -> 
+#if FX_ATLEAST_PORTABLE
+            ctor.Invoke(args))
+#else        
             ctor.Invoke(BindingFlags.InvokeMethod  ||| BindingFlags.Instance ||| bindingFlags,null,args,null))
+#endif            
 
     //-----------------------------------------------------------------
     // EXCEPTION DECOMPILATION
@@ -521,6 +622,7 @@ module internal Impl =
 type UnionCaseInfo(typ: System.Type, tag:int) =
     // Cache the tag -> name map
     let mutable names = None
+    let getMethInfo() = Impl.getUnionCaseConstructorMethod (typ,tag,BindingFlags.Public ||| BindingFlags.NonPublic) 
     member x.Name = 
         match names with 
         | None -> (let conv = Impl.getUnionTagConverter (typ,BindingFlags.Public ||| BindingFlags.NonPublic) in names <- Some conv; conv tag)
@@ -532,14 +634,14 @@ type UnionCaseInfo(typ: System.Type, tag:int) =
         let props = Impl.fieldsPropsOfUnionCase(typ,tag,BindingFlags.Public ||| BindingFlags.NonPublic) 
         props
 
-    member x.GetCustomAttributes() = 
-        let methInfo = Impl.getUnionCaseConstructorMethod (typ,tag,BindingFlags.Public ||| BindingFlags.NonPublic) 
-        methInfo.GetCustomAttributes(false)
+    member x.GetCustomAttributes() = getMethInfo().GetCustomAttributes(false)
     
-    member x.GetCustomAttributes(attributeType) = 
-        let methInfo = Impl.getUnionCaseConstructorMethod (typ,tag,BindingFlags.Public ||| BindingFlags.NonPublic) 
-        methInfo.GetCustomAttributes(attributeType,false)
+    member x.GetCustomAttributes(attributeType) = getMethInfo().GetCustomAttributes(attributeType,false)
 
+#if FX_NO_CUSTOMATTRIBUTEDATA
+#else
+    member x.GetCustomAttributesData() = getMethInfo().GetCustomAttributesData()
+#endif    
     member x.Tag = tag
     override x.ToString() = typ.Name + "." + x.Name
     override x.GetHashCode() = typ.GetHashCode() + tag
@@ -619,7 +721,7 @@ type FSharpType =
         Impl.checkExnType(exceptionType,bindingFlags);
         Impl.fieldPropsOfRecordType (exceptionType,bindingFlags) 
 
-type public DynamicFunction<'T1,'T2>() =
+type DynamicFunction<'T1,'T2>() =
     inherit FSharpFunc<obj -> obj, obj>()
     override x.Invoke(impl: obj -> obj) : obj = 
         box<('T1 -> 'T2)> (fun inp -> unbox<'T2>(impl (box<'T1>(inp))))

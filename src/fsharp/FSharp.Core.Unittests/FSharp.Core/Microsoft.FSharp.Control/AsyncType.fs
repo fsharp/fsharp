@@ -8,7 +8,8 @@ open FSharp.Core.Unittests.LibraryTestFx
 open NUnit.Framework
 open System.Threading
 
-#if FX_ATLEAST_40
+#if FX_NO_TPL_PARALLEL
+#else
 open System.Threading.Tasks
 #endif
 
@@ -19,6 +20,28 @@ type RunWithContinuationsTest_WhatToDo =
 
 [<TestFixture>]
 type AsyncType() =
+
+    let ignoreSynchCtx f =
+#if SILVERLIGHT
+        use event = new ManualResetEvent(false)
+        let x : ref<exn> = ref null
+        ThreadPool.QueueUserWorkItem(fun _ ->
+                try 
+                    try
+                        f()
+                    with
+                        e -> x := e
+                finally
+                    event.Set() |> ignore
+        ) |> ignore
+        event.WaitOne() |> ignore
+        match !x with
+        |   null ->  ()
+        |   e -> raise <| e
+#else
+        f ()
+#endif
+
 
     [<Test>]
     member this.StartWithContinuations() =
@@ -34,7 +57,7 @@ type AsyncType() =
                     match currentState with
                     | Exit   -> 1
                     | Cancel -> Async.CancelDefaultToken()
-                                System.Threading.Thread.Sleep(1 * 1000)
+                                sleep(1 * 1000)
                                 0
                     | Throw  -> raise <| System.Exception("You asked me to do it!")
 
@@ -72,8 +95,43 @@ type AsyncType() =
 
         ()
 
-#if FX_ATLEAST_40        
-    
+    [<Test>]
+    member this.AsyncSleepCancellation1() =
+        ignoreSynchCtx (fun () ->
+            let computation = Async.Sleep(10000000)
+            let result = ref ""
+            use cts = new CancellationTokenSource()
+            Async.StartWithContinuations(computation,
+                                            (fun _ -> result := "Ok"),
+                                            (fun _ -> result := "Exception"),
+                                            (fun _ -> result := "Cancel"),
+                                            cts.Token)
+            cts.Cancel()
+            Assert.AreEqual("Cancel", !result)
+        )
+
+    [<Test>]
+    member this.AsyncSleepCancellation2() =
+        ignoreSynchCtx (fun () ->
+            let computation = Async.Sleep(10)
+            for i in 1..100 do
+                let result = ref ""
+                use completedEvent = new ManualResetEvent(false)
+                use cts = new CancellationTokenSource()
+                Async.StartWithContinuations(computation,
+                                                (fun _ -> result := "Ok"; completedEvent.Set() |> ignore),
+                                                (fun _ -> result := "Exception"; completedEvent.Set() |> ignore),
+                                                (fun _ -> result := "Cancel"; completedEvent.Set() |> ignore),
+                                                cts.Token)
+                sleep(10)
+                cts.Cancel()
+                completedEvent.WaitOne() |> Assert.IsTrue
+                Assert.IsTrue(!result = "Cancel" || !result = "Ok")
+        )
+
+#if FX_NO_TPL_PARALLEL
+#else
+
     member private this.WaitASec (t:Task) =
         let result = t.Wait(TimeSpan(hours=0,minutes=0,seconds=1))
         Assert.IsTrue(result)        
@@ -176,7 +234,8 @@ type AsyncType() =
         use ewh = new ManualResetEvent(false)    
         let cts = new CancellationTokenSource()
         let token = cts.Token
-        use t : Task<unit>=  Task.Factory.StartNew(Func<unit>(fun () -> while not token.IsCancellationRequested do ()), token)
+        use t : Task<unit>=  
+          Task.Factory.StartNew(Func<unit>(fun () -> while not token.IsCancellationRequested do ()), token)
         let cancelled = ref true
         let a = async {
                     use! _holder = Async.OnCancel(fun _ -> ewh.Set() |> ignore)

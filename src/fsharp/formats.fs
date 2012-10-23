@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2011 Microsoft Corporation. 
+// Copyright (c) 2002-2012 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -27,14 +27,14 @@ open Microsoft.FSharp.Compiler.ConstraintSolver
 type FormatItem = Simple of TType | FuncAndVal 
 
 let copyAndFixupFormatTypar m tp = 
-    let _,_,tinst = FreshenAndFixupTypars m TyparFlexible [] [] [tp]
+    let _,_,tinst = FreshenAndFixupTypars m TyparRigidity.Flexible [] [] [tp]
     List.head tinst
 
-let lowestDefaultPriority = 0 (* See comment on TTyparDefaultsToType *)
+let lowestDefaultPriority = 0 (* See comment on TyparConstraint.DefaultsTo *)
 
 let mkFlexibleFormatTypar m tys dflt = 
-    let tp = NewTypar (KindType,TyparRigid,Typar(mkSynId m "fmt",HeadTypeStaticReq,true),false,DynamicReq,[],false,false)
-    tp.FixupConstraints [ TTyparSimpleChoice (tys,m); TTyparDefaultsToType (lowestDefaultPriority,dflt,m)];
+    let tp = NewTypar (TyparKind.Type,TyparRigidity.Rigid,Typar(mkSynId m "fmt",HeadTypeStaticReq,true),false,TyparDynamicReq.Yes,[],false,false)
+    tp.FixupConstraints [ TyparConstraint.SimpleChoice (tys,m); TyparConstraint.DefaultsTo (lowestDefaultPriority,dflt,m)];
     copyAndFixupFormatTypar m tp
 
 let mkFlexibleIntFormatTypar g m = 

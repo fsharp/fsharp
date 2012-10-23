@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2011 Microsoft Corporation. 
+// Copyright (c) 2002-2012 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -39,11 +39,21 @@ val morphExpandILTypeDefs: (ILTypeDef -> ILTypeDef list) -> ILTypeDefs -> ILType
 val morphILTypeDefsInILModule: ILTypeDefs morph -> ILModuleDef -> ILModuleDef
 
 /// Morph all type references throughout an entire module.
-val morphILTypeRefsInILModuleMemoized:  ILTypeRef morph ->  ILModuleDef ->  ILModuleDef
+val morphILTypeRefsInILModuleMemoized:  ILGlobals -> ILTypeRef morph ->  ILModuleDef ->  ILModuleDef
 
-val morphILScopeRefsInILModuleMemoized:  ILScopeRef morph ->  ILModuleDef ->  ILModuleDef
+val morphILScopeRefsInILModuleMemoized: ILGlobals -> ILScopeRef morph ->  ILModuleDef ->  ILModuleDef
 
 val morphILMethodBody: ILMethodBody morph -> ILLazyMethodBody -> ILLazyMethodBody
 val morphIlxClosureInfo: ILMethodBody morph -> IlxClosureInfo ->  IlxClosureInfo
 val morphILInstrsInILCode: (ILInstr -> ILInstr list) -> ILCode -> ILCode
-val morphExpandILInstrsInILCode: (ILCodeLabel -> ILCodeLabel -> ILInstr -> Choice<ILInstr list, ILCode>) -> ILCode -> ILCode
+
+[<Struct; NoComparison; NoEquality>]
+type InstrMorph = 
+    new : ILInstr list -> InstrMorph
+    new : ILCode -> InstrMorph
+
+val morphExpandILInstrsInILCode: (ILCodeLabel -> ILCodeLabel -> ILInstr -> InstrMorph) -> ILCode -> ILCode
+
+// REVIEW: Consider removing Post-Dev11 M3
+val enablemorphCustomAttributeData : unit -> unit
+val disablemorphCustomAttributeData : unit -> unit
