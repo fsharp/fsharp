@@ -1,6 +1,5 @@
 //----------------------------------------------------------------------------
-//
-// Copyright (c) 2002-2011 Microsoft Corporation. 
+// Copyright (c) 2002-2012 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -10,7 +9,7 @@
 // You must not remove this notice, or any other, from this software.
 //----------------------------------------------------------------------------
 
-module internal Microsoft.FSharp.Compiler.Range
+module (* internal *) Microsoft.FSharp.Compiler.Range
 
 open System.Text
 open System.Collections.Generic
@@ -25,7 +24,7 @@ type FileIndex = int32
 val fileIndexOfFile : string -> FileIndex
 val fileOfFileIndex : FileIndex -> string
 
-[<Struct>]
+[<Struct; CustomEquality; NoComparison>]
 type pos =
     member Line : int
     member Column : int
@@ -40,7 +39,7 @@ val mkPos : line:int -> column:int -> pos
 
 val posOrder : IComparer<pos>
 
-[<Struct>]
+[<Struct; CustomEquality; NoComparison>]
 type range =
     member StartLine : int
     member StartColumn : int
@@ -52,6 +51,12 @@ type range =
     member EndRange: range
     member FileIndex : int
     member FileName : string
+    /// Synthetic marks ranges which are produced by intermediate compilation phases. This
+    /// bit signifies that the range covers something that should not be visible to language
+    /// service operations like dot-completion.
+    member IsSynthetic : bool 
+    member MakeSynthetic : unit -> range
+    member ToShortString : unit -> string
     static member Zero : range
   
 /// This view of range marks uses file indexes explicitly 
@@ -60,7 +65,6 @@ val mkFileIndexRange : FileIndex -> pos -> pos -> range
 /// This view hides the use of file indexes and just uses filenames 
 val mkRange : string -> pos -> pos -> range
 
-val trimRangeRight : range -> int -> range
 val trimRangeToLine : range -> range
 
 /// not a total order, but enough to sort on ranges 
@@ -71,6 +75,7 @@ val outputRange : System.IO.TextWriter -> range -> unit
 val boutputPos : StringBuilder -> pos -> unit
 val boutputRange : StringBuilder -> range -> unit
     
+val posLt : pos -> pos -> bool
 val posGt : pos -> pos -> bool
 val posEq : pos -> pos -> bool
 val posGeq : pos -> pos -> bool
@@ -89,3 +94,12 @@ val rangeCmdArgs : range
 (* For diagnostics *)  
 val stringOfPos   : pos   -> string
 val stringOfRange : range -> string
+
+module Pos =
+    // Visual Studio uses line counts starting at 0, F# uses them starting at 1 
+    val fromVS : line:int -> column:int -> pos
+    val toVS : pos -> (int * int)
+
+
+module Range =
+    val toVS : range -> (int * int) * (int * int)

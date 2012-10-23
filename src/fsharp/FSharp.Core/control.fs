@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2011 Microsoft Corporation. 
+// Copyright (c) 2002-2012 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -19,12 +19,10 @@ namespace System
     open Microsoft.FSharp.Control
     open Microsoft.FSharp.Collections
 
-    [<Class>] 
-    [<AllowNullLiteral>] 
-    type AggregateException (exns : seq<exn>) =
+    type [<Class>] AggregateException (exns : seq<exn>) =
         inherit Exception()
         let exnsList = new System.Collections.Generic.List<exn>(exns)        
-        member this.InnerExceptions = exnsList.AsReadOnly()
+        member this.InnerExceptions = new System.Collections.ObjectModel.ReadOnlyCollection<exn>(exnsList :> System.Collections.Generic.IList<exn>)
 
 namespace System.Threading
     #nowarn "864"   // this is for typed Equals() in CancellationTokenRegistration and CancellationToken
@@ -96,7 +94,7 @@ namespace System.Threading
                 
             member this.CanBeCanceled = this.source <> Unchecked.defaultof<_>
             
-            member this.Register (action:System.Action<obj>, state:obj) = 
+            member this.Register (action:Action<obj>, state:obj) = 
                 match this.source with
                 |   null -> Unchecked.defaultof<_>
                 |   source -> source.Register(action, state)
@@ -119,7 +117,7 @@ namespace System.Threading
             static member (=) (left:CancellationToken,right:CancellationToken) = left.Equals(right)
             static member (<>) (left:CancellationToken,right:CancellationToken) = not (left.Equals(right))
                     
-                                       
+            static member None = new CancellationToken(null)
                 
     and [<Struct>] 
         [<NoEquality; NoComparison>]
@@ -219,24 +217,33 @@ namespace System.Threading
                             let list = registrations.Value
                             lock list (fun () -> list.Clear())
             
-            member private this.InternalIsCanceled = 
+            member private this.InternalIsCanceled throwOnDisposed = 
                 match state with
                 |   CancellationState.ACTIVE -> false
                 |   CancellationState.CANCELED -> true
-                |   _ -> // DISPOSED_*
-                        new ObjectDisposedException(typeof<CancellationTokenSource>.FullName) |> raise
+                |   CancellationState.DISPOSED_CANCELED -> 
+                        if throwOnDisposed then
+                            new ObjectDisposedException(typeof<CancellationTokenSource>.FullName) |> raise
+                        else
+                            true
+                |   _ -> 
+                        if throwOnDisposed then
+                            new ObjectDisposedException(typeof<CancellationTokenSource>.FullName) |> raise
+                        else
+                            false
+
             
             member internal this.IsCancellationRequested = state = CancellationState.CANCELED || state = CancellationState.DISPOSED_CANCELED
             
-            member internal this.Register(action:System.Action<obj>, state:obj) =
-                if this.InternalIsCanceled then // do not register, invoke immediately
+            member internal this.Register(action:Action<obj>, state:obj) =
+                if this.InternalIsCanceled true then // do not register, invoke immediately
                     action.Invoke(state)
                     Unchecked.defaultof<_>
                 else
                     let list = registrations.Value
                     let invokeNow, r =
                         lock list (fun () ->
-                            if this.InternalIsCanceled then
+                            if this.InternalIsCanceled true then
                                 true, new CancellationTokenRegistration(Unchecked.defaultof<_>, 0L)
                             else
                                 let id = nextID
@@ -248,12 +255,12 @@ namespace System.Threading
                     r
             
             member internal this.Deregister(id) =
-                if this.InternalIsCanceled then
+                if this.InternalIsCanceled false then // ok to deregister after Dispose
                     () // After cancellation is requested no deregistration needed; 
                 else 
                     let list = registrations.Value
                     lock list (fun () ->
-                        if this.InternalIsCanceled then
+                        if this.InternalIsCanceled false then // ok to deregister after Dispose
                             () 
                         else
                             let index = 
@@ -398,7 +405,6 @@ namespace Microsoft.FSharp.Control
     
         [<Literal>]
         static let bindLimitBeforeHijack = 300 
-
 #if FX_NO_THREAD_STATIC
 #else
         [<ThreadStatic>]
@@ -406,18 +412,16 @@ namespace Microsoft.FSharp.Control
         static val mutable private thisThreadHasTrampoline : bool
 #endif
 
-        let mutable cont = None
-        let mutable bindCount = 0
-        let mutable hasExited = false
-        
-        static let unfake FakeUnit = ()
-        
         static member ThisThreadHasTrampoline = 
 #if FX_NO_THREAD_STATIC
             true
 #else
             Trampoline.thisThreadHasTrampoline
 #endif
+        let mutable cont = None
+        let mutable bindCount = 0
+        
+        static let unfake FakeUnit = ()
         
         // Install a trampolineStack if none exists
         member this.ExecuteAction (firstAction : unit -> FakeUnitValue) =
@@ -440,12 +444,11 @@ namespace Microsoft.FSharp.Control
             try
                 loop firstAction
             finally
-                hasExited <- true
 #if FX_NO_THREAD_STATIC
 #else
                 if thisIsTopTrampoline then
                     Trampoline.thisThreadHasTrampoline <- false
-#endif
+#endif       
             FakeUnit
             
         // returns true if time to jump on trampoline
@@ -453,8 +456,6 @@ namespace Microsoft.FSharp.Control
             bindCount <- bindCount + 1
             bindCount >= bindLimitBeforeHijack
             
-        member this.HasExited = hasExited
-        
         member this.Set action = 
             match cont with
             |   None -> 
@@ -511,10 +512,15 @@ namespace Microsoft.FSharp.Control
 #if FX_NO_PARAMETERIZED_THREAD_START
         // This should be the only call to Thread.Start in this library. We must always install a trampoline.
         member this.StartThread (f : unit -> FakeUnitValue) =
+#if FX_NO_THREAD
+            this.QueueWorkItem(f)
+#else
             (new Thread((fun _ -> this.Protect f |> unfake), IsBackground=true)).Start()
             FakeUnit
+#endif
 
 #else
+        // This should be the only call to Thread.Start in this library. We must always install a trampoline.
         member this.StartThread (f : unit -> FakeUnitValue) =
             (new Thread(threadStartCallbackForStartThreadWithTrampoline,IsBackground=true)).Start(f|>box)
             FakeUnit
@@ -554,6 +560,7 @@ namespace Microsoft.FSharp.Control
         open System
         open System.Threading
         open System.IO
+        open Microsoft.FSharp.Core
 
         let fake () = FakeUnit
         let unfake FakeUnit = ()
@@ -648,13 +655,28 @@ namespace Microsoft.FSharp.Control
                     }
             invokeA p args 
 
-
+                    
 #if FX_NO_PARAMETERIZED_THREAD_START
+        // Preallocate the delegate
+        // This should be the only call to QueueUserWorkItem in this library. We must always install a trampoline.
+        let waitCallbackForQueueWorkItemWithTrampoline(trampolineHolder : TrampolineHolder) = 
+                WaitCallback(fun o ->
+                    let f = unbox o : unit -> FakeUnitValue
+                    trampolineHolder.Protect f |> unfake
+                    )
+                    
         let startThreadWithTrampoline (trampolineHolder:TrampolineHolder) (f : unit -> FakeUnitValue) =
+#if FX_NO_THREADPOOL
+                if not (ThreadPool.QueueUserWorkItem((waitCallbackForQueueWorkItemWithTrampoline trampolineHolder), f |> box)) then
+                    failwith "failed to queue user work item"
+                FakeUnit
+#else        
             (new Thread((fun _ -> trampolineHolder.Protect f |> unfake), IsBackground=true)).Start()
             FakeUnit
+#endif            
 
 #else
+
         // Statically preallocate the delegate
         let threadStartCallbackForStartThreadWithTrampoline = 
                 ParameterizedThreadStart(fun o ->
@@ -694,16 +716,25 @@ namespace Microsoft.FSharp.Control
         // Use carefully!!
         let unprotectedPrimitive f = P f 
 
+        let protectedPrimitiveCore args f =
+            if args.aux.token.IsCancellationRequested then
+                cancelT args
+            else
+                try f args
+                with exn -> errorT args exn
+
         // When run, ensures that any exceptions raised by the immediate execution of "f" are
         // sent to the exception continuation.
         //
         let protectedPrimitive f =
+            unprotectedPrimitive (fun args -> protectedPrimitiveCore args f)
+
+        let reify res =
             unprotectedPrimitive (fun args ->
-                if args.aux.token.IsCancellationRequested then
-                    cancelT args
-                else
-                    try f args
-                    with exn -> errorT args exn )
+                match res with
+                |   Result.Ok r -> args.cont r
+                |   Result.Error e -> args.aux.econt e
+                |   Result.Canceled oce -> args.aux.ccont oce)
 
         //----------------------------------
         // BUILDER OPREATIONS
@@ -892,20 +923,11 @@ namespace Microsoft.FSharp.Control
             trampolineHolder.QueueWorkItem f 
 #else
         let getSyncContext () = System.Threading.SynchronizationContext.Current 
-
             
-        let resync (ctxt:SynchronizationContext) (trampolineHolder:TrampolineHolder) (f : unit -> FakeUnitValue) =
-            let currentCtxt = System.Threading.SynchronizationContext.Current 
-            if Object.Equals(ctxt,currentCtxt) then 
-                f ()
-            else
-                trampolineHolder.Post ctxt f
-
         let postOrQueue (ctxt : SynchronizationContext) (trampolineHolder:TrampolineHolder) f =
             match ctxt with 
             | null -> trampolineHolder.QueueWorkItem f 
             | _ -> trampolineHolder.Post ctxt f            
-
 
 
         let delimitSyncContext args =            
@@ -931,12 +953,23 @@ namespace Microsoft.FSharp.Control
                 let args = delimitSyncContext args
                 f args)
 
+        let unprotectedPrimitiveWithResync f = 
+            unprotectedPrimitive(fun args -> 
+                let args = delimitSyncContext args
+                f args)
+
+        [<Sealed>]
+        [<AutoSerializable(false)>]
+        type Latch() = 
+            let mutable i = 0
+            member this.Enter() = Interlocked.CompareExchange(&i, 1, 0) = 0
+
         [<Sealed>]
         [<AutoSerializable(false)>]
         type Once() =
-            let mutable i = 0
+            let latch = Latch()
             member this.Do f =
-                if Interlocked.CompareExchange(&i, 1, 0) = 0 then
+                if latch.Enter() then
                     f()
 
         [<Sealed>]
@@ -959,12 +992,14 @@ namespace Microsoft.FSharp.Control
 #else
                 let currentCtxt = System.Threading.SynchronizationContext.Current 
                 match ctxt, currentCtxt with
-                |   null, null -> 
+                | null, null -> 
+                    executeImmediately ()
+                // See bug 370350; this logic is incorrect from the perspective of how SynchronizationContext is meant to work,
+                // but the logic works for mainline scenarios (WinForms/WPF/ASP.NET) and we won't change it again.
+                | _ when Object.Equals(ctxt, currentCtxt) && thread.Equals(Thread.CurrentThread) ->
                         executeImmediately ()
-                |   _, _ when Object.Equals(ctxt, currentCtxt) && thread.Equals(Thread.CurrentThread) ->
-                        executeImmediately ()
-                |   _ -> 
-                        postOrQueue ctxt trampolineHolder action
+                | _ -> 
+                    postOrQueue ctxt trampolineHolder action
 #endif
                     
             member this.ContinueWithPostOrQueue res =
@@ -1008,7 +1043,12 @@ namespace Microsoft.FSharp.Control
                         match resEvent with
                         | null -> ()
                         | ev -> 
-                            ev.Close(); 
+#if FX_EVENTWAITHANDLE_NO_IDISPOSABLE
+                            ev.Dispose()                            
+                            System.GC.SuppressFinalize(ev)
+#else                        
+                            ev.Close();
+#endif                            
                             resEvent <- null)
 
             interface IDisposable with
@@ -1095,7 +1135,11 @@ namespace Microsoft.FSharp.Control
                         // OK, let's really wait for the Set signal. This may block.
                         let timeout = defaultArg timeout Threading.Timeout.Infinite 
 #if FX_NO_EXIT_CONTEXT_FLAGS
+#if FX_NO_WAITONE_MILLISECONDS
+                        let ok = resHandle.WaitOne(TimeSpan(int64(timeout)*10000L))
+#else
                         let ok = resHandle.WaitOne(millisecondsTimeout= timeout) 
+#endif                        
 #else
                         let ok = resHandle.WaitOne(millisecondsTimeout= timeout,exitContext=true) 
 #endif
@@ -1109,7 +1153,7 @@ namespace Microsoft.FSharp.Control
     open AsyncImpl
     
     type private Closure<'T>(f) =
-        member x.Invoke(sender:obj, a:'T) : unit = f(a)
+        member x.Invoke(sender:obj, a:'T) : unit = ignore(sender); f(a)
 
     module CancellationTokenOps =
         /// Run the asynchronous workflow and wait for its result.
@@ -1124,15 +1168,7 @@ namespace Microsoft.FSharp.Control
                         subSource.Token, Some subSource
                 
             use resultCell = new ResultCell<Result<_>>()
-            let starter =
-#if FX_NO_SYNC_CONTEXT
-                startAsync
-#else
-                match SynchronizationContext.Current with
-                |   null -> startAsync
-                |   _ -> queueAsync
-#endif
-            starter 
+            queueAsync 
                     token                        
                     
                     (fun res -> resultCell.RegisterResult(Ok(res),reuseThread=true))
@@ -1146,11 +1182,11 @@ namespace Microsoft.FSharp.Control
             match res with
             | None -> // timed out
                 // issue cancelaltion signal
-                innerCTS.Value.Cancel() 
+                if innerCTS.IsSome then innerCTS.Value.Cancel() 
                 // wait for computation to quiesce; drop result on the floor
                 resultCell.TryWaitForResultSynchronously() |> ignore 
                 // dispose the CancellationTokenSource
-                innerCTS.Value.Dispose()
+                if innerCTS.IsSome then innerCTS.Value.Dispose()
                 raise (System.TimeoutException())
             | Some res ->
                 match innerCTS with
@@ -1225,22 +1261,33 @@ namespace Microsoft.FSharp.Control
         static member CancelCheck () = doneA
 
         static member FromContinuations (f : ('T -> unit) * (exn -> unit) * (OperationCanceledException -> unit) -> unit) : Async<'T> = 
-            protectedPrimitive (fun ({ aux = aux } as args) ->
-                let thread = Thread.CurrentThread
-                let called = ref false
-                let once cont x = 
-                    lock called (fun () -> 
-                       if called.Value then invalidOp (SR.GetString(SR.controlContinuationInvokedMultipleTimes))
-                       called := true)                    
-                    if Thread.CurrentThread.Equals(thread) && not aux.trampolineHolder.Trampoline.HasExited then
-                        cont x |> unfake
-                    else if Trampoline.ThisThreadHasTrampoline then
-                        let ctxt = getSyncContext()
-                        postOrQueue ctxt aux.trampolineHolder (fun () -> cont x) |> unfake
-                    else
-                        aux.trampolineHolder.Protect (fun () -> cont x ) |> unfake
-
-                f (once args.cont, once aux.econt, once aux.ccont) |> fake)
+            unprotectedPrimitive (fun ({ aux = aux } as args) ->
+                if args.aux.token.IsCancellationRequested then
+                    cancelT args
+                else
+                    let underCurrentThreadStack = ref true
+                    let contToTailCall = ref None
+                    let thread = Thread.CurrentThread
+                    let latch = Latch()
+                    let once cont x = 
+                        if not(latch.Enter()) then invalidOp(SR.GetString(SR.controlContinuationInvokedMultipleTimes))
+                        if Thread.CurrentThread.Equals(thread) && !underCurrentThreadStack then
+                            contToTailCall := Some(fun () -> cont x)
+                        else if Trampoline.ThisThreadHasTrampoline then
+                            let ctxt = getSyncContext()
+                            postOrQueue ctxt aux.trampolineHolder (fun () -> cont x) |> unfake 
+                        else
+                            aux.trampolineHolder.Protect (fun () -> cont x ) |> unfake
+                    try 
+                        f (once args.cont, once aux.econt, once aux.ccont)
+                    with exn -> 
+                        if not(latch.Enter()) then invalidOp(SR.GetString(SR.controlContinuationInvokedMultipleTimes))
+                        aux.econt exn |> unfake
+                    underCurrentThreadStack := false
+                    match !contToTailCall with
+                    | Some k -> k()
+                    | _ -> FakeUnit
+                    )
                 
         static member DefaultCancellationToken = (!defaultCancellationTokenSource).Token
 
@@ -1279,65 +1326,90 @@ namespace Microsoft.FSharp.Control
 
     type Async with
         static member Parallel (l: seq<Async<'T>>) =
-            protectedPrimitiveWithResync (fun ({ aux = aux } as args) ->
-                let tasks = Seq.toArray l
-                if tasks.Length = 0 then args.cont [| |] else
-                let count = ref tasks.Length
-                let firstExn = ref None
-                let results = Array.zeroCreate tasks.Length
-                // Attept to cancel the individual operations if an exception happens on any the other threads
-                //let failureCTS = new CancellationTokenSource()
-                let innerCTS = new LinkedSubSource(aux.token)
-                let trampolineHolder = aux.trampolineHolder
+            unprotectedPrimitive (fun args ->
+                let tasks,result = 
+                    try Seq.toArray l, None   // manually protect eval of seq
+                    with exn -> null, Some(errorT args exn)
+                match result with
+                | Some r -> r
+                | None ->
+                if tasks.Length = 0 then args.cont [| |] else  // must not be in a 'protect' if we call cont explicitly; if cont throws, it should unwind the stack, preserving Dev10 behavior
+                protectedPrimitiveCore args (fun args ->
+                    let ({ aux = aux } as args) = delimitSyncContext args  // manually resync
+                    let tasks = Seq.toArray l
+                    if tasks.Length = 0 then args.cont [| |] else
+                    let count = ref tasks.Length
+                    let firstExn = ref None
+                    let results = Array.zeroCreate tasks.Length
+                    // Attept to cancel the individual operations if an exception happens on any the other threads
+                    //let failureCTS = new CancellationTokenSource()
+                    let innerCTS = new LinkedSubSource(aux.token)
+                    let trampolineHolder = aux.trampolineHolder
                     
-                let finishTask(remaining) = 
-                    if (remaining=0) then 
-                        match (!firstExn) with 
-                        | None -> trampolineHolder.Protect(fun () -> args.cont results)
-                        | Some (Choice1Of2 exn) -> trampolineHolder.Protect(fun () -> aux.econt exn)
-                        | Some (Choice2Of2 cexn) -> trampolineHolder.Protect(fun () -> aux.ccont cexn)
-                    else
-                        FakeUnit
+                    let finishTask(remaining) = 
+                        if (remaining=0) then 
+                            match (!firstExn) with 
+                            | None -> trampolineHolder.Protect(fun () -> args.cont results)
+                            | Some (Choice1Of2 exn) -> trampolineHolder.Protect(fun () -> aux.econt exn)
+                            | Some (Choice2Of2 cexn) -> trampolineHolder.Protect(fun () -> aux.ccont cexn)
+                        else
+                            FakeUnit
 
-                // recordSuccess and recordFailure between them decrement count to 0 and 
-                // as soon as 0 is reached dispose innerCancellationSource
+                    // recordSuccess and recordFailure between them decrement count to 0 and 
+                    // as soon as 0 is reached dispose innerCancellationSource
                 
-                let recordSuccess i res = 
-                    results.[i] <- res;
-                    let remaining = 
-                        lock count (fun () -> 
-                            decr count; 
-                            if !count = 0 then 
-                                innerCTS.Dispose() 
-                            !count)
-                    finishTask(remaining) 
+                    let recordSuccess i res = 
+                        results.[i] <- res;
+                        let remaining = 
+                            lock count (fun () -> 
+                                decr count; 
+                                if !count = 0 then 
+                                    innerCTS.Dispose() 
+                                !count)
+                        finishTask(remaining) 
 
-                let recordFailure exn = 
-                    let remaining = 
-                        lock count (fun () -> 
-                            decr count; 
-                            match !firstExn with 
-                            | None -> firstExn := Some exn  // save the cancellation as the first exception
-                            | _ -> ()
-                            if !count = 0 then
-                                innerCTS.Dispose()
-                            else
-                                innerCTS.Cancel()
-                            !count) 
-                    finishTask(remaining)
+                    let recordFailure exn = 
+                        let remaining = 
+                            lock count (fun () -> 
+                                decr count; 
+                                match !firstExn with 
+                                | None -> firstExn := Some exn  // save the cancellation as the first exception
+                                | _ -> ()
+                                if !count = 0 then
+                                    innerCTS.Dispose()
+                                else
+                                    innerCTS.Cancel()
+                                !count) 
+                        finishTask(remaining)
                 
-                tasks |> Array.iteri (fun i p ->
-                    queueAsync
-                            innerCTS.Token
-                            // on success, record the result
-                            (fun res -> recordSuccess i res)
-                            // on exception...
-                            (fun exn -> recordFailure (Choice1Of2 exn))
-                            // on cancellation...
-                            (fun cexn -> recordFailure (Choice2Of2 cexn))
-                            p
-                        |> unfake);
-                FakeUnit)
+                    tasks |> Array.iteri (fun i p ->
+                        queueAsync
+                                innerCTS.Token
+                                // on success, record the result
+                                (fun res -> recordSuccess i res)
+                                // on exception...
+                                (fun exn -> recordFailure (Choice1Of2 exn))
+                                // on cancellation...
+                                (fun cexn -> recordFailure (Choice2Of2 cexn))
+                                p
+                            |> unfake);
+                    FakeUnit))
+
+#if FX_NO_REGISTERED_WAIT_HANDLES
+    [<Sealed>]
+    [<AutoSerializable(false)>]
+    type internal WaitHandleIAsyncResult(wh : WaitHandle) = 
+        interface System.IAsyncResult with
+            member this.AsyncState = null
+            member this.AsyncWaitHandle = wh
+            member this.IsCompleted = 
+#if FX_NO_WAITONE_MILLISECONDS
+                wh.WaitOne(TimeSpan(0L))
+#else
+                wh.WaitOne(0,exitContext=false)
+#endif
+            member this.CompletedSynchronously = false // always reschedule
+#endif
 
     type Async with
 
@@ -1349,74 +1421,152 @@ namespace Microsoft.FSharp.Control
             Async.StartWithContinuations(a,id,raise,ignore,?cancellationToken=cancellationToken)
 
         static member Sleep(dueTime) : Async<unit> =
-            protectedPrimitiveWithResync (fun ({ aux = aux } as args) ->
+            unprotectedPrimitiveWithResync (fun ({ aux = aux } as args) ->
                 let timer = ref (None : Timer option)
                 let savedCont = args.cont
-                timer := new Timer((fun _ ->
-                                      // Try to Dispose of the TImer.
-                                      // Note: there is a race here: the System.Threading.Timer time very occasionally
-                                       // calls the callback _before_ the timer object has been recorded anywhere. This makes it difficult to dispose the
-                                      // timer in this situation. In this case we just let the timer be collected by finalization.
-                                     match !timer with
-                                       | None -> ()
-                                       | Some t -> t.Dispose()
-                                     // Now we're done, so call the continuation
-                                     aux.trampolineHolder.Protect (fun () -> savedCont()) |> unfake
-                                  ),
-                                 null, dueTime=dueTime, period = -1) |> Some
-                FakeUnit)
+                let savedCCont = aux.ccont
+                let latch = new Latch()
+                let registration =
+                    aux.token.Register(
+                        (fun _ -> 
+                            if latch.Enter() then
+                                match !timer with
+                                | None -> ()
+                                | Some t -> t.Dispose()
+                                aux.trampolineHolder.Protect(fun () -> savedCCont(new OperationCanceledException())) |> unfake
+                            ),
+                        null)
+                let mutable the_exn = null
+                try
+                    timer := new Timer((fun _ ->
+                                        if latch.Enter() then
+                                            // NOTE: If the CTS for the token would have been disposed, disposal of the registration would throw
+                                            // However, our contract is that until async computation ceases execution (and invokes ccont) 
+                                            // the CTS will not be disposed. Execution of savedCCont is guarded by latch, so we are safe unless
+                                            // user violates the contract.
+                                            registration.Dispose()
+                                            // Try to Dispose of the TImer.
+                                            // Note: there is a race here: the System.Threading.Timer time very occasionally
+                                            // calls the callback _before_ the timer object has been recorded anywhere. This makes it difficult to dispose the
+                                            // timer in this situation. In this case we just let the timer be collected by finalization.
+                                            match !timer with
+                                            |  None -> ()
+                                            |  Some t -> t.Dispose()
+                                            // Now we're done, so call the continuation
+                                            aux.trampolineHolder.Protect (fun () -> savedCont()) |> unfake),
+                                     null, dueTime=dueTime, period = -1) |> Some
+                with
+                    exn -> if latch.Enter() then the_exn <- exn // post exception to econt only if we successfully enter the latch (no other continuations were called)
+                match the_exn with 
+                | null -> 
+                    FakeUnit
+                | exn -> 
+                    aux.econt exn
+                )
         
         static member AwaitWaitHandle(waitHandle:WaitHandle,?millisecondsTimeout:int) =
             let millisecondsTimeout = defaultArg millisecondsTimeout Threading.Timeout.Infinite
             if millisecondsTimeout = 0 then 
-                protectedPrimitive(fun args ->
+                async.Delay(fun () ->
 #if FX_NO_EXIT_CONTEXT_FLAGS
+#if FX_NO_WAITONE_MILLISECONDS
+                    let ok = waitHandle.WaitOne(TimeSpan(0L))
+#else
                     let ok = waitHandle.WaitOne(0)
+#endif                    
 #else
                     let ok = waitHandle.WaitOne(0,exitContext=false)
 #endif
-                    args.cont ok)
+                    async.Return ok)
             else
 #if FX_NO_REGISTERED_WAIT_HANDLES
                 protectedPrimitiveWithResync(fun ({ aux = aux } as args) ->
                     // The .NET Compact Framework doesn't support RegisterWaitForSingleObject
-                    // Hence we unblock the condition byusing a new thread pool work item.
-                    // This is sub-optimal.
-                    aux.trampolineHolder.QueueWorkItem (fun () -> 
-                        let ok = waitHandle.WaitOne(millisecondsTimeout,exitContext=false)
-                        args.cont ok ))
+                    
+                    // Latch is used to protect entrance to the cancelHandler/actual continuation/error continuation
+                    let latch = Latch()
+
+                    let scont = args.cont
+                    let ccont = aux.ccont
+
+                    // cancel action
+                    let cancel e = 
+                        if latch.Enter() then
+                            Async.Start (async { do (ccont e |> unfake) })
+
+                    // register cancellation handler
+                    let registration = aux.token.Register(fun () -> cancel (OperationCanceledException()))
+
+                    // run actual await routine
+                    // callback will be executed on the thread pool so we need to use TrampolineHolder.Protect to install trampoline
+                    try
+                        Task.Factory.FromAsync
+                            (
+                                WaitHandleIAsyncResult(waitHandle),
+                                fun _ -> 
+                                    if latch.Enter() then
+                                        registration.Dispose()
+                                        aux.trampolineHolder.Protect(fun () -> scont true) 
+                                        |> unfake
+                            )
+                            |> ignore
+                        // if user has specified timeout different from Timeout.Infinite 
+                        // then start another async to track timeout expiration
+                        // StartWithContinuations already installs trampoline so we can invoke continuation directly
+                        if millisecondsTimeout <> Timeout.Infinite then 
+                            Async.StartWithContinuations
+                                (
+                                    a = (Async.Sleep millisecondsTimeout),
+                                    cont = (fun () -> 
+                                        if latch.Enter() then 
+                                            registration.Dispose()
+                                            scont false 
+                                            |> unfake),
+                                    econt = ignore, // we do not expect exceptions here
+                                    ccont = cancel,
+                                    cancellationToken = aux.token
+                                )
+                        FakeUnit
+                    with e -> 
+                        if latch.Enter() then 
+                            registration.Dispose()
+                            reraise() // exception will be intercepted by try..with in protectedPrimitiveWithResync
+                        else FakeUnit
+                    )
 
 #else
                 protectedPrimitiveWithResync(fun ({ aux = aux } as args) ->
                     let rwh = ref (None : RegisteredWaitHandle option)
-
+                    let latch = Latch()
                     let rec cancelHandler =
                         Action<obj>(fun _ ->
-                            match !rwh with
-                            | None -> ()
-                            | Some rwh ->
-                                // If we successfully Unregister the operation then
-                                // the callback below will never get called. So we call the cancel
-                                // continuation directly in a new work item.
-                                //
-                                // If we don't successfully unregister then the primtive has already
-                                // completed.
-                                let succeeded = rwh.Unregister(waitHandle)
-                                if succeeded then
-                                    Async.Start (async { do (aux.ccont (OperationCanceledException()) |> unfake) }))
+                            if latch.Enter() then
+                                // if we got here - then we need to unregister RegisteredWaitHandle + trigger cancellation
+                                // entrance to TP callback  is protected by latch - so savedCont will never be called
+                                match !rwh with
+                                | None -> ()
+                                | Some rwh -> rwh.Unregister(null) |> ignore
+                                Async.Start (async { do (aux.ccont (OperationCanceledException()) |> unfake) }))
+
                     and registration : CancellationTokenRegistration= aux.token.Register(cancelHandler, null)
                     
                     let savedCont = args.cont
-                    rwh := Some(ThreadPool.RegisterWaitForSingleObject
-                                  (waitObject=waitHandle,
-                                   callBack=WaitOrTimerCallback(fun _ timeOut ->
-                                                rwh := None
-                                                registration.Dispose()
-                                                aux.trampolineHolder.Protect (fun () -> savedCont (not timeOut)) |> unfake),
-                                   state=null,
-                                   millisecondsTimeOutInterval=millisecondsTimeout,
-                                   executeOnlyOnce=true));
-                    FakeUnit)
+                    try
+                        rwh := Some(ThreadPool.RegisterWaitForSingleObject
+                                      (waitObject=waitHandle,
+                                       callBack=WaitOrTimerCallback(fun _ timeOut ->
+                                                    if latch.Enter() then
+                                                        rwh := None
+                                                        registration.Dispose()
+                                                        aux.trampolineHolder.Protect (fun () -> savedCont (not timeOut)) |> unfake),
+                                       state=null,
+                                       millisecondsTimeOutInterval=millisecondsTimeout,
+                                       executeOnlyOnce=true));
+                        FakeUnit
+                    with _ -> 
+                        if latch.Enter() then reraise() // reraise exception only if we successfully enter the latch (no other continuations were called)
+                        else FakeUnit
+                    )
 #endif
 
         static member AwaitIAsyncResult(iar: IAsyncResult, ?millisecondsTimeout): Async<bool> =
@@ -1665,7 +1815,12 @@ namespace Microsoft.FSharp.Control
                             // ResultCell allows a race and throws away whichever comes last.
                             resultCell.RegisterResult(res,reuseThread=true) |> unfake) 
                     and del = 
+#if FX_ATLEAST_PORTABLE
+                        let invokeMeth = (typeof<Closure<'T>>).GetMethod("Invoke")
+                        System.Delegate.CreateDelegate(typeof<'Delegate>, obj, invokeMeth) :?> 'Delegate
+#else                    
                         System.Delegate.CreateDelegate(typeof<'Delegate>, obj, "Invoke") :?> 'Delegate
+#endif                        
                     
                     // Start listening to events
                     event.AddHandler(del)
@@ -1687,7 +1842,7 @@ namespace Microsoft.FSharp.Control
                 let! ct = getCancellationToken()
                 let innerCTS = new CancellationTokenSource() // innerCTS does not require disposal
                 let ctsRef = ref innerCTS
-                let _reg = ct.Register(
+                let reg = ct.Register(
                                         (fun _ -> 
                                             match !ctsRef with
                                             |   null -> ()
@@ -1695,10 +1850,10 @@ namespace Microsoft.FSharp.Control
                                         null)
                 do queueAsync 
                        innerCTS.Token
-                                              
-                       (fun res -> ctsRef := null; resultCell.RegisterResult (Ok res, reuseThread=true))   
-                       (fun err -> ctsRef := null; resultCell.RegisterResult (Error err,reuseThread=true))   
-                       (fun err -> ctsRef := null; resultCell.RegisterResult (Canceled err,reuseThread=true))    
+                       // since innerCTS is not ever Disposed, can call reg.Dispose() without a safety Latch
+                       (fun res -> ctsRef := null; reg.Dispose(); resultCell.RegisterResult (Ok res, reuseThread=true))   
+                       (fun err -> ctsRef := null; reg.Dispose(); resultCell.RegisterResult (Error err,reuseThread=true))   
+                       (fun err -> ctsRef := null; reg.Dispose(); resultCell.RegisterResult (Canceled err,reuseThread=true))    
                        
                        computation
                      |> unfake
@@ -1719,9 +1874,21 @@ namespace Microsoft.FSharp.Control
 #endif
 
         static member OnCancel action =
-            async { let h = new Action<obj>(fun _ -> try action () with _ -> ())
-                    let! ct = getCancellationToken ()
-                    return (upcast ct.Register(h, null) : IDisposable)}
+            async { let! ct = getCancellationToken ()
+                    // latch protects CancellationTokenRegistration.Dispose from being called twice
+                    let latch = Latch()
+                    let rec handler (_ : obj) = 
+                        try 
+                            if latch.Enter() then registration.Dispose()
+                            action () 
+                        with _ -> ()                        
+                    and registration : CancellationTokenRegistration = ct.Register(Action<obj>(handler), null)
+                    return { new System.IDisposable with
+                                member this.Dispose() = 
+                                    // dispose CancellationTokenRegistration only if cancellation was not requested.
+                                    // otherwise - do nothing, disposal will be performed by the handler itself
+                                    if not ct.IsCancellationRequested then
+                                        if latch.Enter() then registration.Dispose() } }
 
         static member TryCancelled (p: Async<'T>,f) = 
             whenCancelledA f p
@@ -1772,14 +1939,8 @@ namespace Microsoft.FSharp.Control
                 Async.FromBeginEnd (buffer,offset,count,stream.BeginWrite,stream.EndWrite)
                 
         type System.Threading.WaitHandle with
-            [<CompiledName("AsyncWaitOne")>] // give the extension member a 'nice', unmangled compiled name, unique within this module
-            member waitHandle.AsyncWaitOne(?millisecondsTimeout:int) =
+            member waitHandle.AsyncWaitOne(?millisecondsTimeout:int) =  // only used internally, not a public API
                 Async.AwaitWaitHandle(waitHandle,?millisecondsTimeout=millisecondsTimeout) 
-
-        type System.Threading.Thread with
-
-            [<CompiledName("AsyncSleep")>] // give the extension member a 'nice', unmangled compiled name, unique within this module
-            static member AsyncSleep(dueTime) = Async.Sleep(dueTime)
 
         type IObservable<'Args> with 
 
@@ -1803,15 +1964,16 @@ namespace Microsoft.FSharp.Control
             [<CompiledName("AsyncGetResponse")>] // give the extension member a 'nice', unmangled compiled name, unique within this module
             member req.AsyncGetResponse() : Async<System.Net.WebResponse>= 
                 
-                async { try 
+                async { let canceled = ref false // WebException with Status = WebExceptionStatus.RequestCanceled  can be raised in other situations except cancellation, use flag to filter out false positives
+                        try 
                             // Note that we specify req.Abort as the cancelAction. If successful, this will cause 
                             // a WebExceptionStatus.RequestCanceled to be raised from the web request.
                            return! Async.FromBeginEnd(beginAction=req.BeginGetResponse, 
                                                       endAction = req.EndGetResponse, 
-                                                      cancelAction = req.Abort)
+                                                      cancelAction = fun() -> canceled := true; req.Abort())
                         with 
                            | :? System.Net.WebException as webExn 
-                                   when webExn.Status = System.Net.WebExceptionStatus.RequestCanceled -> 
+                                   when webExn.Status = System.Net.WebExceptionStatus.RequestCanceled && !canceled -> 
 
                                return! Async.ReifyResult(Result.Canceled (OperationCanceledException webExn.Message)) }
 
@@ -1848,7 +2010,34 @@ namespace Microsoft.FSharp.Control
 
 
     open CommonExtensions
-    
+
+    module AsyncHelpers =
+        let awaitEither a1 a2 =
+            async {
+                let c = new ResultCell<_>()
+                let! ct = Async.CancellationToken
+                let start a f =
+                    Async.StartWithContinuations(a, 
+                        (fun res -> c.RegisterResult(f res |> Result.Ok, reuseThread=false) |> unfake),
+                        (fun e -> c.RegisterResult(e |> Result.Error, reuseThread=false) |> unfake),
+                        (fun oce -> c.RegisterResult(oce |> Result.Canceled, reuseThread=false) |> unfake),
+                        cancellationToken = ct
+                        )
+                start a1 Choice1Of2
+                start a2 Choice2Of2
+                let! result = c.AwaitResult
+                return! reify result
+            }
+        let timeout msec cancellationToken =
+            if msec < 0 then
+                unprotectedPrimitive(fun _ -> FakeUnit) // "block" forever
+            else
+                let c = new ResultCell<_>()
+                Async.StartWithContinuations(Async.Sleep(msec),
+                    (fun () -> c.RegisterResult((), reuseThread = false) |> unfake),
+                    (fun _ -> ()), (fun _ -> ()), cancellationToken = cancellationToken)
+                c.AwaitResult
+
     [<Sealed>]
     [<AutoSerializable(false)>]        
     type Mailbox<'Msg>() =  
@@ -1872,8 +2061,8 @@ namespace Microsoft.FSharp.Control
                 
         let waitOneNoTimeout = 
             unprotectedPrimitive (fun ({ aux = aux } as args) -> 
-                match box savedCont with 
-                | null -> 
+                match savedCont with 
+                | None -> 
                     let descheduled = 
                         // An arrival may have happened while we're preparing to deschedule
                         lock syncRoot (fun () -> 
@@ -1888,7 +2077,7 @@ namespace Microsoft.FSharp.Control
                     else 
                         // If we didn't deschedule then run the continuation immediately
                         args.cont true
-                | _ -> 
+                | Some _ -> 
                     failwith "multiple waiting reader continuations for mailbox")
 
         let waitOne(timeout) = 
@@ -1966,18 +2155,63 @@ namespace Microsoft.FSharp.Control
                     trampolineHolder.QueueWorkItem(fun () -> action true) |> unfake)
 
         member x.TryScan ((f: 'Msg -> (Async<'T>) option), timeout) : Async<'T option> =
-            let rec scan() =
+            let rec scan timeoutAsync (timeoutCts:CancellationTokenSource) =
                 async { match x.scanArrivals(f) with
-                        | None -> // Deschedule and wait for a message. When it comes, rescan the arrivals
-                                  let! ok = waitOne(timeout)
-                                  if ok then return! scan() else return None
-                        | Some resP -> let! res = resP
-                                       return Some(res) }
+                        | None -> 
+                            // Deschedule and wait for a message. When it comes, rescan the arrivals
+                            let! ok = AsyncHelpers.awaitEither waitOneNoTimeout timeoutAsync
+                            match ok with
+                            | Choice1Of2 true -> 
+                                return! scan timeoutAsync timeoutCts
+                            | Choice1Of2 false ->
+                                return failwith "should not happen - waitOneNoTimeout always returns true"
+                            | Choice2Of2 () ->
+                                lock syncRoot (fun () -> 
+                                    // Cancel the outstanding wait for messages installed by waitOneNoTimeout
+                                    //
+                                    // HERE BE DRAGONS. This is bestowed on us because we only support
+                                    // a single mailbox reader at any one time.
+                                    // If awaitEither returned control because timeoutAsync has terminated, waitOneNoTimeout
+                                    // might still be in-flight. In practical terms, it means that the push-to-async-result-cell 
+                                    // continuation that awaitEither registered on it is still pending, i.e. it is still in savedCont.
+                                    // That continuation is a no-op now, but it is still a registered reader for arriving messages.
+                                    // Therefore we just abandon it - a brutal way of canceling.
+                                    // This ugly non-compositionality is only needed because we only support a single mailbox reader
+                                    // (i.e. the user is not allowed to run several Recieve/TryRecieve/Scan/TryScan in parallel) - otherwise 
+                                    // we would just have an extra no-op reader in the queue.
+                                    savedCont <- None)
+
+                                return None
+                        | Some resP ->                     
+                            timeoutCts.Cancel() // cancel the timeout watcher
+                            let! res = resP
+                            return Some res
+                       }
+            let rec scanNoTimeout () =
+                async { match x.scanArrivals(f) with
+                        |   None -> let! ok = waitOneNoTimeout
+                                    if ok then
+                                        return! scanNoTimeout()
+                                    else
+                                        return (failwith "Timed out with infinite timeout??")
+                        |   Some resP -> 
+                            let! res = resP
+                            return Some res
+                }
+
             // Look in the inbox first
             async { match x.scanInbox(f,0) with
-                    | None  -> return! scan()
-                    | Some resP -> let! res = resP
-                                   return Some(res) }
+                    |   None  when timeout < 0 -> return! scanNoTimeout()
+                    |   None -> 
+                            let! ct = Async.CancellationToken
+                            let timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct, CancellationToken.None)
+                            let timeoutAsync = AsyncHelpers.timeout timeout timeoutCts.Token
+                            return! scan timeoutAsync timeoutCts
+                    |   Some resP -> 
+                            let! res = resP
+                            return Some res
+
+            }
 
         member x.Scan((f: 'Msg -> (Async<'T>) option), timeout) =
             async { let! resOpt = x.TryScan(f,timeout)

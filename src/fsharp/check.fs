@@ -1,5 +1,3 @@
-
-
 module internal Microsoft.FSharp.Compiler.PostTypecheckSemanticChecks
 
 open System.Collections.Generic
@@ -44,85 +42,80 @@ let testHookMemberBody membInfo (expr:Expr) =
 
 //--------------------------------------------------------------------------
 // NOTES: byref safety checks
-//--------------------------------------------------------------------------
-
-(*
-  The .NET runtime has safety requirements on the use of byrefs.
-  These include:
-    A1: No generic type/method can be instantiated with byref types (meaning contains byref type).
-    A2: No object field may be byref typed.
-
-  In F# TAST level, byref types can be introduced/consumed at:
-    B1: lambda ... (v:byref<a>) ...         -- binding sites for values.
-    B2: &m                                  -- address of operator, where m is local mutable or reference cell.
-    B3: ms.M()                              -- method calls on mutable structs.
-    B4: *br                                 -- dereference byref
-    B5: br <- x                             -- assign byref
-    B6: expr@[byrefType]                    -- any type instantiation could introduce byref types.
-    B7: asm                                 -- TExpr_asm forms that create/consume byrefs.
-        a) I_ldfld <byref> expr
-        b) I_stfld <byref>
-        c) others TBD... work in progress.
-
-  Closures imply objects.
-  Closures are either:
-    a) explicit lambda expressions.
-    b) functions partially applied below their known arity.
- 
-  Checks:
-    C1: check no instantiation can contain byref types.
-    C2: check type declarations to ensure no object field will have byref type.
-    C3: check no explicit lambda expressions capture any free byref typed expression.    
-    C4: check byref type expr occur only as:
-        C4.a) arg to functions occuring within their known arity.
-        C4.b) arg to IL method calls, e.g. arising from calls to instance methods on mutable structs.
-        C4.c) arg to property getter on mutable struct (record field projection)
-        C4.d) rhs of byref typed binding (aliasing).
-              Note [1] aliasing should not effect safety. The restrictions on RHS byref will also apply to alias.
-              Note [2] aliasing happens in the generated hash/compare code.
-    C5: when is a byref-typed-binding acceptable?    
-        a) if it will be a method local, ok.
-        b) if it will be a top-level value stored as a field, then no. [These should have arity info].
-
-  Check commentary:
-    The C4 checks ensure byref expressions are only passed directly as method arguments (or aliased).
-    The C3 check ensures byref expressions are never captured, e.g. passed as direct method arg under a capturing thunk.
-    The C2 checks no type can store byrefs (C4 ensures F# code would never actually store them).
-    The C1 checks no generic type could be instanced to store byrefs.
-*)
+//
+// The .NET runtime has safety requirements on the use of byrefs.
+//  These include:
+//    A1: No generic type/method can be instantiated with byref types (meaning contains byref type).
+//    A2: No object field may be byref typed.
+//
+//  In F# TAST level, byref types can be introduced/consumed at:
+//    B1: lambda ... (v:byref<a>) ...         -- binding sites for values.
+//    B2: &m                                  -- address of operator, where m is local mutable or reference cell.
+//    B3: ms.M()                              -- method calls on mutable structs.
+//    B4: *br                                 -- dereference byref
+//    B5: br <- x                             -- assign byref
+//    B6: expr@[byrefType]                    -- any type instantiation could introduce byref types.
+//    B7: asm                                 -- TExpr_asm forms that create/consume byrefs.
+//        a) I_ldfld <byref> expr
+//        b) I_stfld <byref>
+//
+//  Closures imply objects.
+//  Closures are either:
+//    a) explicit lambda expressions.
+//    b) functions partially applied below their known arity.
+// 
+//  Checks:
+//    C1: check no instantiation can contain byref types.
+//    C2: check type declarations to ensure no object field will have byref type.
+//    C3: check no explicit lambda expressions capture any free byref typed expression.    
+//    C4: check byref type expr occur only as:
+//        C4.a) arg to functions occuring within their known arity.
+//        C4.b) arg to IL method calls, e.g. arising from calls to instance methods on mutable structs.
+//        C4.c) arg to property getter on mutable struct (record field projection)
+//        C4.d) rhs of byref typed binding (aliasing).
+//              Note [1] aliasing should not effect safety. The restrictions on RHS byref will also apply to alias.
+//              Note [2] aliasing happens in the generated hash/compare code.
+//    C5: when is a byref-typed-binding acceptable?    
+//        a) if it will be a method local, ok.
+//        b) if it will be a top-level value stored as a field, then no. [These should have arity info].
+//
+//  Check commentary:
+//    The C4 checks ensure byref expressions are only passed directly as method arguments (or aliased).
+//    The C3 check ensures byref expressions are never captured, e.g. passed as direct method arg under a capturing thunk.
+//    The C2 checks no type can store byrefs (C4 ensures F# code would never actually store them).
+//    The C1 checks no generic type could be instanced to store byrefs.
 
 //--------------------------------------------------------------------------
 // NOTES: reraise safety checks
 //--------------------------------------------------------------------------
  
-(* "rethrow may only occur with-in the body of a catch handler".
-   -- Section 4.23. Part III. CLI Instruction Set. ECMA Draft 2002.
-   
-   1. reraise() calls are converted to TOp.Reraise in the type checker.
-   2. any remaining reraise val_refs will be first class uses. These are trapped.
-   3. The freevars track free TOp.Reraise (they are bound (cleared) at try-catch handlers).
-   4. An outermost expression is not contained in a try-catch handler.
-      These may not have unbound rethrows.      
-      Outermost expressions occur at:
-      * module bindings.
-      * attribute arguments.
-      * Any more? What about fields of a static class?            
-   5. A lambda body (from lambda-expression or method binding) will not occur under a try-catch handler.
-      These may not have unbound rethrows.
-   6. All other constructs are assumed to generate IL code sequences.
-      For correctness, this claim needs to be justified.
-      
-      Q:  Do any post check rewrite passes factor expressions out to other functions?      
-      A1. The optimiser may introduce auxillary functions, e.g. by splitting out match-branches.
-          This should not be done if the refactored body contains an unbound reraise.
-      A2. TLR? Are any expression factored out into functions?
-      
-   Informal justification:
-   If a reraise occurs, then it is minimally contained by either:
-     a) a try-catch - accepted.
-     b) a lambda expression - rejected.
-     c) none of the above - rejected as when checking outmost expressions.
-*)
+// "rethrow may only occur with-in the body of a catch handler".
+//   -- Section 4.23. Part III. CLI Instruction Set. ECMA Draft 2002.
+//   
+//   1. reraise() calls are converted to TOp.Reraise in the type checker.
+//   2. any remaining reraise val_refs will be first class uses. These are trapped.
+//   3. The freevars track free TOp.Reraise (they are bound (cleared) at try-catch handlers).
+//   4. An outermost expression is not contained in a try-catch handler.
+//      These may not have unbound rethrows.      
+//      Outermost expressions occur at:
+//      * module bindings.
+//      * attribute arguments.
+//      * Any more? What about fields of a static class?            
+//   5. A lambda body (from lambda-expression or method binding) will not occur under a try-catch handler.
+//      These may not have unbound rethrows.
+//   6. All other constructs are assumed to generate IL code sequences.
+//      For correctness, this claim needs to be justified.
+//      
+//      Q:  Do any post check rewrite passes factor expressions out to other functions?      
+//      A1. The optimiser may introduce auxillary functions, e.g. by splitting out match-branches.
+//          This should not be done if the refactored body contains an unbound reraise.
+//      A2. TLR? Are any expression factored out into functions?
+//      
+//   Informal justification:
+//   If a reraise occurs, then it is minimally contained by either:
+//     a) a try-catch - accepted.
+//     b) a lambda expression - rejected.
+//     c) none of the above - rejected as when checking outmost expressions.
 
 
 
@@ -137,7 +130,9 @@ type env =
       /// Constructor limited - are we in the prelude of a constructor, prior to object initialization
       limited: bool;
       /// Are we in a quotation?
-      quote : bool;  } 
+      quote : bool; 
+      /// Are we under [<ReflectedDefinition>]?
+      reflect : bool } 
 
 let BindTypar env tyv = { env with boundTypars= tyv::env.boundTypars } 
 
@@ -162,7 +157,6 @@ type cenv =
       viewCcu : CcuThunk;
       reportErrors: bool;
       isLastCompiland : bool;
-      isInteractive : bool;
       // outputs
       mutable usesQuotations : bool
       mutable entryPointGiven:bool  }
@@ -188,19 +182,19 @@ let BindVals cenv vs = List.iter (BindVal cenv) vs
 // approx walk of type
 //--------------------------------------------------------------------------
 
-let rec CheckTypeDeep ((visitTyp,visitTyconRef,visitTraitSolution) as f) typ =
+let rec CheckTypeDeep ((visitTyp,visitTyconRef,visitByrefsOfByrefs,visitTraitSolution) as f) typ =
     // We iterate the _solved_ constraints as well, to pick up any record of trait constraint solutions
     // This means we walk _all_ the constraints _everywhere_ in a type, including
     // those attached to _solved_ type variables. This is used by PostTypecheckSemanticChecks to detect uses of
     // values as solutions to trait constraints and determine if inference has caused the value to escape its scope.
     // The only record of these solutions is in the _solved_ constraints of types.
     // In an ideal world we would, instead, record the solutions to these constraints as "witness variables" in expressions,
-    // rather than solely in types.
+    // rather than solely in types. 
     match typ with 
     | TType_var tp  when tp.Solution.IsSome  -> 
         tp.Constraints |> List.iter (fun cx -> 
             match cx with 
-            | TTyparMayResolveMemberConstraint((TTrait(_,_,_,_,_,soln)),_) -> 
+            | TyparConstraint.MayResolveMember((TTrait(_,_,_,_,_,soln)),_) -> 
                  Option.iter visitTraitSolution !soln
             | _ -> ())
     | _ -> ()
@@ -217,6 +211,7 @@ let rec CheckTypeDeep ((visitTyp,visitTyconRef,visitTraitSolution) as f) typ =
     | TType_app (tcref,tinst) -> 
         visitTyconRef tcref
         CheckTypesDeep f tinst
+        visitByrefsOfByrefs (tcref, tinst)
 
     | TType_ucase (_,tinst) -> CheckTypesDeep f tinst
     | TType_tuple typs        -> CheckTypesDeep f typs
@@ -225,20 +220,20 @@ let rec CheckTypeDeep ((visitTyp,visitTyconRef,visitTraitSolution) as f) typ =
 and CheckTypesDeep f tys = List.iter (CheckTypeDeep f) tys
 and CheckTypeConstraintDeep f x =
      match x with 
-     | TTyparCoercesToType(ty,_) -> CheckTypeDeep f ty
-     | TTyparMayResolveMemberConstraint(traitInfo,_) -> CheckTraitInfoDeep f traitInfo
-     | TTyparDefaultsToType(_,ty,_) -> CheckTypeDeep f ty
-     | TTyparSimpleChoice(tys,_) -> CheckTypesDeep f tys
-     | TTyparIsEnum(uty,_) -> CheckTypeDeep f uty
-     | TTyparIsDelegate(aty,bty,_) -> CheckTypeDeep f aty; CheckTypeDeep f bty
-     | TTyparSupportsComparison _ 
-     | TTyparSupportsEquality _ 
-     | TTyparSupportsNull _ 
-     | TTyparIsNotNullableValueType _ 
-     | TTyparIsUnmanaged _
-     | TTyparIsReferenceType _ 
-     | TTyparRequiresDefaultConstructor _ -> ()
-and CheckTraitInfoDeep ((_,_,visitTraitSolution) as f) (TTrait(typs,_,_,argtys,rty,soln))  = 
+     | TyparConstraint.CoercesTo(ty,_) -> CheckTypeDeep f ty
+     | TyparConstraint.MayResolveMember(traitInfo,_) -> CheckTraitInfoDeep f traitInfo
+     | TyparConstraint.DefaultsTo(_,ty,_) -> CheckTypeDeep f ty
+     | TyparConstraint.SimpleChoice(tys,_) -> CheckTypesDeep f tys
+     | TyparConstraint.IsEnum(uty,_) -> CheckTypeDeep f uty
+     | TyparConstraint.IsDelegate(aty,bty,_) -> CheckTypeDeep f aty; CheckTypeDeep f bty
+     | TyparConstraint.SupportsComparison _ 
+     | TyparConstraint.SupportsEquality _ 
+     | TyparConstraint.SupportsNull _ 
+     | TyparConstraint.IsNonNullableStruct _ 
+     | TyparConstraint.IsUnmanaged _
+     | TyparConstraint.IsReferenceType _ 
+     | TyparConstraint.RequiresDefaultConstructor _ -> ()
+and CheckTraitInfoDeep ((_,_,_,visitTraitSolution) as f) (TTrait(typs,_,_,argtys,rty,soln))  = 
     CheckTypesDeep f typs; 
     CheckTypesDeep f argtys; 
     Option.iter (CheckTypeDeep f) rty;
@@ -249,7 +244,7 @@ and CheckTraitInfoDeep ((_,_,visitTraitSolution) as f) (TTrait(typs,_,_,argtys,r
 //--------------------------------------------------------------------------
 
 let CheckForByrefLikeType cenv typ check = 
-    CheckTypeDeep (ignore, (fun tcref -> if isByrefLikeTyconRef cenv.g tcref then check()), ignore) typ
+    CheckTypeDeep (ignore, (fun tcref -> if isByrefLikeTyconRef cenv.g tcref then check()), ignore, ignore) typ
 
 
 //--------------------------------------------------------------------------
@@ -329,7 +324,7 @@ let CheckTypeForAccess (cenv:cenv) objName valAcc m ty =
                 if isLessAccessible tyconAcc valAcc then
                     errorR(Error(FSComp.SR.chkTypeLessAccessibleThanType(tcref.DisplayName, (objName())), m))
 
-        CheckTypeDeep (visitType, ignore, ignore) ty 
+        CheckTypeDeep (visitType, ignore, ignore, ignore) ty 
 
 //--------------------------------------------------------------------------
 // check type instantiations
@@ -344,6 +339,17 @@ let CheckType permitByrefs (cenv:cenv) m ty =
             if tyconRefEq cenv.g cenv.g.system_Void_tcref tcref then 
                 errorR(Error(FSComp.SR.chkSystemVoidOnlyInTypeof(), m))
 
+        // check if T contains byref types in case of byref<T>
+        let visitByrefsOfByrefs (tcref,tinst) = 
+            if isByrefLikeTyconRef cenv.g tcref then
+                let visitType ty0 =
+                    match tryDestAppTy cenv.g ty0 with
+                    | None -> ()
+                    | Some tcref ->  
+                        if isByrefLikeTyconRef cenv.g tcref then 
+                            errorR(Error(FSComp.SR.chkNoByrefsOfByrefs(NicePrint.minimalStringOfType cenv.denv ty), m)) 
+                CheckTypesDeep (visitType, ignore, ignore, ignore) tinst
+
         let visitTraitSolution info = 
             match info with 
             | FSMethSln(_,vref,_) -> 
@@ -353,7 +359,7 @@ let CheckType permitByrefs (cenv:cenv) m ty =
                    cenv.potentialUnboundUsesOfVals <- cenv.potentialUnboundUsesOfVals.Add(vref.Stamp,m)
             | _ -> ()
 
-        ty |> CheckTypeDeep (ignore, visitTyconRef, visitTraitSolution);
+        ty |> CheckTypeDeep (ignore, visitTyconRef, visitByrefsOfByrefs, visitTraitSolution);
 
 
 /// Check types occuring in TAST (like CheckType) and additionally reject any byrefs.
@@ -367,6 +373,7 @@ let CheckTypeInstNoByrefs (cenv:cenv) m tyargs =
 let CheckTypeInstPermitByrefs (cenv:cenv) m tyargs =
     tyargs |> List.iter (CheckType true cenv m)
 
+    
 //--------------------------------------------------------------------------
 // check exprs etc
 //--------------------------------------------------------------------------
@@ -404,6 +411,24 @@ let CheckNoReraise cenv freesOpt (body:Expr) =
 
 let is_splice g v = valRefEq g v g.splice_expr_vref || valRefEq g v g.splice_raw_expr_vref 
 
+let CheckMultipleInterfaceInstantiations cenv interfaces m = 
+    let keyf ty = assert isAppTy cenv.g ty; (tcrefOfAppTy cenv.g ty).Stamp
+    let table = interfaces |> MultiMap.initBy keyf
+    let firstInterfaceWithMultipleGenericInstantiations = 
+        interfaces |> List.tryPick (fun typ1 -> 
+            table |> MultiMap.find (keyf typ1) |> List.tryPick (fun typ2 -> 
+                   if // same nominal type
+                       tyconRefEq cenv.g (tcrefOfAppTy cenv.g typ1) (tcrefOfAppTy cenv.g typ2) &&
+                       // different instantiations
+                       not (typeEquivAux EraseNone cenv.g typ1 typ2) 
+                    then Some (typ1,typ2)
+                    else None))
+    match firstInterfaceWithMultipleGenericInstantiations with 
+    | None -> ()
+    | Some (typ1,typ2) -> 
+         errorR(Error(FSComp.SR.chkMultipleGenericInterfaceInstantiations((NicePrint.minimalStringOfType cenv.denv typ1), (NicePrint.minimalStringOfType cenv.denv typ2)),m))
+
+
 let rec CheckExpr   (cenv:cenv) (env:env) expr = 
     CheckExprInContext cenv env expr GeneralContext
 
@@ -412,20 +437,22 @@ and CheckVal (cenv:cenv) (env:env) v m context =
           if is_splice cenv.g v && not env.quote then errorR(Error(FSComp.SR.chkSplicingOnlyInQuotations(), m));
           if is_splice cenv.g v then errorR(Error(FSComp.SR.chkNoFirstClassSplicing(), m));
           if valRefEq cenv.g v cenv.g.addrof_vref  then errorR(Error(FSComp.SR.chkNoFirstClassAddressOf(), m));
-          if valRefEq cenv.g v cenv.g.addrof2_vref then errorR(Error(FSComp.SR.chkNoFirstClassAddressOf(), m));
           if valRefEq cenv.g v cenv.g.reraise_vref then errorR(Error(FSComp.SR.chkNoFirstClassRethrow(), m));
           if isByrefLikeTy cenv.g v.Type then 
               // byref typed val can only occur in permitting contexts 
               if context <> DirectArg then errorR(Error(FSComp.SR.chkNoByrefAtThisPoint(v.DisplayName), m))
     CheckTypePermitByrefs cenv m v.Type
-
+    
 and CheckExprInContext (cenv:cenv) (env:env) expr (context:ByrefCallContext) =    
     // dprintf "CheckExpr: %s\n" (showL(exprL expr));
-    let expr = stripExpr expr in
+    let expr = stripExpr expr
+
     match expr with
-    | Expr.Seq (e1,e2,dir,_,_) -> 
-        CheckExpr cenv env e1; 
-        CheckExpr cenv (if dir=ThenDoSeq then {env with limited=false} else env) e2
+    | Expr.Sequential (e1,e2,dir,_,_) -> 
+        CheckExpr cenv env e1;
+        match dir with
+        | NormalSeq -> CheckExprInContext cenv env e2 context       // carry context into _;RHS (normal sequencing only)      
+        | ThenDoSeq -> CheckExpr cenv {env with limited=false} e2
     | Expr.Let (bind,body,_,_) ->  
         CheckBinding cenv env false bind ; 
         BindVal cenv bind.Var
@@ -444,12 +471,14 @@ and CheckExprInContext (cenv:cenv) (env:env) expr (context:ByrefCallContext) =
           
           CheckVal cenv env v m context
           
-    | Expr.Quote(ast,savedConv,m,ty) -> 
+    | Expr.Quote(ast,savedConv,_isFromQueryExpression,m,ty) -> 
           CheckExpr cenv {env with quote=true} ast;
           if cenv.reportErrors then 
               cenv.usesQuotations <- true
               try 
-                  let conv = QuotationTranslator.ConvExprPublic (cenv.g, cenv.amap, cenv.viewCcu, cenv.isInteractive) QuotationTranslator.QuotationTranslationEnv.Empty ast  
+                  let conv = QuotationTranslator.ConvExprPublic 
+                                (cenv.g, cenv.amap, cenv.viewCcu, QuotationTranslator.IsReflectedDefinition.No) 
+                                QuotationTranslator.QuotationTranslationEnv.Empty ast  
                   match !savedConv with 
                   | None -> savedConv:= Some conv
                   | Some _ -> ()
@@ -463,13 +492,19 @@ and CheckExprInContext (cenv:cenv) (env:env) expr (context:ByrefCallContext) =
           CheckMethods cenv env basev overrides ;
           CheckInterfaceImpls cenv env basev iimpls;
           CheckTypePermitByrefs cenv m typ
+          let interfaces = 
+              [ yield! AllSuperTypesOfType cenv.g cenv.amap m AllowMultiIntfInstantiations.Yes typ
+                for (ty,_) in iimpls do
+                    yield! AllSuperTypesOfType cenv.g cenv.amap m AllowMultiIntfInstantiations.Yes ty ]
+              |> List.filter (isInterfaceTy cenv.g)
+          CheckMultipleInterfaceInstantiations cenv interfaces m
 
     // Allow base calls to F# methods
-    | Expr.App((Expr.Val(v,vFlags,_) as f),fty,tyargs,(Expr.Val(baseVal,_,_)::rest),m) 
+    | Expr.App((InnerExprPat(Expr.Val(v,vFlags,_) as f)),fty,tyargs,(Expr.Val(baseVal,_,_)::rest),m) 
           when ((match vFlags with VSlotDirectCall -> true | _ -> false) && 
                 baseVal.BaseOrThisInfo = BaseVal) ->
         // dprintfn "GOT BASE VAL USE"
-        let memberInfo = the (v.MemberInfo)
+        let memberInfo = Option.get v.MemberInfo
         if memberInfo.MemberFlags.IsDispatchSlot then
             errorR(Error(FSComp.SR.tcCannotCallAbstractBaseMember(v.DisplayName),m));
         else         
@@ -482,13 +517,19 @@ and CheckExprInContext (cenv:cenv) (env:env) expr (context:ByrefCallContext) =
     // Allow base calls to IL methods
     | Expr.Op (TOp.ILCall (virt,_,_,_,_,_,_,mref,enclTypeArgs,methTypeArgs,tys),tyargs,(Expr.Val(baseVal,_,_)::rest),m) 
           when not virt && baseVal.BaseOrThisInfo = BaseVal ->
+        
+        // Disallow calls to abstract base methods on IL types. 
         match tryDestAppTy cenv.g baseVal.Type with
-        | Some tcref ->
+        | Some tcref when tcref.IsILTycon ->
             try
-                let mdef = resolveILMethodRef tcref.Deref.ILTyconRawMetadata mref
+                // This is awkward - we have to explicitly re-resolve back to the IL metadata to determine if the method is abstract.
+                // We believe this may be fragile in some situations, since we are using the Abstract IL code to compare
+                // type equality, and it would be much better to remove any F# dependency on that implementation of IL type
+                // equality. It would be better to make this check in tc.fs when we have the Abstract IL metadata for the method to hand.
+                let mdef = resolveILMethodRef tcref.ILTyconRawMetadata mref
                 if mdef.IsAbstract then
                     errorR(Error(FSComp.SR.tcCannotCallAbstractBaseMember(mdef.Name),m));
-            with _ -> ()
+            with _ -> () // defensive coding
         | _ -> ()
         CheckTypeInstNoByrefs cenv m tyargs;
         CheckTypeInstNoByrefs cenv m enclTypeArgs;
@@ -521,6 +562,7 @@ and CheckExprInContext (cenv:cenv) (env:env) expr (context:ByrefCallContext) =
         CheckExpr cenv env f;
         CheckExprsInContext cenv env argsl (argAritiesOfFunExpr f)
 
+    (* REVIEW: fold the next two cases together *)
     | Expr.Lambda(_,_ctorThisValOpt,_baseValOpt,argvs,_,m,rty) -> 
         let topValInfo = ValReprInfo ([],[argvs |> List.map (fun _ -> ValReprInfo.unnamedTopArg1)],ValReprInfo.unnamedRetVal) 
         let ty = mkMultiLambdaTy m argvs rty in 
@@ -537,7 +579,7 @@ and CheckExprInContext (cenv:cenv) (env:env) expr (context:ByrefCallContext) =
     | Expr.Match(_,_,dtree,targets,m,ty) -> 
         CheckTypeNoByrefs cenv m ty;
         CheckDecisionTree cenv env dtree;
-        CheckDecisionTreeTargets cenv env m targets;
+        CheckDecisionTreeTargets cenv env targets;
     | Expr.LetRec (binds,e,_,_) ->  
         BindVals cenv (valsOfBinds binds)
         CheckBindings cenv env binds;
@@ -634,7 +676,7 @@ and CheckExprOp cenv env (op,tyargs,args,m) context =
         CheckTypeInstNoByrefs cenv m tyargs        
     | TOp.ValFieldGetAddr rfref,tyargs,[],_ ->
         if context <> DirectArg && cenv.reportErrors  then
-          errorR(Error(FSComp.SR.chkNoAddressStaticFieldAtThisPoint(rfref.FieldName), m));
+          errorR(Error(FSComp.SR.chkNoAddressStaticFieldAtThisPoint(rfref.FieldName), m)); 
         CheckTypeInstNoByrefs cenv m tyargs
         (* NOTE: there are no arg exprs to check in this case *)
     | TOp.ValFieldGetAddr rfref,tyargs,[rx],_ ->
@@ -659,13 +701,19 @@ and CheckExprOp cenv env (op,tyargs,args,m) context =
                 if context <> DirectArg && cenv.reportErrors then
                   errorR(Error(FSComp.SR.chkNoAddressFieldAtThisPoint(fspec.Name), m));
                 CheckExprInContext cenv env lhs DirectArg  (* permit byref for lhs lvalue *)
-            | [ I_ldelema _ ],[lhs] ->
-                if context <> DirectArg && cenv.reportErrors then
+            | [ I_ldelema (_,isNativePtr,_,_) ],lhsArray::indices ->
+                if not(isNativePtr) && context <> DirectArg && cenv.reportErrors then
                   errorR(Error(FSComp.SR.chkNoAddressOfArrayElementAtThisPoint(), m));
-                CheckExprInContext cenv env lhs DirectArg  (* permit byref for lhs lvalue *)
+                CheckExprInContext cenv env lhsArray DirectArg  (* permit byref for lhs lvalue *)
+                CheckExprs cenv env indices
             | _instrs ->
                 CheckExprs cenv env args  
         end
+
+    | TOp.TraitCall _,_,_,_ ->
+        CheckTypeInstNoByrefs cenv m tyargs;
+        CheckExprDirectArgs cenv env args (* allow args to be byref here *)
+
     | (   TOp.Tuple
         | TOp.UnionCase _
         | TOp.ExnConstr _
@@ -682,19 +730,17 @@ and CheckExprOp cenv env (op,tyargs,args,m) context =
         | TOp.ExnFieldSet _
         | TOp.TupleFieldGet _
         | TOp.RefAddrGet 
-        | TOp.TraitCall _
         | _ (* catch all! *)
         ),_,_,_ ->    
         CheckTypeInstNoByrefs cenv m tyargs;
         CheckExprs cenv env args 
 
 and CheckLambdas memInfo cenv env inlined topValInfo alwaysCheckNoReraise e m ety =
-    CheckTypePermitByrefs cenv m ety;
     // The topValInfo here says we are _guaranteeing_ to compile a function value 
     // as a .NET method with precisely the corresponding argument counts. 
     match e with
     | Expr.TyChoose(tps,e1,m)  -> 
-        let env = BindTypars env tps 
+        let env = BindTypars env tps
         CheckLambdas memInfo cenv env inlined topValInfo alwaysCheckNoReraise e1 m ety      
 
     | Expr.Lambda (_,_,_,_,_,m,_)  
@@ -702,14 +748,23 @@ and CheckLambdas memInfo cenv env inlined topValInfo alwaysCheckNoReraise e m et
 
         let tps,ctorThisValOpt,baseValOpt,vsl,body,bodyty = destTopLambda cenv.g cenv.amap topValInfo (e, ety) in
         let env = BindTypars env tps 
-        let syntacticArgs = (Option.toList ctorThisValOpt @  Option.toList baseValOpt @ List.concat vsl) 
-        
-        // All member arguments, ctorThis and baseVal values are always considered used
+        let thisAndBase = Option.toList ctorThisValOpt @ Option.toList baseValOpt
+        let restArgs = List.concat vsl
+        let syntacticArgs = thisAndBase @ restArgs
+
         match memInfo with 
         | None -> ()
-        | Some _ -> for v in syntacticArgs do v.SetHasBeenReferenced() 
-        
-        syntacticArgs |> List.iter (CheckValSpec cenv env m);
+        | Some mi -> 
+            // ctorThis and baseVal values are always considered used
+            for v in thisAndBase do v.SetHasBeenReferenced() 
+            // instance method 'this' is always considered used
+            match mi.MemberFlags.IsInstance, restArgs with
+            | true, firstArg::_ -> firstArg.SetHasBeenReferenced()
+            | _ -> ()
+            // any byRef arguments are considered used, as they may be 'out's
+            restArgs |> List.iter (fun arg -> if isByrefTy cenv.g arg.Type then arg.SetHasBeenReferenced())
+
+        syntacticArgs |> List.iter (CheckValSpec cenv env);
         syntacticArgs |> List.iter (BindVal cenv);
 
         // Allow access to protected things within members
@@ -728,7 +783,12 @@ and CheckLambdas memInfo cenv env inlined topValInfo alwaysCheckNoReraise e m et
                         errorR(Error(FSComp.SR.chkFirstClassFuncNoByref(), m))
                     else
                         errorR(Error(FSComp.SR.chkReturnTypeNoByref(), m)))
+            for tp in tps do 
+                if tp.Constraints |> List.sumBy (function TyparConstraint.CoercesTo(ty,_) when isClassTy cenv.g ty -> 1 | _ -> 0) > 1 then 
+                    errorR(Error(FSComp.SR.chkTyparMultipleClassConstraints(), m))
+                
     | _ -> 
+        CheckTypePermitByrefs cenv m ety;
         if not inlined && isByrefLikeTy cenv.g ety then
             CheckExprInContext cenv env e DirectArg           (* allow byref to occur as RHS of byref binding. *)
         else 
@@ -750,12 +810,12 @@ and CheckFlatExprs cenv env exprs =
 and CheckExprDirectArgs cenv env exprs = 
     exprs |> List.iter (fun x -> CheckExprInContext cenv env x DirectArg) 
 
-and CheckDecisionTreeTargets cenv env m targets = 
-    targets |> Array.iter (CheckDecisionTreeTarget cenv env m) 
+and CheckDecisionTreeTargets cenv env targets = 
+    targets |> Array.iter (CheckDecisionTreeTarget cenv env) 
 
-and CheckDecisionTreeTarget cenv env m (TTarget(vs,e,_)) = 
+and CheckDecisionTreeTarget cenv env (TTarget(vs,e,_)) = 
     BindVals cenv vs 
-    vs |> FlatList.iter (CheckValSpec cenv env m)
+    vs |> FlatList.iter (CheckValSpec cenv env)
     CheckExpr cenv env e
 
 and CheckDecisionTree cenv env x =
@@ -778,7 +838,7 @@ and CheckDecisionTreeTest cenv env m discrim =
     | Test.IsInst (srcTyp,dstTyp)    -> (CheckTypePermitByrefs cenv m srcTyp; CheckTypePermitByrefs cenv m dstTyp)
     | Test.ActivePatternCase (exp,_,_,_,_)     -> CheckExpr cenv env exp
 
-and CheckAttrib cenv env (Attrib(_,_,args,props,_,_)) = 
+and CheckAttrib cenv env (Attrib(_,_,args,props,_,_,_)) = 
     props |> List.iter (fun (AttribNamedArg(_,_,_,expr)) -> CheckAttribExpr cenv env expr);
     args |> List.iter (CheckAttribExpr cenv env)
 
@@ -812,7 +872,7 @@ and CheckAttribArgExpr cenv env expr =
         | _ -> 
             if cenv.reportErrors then 
                 errorR (Error (FSComp.SR.tastConstantCannotBeCustomAttribute(), m))
-
+                
     | Expr.Op(TOp.Array,[_elemTy],args,_m) -> 
         List.iter (CheckAttribArgExpr cenv env) args
     | TypeOfExpr cenv.g _ -> 
@@ -832,7 +892,7 @@ and CheckAttribArgExpr cenv env expr =
   
 and CheckAttribs cenv env (attribs: Attribs) = 
     if isNil attribs then () else
-    let tcrefs = [ for (Attrib(tcref,_,_,_,_,m)) in attribs -> (tcref,m) ]
+    let tcrefs = [ for (Attrib(tcref,_,_,_,_,_,m)) in attribs -> (tcref,m) ]
 
     // Check for violations of allowMultiple = false
     let duplicates = 
@@ -843,11 +903,12 @@ and CheckAttribs cenv env (attribs: Attribs) =
         |> Seq.map fst 
         |> Seq.toList
         // Filter for allowMultiple = false
-        |> List.filter (fun (tcref,_) -> 
+        |> List.filter (fun (tcref,m) -> 
                 let allowMultiple = 
-                    TyconRefTryBindAttrib cenv.g cenv.g.attrib_AttributeUsageAttribute tcref 
+                    Infos.AttributeChecking.TryBindTyconRefAttribute cenv.g m cenv.g.attrib_AttributeUsageAttribute tcref 
                              (fun (_,named)             -> named |> List.tryPick (function ("AllowMultiple",_,_,ILAttribElem.Bool res) -> Some res | _ -> None))
-                             (fun (Attrib(_,_,_,named,_,_)) -> named |> List.tryPick (function AttribNamedArg("AllowMultiple",_,_,AttribBoolArg(res) ) -> Some res | _ -> None)) 
+                             (fun (Attrib(_,_,_,named,_,_,_)) -> named |> List.tryPick (function AttribNamedArg("AllowMultiple",_,_,AttribBoolArg(res) ) -> Some res | _ -> None))
+                             (fun _ -> None)
                 
                 (allowMultiple <> Some(true)))
     if cenv.reportErrors then 
@@ -863,10 +924,10 @@ and CheckValInfo cenv env (ValReprInfo(_,args,ret)) =
 and CheckArgInfo cenv env (argInfo : ArgReprInfo)  = 
     CheckAttribs cenv env argInfo.Attribs
 
-and CheckValSpec cenv env m (v:Val) =
+and CheckValSpec cenv env (v:Val) =
     v.Attribs |> CheckAttribs cenv env;
     v.ValReprInfo |> Option.iter (CheckValInfo cenv env);
-    v.Type |> CheckTypePermitByrefs cenv m
+    v.Type |> CheckTypePermitByrefs cenv v.Range
 
 and AdjustAccess isHidden (cpath: unit -> CompilationPath) access =
     if isHidden then 
@@ -880,7 +941,7 @@ and AdjustAccess isHidden (cpath: unit -> CompilationPath) access =
 and CheckBinding cenv env alwaysCheckNoReraise (TBind(v,e,_) as bind) =
     //printfn "visiting %s..." v.DisplayName
     match TryGetActivePatternInfo (mkLocalValRef v) with 
-    | Some apinfo when apinfo.ActiveTags.Length > 1 -> 
+    | Some _ -> 
         let vty  = v.TauType
         let vtps = v.Typars |> Zset.ofList typarOrder
         if not (isFunTy cenv.g v.TauType) then
@@ -893,18 +954,18 @@ and CheckBinding cenv env alwaysCheckNoReraise (TBind(v,e,_) as bind) =
             errorR(Error(FSComp.SR.activePatternChoiceHasFreeTypars(v.LogicalName),v.Range))
     | _ -> ()
     
-    match cenv.potentialUnboundUsesOfVals.TryFind(v.Stamp) with
+    match cenv.potentialUnboundUsesOfVals.TryFind v.Stamp with
     | None -> () 
     | Some m ->
          let nm = v.DisplayName
-         errorR(Error(FSComp.SR.chkMemberUsedInInvalidWay(nm, nm, (stringOfRange m)), v.Range))
+         errorR(Error(FSComp.SR.chkMemberUsedInInvalidWay(nm, nm, stringOfRange m), v.Range))
 
     v.Type |> CheckTypePermitByrefs cenv v.Range;
     v.Attribs |> CheckAttribs cenv env;
     v.ValReprInfo |> Option.iter (CheckValInfo cenv env);
     if (v.IsMemberOrModuleBinding || v.IsMember) && not v.IsIncrClassGeneratedMember then 
         let access =  AdjustAccess (IsHiddenVal env.sigToImplRemapInfo v) (fun () -> v.TopValActualParent.CompilationPath) v.Accessibility
-        v.Type |> CheckTypeForAccess cenv (fun () -> NicePrint.stringOfQualifiedValSpec cenv.denv v) access v.Range;
+        v.Type |> CheckTypeForAccess cenv (fun () -> NicePrint.stringOfQualifiedValOrMember cenv.denv v) access v.Range;
     
     let env = if v.IsConstructor && not v.IsIncrClassConstructor then { env with limited=true } else env
 
@@ -919,9 +980,25 @@ and CheckBinding cenv env alwaysCheckNoReraise (TBind(v,e,_) as bind) =
           | _ -> ()
 
         if isSome v.PublicPath then 
-            if HasAttrib cenv.g cenv.g.attrib_ReflectedDefinitionAttribute v.Attribs then
+            if 
+              // Don't support implicit [<ReflectedDefinition>] on generated members, except the implicit members
+              // for 'let' bound functions in classes.
+              (not v.IsCompilerGenerated || v.IsIncrClassGeneratedMember) &&
+              
+              (// Check the attributes on any enclosing module
+               env.reflect || 
+               // Check the attributes on the value
+               HasFSharpAttribute cenv.g cenv.g.attrib_ReflectedDefinitionAttribute v.Attribs ||
+               // Also check the enclosing type for members - for historical reasons, in the TAST member values 
+               // are stored in the entity that encloses the type, hence we will not have noticed the ReflectedDefinition
+               // on the enclosing type at this point.
+               HasFSharpAttribute cenv.g cenv.g.attrib_ReflectedDefinitionAttribute v.TopValActualParent.Attribs) then 
+
+                if v.IsInstanceMember && v.MemberApparentParent.IsStructOrEnumTycon then
+                    errorR(Error(FSComp.SR.chkNoReflectedDefinitionOnStructMember(),v.Range))
                 cenv.usesQuotations <- true
-                (* If we've already recorded a definition then skip this *)
+
+                // If we've already recorded a definition then skip this 
                 match v.ReflectedDefinition with 
                 | None -> v.Data.val_defn <- Some e
                 | Some _ -> ()
@@ -936,10 +1013,12 @@ and CheckBinding cenv env alwaysCheckNoReraise (TBind(v,e,_) as bind) =
                       | Expr.TyLambda (_,tps,b,_,_) -> tps,b,applyForallTy cenv.g ety (List.map mkTyparTy tps)
                       | _ -> [],e,ety
                     let env = QuotationTranslator.QuotationTranslationEnv.Empty.BindTypars tps
-                    let _,argExprs,_ = QuotationTranslator.ConvExprPublic (cenv.g,cenv.amap,cenv.viewCcu, cenv.isInteractive) env taue 
+                    let _,argExprs,_ = QuotationTranslator.ConvExprPublic 
+                                            (cenv.g,cenv.amap,cenv.viewCcu, QuotationTranslator.IsReflectedDefinition.Yes) 
+                                            env taue 
                     if nonNil(argExprs) then 
                         errorR(Error(FSComp.SR.chkReflectedDefCantSplice(), v.Range));
-                    QuotationTranslator.ConvMethodBase (cenv.g,cenv.amap,cenv.viewCcu, cenv.isInteractive) env v |> ignore
+                    QuotationTranslator.ConvMethodBase (cenv.g,cenv.amap,cenv.viewCcu) env (v.CompiledName, v) |> ignore
                 with 
                   | QuotationTranslator.InvalidQuotedTerm e -> 
                           errorR(e)
@@ -968,7 +1047,7 @@ and CheckBindings cenv env xs = FlatList.iter (CheckBinding cenv env false) xs
 
 // Top binds introduce expression, check they are reraise free.
 let CheckTopBinding cenv env (TBind(v,e,_) as bind) =
-    let isExplicitEntryPoint = HasAttrib cenv.g cenv.g.attrib_EntryPointAttribute v.Attribs
+    let isExplicitEntryPoint = HasFSharpAttribute cenv.g cenv.g.attrib_EntryPointAttribute v.Attribs
     if isExplicitEntryPoint then 
         cenv.entryPointGiven <- true;
         if not cenv.isLastCompiland && cenv.reportErrors  then 
@@ -978,9 +1057,9 @@ let CheckTopBinding cenv env (TBind(v,e,_) as bind) =
     if // Mutable values always have fields
        not v.IsMutable && 
        // Literals always have fields
-       not (HasAttrib cenv.g cenv.g.attrib_LiteralAttribute v.Attribs) && 
-       not (HasAttrib cenv.g cenv.g.attrib_ThreadStaticAttribute v.Attribs) && 
-       not (HasAttrib cenv.g cenv.g.attrib_ContextStaticAttribute v.Attribs) && 
+       not (HasFSharpAttribute cenv.g cenv.g.attrib_LiteralAttribute v.Attribs) && 
+       not (HasFSharpAttribute cenv.g cenv.g.attrib_ThreadStaticAttribute v.Attribs) && 
+       not (HasFSharpAttribute cenv.g cenv.g.attrib_ContextStaticAttribute v.Attribs) && 
        // Having a field makes the binding a static initialization trigger
        IsSimpleSyntacticConstantExpr cenv.g e && 
        // Check the thing is actually compiled as a property
@@ -991,6 +1070,7 @@ let CheckTopBinding cenv env (TBind(v,e,_) as bind) =
     // Check for value name clashes
     begin
         try 
+
           // Skip compiler generated values
           if v.IsCompilerGenerated then () else
           // Skip explicit implementations of interface methods
@@ -1002,8 +1082,8 @@ let CheckTopBinding cenv env (TBind(v,e,_) as bind) =
             let tcref = v.TopValActualParent 
             let hasDefaultAugmentation = 
                 tcref.IsUnionTycon &&
-                match TryFindAttrib cenv.g cenv.g.attrib_DefaultAugmentationAttribute tcref.Attribs with
-                | Some(Attrib(_,_,[ AttribBoolArg(b) ],_,_,_)) -> b
+                match TryFindFSharpAttribute cenv.g cenv.g.attrib_DefaultAugmentationAttribute tcref.Attribs with
+                | Some(Attrib(_,_,[ AttribBoolArg(b) ],_,_,_,_)) -> b
                 | _ -> true (* not hiddenRepr *)
 
             let kind = (if v.IsMember then "member" else "value")
@@ -1015,19 +1095,33 @@ let CheckTopBinding cenv env (TBind(v,e,_) as bind) =
                     
                     error(Duplicate(kind,v.DisplayName,v.Range));
 
-                if (hasDefaultAugmentation) then 
-                    match tcref.GetUnionCaseByName(nm) with 
-                    | Some(uc) -> error(NameClash(nm,kind,v.DisplayName,v.Range, FSComp.SR.typeInfoUnionCase(),uc.DisplayName,uc.Range));
-                    | None -> ()
-
-                if tcref.IsUnionTycon && hasDefaultAugmentation && nm = "Cases" then 
+#if CASES_IN_NESTED_CLASS
+                if tcref.IsUnionTycon && nm = "Cases" then 
                     errorR(NameClash(nm,kind,v.DisplayName,v.Range, "generated type","Cases",tcref.Range));
+#endif
+                if tcref.IsUnionTycon then 
+                    match nm with 
+                    | "Tag" -> errorR(NameClash(nm,kind,v.DisplayName,v.Range, FSComp.SR.typeInfoGeneratedProperty(),"Tag",tcref.Range));
+                    | "Tags" -> errorR(NameClash(nm,kind,v.DisplayName,v.Range, FSComp.SR.typeInfoGeneratedType(),"Tags",tcref.Range));
+                    | _ ->
+                        if hasDefaultAugmentation then 
+                            match tcref.GetUnionCaseByName(nm) with 
+                            | Some(uc) -> error(NameClash(nm,kind,v.DisplayName,v.Range, FSComp.SR.typeInfoUnionCase(),uc.DisplayName,uc.Range));
+                            | None -> ()
 
-                if tcref.IsUnionTycon && hasDefaultAugmentation && nm = "Tag" then 
-                    errorR(NameClash(nm,kind,v.DisplayName,v.Range, "generated property","Tag",tcref.Range));
+                            let hasNoArgs = 
+                                match v.ValReprInfo with 
+                                | None -> false 
+                                | Some arity -> List.sum arity.AritiesOfArgs - v.NumObjArgs <= 0 && arity.NumTypars = 0
 
-                if tcref.IsUnionTycon && hasDefaultAugmentation && nm = "Tags" then 
-                    errorR(NameClash(nm,kind,v.DisplayName,v.Range, "generated type","Tags",tcref.Range));
+                            // Unions with one alternative use "Item", "Item1", "Item2" etc. But only if these
+                            // are properties without arguments.
+                            if tcref.UnionCasesArray.Length = 1 && hasNoArgs then 
+                               let ucase1 = tcref.UnionCasesArray.[0]
+                               let nFields = ucase1.RecdFieldsArray.Length
+                               for i in 0 .. nFields - 1 do
+                                   let propName = if nFields <= 1 then "Item" else "Item"+string (i+1)
+                                   if nm = propName then error(NameClash(nm,kind,v.DisplayName,v.Range, FSComp.SR.typeInfoGeneratedProperty(),propName,ucase1.Range));
 
                 // Default augmentation contains the nasty 'Case<UnionCase>' etc.
                 let prefix = "New"
@@ -1051,6 +1145,7 @@ let CheckTopBinding cenv env (TBind(v,e,_) as bind) =
             check false v.DisplayName
             check false v.CompiledName
 
+            // Properties get 'get_X', only if there are no args
             // Properties get 'get_X'
             match v.ValReprInfo with 
             | Some arity when arity.NumCurriedArgs = 0 && arity.NumTypars = 0 -> check false ("get_"^v.DisplayName)
@@ -1085,17 +1180,21 @@ let CheckRecdField isUnion cenv env (tycon:Tycon) (rfield:RecdField) =
     if cenv.reportErrors then 
         CheckForByrefLikeType cenv rfield.FormalType (fun () -> errorR(Error(FSComp.SR.chkCantStoreByrefValue(), tycon.Range)))
 
-let CheckTypeDefn cenv env (tycon:Tycon) =
+let CheckEntityDefn cenv env (tycon:Entity) =
+#if EXTENSIONTYPING
+  if not tycon.IsProvidedGeneratedTycon then
+#endif
+    let env = { env with reflect = env.reflect || HasFSharpAttribute cenv.g cenv.g.attrib_ReflectedDefinitionAttribute tycon.Attribs }
     let m = tycon.Range 
     CheckAttribs cenv env tycon.Attribs;
 
     if cenv.reportErrors then begin
-      if not tycon.IsTypeAbbrev then 
+      if not tycon.IsTypeAbbrev then
         let typ = generalizedTyconRef (mkLocalTyconRef tycon)
         let allVirtualMethsInParent = 
-            match SuperTypeOfType cenv.g cenv.amap m typ with 
+            match GetSuperTypeOfType cenv.g cenv.amap m typ with 
             | Some super -> 
-                GetIntrinsicMethInfosOfType cenv.infoReader (None,AccessibleFromSomewhere,AllowMultiIntfInst)  IgnoreOverrides m super
+                GetIntrinsicMethInfosOfType cenv.infoReader (None,AccessibleFromSomewhere,AllowMultiIntfInstantiations.Yes)  IgnoreOverrides m super
                 |> List.filter (fun minfo -> minfo.IsVirtual)
             | None -> []
 
@@ -1103,8 +1202,8 @@ let CheckTypeDefn cenv env (tycon:Tycon) =
         let methodUniquenessIncludesReturnType (minfo:MethInfo) = List.mem minfo.LogicalName namesOfMethodsThatMayDifferOnlyInReturnType
         let MethInfosEquivWrtUniqueness eraseFlag m minfo minfo2 =
             if methodUniquenessIncludesReturnType minfo
-            then MethInfosEquivByNameAndSig        eraseFlag cenv.g cenv.amap m minfo minfo2
-            else MethInfosEquivByNameAndPartialSig eraseFlag cenv.g cenv.amap m minfo minfo2 (* partial ignores return type *)
+            then MethInfosEquivByNameAndSig        eraseFlag true cenv.g cenv.amap m minfo minfo2
+            else MethInfosEquivByNameAndPartialSig eraseFlag true cenv.g cenv.amap m minfo minfo2 (* partial ignores return type *)
 
         let immediateMeths = 
             [ for v in tycon.AllGeneratedValues do yield FSMeth (cenv.g,typ,v,None)
@@ -1114,13 +1213,32 @@ let CheckTypeDefn cenv env (tycon:Tycon) =
 
         let getHash (hash:Dictionary<string,_>) nm = 
              if hash.ContainsKey(nm) then hash.[nm] else []
+        
+        // precompute methods grouped by MethInfo.LogicalName
+        let hashOfImmediateMeths = 
+                let h = new Dictionary<string, _>()
+                for minfo in immediateMeths do
+                    match h.TryGetValue minfo.LogicalName with
+                    | true, methods -> 
+                        h.[minfo.LogicalName] <- minfo::methods
+                    | false, _ -> 
+                        h.[minfo.LogicalName] <- [minfo]
+                h
+        let getOtherMethods (minfo : MethInfo) =                         
+            [
+                //we have added all methods to the dictionary on the previous step
+                let methods = hashOfImmediateMeths.[minfo.LogicalName]
+                for m in methods do
+                    // use referencial identity to filter out 'minfo' method
+                    if not(System.Object.ReferenceEquals(m, minfo)) then 
+                        yield m
+            ]
 
-        let hashOfImmediateMeths = new Dictionary<string,_>()
         let hashOfImmediateProps = new Dictionary<string,_>()
         for minfo in immediateMeths do
             let nm = minfo.LogicalName
             let m = (match minfo.ArbitraryValRef with None -> m | Some vref -> vref.DefinitionRange)
-            let others = getHash hashOfImmediateMeths nm
+            let others = getOtherMethods minfo
             // abstract/default pairs of duplicate methods are OK
             let IsAbstractDefaultPair (x:MethInfo) (y:MethInfo) = 
                 x.IsDispatchSlot && y.IsDefiniteFSharpOverride
@@ -1140,10 +1258,11 @@ let CheckTypeDefn cenv env (tycon:Tycon) =
             if minfo.NumArgs.Length > 1 && others |> List.exists (fun minfo2 -> not (IsAbstractDefaultPair2 minfo minfo2)) then 
                 errorR(Error(FSComp.SR.chkDuplicateMethodCurried nm,m))
 
-            if minfo.NumArgs.Length > 1 && ParamDatasOfMethInfo cenv.amap m minfo minfo.FormalMethodInst |> List.existsSquared (fun (ParamData(isParamArrayArg, isOutArg, optArgInfo, _, ty)) -> isParamArrayArg || isOutArg || optArgInfo.IsOptional || isByrefTy cenv.g ty) then 
+            if minfo.NumArgs.Length > 1 && 
+               (minfo.GetParamDatas(cenv.amap, m, minfo.FormalMethodInst) 
+                |> List.existsSquared (fun (ParamData(isParamArrayArg, isOutArg, optArgInfo, _, ty)) -> 
+                    isParamArrayArg || isOutArg || optArgInfo.IsOptional || isByrefTy cenv.g ty)) then 
                 errorR(Error(FSComp.SR.chkCurriedMethodsCantHaveOutParams(), m))
-
-            hashOfImmediateMeths.[nm] <- minfo::others
 
         for pinfo in immediateProps do
             let nm = pinfo.PropertyName
@@ -1174,14 +1293,22 @@ let CheckTypeDefn cenv env (tycon:Tycon) =
 
             if ( (pinfo.HasGetter && 
                   pinfo.HasSetter && 
-                  let setterArgs = pinfo.DropGetter.ParamTypes(cenv.amap,m)
-                  let getterArgs = pinfo.DropSetter.ParamTypes(cenv.amap,m)
+                  let setterArgs = pinfo.DropGetter.GetParamTypes(cenv.amap,m)
+                  let getterArgs = pinfo.DropSetter.GetParamTypes(cenv.amap,m)
                   setterArgs.Length <> getterArgs.Length)
                 || 
-                 (let nargs = pinfo.ParamTypes(cenv.amap,m).Length
-                  others |> List.exists (fun pinfo2 -> (pinfo2.ParamTypes(cenv.amap,m).Length = 0) <> (nargs = 0)))) then 
+                 (let nargs = pinfo.GetParamTypes(cenv.amap,m).Length
+                  others |> List.exists (fun pinfo2 -> (pinfo2.GetParamTypes(cenv.amap,m).Length = 0) <> (nargs = 0)))) then 
                   
                   errorR(Error(FSComp.SR.chkPropertySameNameIndexer(nm),m))
+
+            // Check to see if the signatures of the both getter and the setter imply the same property type
+
+            if pinfo.HasGetter && pinfo.HasSetter && not pinfo.IsIndexer then
+                let ty1 = pinfo.DropSetter.GetPropertyType(cenv.amap,m)
+                let ty2 = pinfo.DropGetter.GetPropertyType(cenv.amap,m)
+                if not (typeEquivAux EraseNone cenv.amap.g ty1 ty2) then
+                    errorR(Error(FSComp.SR.chkGetterAndSetterHaveSamePropertyType(pinfo.PropertyName, NicePrint.minimalStringOfType cenv.denv ty1, NicePrint.minimalStringOfType cenv.denv ty2),m))
 
             hashOfImmediateProps.[nm] <- pinfo::others
             
@@ -1196,11 +1323,11 @@ let CheckTypeDefn cenv env (tycon:Tycon) =
                     let nm = minfo.LogicalName
                     let m = (match minfo.ArbitraryValRef with None -> m | Some vref -> vref.DefinitionRange)
                     let parentMethsOfSameName = getHash hashOfAllVirtualMethsInParent nm 
-                    let checkForDup erasureFlag (minfo2:MethInfo) = minfo2.IsDispatchSlot && MethInfosEquivByNameAndSig erasureFlag cenv.g cenv.amap m minfo minfo2
+                    let checkForDup erasureFlag (minfo2:MethInfo) = minfo2.IsDispatchSlot && MethInfosEquivByNameAndSig erasureFlag true cenv.g cenv.amap m minfo minfo2
                     match parentMethsOfSameName |> List.tryFind (checkForDup EraseAll) with
                     | None -> ()
                     | Some minfo ->
-                        let mtext = stringOfMethInfo cenv.amap m cenv.denv minfo
+                        let mtext = NicePrint.stringOfMethInfo cenv.amap m cenv.denv minfo
                         if parentMethsOfSameName |> List.exists (checkForDup EraseNone) then 
                             warning(Error(FSComp.SR.tcNewMemberHidesAbstractMember(mtext),m))
                         else
@@ -1211,7 +1338,7 @@ let CheckTypeDefn cenv env (tycon:Tycon) =
                     let nm = minfo.LogicalName
                     let m = (match minfo.ArbitraryValRef with None -> m | Some vref -> vref.DefinitionRange)
                     let parentMethsOfSameName = getHash hashOfAllVirtualMethsInParent nm 
-                    let checkForDup erasureFlag minfo2 = MethInfosEquivByNameAndSig erasureFlag cenv.g cenv.amap m minfo minfo2
+                    let checkForDup erasureFlag minfo2 = MethInfosEquivByNameAndSig erasureFlag true cenv.g cenv.amap m minfo minfo2
                     //if minfo.NumArgs.Length > 1 then 
                     //    warning(Error(sprintf "Abstract methods taking curried arguments Duplicate method. The method '%s' has curried arguments but has the same name as another method in this type. Methods with curried arguments may not be overloaded" nm,(match minfo.ArbitraryValRef with None -> m | Some vref -> vref.DefinitionRange)))
                     if parentMethsOfSameName |> List.exists (checkForDup EraseAll) then
@@ -1226,7 +1353,7 @@ let CheckTypeDefn cenv env (tycon:Tycon) =
     // [Review] are all cases covered: TILObjModelRepr,TAsmRepr. [Yes - these are FSharp.Core.dll only]
     tycon.AllFieldsArray |> Array.iter (CheckRecdField false cenv env tycon);
     abstractSlotValsOfTycons [tycon] |> List.iter (typeOfVal >> CheckTypePermitByrefs cenv m); (* check vslots = abstract slots *)
-    tycon.InterfaceTypesOfFSharpTycon |> List.iter (CheckTypePermitByrefs cenv m);                   (* check implemented interface types *)
+    tycon.ImmediateInterfaceTypesOfFSharpTycon |> List.iter (CheckTypePermitByrefs cenv m);                   (* check implemented interface types *)
     superOfTycon cenv.g tycon |> CheckTypePermitByrefs cenv m;                                    (* check super type *)
 
     if tycon.IsUnionTycon then                             (* This covers finite unions. *)
@@ -1235,14 +1362,14 @@ let CheckTypeDefn cenv env (tycon:Tycon) =
             uc.RecdFields |> List.iter (CheckRecdField true cenv env tycon))
 
     let access =  AdjustAccess (IsHiddenTycon env.sigToImplRemapInfo tycon) (fun () -> tycon.CompilationPath) tycon.Accessibility
-    let visitType ty = CheckTypeForAccess cenv (fun () -> tycon.DisplayNameWithUnderscoreTypars) access tycon.Range ty    
+    let visitType ty = CheckTypeForAccess cenv (fun () -> tycon.DisplayNameWithStaticParametersAndUnderscoreTypars) access tycon.Range ty    
     abstractSlotValsOfTycons [tycon] |> List.iter (typeOfVal >> visitType); (* check vslots = abstract slots *)
     superOfTycon cenv.g tycon |> visitType
     // We do not have to check access of interface implementations. See FSharp 1.0 5042
     //implements_of_tycon cenv.g tycon |> List.iter visitType
     if tycon.IsFSharpDelegateTycon then 
         match tycon.TypeReprInfo with 
-        | Some (TFsObjModelRepr r) ->
+        | TFsObjModelRepr r ->
             match r.fsobjmodel_kind with 
             | TTyconDelegate ss ->
                 //ss.ClassTypars 
@@ -1254,34 +1381,21 @@ let CheckTypeDefn cenv env (tycon:Tycon) =
 
 
     let interfaces = 
-        AllSuperTypesOfType cenv.g cenv.amap tycon.Range AllowMultiIntfInst (generalizedTyconRef (mkLocalTyconRef tycon)) 
+        AllSuperTypesOfType cenv.g cenv.amap tycon.Range AllowMultiIntfInstantiations.Yes (generalizedTyconRef (mkLocalTyconRef tycon)) 
             |> List.filter (isInterfaceTy cenv.g)
             
     if tycon.IsFSharpInterfaceTycon then List.iter visitType interfaces // Check inheritted interface is as accessible
  
     if cenv.reportErrors then 
         if not tycon.IsTypeAbbrev then 
-            let firstInterfaceWithMultipleGenericInstantiations = 
-                interfaces |> List.tryPick (fun typ1 -> 
-                    interfaces |> List.tryPick (fun typ2 -> 
-                        if // same nominal type
-                           tyconRefEq cenv.g (tcrefOfAppTy cenv.g typ1) (tcrefOfAppTy cenv.g typ2) &&
-                           // different instantiations
-                           not (typeEquivAux EraseNone cenv.g typ1 typ2) 
-                        then Some (typ1,typ2)
-                        else None))
-        
-            match firstInterfaceWithMultipleGenericInstantiations with 
-            | None -> ()
-            | Some (typ1,typ2) -> 
-                 errorR(Error(FSComp.SR.chkMultipleGenericInterfaceInstantiations((NicePrint.prettyStringOfTy cenv.denv typ1), (NicePrint.prettyStringOfTy cenv.denv typ2)),tycon.Range))
+            CheckMultipleInterfaceInstantiations cenv interfaces m
         
         // Check struct fields. We check these late because we have to have first checked that the structs are
         // free of cycles
         if tycon.IsStructOrEnumTycon then 
             tycon.AllInstanceFieldsAsList |> List.iter (fun f -> 
                 // Check if it's marked unsafe 
-                let zeroInitUnsafe = TryFindBoolAttrib cenv.g cenv.g.attrib_DefaultValueAttribute f.FieldAttribs
+                let zeroInitUnsafe = TryFindFSharpBoolAttribute cenv.g cenv.g.attrib_DefaultValueAttribute f.FieldAttribs
                 if zeroInitUnsafe = Some(true) then
                    let ty' = generalizedTyconRef (mkLocalTyconRef tycon)
                    if not (TypeHasDefaultValue cenv.g ty') then 
@@ -1292,8 +1406,8 @@ let CheckTypeDefn cenv env (tycon:Tycon) =
          | Some typ -> 
              CheckForByrefLikeType cenv typ (fun () -> errorR(Error(FSComp.SR.chkNoByrefInTypeAbbrev(), tycon.Range)))
 
-let CheckTypeDefns cenv env tycons = 
-    tycons |> List.iter (CheckTypeDefn cenv env) 
+let CheckEntityDefns cenv env tycons = 
+    tycons |> List.iter (CheckEntityDefn cenv env) 
 
 //--------------------------------------------------------------------------
 // check modules
@@ -1318,7 +1432,7 @@ and CheckDefnInModule cenv env x =
     | TMDefRec(tycons,binds,mspecs,m) -> 
         CheckNothingAfterEntryPoint cenv m
         BindVals cenv (valsOfBinds binds)
-        CheckTypeDefns cenv env tycons; 
+        CheckEntityDefns cenv env tycons; 
         CheckTopBindings cenv env binds;
         List.iter (CheckModuleSpec cenv env) mspecs
     | TMDefLet(bind,m)  -> 
@@ -1331,11 +1445,13 @@ and CheckDefnInModule cenv env x =
         CheckExpr cenv env e
     | TMAbstract(def)  -> CheckModuleExpr cenv env def
     | TMDefs(defs) -> CheckDefnsInModule cenv env defs 
+
 and CheckModuleSpec cenv env (ModuleOrNamespaceBinding(mspec, rhs)) = 
-    CheckTypeDefn cenv env mspec;
+    CheckEntityDefn cenv env mspec;
+    let env = { env with reflect = env.reflect || HasFSharpAttribute cenv.g cenv.g.attrib_ReflectedDefinitionAttribute mspec.Attribs }
     CheckDefnInModule cenv env rhs 
 
-let CheckTopImpl (g,amap,reportErrors,infoReader,internalsVisibleToPaths,viewCcu,denv ,mexpr,extraAttribs,isLastCompiland,isInteractive) =
+let CheckTopImpl (g,amap,reportErrors,infoReader,internalsVisibleToPaths,viewCcu,denv ,mexpr,extraAttribs,isLastCompiland) =
     let cenv = 
         { g =g ; 
           reportErrors=reportErrors; 
@@ -1344,7 +1460,6 @@ let CheckTopImpl (g,amap,reportErrors,infoReader,internalsVisibleToPaths,viewCcu
           usesQuotations=false; 
           infoReader=infoReader; 
           internalsVisibleToPaths=internalsVisibleToPaths;
-          isInteractive=isInteractive;
           amap=amap; 
           denv=denv; 
           viewCcu= viewCcu;
@@ -1361,10 +1476,11 @@ let CheckTopImpl (g,amap,reportErrors,infoReader,internalsVisibleToPaths,viewCcu
     cenv.g.system_RuntimeArgumentHandle_tcref.TryDeref |> ignore
 
     let env = 
-        { sigToImplRemapInfo=[]; 
-          quote=false; 
-          limited=false; 
-          boundTypars=[] }
+        { sigToImplRemapInfo=[]
+          quote=false
+          limited=false 
+          boundTypars=[]
+          reflect=false }
 
     CheckModuleExpr cenv env mexpr;
     CheckAttribs cenv env extraAttribs;

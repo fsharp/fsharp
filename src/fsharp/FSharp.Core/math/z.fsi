@@ -1,6 +1,5 @@
 //----------------------------------------------------------------------------
-//
-// Copyright (c) 2002-2011 Microsoft Corporation. 
+// Copyright (c) 2002-2012 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -11,8 +10,7 @@
 //----------------------------------------------------------------------------
 
 namespace System.Numerics
-#if FX_ATLEAST_40
-#else
+#if FX_NO_BIGINT
 
     open System
     open Microsoft.FSharp.Collections
@@ -86,10 +84,9 @@ namespace System.Numerics
         new : x:int -> BigInteger
         /// Construct a BigInteger value for the given 64-bit integer
         new : x:int64 -> BigInteger
-
-#if EXTRAS_FOR_SILVERLIGHT_COMPILER
-        /// Provide custom formatting
-        member StructuredDisplayString : string
+#if SILVERLIGHT
+        /// Provides custom formatting for BigInteger values
+        member StructuredDisplayString : string // This needs to be accessible in order for formatting code to invoke it via reflection in Silverlight. 
 #endif
 #endif
 

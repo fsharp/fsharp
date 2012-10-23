@@ -1,6 +1,5 @@
 //----------------------------------------------------------------------------
-//
-// Copyright (c) 2002-2011 Microsoft Corporation. 
+// Copyright (c) 2002-2012 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -173,8 +172,11 @@ module PrintfImpl =
     // overheads (though they are not too bad) and thus could and should be 
     // optimized in some special cases, e.g. where a format string
     // just contains a single simple format specifier such as '%x'
-
+#if FX_ATLEAST_PORTABLE
+    let staticInvokeFlags = BindingFlags.Public ||| BindingFlags.Static
+#else
     let staticInvokeFlags = BindingFlags.Public ||| BindingFlags.InvokeMethod ||| BindingFlags.Static
+#endif    
     let mkFunctionValue (tys: System.Type[]) (impl:obj->obj) = 
         FSharpValue.MakeFunction(FSharpType.MakeFunctionType(tys.[0],tys.[1]), impl)
 
@@ -192,14 +194,22 @@ module PrintfImpl =
             match ty.BaseType with 
             | null -> raise <| System.InvalidOperationException(SR.GetString(SR.printfNotAFunType))
             | b -> destFunTy b 
-     
+#if FX_ATLEAST_PORTABLE
+    let instanceInvokeFlags = BindingFlags.Public ||| BindingFlags.Instance
+#else     
     let instanceInvokeFlags = BindingFlags.Public ||| BindingFlags.InvokeMethod ||| BindingFlags.Instance
+#endif    
     let invokeFunctionValue (f:obj) (x:obj) = 
         let fTy,_ = destFunTy (f.GetType())
+#if FX_ATLEAST_PORTABLE
+        let meth = fTy.GetMethod("Invoke",instanceInvokeFlags)
+        meth.Invoke(f,[| x |])
+#else        
 #if FX_NO_CULTURE_INFO_ARGS
         fTy.InvokeMember("Invoke",instanceInvokeFlags,(null:Binder),f,[| x |]) 
 #else
         fTy.InvokeMember("Invoke",instanceInvokeFlags,(null:Binder),f,[| x |],CultureInfo.InvariantCulture(*FxCop:1304*)) 
+#endif
 #endif
 
     let buildFunctionForOneArgPat (ty: System.Type) impl = 
@@ -562,12 +572,14 @@ module Printf =
     type BuilderFormat<'T>     = BuilderFormat<'T,unit>
     type StringFormat<'T>      = StringFormat<'T,string>
     type TextWriterFormat<'T>  = TextWriterFormat<'T,unit>
-    
+
+#if EXTRAS_FOR_SILVERLIGHT_COMPILER
     let outWriter = ref System.Console.Out
     let errorWriter = ref System.Console.Error
 
     let setWriter (out : System.IO.TextWriter) = outWriter := out
     let setError  (error : System.IO.TextWriter) = errorWriter := error
+#endif
     
     [<CompiledName("PrintFormatToStringThen")>]
     let ksprintf (f : string -> 'd) (fp : StringFormat<'a,'d>)  = 
@@ -609,6 +621,9 @@ module Printf =
     [<CompiledName("PrintFormatLineToTextWriter")>]
     let fprintfn (os: TextWriter) fmt  = kfprintf (fun _ -> os.WriteLine()) os fmt 
 
+#if FX_NO_SYSTEM_CONSOLE
+#else    
+#if EXTRAS_FOR_SILVERLIGHT_COMPILER
     [<CompiledName("PrintFormat")>]
     let printf fmt = fprintf (!outWriter) fmt
 
@@ -620,5 +635,19 @@ module Printf =
 
     [<CompiledName("PrintFormatLineToError")>]
     let eprintfn fmt = fprintfn (!errorWriter) fmt
+#else
+    [<CompiledName("PrintFormat")>]
+    let printf fmt = fprintf System.Console.Out fmt
+
+    [<CompiledName("PrintFormatToError")>]
+    let eprintf fmt = fprintf System.Console.Error fmt
+
+    [<CompiledName("PrintFormatLine")>]
+    let printfn fmt = fprintfn System.Console.Out fmt
+
+    [<CompiledName("PrintFormatLineToError")>]
+    let eprintfn fmt = fprintfn System.Console.Error fmt
+#endif
+#endif    
 
 

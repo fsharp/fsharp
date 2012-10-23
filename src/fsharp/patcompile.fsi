@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// Copyright (c) 2002-2011 Microsoft Corporation. 
+// Copyright (c) 2002-2012 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -31,6 +31,7 @@ type ActionOnFailure =
     | FailFilter
 
 [<NoEquality; NoComparison>]
+/// Represents the typechecked, elaborated form of a pattern, prior to pattern-match compilation.
 type Pattern =
     | TPat_const of Const * range
     | TPat_wild of range
@@ -42,10 +43,11 @@ type Pattern =
     | TPat_exnconstr of TyconRef * Pattern list * range
     | TPat_tuple of  Pattern list * TType list * range
     | TPat_array of  Pattern list * TType * range
-    | TPat_recd of TyconRef * TypeInst * (TypeInst * Pattern) list * range
+    | TPat_recd of TyconRef * TypeInst * Pattern list * range
     | TPat_range of char * char * range
     | TPat_null of range
     | TPat_isinst of TType * TType * PatternValBinding option * range
+    member Range : range
 
 and PatternValBinding = 
     | PBind of Val * TypeScheme
@@ -53,15 +55,14 @@ and PatternValBinding =
 and TypedMatchClause =  
     | TClause of Pattern * Expr option * DecisionTreeTarget * range
 
-val internal rangeOfPat : Pattern -> range
-
+/// Compile a pattern into a decision tree and a set of targets.
 val internal CompilePattern : 
     Env.TcGlobals ->
     Tastops.DisplayEnv ->
     Import.ImportMap -> 
     // range of the expression we are matching on 
     range ->  
-    // range of the whole match clause on 
+    // range to report "incomplete match" on
     range ->  
     // warn on unused? 
     bool ->   
@@ -69,8 +70,11 @@ val internal CompilePattern :
     // the value being matched against, perhaps polymorphic 
     Val * Typars -> 
     // input type-checked syntax of pattern matching
-    TypedMatchClause list -> 
+    TypedMatchClause list ->
+    // input type 
     TType -> 
+    // result type
+    TType ->
       // produce TAST nodes
       DecisionTree * DecisionTreeTarget list
 

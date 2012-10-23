@@ -1,14 +1,4 @@
-//----------------------------------------------------------------------------
-//
-// Copyright (c) 2002-2011 Microsoft Corporation. 
-//
-// This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
-// copy of the license can be found in the License.html file at the root of this distribution. 
-// By using this source code in any fashion, you are agreeing to be bound 
-// by the terms of the Apache License, Version 2.0.
-//
-// You must not remove this notice, or any other, from this software.
-//----------------------------------------------------------------------------
+(* (c) Microsoft Corporation. All rights reserved  *)
 
 /// Internal use only.  Code and constants shared between binary reader/writer.
 module internal Microsoft.FSharp.Compiler.AbstractIL.Internal.BinaryConstants 
@@ -19,7 +9,7 @@ open Microsoft.FSharp.Compiler.AbstractIL.IL
 open Microsoft.FSharp.Compiler.AbstractIL.Internal 
 
 
-[<Sealed>]
+[<Struct>]
 type TableName =
     member Index : int
     static member FromIndex : int -> TableName 
@@ -73,15 +63,21 @@ module TableNames =
     val UserStrings : TableName
 
 val sortedTableInfo : (TableName * int) list
-type TypeDefOrRefTag = TypeDefOrRefOrSpecTag of int32
+
+[<Struct>]
+type TypeDefOrRefTag = member Tag : int32
 val tdor_TypeDef : TypeDefOrRefTag
 val tdor_TypeRef : TypeDefOrRefTag
 val tdor_TypeSpec : TypeDefOrRefTag
-type HasConstantTag = HasConstantTag of int32
+
+[<Struct>]
+type HasConstantTag = member Tag : int32
 val hc_FieldDef : HasConstantTag
 val hc_ParamDef : HasConstantTag
 val hc_Property : HasConstantTag
-type HasCustomAttributeTag = HasCustomAttributeTag of int32
+
+[<Struct>]
+type HasCustomAttributeTag = member Tag : int32
 val hca_MethodDef : HasCustomAttributeTag
 val hca_FieldDef : HasCustomAttributeTag
 val hca_TypeRef : HasCustomAttributeTag
@@ -102,40 +98,66 @@ val hca_AssemblyRef : HasCustomAttributeTag
 val hca_File : HasCustomAttributeTag
 val hca_ExportedType : HasCustomAttributeTag
 val hca_ManifestResource : HasCustomAttributeTag
-type HasFieldMarshalTag = HasFieldMarshalTag of int32
+
+[<Struct>]
+type HasFieldMarshalTag = member Tag : int32
 val hfm_FieldDef : HasFieldMarshalTag
 val hfm_ParamDef : HasFieldMarshalTag
-type HasDeclSecurityTag = HasDeclSecurityTag of int32
+
+
+[<Struct>]
+type HasDeclSecurityTag = member Tag : int32
 val hds_TypeDef : HasDeclSecurityTag
 val hds_MethodDef : HasDeclSecurityTag
 val hds_Assembly : HasDeclSecurityTag
-type MemberRefParentTag = MemberRefParentTag of int32
+
+
+[<Struct>]
+type MemberRefParentTag = member Tag : int32
 val mrp_TypeRef : MemberRefParentTag
 val mrp_ModuleRef : MemberRefParentTag
 val mrp_MethodDef : MemberRefParentTag
 val mrp_TypeSpec : MemberRefParentTag
-type HasSemanticsTag = HasSemanticsTag of int32
+
+
+[<Struct>]
+type HasSemanticsTag = member Tag : int32
 val hs_Event : HasSemanticsTag
 val hs_Property : HasSemanticsTag
-type MethodDefOrRefTag = MethodDefOrRefTag of int32
+
+
+[<Struct>]
+type MethodDefOrRefTag = member Tag : int32
 val mdor_MethodDef : MethodDefOrRefTag
 val mdor_MemberRef : MethodDefOrRefTag
-type MemberForwardedTag = MemberForwardedTag of int32
+
+
+[<Struct>]
+type MemberForwardedTag = member Tag : int32
 val mf_FieldDef : MemberForwardedTag
 val mf_MethodDef : MemberForwardedTag
-type ImplementationTag = ImplementationTag of int32
+
+
+[<Struct>]
+type ImplementationTag = member Tag : int32
 val i_File : ImplementationTag
 val i_AssemblyRef : ImplementationTag
 val i_ExportedType : ImplementationTag
-type CustomAttributeTypeTag = CustomAttributeTypeTag of int32
+
+[<Struct>]
+type CustomAttributeTypeTag = member Tag : int32
 val cat_MethodDef : CustomAttributeTypeTag
 val cat_MemberRef : CustomAttributeTypeTag
-type ResolutionScopeTag = ResolutionScopeTag of int32
+
+[<Struct>]
+type ResolutionScopeTag = member Tag : int32
 val rs_Module : ResolutionScopeTag
 val rs_ModuleRef : ResolutionScopeTag
 val rs_AssemblyRef : ResolutionScopeTag
 val rs_TypeRef : ResolutionScopeTag
-type TypeOrMethodDefTag = TypeOrMethodDefTag of int32
+
+[<Struct>]
+type TypeOrMethodDefTag = member Tag : int32
 val tomd_TypeDef : TypeOrMethodDefTag
 val tomd_MethodDef : TypeOrMethodDefTag
 

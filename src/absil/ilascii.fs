@@ -1,6 +1,5 @@
 //----------------------------------------------------------------------------
-//
-// Copyright (c) 2002-2011 Microsoft Corporation. 
+// Copyright (c) 2002-2012 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -22,22 +21,6 @@ open Microsoft.FSharp.Compiler.AbstractIL.Diagnostics
 open Microsoft.FSharp.Compiler.AbstractIL.Extensions.ILX.Types 
 open Microsoft.FSharp.Compiler.AbstractIL.IL 
 
-// The hasthis i.e. static/nonstatic part of the calling convention 
-// participates in binding, i.e. constructors have the flag set. 
-// However, when quoting a constructor at the callsite of a newobj 
-// instruction the flag does not have to be given, even though that 
-// results in an inadequate specification of the method to call.  
-// Thus we perform a fix-up on every method quoted at a newobj instruction, 
-// forcing the flag to be set.  This is only for naming/linking purposes, 
-// and the semantic meaning of the flag, as stored in the method callsig, is 
-// not effected.  
-let set_hasthis_in_callconv hasthis (Callconv (_,bcc)) = Callconv (hasthis,bcc)
-let set_hasthis_in_mref hasthis (x:ILMethodRef) = 
-  ILMethodRef.Create(x.EnclosingTypeRef,set_hasthis_in_callconv hasthis x.CallingConv,x.Name,x.GenericArity,x.ArgTypes,x.ReturnType)
-
-let set_hasthis_in_mspec hasthis (x: ILMethodSpec) = 
-    mkILMethSpecForMethRefInTy(set_hasthis_in_mref hasthis x.MethodRef,x.EnclosingType,x.GenericArgs)
-
 let parseILGlobals = ref ecmaILGlobals
 
 // -------------------------------------------------------------------- 
@@ -58,18 +41,18 @@ let noArgInstrs =
         ["ldc";"i4";"8"],           mkLdcInt32 8;
         ["ldc";"i4";"M1"],          mkLdcInt32 -1;
         ["ldc";"i4";"m1"],          mkLdcInt32 -1;
-        ["stloc";"0"],            I_stloc (uint16 0);
-        ["stloc";"1"],            I_stloc (uint16 1);
-        ["stloc";"2"],            I_stloc (uint16 2);
-        ["stloc";"3"],            I_stloc (uint16 3);
-        ["ldloc";"0"],            I_ldloc (uint16 0);
-        ["ldloc";"1"],            I_ldloc (uint16 1);
-        ["ldloc";"2"],            I_ldloc (uint16 2);
-        ["ldloc";"3"],            I_ldloc (uint16 3);
-        ["ldarg";"0"],            (I_ldarg (uint16 ( 0)));
-        ["ldarg";"1"],            (I_ldarg (uint16 ( 1)));
-        ["ldarg";"2"],            (I_ldarg (uint16 ( 2)));
-        ["ldarg";"3"],            (I_ldarg (uint16 ( 3)));
+        ["stloc";"0"],            mkStloc (uint16 0);
+        ["stloc";"1"],            mkStloc (uint16 1);
+        ["stloc";"2"],            mkStloc (uint16 2);
+        ["stloc";"3"],            mkStloc (uint16 3);
+        ["ldloc";"0"],            mkLdloc (uint16 0);
+        ["ldloc";"1"],            mkLdloc (uint16 1);
+        ["ldloc";"2"],            mkLdloc (uint16 2);
+        ["ldloc";"3"],            mkLdloc (uint16 3);
+        ["ldarg";"0"],            (mkLdarg (uint16 ( 0)));
+        ["ldarg";"1"],            (mkLdarg (uint16 ( 1)));
+        ["ldarg";"2"],            (mkLdarg (uint16 ( 2)));
+        ["ldarg";"3"],            (mkLdarg (uint16 ( 3)));
         ["ret"],              I_ret;
         ["add"],              AI_add;
         ["add";"ovf"],        AI_add_ovf;
@@ -254,7 +237,7 @@ let Int64Instrs =
 
 let Int32Instrs = 
  lazy ([  (["ldc";"i4"],     (fun x -> ((mkLdcInt32 x))));
-                   (["ldc";"i4";"s"], (fun x -> ((mkLdcInt32 x)))); ] : Int32Instr InstrTable)
+          (["ldc";"i4";"s"], (fun x -> ((mkLdcInt32 x)))); ] : Int32Instr InstrTable)
 
 let Int32Int32Instrs = 
  lazy ([  (["ldlen";"multi"],     (fun (x,y) -> EI_ldlen_multi (x, y))); ] : Int32Int32Instr InstrTable)
@@ -264,12 +247,7 @@ let DoubleInstrs =
           (["ldc";"r8"],     (fun x -> (AI_ldc (DT_R8, x)))); ]  : DoubleInstr InstrTable)
 
 let MethodSpecInstrs = 
- lazy ([ ( (["call"],      (fun (mspec,y) -> I_call (Normalcall,mspec,y))));
-         ( (["ldftn"],     (fun (mspec,_) -> I_ldftn mspec)));
-         ( (["ldvirtftn"], (fun (mspec,_) -> I_ldvirtftn mspec))); 
-         ( (["newobj"],    (fun (mspec,y) -> I_newobj (set_hasthis_in_mspec ILThisConvention.Instance mspec,y))));
-         ( (["callvirt"],  (fun (mspec,y) -> I_callvirt (Normalcall,set_hasthis_in_mspec ILThisConvention.Instance mspec,y))));
-                ]  : InstrTable<MethodSpecInstr>)
+ lazy ([ ( (["call"],      (fun (mspec,y) -> I_call (Normalcall,mspec,y)))) ]  : InstrTable<MethodSpecInstr>)
 
 let StringInstrs = 
  lazy ([  (["ldstr"],    (fun x -> I_ldstr x)); ]  : InstrTable<StringInstr>)
@@ -279,7 +257,7 @@ let TokenInstrs =
 
 
 let TypeInstrs = 
- lazy ([  (["ldelema"],   (fun x -> I_ldelema (NormalAddress,ILArrayShape.SingleDimensional,x)));
+ lazy ([  (["ldelema"],   (fun x -> I_ldelema (NormalAddress,false,ILArrayShape.SingleDimensional,x)));
           (["ldelem";"any"], (fun x -> I_ldelem_any (ILArrayShape.SingleDimensional,x)));
           (["stelem";"any"], (fun x -> I_stelem_any (ILArrayShape.SingleDimensional, x)));
           (["newarr"],    (fun x -> I_newarr (ILArrayShape.SingleDimensional,x)));  
@@ -293,7 +271,7 @@ let IntTypeInstrs =
  lazy ([  (["ldelem";"multi"], (fun (x,y) -> (I_ldelem_any (ILArrayShape.FromRank x,y))));
           (["stelem";"multi"], (fun (x,y) -> (I_stelem_any (ILArrayShape.FromRank x,y))));
           (["newarr";"multi"], (fun (x,y) -> (I_newarr (ILArrayShape.FromRank x,y))));  
-          (["ldelema";"multi"], (fun (x,y) -> (I_ldelema (NormalAddress,ILArrayShape.FromRank x,y))));  ]  :  InstrTable<IntTypeInstr>)
+          (["ldelema";"multi"], (fun (x,y) -> (I_ldelema (NormalAddress,false,ILArrayShape.FromRank x,y))));  ]  :  InstrTable<IntTypeInstr>)
 
 let ValueTypeInstrs = 
  lazy ([  (["cpobj"],     (fun x -> I_cpobj x));

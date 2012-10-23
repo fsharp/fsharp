@@ -1,6 +1,5 @@
 //----------------------------------------------------------------------------
-//
-// Copyright (c) 2002-2011 Microsoft Corporation. 
+// Copyright (c) 2002-2012 Microsoft Corporation. 
 //
 // This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
 // copy of the license can be found in the License.html file at the root of this distribution. 
@@ -9,6 +8,7 @@
 //
 // You must not remove this notice, or any other, from this software.
 //----------------------------------------------------------------------------
+
 
 
 //[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>] // avoid calling the type "Shared" which is keyword in some languages
@@ -38,8 +38,10 @@ open System.Runtime.Remoting.Lifetime
 type internal FSharpInteractiveServer() =
     inherit System.MarshalByRefObject()  
     abstract Interrupt       : unit -> unit
+#if FSI_SERVER_INTELLISENSE
     abstract Completions     : prefix:string -> string array
     abstract GetDeclarations : text:string * names:string array -> (string * string * string * int) array
+#endif
     default x.Interrupt() = ()
 
     [<CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1011:ConsiderPassingBaseTypesAsParameters")>]
@@ -54,6 +56,6 @@ type internal FSharpInteractiveServer() =
         ()
 
     static member StartClient(channelName) =
-        let T = Activator.GetObject(typeof<FSharpInteractiveServer>,"ipc://" + channelName + "/FSIServer") in
-        let x = T :?> FSharpInteractiveServer in
+        let T = Activator.GetObject(typeof<FSharpInteractiveServer>,"ipc://" + channelName + "/FSIServer") 
+        let x = T :?> FSharpInteractiveServer 
         x

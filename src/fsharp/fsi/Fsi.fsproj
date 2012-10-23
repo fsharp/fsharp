@@ -2,10 +2,10 @@
 <!--
 # Copyright (c) 2002-2011 Microsoft Corporation. 
 #
-# This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
-# copy of the license can be found in the License.html file at the root of this distribution. 
-# By using this source code in any fashion, you are agreeing to be bound 
-# by the terms of the Apache License, Version 2.0.
+# 
+# 
+# 
+#
 #
 # You must not remove this notice, or any other, from this software.
 -->
@@ -26,37 +26,43 @@
     <NoWarn>$(NoWarn);62;44</NoWarn>
     <AssemblyName>fsi</AssemblyName>
     <BaseAddress>0x0A000000</BaseAddress>
-    <DefineConstants>COMPILER;$(DefineConstants)</DefineConstants>
-    <TargetFrameworkVersion Condition="'$(TargetFramework)'=='cli\2.0' or '$(TargetFramework)'=='mono\2.0'">v3.5</TargetFrameworkVersion>
+    <DefineConstants>EXTENSIONTYPING;COMPILER;$(DefineConstants)</DefineConstants>
+    <TargetFrameworkVersion Condition="'$(TargetFramework)'=='net20' or '$(TargetFramework)'=='mono20'">v3.5</TargetFrameworkVersion>
     <AllowCrossTargeting>true</AllowCrossTargeting>
     <OtherFlags>$(OtherFlags) --warnon:1182</OtherFlags>
   </PropertyGroup>
   <ItemGroup>
-    <FsSrGen Include="FSIstrings.txt">
-      <Link>FSIstrings.txt</Link>
-    </FsSrGen>
+      <FsSrGen Include="FSIstrings.txt">
+        <Link>FSIstrings.txt</Link>
+      </FsSrGen>
     <Compile Include="..\..\assemblyinfo\assemblyinfo.fsi.exe.fs">
       <Link>assemblyinfo.fsi.exe.fs</Link>
     </Compile>
-    <Compile Include="..\InternalCollections.fsi">
-      <Link>InternalCollections.fsi</Link>
-    </Compile>
-    <Compile Include="..\InternalCollections.fs">
-      <Link>InternalCollections.fs</Link>
-    </Compile>
+      <Compile Include="..\InternalCollections.fsi">
+        <Link>InternalCollections.fsi</Link>
+      </Compile>
+      <Compile Include="..\InternalCollections.fs">
+        <Link>InternalCollections.fs</Link>
+      </Compile>
+
     <Compile Include="console.fs">
       <Link>console.fs</Link>
     </Compile>
     <Compile Include="fsi.fs">
       <Link>fsi.fs</Link>
     </Compile>
+    <Compile Include="fsimain.fs">
+      <Link>fsimain.fs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Reference Include="mscorlib" />
     <Reference Include="System" />
-    <Reference Include="System.Drawing" />
-    <Reference Include="System.Windows.Forms" />
-    <Reference Include="WindowsBase" />
+          <Reference Include="System.Drawing" />
+          <Reference Include="System.Windows.Forms" />
+          <Reference Include="PresentationCore" />
+          <Reference Include="PresentationFramework" />
+          <Reference Include="WindowsBase" />
     <ProjectReference Include="..\FSharp.Compiler.Interactive.Settings\FSharp.Compiler.Interactive.Settings.fsproj">
       <Name>FSharp.Compiler.Interactive.Settings</Name>
       <Project>{649fa588-f02e-457c-9fcf-87e46407481e}</Project>
@@ -72,9 +78,9 @@
       <Name>FSharp.Compiler</Name>
     </ProjectReference>
     <ProjectReference Include="$(FSharpSourcesRoot)\fsharp\FSharp.Core\FSharp.Core.fsproj" >
-      <Project>{DED3BBD7-53F4-428A-8C9F-27968E768605}</Project>
-      <Name>FSharp.Core</Name>
-    </ProjectReference>
+		  <Project>{DED3BBD7-53F4-428A-8C9F-27968E768605}</Project>
+		  <Name>FSharp.Core</Name>
+	  </ProjectReference>
   </ItemGroup>
   <Import Project="$(FSharpSourcesRoot)\FSharpSource.targets" />
 </Project>

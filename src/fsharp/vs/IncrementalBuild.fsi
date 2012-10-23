@@ -1,31 +1,67 @@
 namespace Microsoft.FSharp.Compiler
 
 open Microsoft.FSharp.Compiler
+open Microsoft.FSharp.Compiler.Range
 open Microsoft.FSharp.Compiler.ErrorLogger
 open Microsoft.FSharp.Compiler.AbstractIL.Internal.Library
+open Microsoft.FSharp.Compiler.Build
 
+
+[<RequireQualifiedAccess>]
+type (* internal *) Severity = 
+    | Warning 
+    | Error
+
+type (* internal *) ErrorInfo = 
+    { FileName:string
+      StartLine:int
+      EndLine:int
+      StartColumn:int
+      EndColumn:int
+      Severity:Severity
+      Message:string
+      Subcategory:string }
+    static member internal CreateFromExceptionAndAdjustEof : PhasedError * bool * bool * range * (int*int) -> ErrorInfo
+    static member internal CreateFromException : PhasedError * bool * bool * range -> ErrorInfo
+
+// implementation details used by other code in the compiler    
+[<Sealed>]
+type (* internal *) ErrorScope = 
+    interface System.IDisposable
+    new : unit -> ErrorScope
+    member ErrorsAndWarnings : ErrorInfo list
+    static member Protect<'a> : range -> (unit->'a) -> (string->'a) -> 'a
+    static member ProtectWithDefault<'a> : range -> (unit -> 'a) -> 'a -> 'a
+    static member ProtectAndDiscard : range -> (unit -> unit) -> unit
 
 /// Generalized Incremental Builder. This is exposed only for unittesting purposes.
 module internal IncrementalBuild =
   // A build scalar.
-  type Scalar<'T> = interface
-    end
+  type Scalar<'T> = interface end
   /// A build vector.        
-  type Vector<'T> = interface
-    end
-  type Build 
+  type Vector<'T> = interface end
+
+  /// A set of build rules and the corresponding, possibly partial, results from building.
+  type PartialBuild 
+
   /// Declares a vector build input.
+  /// Only required for unit testing.
   val InputScalar : string -> Scalar<'T>
+
   /// Declares a scalar build input.
+  /// Only required for unit testing.
   val InputVector : string -> Vector<'T>
+
   /// Methods for acting on build Scalars
+  /// Only required for unit testing.
   module Scalar = 
       /// Apply a function to one scalar to produce another.
       val Map : string -> ('I -> 'O) -> Scalar<'I> -> Scalar<'O>
       /// Apply a function to scalar value to produce a vector.
-      val Multiplex : string -> ('I -> 'O array)->Scalar<'I> -> Vector<'O>
+      val Multiplex : string -> ('I -> 'O[])->Scalar<'I> -> Vector<'O>
 
   /// Methods for acting on build Vectors
+  /// Only required for unit testing.
   module Vector = 
       /// Maps one vector to another using the given function.    
       val Map : string -> ('I -> 'O) -> Vector<'I> -> Vector<'O>
@@ -36,63 +72,47 @@ module internal IncrementalBuild =
       /// through the computation. Returns intermediate results in a vector.
       val ScanLeft : string -> ('A -> 'I -> Eventually<'A>) -> Scalar<'A> -> Vector<'I> -> Vector<'A>
       /// Apply a function to a vector to get a scalar value.
-      val Demultiplex : string -> ('I array -> 'O)->Vector<'I> -> Scalar<'O>
+      val Demultiplex : string -> ('I[] -> 'O)->Vector<'I> -> Scalar<'O>
       /// Convert a Vector into a Scalar.
-      val AsScalar: string -> Vector<'I> -> Scalar<'I array> 
+      val AsScalar: string -> Vector<'I> -> Scalar<'I[]> 
 
-  /// Evaluate a build.
-  val Eval : (string -> Build -> Build)
-  /// Evaluate a single slot.
-  val EvalSlot : (string * 'a * Build -> Build)
-  /// Do one step in the build.
-  val Step : (string -> Build -> Build option)
-  /// Get a scalar vector. Result must be available
-  val GetScalarResult<'T> : string * Build -> ('T * System.DateTime) option
-  /// Get a result vector. All results must be available or thrown an exception.
-  val GetVectorResult<'T> : string * Build -> 'T array
-  /// Get an element of vector result or None if there were no results.
-  val GetVectorResultBySlot<'T> : string*int*Build -> ('T * System.DateTime) option
+  /// Evaluate a build. Only required for unit testing.
+  val Eval : string -> PartialBuild -> PartialBuild
+  /// Do one step in the build. Only required for unit testing.
+  val Step : (string -> PartialBuild -> PartialBuild option)
+  /// Get a scalar vector. Result must be available. Only required for unit testing.
+  val GetScalarResult<'T> : string * PartialBuild -> ('T * System.DateTime) option
+  /// Get a result vector. All results must be available or thrown an exception. Only required for unit testing.
+  val GetVectorResult<'T> : string * PartialBuild -> 'T[]
+  /// Get an element of vector result or None if there were no results. Only required for unit testing.
+  val GetVectorResultBySlot<'T> : string*int*PartialBuild -> ('T * System.DateTime) option
   
   /// Declare build outputs and bind them to real values.
-  type BuildScope = 
-       new : unit -> BuildScope
+  /// Only required for unit testing.
+  type BuildDescriptionScope = 
+       new : unit -> BuildDescriptionScope
        /// Declare a named scalar output.
        member DeclareScalarOutput : name:string * output:Scalar<'T> -> unit
        /// Declare a named vector output.
        member DeclareVectorOutput : name:string * output:Vector<'T> -> unit
-       /// Set the conrete inputs for this build
-       member GetConcreteBuild : vectorinputs:(string * int * obj list) list * scalarinputs:(string*obj) list -> Build
-
-/// Incremental builder for F# parsing and type checking.  
-module internal FsiGeneration =
-  /// Result of generating an interface file (probably for GotoDefinition); this
-  /// is (name-of-generated-file,
-  ///     map-from-fully-qualified-name-to-position-in-file,
-  ///     referenced-assemblies-needed-to-resolve-names-in-file)
-  type FsiGenerationResult = (string * System.Collections.Generic.Dictionary<string list, int * int> * string list) option
-
-  /// Given a .dll name, predictably generate a name for the corresponding .fsi file that we generate.
-  val GeneratedFsiNameGenerator                   : string -> string
-  /// The directory where generated .fsi files can be placed (and deleted) without interfering with user files.
-  val PathForGeneratedVisualStudioFSharpTempFiles : string
+       /// Set the conrete inputs for this build. 
+       member GetInitialPartialBuild : vectorinputs:(string * int * obj list) list * scalarinputs:(string*obj) list -> PartialBuild
 
 /// Incremental builder for F# parsing and type checking.  
 module internal IncrementalFSharpBuild =
 
+    /// Used for unit testing
   type IBEvent =
         | IBEParsed of string // filename
         | IBETypechecked of string // filename
         | IBENuked
 
+    /// Used for unit testing
   val GetMostRecentIncrementalBuildEvents : int -> IBEvent list
+    /// Used for unit testing
   val GetCurrentIncrementalBuildEventNum : unit -> int
 
 
-  /// Callbacks for things that happen in the build.                  
-  type BuildEvents = 
-    { BeforeTypeCheckFile: string -> unit  }
-    static member Default : BuildEvents
-    
   type FileDependency = {
         // Name of the file
         Filename : string
@@ -102,49 +122,56 @@ module internal IncrementalFSharpBuild =
         IncrementalBuildDependency : bool
       }    
     
-  type Dependencies = {
-      ImportedCcusInvalidated : IEvent<string>
-      Files : FileDependency list
-  } 
+  type IncrementalBuilder = 
+      new : tcConfig : Build.TcConfig * projectDirectory : string * assemblyName : string * niceNameGen : Microsoft.FSharp.Compiler.Ast.NiceNameGenerator *
+            lexResourceManager : Microsoft.FSharp.Compiler.Lexhelp.LexResourceManager * sourceFiles : string list * ensureReactive : bool *
+            errorLogger : ErrorLogger * keepGeneratedTypedAssembly:bool
+        -> IncrementalBuilder
 
-  val Create :
-    tcConfig : Build.TcConfig *
-    projectDirectory : string *
-    assemblyName : string *
-    niceNameGen : Microsoft.FSharp.Compiler.Ast.NiceNameGenerator *
-    resourceManager : Microsoft.FSharp.Compiler.Lexhelp.LexResourceManager *
-    sourceFiles : string list *
-    ensureReactive : bool *
-    buildEvents : BuildEvents *
-    errorLogger : ErrorLogger * 
-    errorRecovery: (exn -> Range.range -> unit)  
-      -> IncrementalBuild.Build * Dependencies
+      /// Increment the usage count on the IncrementalBuilder by 1. Ths initial usage count is 0. The returns an IDisposable which will 
+      /// decrement the usage count on the entire build by 1 and dispose if it is no longer used by anyone.
+      member IncrementUsageCount : unit -> System.IDisposable
+     
+      /// Check if the builder is not disposed
+      member IsAlive : bool
 
-  /// Perform one step in the F# build.
-  val Step : IncrementalBuild.Build -> IncrementalBuild.Build option
+      /// The TcConfig passed in to the builder creation.
+      member TcConfig : Build.TcConfig
 
-  /// Ensure that the given file has been typechecked.
-  val EvalTypeCheckSlot :
-    'a * IncrementalBuild.Build -> IncrementalBuild.Build
+      /// Raised just before a file is type-checked, to invalidate the state of the file in VS and force VS to request a new direct typecheck of the file.
+      /// The incremental builder also typechecks the file (error and intellisense results from the backgroud builder are not
+      /// used by VS). 
+      member BeforeTypeCheckFile : IEvent<string>
 
-  /// Get the preceding typecheck state of a slot, allow stale results.
-  val GetAntecedentTypeCheckResultsBySlot :
-    int * IncrementalBuild.Build ->
-    (Build.TcState * Build.TcImports * Microsoft.FSharp.Compiler.Env.TcGlobals * Build.TcConfig * (PhasedError * bool) list * System.DateTime) option
+      /// Raised when a type provider invalidates the build.
+      member ImportedCcusInvalidated : IEvent<string>
 
-  /// Get the final typecheck result.
-  val TypeCheck :
-    IncrementalBuild.Build ->
-    IncrementalBuild.Build * Build.TcState * TypeChecker.TopAttribs * Tast.TypedAssembly * TypeChecker.TcEnv * Build.TcImports * Env.TcGlobals * Build.TcConfig
+      /// The list of files the build depends on
+      member Dependencies : FileDependency list
+#if EXTENSIONTYPING
+      /// Whether there are any 'live' type providers that may need a refresh when a project is Cleaned
+      member ThereAreLiveTypeProviders : bool
+#endif
+      /// Perform one step in the F# build.
+      member Step : unit -> bool
 
-  /// Attempts to find the slot of the given input file name. Throws an exception if it couldn't find it.    
-  val GetSlotOfFileName :
-    string * IncrementalBuild.Build -> int
+      /// Ensure that the given file has been typechecked.
+      /// Get the preceding typecheck state of a slot, allow stale results.
+      member GetAntecedentTypeCheckResultsBySlot :
+        int -> (Build.TcState * Build.TcImports * Microsoft.FSharp.Compiler.Env.TcGlobals * Build.TcConfig * (PhasedError * bool) list * System.DateTime) option
+
+      /// Get the final typecheck result. Only allowed when 'generateTypedImplFiles' was set on Create, otherwise the TypedAssembly will have not implementations.
+      member TypeCheck : unit -> Build.TcState * TypeChecker.TopAttribs * Tast.TypedAssembly * TypeChecker.TcEnv * Build.TcImports * Env.TcGlobals * Build.TcConfig
+
+      /// Attempts to find the slot of the given input file name. Throws an exception if it couldn't find it.    
+      member GetSlotOfFileName : string -> int
  
-  val GetSlotsCount : IncrementalBuild.Build -> int
-  val GetParseResultsBySlot : int * IncrementalBuild.Build -> Ast.Input option * Range.range * string * IncrementalBuild.Build
+#if NO_QUICK_SEARCH_HELPERS // only used in QuickSearch prototype
+#else
+      /// Get the number of slots on the vector of parse results
+      member GetSlotsCount : unit -> int
+      /// Await the untyped parse results for a particular slot in the vector of parse results.
+      member GetParseResultsBySlot : int -> Ast.ParsedInput option * Range.range * string 
+#endif // QUICK_SEARCH
 
-
-  /// Returns a function that tries to generate an interface (.fsi) file given the name of an assembly's .dll.
-  val GetFsiGenerators                            : IncrementalBuild.Build -> ((string -> string) -> string -> FsiGeneration.FsiGenerationResult) * IncrementalBuild.Build
-
+      static member CreateBackgroundBuilderForProjectOptions : scriptClosureOptions:LoadClosure option * sourceFiles:string list * commandLineArgs:string list * projectDirectory:string * useScriptResolutionRules:bool * isIncompleteTypeCheckEnvironment : bool -> IncrementalBuilder * ErrorInfo list

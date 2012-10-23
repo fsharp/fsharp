@@ -1,0 +1,30 @@
+NAME=policy.4.0.FSharp.Core
+ASSEMBLY = $(NAME).dll
+SIGN=1
+
+srcdir := @abs_srcdir@/
+
+include @abs_top_builddir@/config.make
+
+include $(topdir)/src/fsharp/targets.make
+
+# override the targets to build the assembly
+
+$(objdir)$(TARGET_2_0)/policy.4.0.FSharp.Core.dll: policy.4.0.FSharp.Core.dll.config 
+	@mkdir -p $(@D)
+	cp policy.4.0.FSharp.Core.dll.config $(@D)
+	al /link:policy.4.0.FSharp.Core.dll.config /out:$@ /delaysign /keyfile:$(topdir)msfinal.pub /version:$(VERSION_2_0)
+
+$(objdir)$(TARGET_4_0)/policy.4.0.FSharp.Core.dll: policy.4.0.FSharp.Core.dll.config 
+	@mkdir -p $(@D)
+	cp policy.4.0.FSharp.Core.dll.config $(@D)
+	al /link:policy.4.0.FSharp.Core.dll.config /out:$@ /delaysign /keyfile:$(topdir)msfinal.pub /version:$(VERSION_4_0)
+
+do-final: do-2-0 do-4-0 
+
+clean: clean-2-0 clean-4-0
+
+install: install-lib-2 install-lib-4
+
+
+

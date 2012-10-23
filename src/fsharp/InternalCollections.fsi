@@ -6,6 +6,8 @@ namespace Internal.Utilities.Collections
   type internal AgedLookup<'TKey,'TValue> = 
     new : keepStrongly:int
             * areSame:('TKey * 'TKey -> bool) 
+            * ?onStrongDiscard : ('TValue -> unit) // this may only be set if keepTotal=keepStrongly, i.e. not weak entries
+            * ?keepMax: int
             -> AgedLookup<'TKey,'TValue>
     /// Lookup the value without making it the most recent.
     /// Returns the original key value because the areSame function
@@ -21,8 +23,6 @@ namespace Internal.Utilities.Collections
     member Put : 'TKey*'TValue -> unit
     /// Remove the given value from the collection.
     member Remove : key:'TKey -> unit
-    /// Get the most recent item if there is one.
-    member MostRecent : ('TKey * 'TValue) option  
     /// Remove all elements.
     member Clear : unit -> unit
     
@@ -31,13 +31,15 @@ namespace Internal.Utilities.Collections
   /// Because of this, the caller must be able to tolerate values 
   /// that aren't what was originally passed to the Set function.         
   type internal MruCache<'TKey,'TValue> =
-    new : n:int 
+    new : keepStrongly:int 
             * compute:('TKey -> 'TValue) 
             * areSame:('TKey * 'TKey -> bool) 
             * ?isStillValid:('TKey * 'TValue -> bool)
             * ?areSameForSubsumption:('TKey * 'TKey -> bool) 
             * ?logComputedNewValue:('TKey -> unit)
             * ?logUsedCachedValue:('TKey -> unit)
+            * ?onDiscard:('TValue -> unit)
+            * ?keepMax:int
             -> MruCache<'TKey,'TValue>
     /// Clear out the cache.
     member Clear : unit -> unit
@@ -55,4 +57,6 @@ namespace Internal.Utilities.Collections
   [<Sealed>]
   type internal List = 
     /// Return a new list with one element for each unique 'TKey. Multiple 'TValues are flattened. The original order of the first instance of 'TKey is preserved.
-    static member GroupByFirst : l:('TKey * 'TValue) list -> ('TKey * 'TValue list) list when 'TKey : equality
+    static member groupByFirst : l:('TKey * 'TValue) list -> ('TKey * 'TValue list) list when 'TKey : equality
+    /// Return each distinct item in the list using reference equality.
+    static member referenceDistinct : 'T list -> 'T list when 'T : not struct
