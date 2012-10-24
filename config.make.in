@@ -62,9 +62,13 @@ DEFINES_GENERAL = \
 	--define:TRACE \
 	--define:MONO
 	
+ifeq ($(CONFIG),debug)
 DEFINES_DEBUG = \
 	--define:CODE_ANALYSIS \
 	--define:DEBUG
+else
+DEFINES_DEBUG =
+endif
 
 DEFINES_2_0 = \
 	$(DEFINES_GENERAL) \
@@ -117,8 +121,8 @@ REFERENCES_2_1 = \
 REFERENCES_4_0 = \
 	-r:$(monolibdir)Microsoft.Build.Engine.dll \
 	-r:$(monolibdir)Microsoft.Build.Framework.dll \
-	-r:$(monolibdir35)Microsoft.Build.Tasks.v3.5.dll \
-	-r:$(monolibdir35)Microsoft.Build.Utilities.v3.5.dll \
+	-r:$(monolibdir)Microsoft.Build.Tasks.v4.0.dll \
+	-r:$(monolibdir)Microsoft.Build.Utilities.v4.0.dll \
 	-r:$(monolibdir)mscorlib.dll \
 	-r:$(monolibdir)System.Core.dll \
 	-r:$(monolibdir)System.dll \
