@@ -192,8 +192,8 @@ module FSharpResidentCompiler =
                                         // create some garbage
                                         for i in 0..1000 do [ 0 .. i ] |> ignore
                                         // test if we're using mono-sgen
-                                        let usingMonoSGEN =   (System.GC.CollectionCount(0) = System.GC.CollectionCount(1)) 
-                                        let target = if usingMonoSGEN then "mono" else "mono-sgen"
+                                        let notUsingMonoSGEN =   (System.GC.CollectionCount(0) = System.GC.CollectionCount(1)) 
+                                        let target = if notUsingMonoSGEN then "mono" else "mono-sgen"
                                         target, true
                                 | path -> path, false
                                      
