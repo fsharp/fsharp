@@ -21,7 +21,7 @@
   <ItemGroup>                             2
     <!--This is used for compiling the run2ype provider DLL for WP7, Silverlight etc. -->
     <!--This is the only file used. -->
-    <Compile Include="$(FSharpSourcesRoot)\fsharp\FSharp.Data.TypeProviders\TypeProviderRuntimeAttribute.fs"   Condition="'$(TargetFramework)' == 'net20' or '$(TargetFramework)' == 'mono20' or '$(TargetFramework)' == 'sl3-wp' or '$(TargetFramework)'=='sl4' ">
+    <Compile Include="$(FSharpSourcesRoot)\fsharp\FSharp.Data.TypeProviders\TypeProviderRuntimeAttribute.fs"   Condition="'$(TargetFramework)' == 'net20' or '$(TargetFramework)' == 'sl3-wp' or '$(TargetFramework)'=='sl4' ">
       <Link>TypeProviderRuntimeAttribute.fs</Link>
       <Visible>true</Visible>
     </Compile>

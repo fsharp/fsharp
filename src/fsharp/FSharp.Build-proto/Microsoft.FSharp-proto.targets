@@ -17,12 +17,11 @@ Copyright (C) Microsoft Corporation. All rights reserved.
 
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
-    <UsingTask TaskName="Fsc" AssemblyFile="FSharp.Build.dll"/>
-    <UsingTask TaskName="CreateFSharpManifestResourceName" AssemblyFile="FSharp.Build.dll"/>
+    <UsingTask TaskName="Fsc" AssemblyFile="FSharp.Build-proto.dll"/>
+    <UsingTask TaskName="CreateFSharpManifestResourceName" AssemblyFile="FSharp.Build-proto.dll"/>
 
 
     <PropertyGroup>
-        <MSBuildAllProjects>$(MSBuildAllProjects);$(FSharpTargetsFullPath)</MSBuildAllProjects>
         <DefaultLanguageSourceExtension>.fs</DefaultLanguageSourceExtension>
         <Language>F#</Language>
         <Tailcalls Condition="'$(Tailcalls)'==''">$(Optimize)</Tailcalls>

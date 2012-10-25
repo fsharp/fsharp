@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <!--
 # Copyright (c) 2002-2011 Microsoft Corporation. 
 #
@@ -31,8 +31,8 @@
     <CompilingFsLib>true</CompilingFsLib>
     <AllowCrossTargeting>true</AllowCrossTargeting>
     <OtherFlags>$(OtherFlags) --warnon:1182 --compiling-fslib --optimize --maxerrors:20 --extraoptimizationloops:1 </OtherFlags>
-    <OtherFlags Condition=" '$(TargetFramework)'=='net20' or '$(TargetFramework)'=='mono20'">$(OtherFlags) --compiling-fslib-20:"$(SystemRoot)\Microsoft.NET\Framework\v4.0.30319\mscorlib.dll" </OtherFlags>
-    <OtherFlags Condition=" '$(TargetFramework)'=='net40' or '$(TargetFramework)'=='mono40'">$(OtherFlags) --compiling-fslib-40</OtherFlags>
+    <OtherFlags Condition=" '$(TargetFramework)'=='net20'">$(OtherFlags) --compiling-fslib-20:"$(SystemRoot)\Microsoft.NET\Framework\v4.0.30319\mscorlib.dll" </OtherFlags>
+    <OtherFlags Condition=" '$(TargetFramework)'=='net40'">$(OtherFlags) --compiling-fslib-40</OtherFlags>
   </PropertyGroup>
   <ItemGroup>
     <EmbeddedResource Include="FSCore.resx">
@@ -182,18 +182,6 @@
     <Compile Include="SI.fs">
       <Link>SI.fs</Link>
     </Compile>
-    <Compile Include="fslib-extra-pervasives.fsi">
-      <Link>fslib-extra-pervasives.fsi</Link>
-    </Compile>
-    <Compile Include="fslib-extra-pervasives.fs">
-      <Link>fslib-extra-pervasives.fs</Link>
-    </Compile>
-    <Compile Include="..\..\assemblyinfo\assemblyinfo.FSharp.Core.dll.fs">
-      <Link>assemblyinfo.FSharp.Core.dll.fs</Link>
-    </Compile>
-    <CustomAdditionalCompileInputs Include="Proto\%24%28protoCLIDir%29\bin\fsc-proto.exe">
-      <Visible>False</Visible>
-    </CustomAdditionalCompileInputs>
     <Compile Include="math\n.fsi">
       <Link>n.fsi</Link>
     </Compile>
@@ -206,11 +194,23 @@
     <Compile Include="math\z.fs">
       <Link>z.fs</Link>
     </Compile>
+    <Compile Include="fslib-extra-pervasives.fsi">
+      <Link>fslib-extra-pervasives.fsi</Link>
+    </Compile>
+    <Compile Include="fslib-extra-pervasives.fs">
+      <Link>fslib-extra-pervasives.fs</Link>
+    </Compile>
+    <Compile Include="..\..\assemblyinfo\assemblyinfo.FSharp.Core.dll.fs">
+      <Link>assemblyinfo.FSharp.Core.dll.fs</Link>
+    </Compile>
+    <CustomAdditionalCompileInputs Include="$(FSharpSourcesRoot)\..\Proto\$(protoCLIDir)\bin\fsc-proto.exe">
+      <Visible>False</Visible>
+    </CustomAdditionalCompileInputs>
   </ItemGroup>
   <ItemGroup>
     <Reference Include="mscorlib" />
     <Reference Include="System" />
-    <Reference Include="System.Numerics" Condition="'$(TargetFramework)' == 'net40' or '$(TargetFramework)'=='mono40'" />
+    <Reference Include="System.Numerics" Condition="'$(TargetFramework)' == 'net40'" />
     <Reference Include="System.Net" Condition="'$(TargetFramework)' == 'sl5' OR &#xD;&#xA;                                               '$(TargetFramework)' == 'sl5-compiler' OR &#xD;&#xA;                                               '$(TargetFramework)' == 'XNA\5.0' OR &#xD;&#xA;                                               '$(TargetFramework)' == 'sl3-wp' " />
     <Reference Include="System.Observable" Condition="'$(TargetFramework)' == 'sl3-wp' " />
     <Reference Include="System.Core" Condition="'$(TargetFramework)' == 'sl5' OR &#xD;&#xA;                                               '$(TargetFramework)' == 'sl5-compiler' OR &#xD;&#xA;                                               '$(TargetFramework)' == 'XNA\5.0' OR &#xD;&#xA;                                               '$(TargetFramework)' == 'sl3-wp' " />

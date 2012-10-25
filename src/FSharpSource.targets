@@ -10,7 +10,7 @@
     <TargetFramework Condition="'$(TargetFramework)'==''">net40</TargetFramework>
     <!-- For .NET 2.0 use a 2.0 proto compiler, otherwise use a 4.0 proto compiler -->
     <protoCLIDir Condition="'$(protoCLIDir)' == ''">net40</protoCLIDir>
-    <LkgVersion>4.0.30319.1</LkgVersion>
+    <LkgPath>..\lib\bootstrap\4.0</LkgPath>
     <FsLexUnicode>true</FsLexUnicode>
     <ProjectLanguage>FSharp</ProjectLanguage>
     <OtherFlags>$(OtherFlags) --times</OtherFlags>
@@ -18,38 +18,21 @@
     <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
 
-  <!-- For .NET 2.0 and 4.0, we use the version in 'source-build-version', initially 2.9.999 -->
-  <!-- For Mono 2.0 and 4.0, we use the same versions as VS2012 (see strong naming below) -->
-  <!-- -->
-  <!-- However FSharp.Core must always use the same version and name as VS, with delay signing, see below  -->
-  <PropertyGroup Condition="'$(AssemblyName)' != 'FSharp.Core'">
+  <!-- We use the same versions as VS2012 (see strong naming below) -->
+  <PropertyGroup>
     <VersionFile>$(FSharpSourcesRoot)\source-build-version</VersionFile>
-    <VersionFile Condition="'$(TargetFramework)' == 'mono20'">$(FSharpSourcesRoot)\source-build-version-2.3.0.0</VersionFile>
-    <VersionFile Condition="'$(TargetFramework)' == 'mono40'">$(FSharpSourcesRoot)\source-build-version-4.3.0.0</VersionFile>
+    <VersionFile Condition="'$(TargetFramework)' == 'net20'">$(FSharpSourcesRoot)\source-build-version-2.3.0.0</VersionFile>
+    <VersionFile Condition="'$(TargetFramework)' == 'net40'">$(FSharpSourcesRoot)\source-build-version-4.3.0.0</VersionFile>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(AssemblyName)' == 'FSharp.Core'">
-    <VersionFile>$(FSharpSourcesRoot)\source-build-version</VersionFile>
-    <VersionFile Condition="'$(TargetFramework)' == 'net20' OR '$(TargetFramework)' == 'mono20'">$(FSharpSourcesRoot)\source-build-version-2.3.0.0</VersionFile>
-    <VersionFile Condition="'$(TargetFramework)' == 'net40' OR '$(TargetFramework)' == 'mono40'">$(FSharpSourcesRoot)\source-build-version-4.3.0.0</VersionFile>
-  </PropertyGroup>
-
-  <!-- For .NET 2.0 and 4.0, we use test-signed binaries, apart from FSharp.Core. We do this because there's no point creating Microsoft-named binaries. -->
-  <!-- -->
-  <!-- For Mono 2.0 and 4.0, we sign with the Microsoft key and use delay-signing. -->
+  <!-- We sign with the Microsoft key and use delay-signing. -->
   <!-- These can then be signed with the special mono.snk (we don't do this as part of this build, -->
   <!-- but it can be done manually later, e.g. on the target machine). This is how the Mono team build the binaries -->
   <!-- at github.com/fsharp/fsharp and how they are shipped with Mono -->
   <!-- -->
   <!-- However FSharp.Core must use the Microsoft key name, otherwise the compiler can't load type provider components. -->
-  <PropertyGroup Condition="('$(Configuration)'=='Debug' OR '$(Configuration)'=='Release') AND ('$(TargetFramework)' == 'net20' OR '$(TargetFramework)' == 'net40')">
-    <DefineConstants>STRONG_NAME_FSHARP_COMPILER_WITH_TEST_KEY;$(DefineConstants)</DefineConstants>
-    <OtherFlags Condition="'$(AssemblyName)' == 'FSharp.Core'">$(OtherFlags) --delaysign+ --keyfile:$(FSharpSourcesRoot)\fsharp\msft.pubkey</OtherFlags>
-    <OtherFlags Condition="'$(AssemblyName)' != 'FSharp.Core'">$(OtherFlags) --keyfile:$(FSharpSourcesRoot)\fsharp\test.snk</OtherFlags>
-    <StrongNames>true</StrongNames>
-  </PropertyGroup>
 
-  <PropertyGroup Condition="('$(Configuration)'=='Debug' OR '$(Configuration)'=='Release') AND ('$(TargetFramework)' == 'mono20' OR '$(TargetFramework)' == 'mono40')">
+  <PropertyGroup Condition="'$(Configuration)'=='Debug' OR '$(Configuration)'=='Release'">
     <DefineConstants>STRONG_NAME_AND_DELAY_SIGN_FSHARP_COMPILER_WITH_MSFT_KEY;$(DefineConstants)</DefineConstants>
     <OtherFlags>$(OtherFlags) --delaysign+ --keyfile:$(FSharpSourcesRoot)\fsharp\msft.pubkey</OtherFlags>
     <StrongNames>true</StrongNames>
@@ -80,6 +63,10 @@
     <DefineConstants>DEBUG;NO_STRONG_NAMES;$(DefineConstants)</DefineConstants>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <DefineConstants>MONO;$(DefineConstants)</DefineConstants>
+  </PropertyGroup>
+
   <!-- Always qualify the IntermediateOutputPath by the TargetFramework if any exists -->
   <PropertyGroup>
     <IntermediateOutputPath>obj\$(Configuration)\$(TargetFramework)\</IntermediateOutputPath>
@@ -102,7 +89,7 @@
     <OtherFlags>$(OtherFlags) --simpleresolution</OtherFlags>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(TargetFramework)'=='net40' or '$(TargetFramework)'=='mono40'">
+  <PropertyGroup Condition="'$(TargetFramework)'=='net40'">
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <DefineConstants>$(DefineConstants);FX_ATLEAST_40</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_ATLEAST_35</DefineConstants>
@@ -110,6 +97,7 @@
     <DefineConstants>$(DefineConstants);QUERIES_IN_FSLIB</DefineConstants>
     <DefineConstants>$(DefineConstants);PUT_TYPE_PROVIDERS_IN_FSCORE;</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_ATLEAST_LINQ</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_BIGINT_CULTURE_PARSE</DefineConstants>
     <TargetFrameworkProfile></TargetFrameworkProfile>
     <!-- MSbuild works out the assembly references -->
   </PropertyGroup>
@@ -445,32 +433,18 @@
 
 
 
-  <Import Project="..\Proto\$(protoCLIDir)\bin\Microsoft.FSharp-proto.Targets" 
-          Condition="'$(BuildWith)' == '' 
-                     AND '$(ProjectLanguage)' == 'FSharp' "/>
-  <Import Project="$(MSBuildExtensionsPath32)\FSharp\1.0\Microsoft.FSharp.Targets" 
-          Condition="'$(BuildWith)' == 'LKG' AND 
-                     '$(ProjectLanguage)' == 'FSharp' AND 
-                     !Exists('$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll') " />
-  <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.0\Framework\v4.0\Microsoft.FSharp.Targets" 
-          Condition="'$(BuildWith)' == 'LKG' 
-                      AND '$(ProjectLanguage)' == 'FSharp' 
-                      AND Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll') 
-                      AND Exists('$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.0\Framework\v4.0\Microsoft.FSharp.Targets')" />
-  <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft F#\v4.0\Microsoft.FSharp.Targets" 
-          Condition="'$(BuildWith)' == 'LKG' 
-                      AND '$(ProjectLanguage)' == 'FSharp' 
-                      AND Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll') 
-                      AND (!Exists('$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.0\Framework\v4.0\Microsoft.FSharp.Targets')) 
-                      AND (Exists('$(MSBuildExtensionsPath32)\..\Microsoft F#\v4.0\Microsoft.FSharp.Targets'))" />
+  <Import Project="..\Proto\$(protoCLIDir)\bin\Microsoft.FSharp-proto.targets" 
+          Condition="'$(BuildWith)' == '' AND '$(ProjectLanguage)' == 'FSharp' "/>
+  <Import Project="$(LkgPath)\Microsoft.FSharp.targets"  
+          Condition="'$(BuildWith)' == 'LKG' AND '$(ProjectLanguage)' == 'FSharp'" />
   <Import Project="Silverlight\$(SilverlightVersion)\FSharpSource.Silverlight.Common.targets"
           Condition="'$(TargetFramework)'=='sl3' or '$(TargetFramework)'=='sl4' or '$(TargetFramework)'=='sl5' or '$(TargetFramework)'=='sl5-compiler'"/>
 
   <!-- Reference an existing FSI.EXE for use from within MSBuild -->
   <PropertyGroup>
-    <FsSrGenToolPath>$(FSharpSourcesRoot)\..\lkg\FSharp-$(LkgVersion)\bin</FsSrGenToolPath>
-    <FsLexToolPath>$(FSharpSourcesRoot)\..\lkg\FSharp-$(LkgVersion)\bin</FsLexToolPath>
-    <FsYaccToolPath>$(FSharpSourcesRoot)\..\lkg\FSharp-$(LkgVersion)\bin</FsYaccToolPath>
+    <FsSrGenToolPath>$(FSharpSourcesRoot)\$(LkgPath)\..\2.0</FsSrGenToolPath>
+    <FsLexToolPath>$(FSharpSourcesRoot)\$(LkgPath)\..\2.0</FsLexToolPath>
+    <FsYaccToolPath>$(FSharpSourcesRoot)\$(LkgPath)\..\2.0</FsYaccToolPath>
     <FsLexToolExe>fslex.exe</FsLexToolExe>
     <FsYaccToolExe>fsyacc.exe</FsYaccToolExe>
   </PropertyGroup>
@@ -478,7 +452,7 @@
 
   <PropertyGroup>
     <!-- Hook compilation phase to do custom work -->
-    <CompileDependsOn>ValidateConfiguration;$(CompileDependsOn);CustomCopyLocalFiles</CompileDependsOn>
+    <CompileDependsOn>ValidateConfiguration;$(CompileDependsOn)</CompileDependsOn>
     <RootNamespace></RootNamespace>
     <DocumentationFile>$(OutputPath)$(AssemblyName).xml</DocumentationFile>
     <EnsureThereAreNoUnusedFsSrGenResources>false</EnsureThereAreNoUnusedFsSrGenResources>
@@ -489,30 +463,13 @@
             Text="Configuration '$(Configuration)' is not one of the supported configurations: Debug, Release, Proto"
             Condition="'$(Configuration)'!='Release' and '$(Configuration)'!='Debug' and '$(Configuration)'!='Proto'"/>
     <Error
-            Text="TargetFramework '$(TargetFramework)' is not one of the supported configurations: 'empty', net20, net40, mono20, mono40, sl3-wp, sl5, sl5-compiler"
+            Text="TargetFramework '$(TargetFramework)' is not one of the supported configurations: 'empty', net20, net40, sl3-wp, sl5, sl5-compiler"
             Condition="! ('$(TargetFramework)' == 'net40' or 
                           '$(TargetFramework)' == 'net20' or 
-                          '$(TargetFramework)' == 'mono40' or 
-                          '$(TargetFramework)' == 'mono20' or 
                           '$(TargetFramework)' == 'sl5' or 
                           '$(TargetFramework)' == 'sl5-compiler' or 
                           '$(TargetFramework)' == 'sl3-wp')"/>
   </Target>
 
-  <!-- This build step copies files to the output folder while replacing build variables in the text of
-             those file. -->
-  <Target
-          Name="CustomCopyLocalFiles"
-          Inputs="@(CustomCopyLocal)"
-          Outputs="@(CustomCopyLocal->'$(OutDir)%(TargetFilename)')"
-          Condition="'$(targetCLIDir)'!='Silverlight/4.0/'"
-                >
-    <Exec Command="$(FSharpSourcesRoot)\fsharp\FSharp.Build\subst.exe {LkgVersion} $(LkgVersion) {BuildSuffix} &quot;$(FsBuildSuffix)&quot; {FSharpTargetsDir} unused &quot;%(CustomCopyLocal.FullPath)&quot; &gt; $(OutDir)%(CustomCopyLocal.TargetFilename)  "/>
-    <!-- Make sure it will get cleaned  -->
-    <CreateItem Include="$(OutDir)%(CustomCopyLocal.TargetFilename)">
-      <Output TaskParameter="Include" ItemName="FileWrites"/>
-    </CreateItem>
-  </Target>
-
-  <Import Project="..\lkg\FSharp-$(LkgVersion)\bin\FSharp.SRGen.targets" />
+  <Import Project="$(LkgPath)\..\2.0\FSharp.SRGen.targets" />
 </Project>

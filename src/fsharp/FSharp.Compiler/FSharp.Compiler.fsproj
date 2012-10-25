@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <!--
 # Copyright (c) 2002-2011 Microsoft Corporation. 
 #
@@ -23,7 +23,7 @@
     <NoWarn>$(NoWarn);44;62;9</NoWarn>
     <ProjectGuid>{2E4D67B4-522D-4CF7-97E4-BA940F0B18F3}</ProjectGuid>
     <AllowCrossTargeting>true</AllowCrossTargeting>
-    <TargetFrameworkVersion Condition="'$(TargetFramework)'=='net20' or '$(TargetFramework)'=='mono20'">v2.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion Condition="'$(TargetFramework)'=='net20'">v2.0</TargetFrameworkVersion>
     <BaseAddress>0x06800000</BaseAddress>
     <OtherFlags>$(OtherFlags) /warnon:1182</OtherFlags>
   </PropertyGroup>
@@ -497,23 +497,16 @@
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Windows.Forms" />
-    <Reference Include="System.Runtime.Remoting" />    
+    <Reference Include="System.Runtime.Remoting" />
     <Reference Include="Microsoft.Build.Framework" />
     <Reference Include="Microsoft.Build.Engine" />
-    <Reference Include="Microsoft.Build.Utilities" Condition="'$(TargetFramework)'=='net20' or '$(TargetFramework)'=='mono20'" />
-    <Reference Include="Microsoft.Build.Tasks" Condition="'$(TargetFramework)'=='net20' or '$(TargetFramework)'=='mono20'" />
-
-    <Reference Include="ISymWrapper, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" Condition="'$(TargetFramework)'=='net40' or '$(TargetFramework)'=='mono40'" />
-    <Reference Include="Microsoft.Build" Condition="'$(TargetFramework)'=='net40' or '$(TargetFramework)'=='mono40'" />
-    <Reference Include="Microsoft.Build.Utilities.v4.0" Condition="'$(TargetFramework)'=='net40' or '$(TargetFramework)'=='mono40'" />
-    <Reference Include="Microsoft.Build.Tasks.v4.0" Condition="'$(TargetFramework)'=='net40' or '$(TargetFramework)'=='mono40'" />
-
-
-    <ProjectReference Include="$(FSharpSourcesRoot)\fsharp\FSharp.Core\FSharp.Core.fsproj" >
-      <Project>{DED3BBD7-53F4-428A-8C9F-27968E768605}</Project>
-      <Name>FSharp.Core</Name>
-    </ProjectReference>
+    <Reference Include="Microsoft.Build.Utilities" Condition="'$(TargetFramework)'=='net20'" />
+    <Reference Include="Microsoft.Build.Tasks" Condition="'$(TargetFramework)'=='net20'" />
+    <Reference Include="ISymWrapper, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" Condition="'$(TargetFramework)'=='net40'" />
+    <Reference Include="Microsoft.Build" Condition="'$(TargetFramework)'=='net40'" />
+    <Reference Include="Microsoft.Build.Utilities.v4.0" Condition="'$(TargetFramework)'=='net40'" />
+    <Reference Include="Microsoft.Build.Tasks.v4.0" Condition="'$(TargetFramework)'=='net40'" />
   </ItemGroup>
   <Import Project="$(FSharpSourcesRoot)\FSharpSource.targets" />
-  <Import Project="$(FSharpSourcesRoot)\..\lkg\FSharp-$(LkgVersion)\bin\FSharp.PowerPack.targets" />
+  <Import Project="$(FSharpSourcesRoot)\$(LkgPath)\..\2.0\FSharp.PowerPack.targets" />
 </Project>
