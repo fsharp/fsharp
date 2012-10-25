@@ -7,12 +7,12 @@ all:
 	$(MAKE) do-proto
 	$(MAKE) do-final
 
-do-proto:
+do-proto clean-proto:
 	$(MAKE) -C FSharp.Build-proto $@
 	$(MAKE) -C FSharp.Compiler-proto $@
 	$(MAKE) -C Fsc-proto $@
 
-do-final:
+do-final install:
 	$(MAKE) -C FSharp.Core $@
 	$(MAKE) -C FSharp.Build $@
 	$(MAKE) -C FSharp.Compiler $@
@@ -23,23 +23,7 @@ do-final:
 	$(MAKE) -C policy.2.0.FSharp.Core $@
 	$(MAKE) -C policy.4.0.FSharp.Core $@
 
-install: 
-	$(MAKE) do-proto
-	$(MAKE) do-final
-	$(MAKE) -C FSharp.Core $@
-	$(MAKE) -C FSharp.Build $@
-	$(MAKE) -C FSharp.Compiler $@
-	$(MAKE) -C Fsc $@
-	$(MAKE) -C FSharp.Compiler.Interactive.Settings $@
-	$(MAKE) -C FSharp.Compiler.Server.Shared $@
-	$(MAKE) -C fsi $@
-	$(MAKE) -C policy.2.0.FSharp.Core $@
-	$(MAKE) -C policy.4.0.FSharp.Core $@
-
-clean:
-	$(MAKE) -C FSharp.Build-proto $@
-	$(MAKE) -C FSharp.Compiler-proto $@
-	$(MAKE) -C Fsc-proto $@
+clean: clean-proto
 	$(MAKE) -C FSharp.Core $@
 	$(MAKE) -C FSharp.Build $@
 	$(MAKE) -C FSharp.Compiler $@
