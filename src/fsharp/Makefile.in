@@ -22,6 +22,8 @@ do-final install:
 	$(MAKE) -C fsi $@
 	$(MAKE) -C policy.2.0.FSharp.Core $@
 	$(MAKE) -C policy.4.0.FSharp.Core $@
+	$(MAKE) -C policy.2.3.FSharp.Core $@
+	$(MAKE) -C policy.4.3.FSharp.Core $@
 
 clean:
 	$(MAKE) -C FSharp.Build-proto $@
@@ -36,6 +38,8 @@ clean:
 	$(MAKE) -C fsi $@
 	$(MAKE) -C policy.2.0.FSharp.Core $@
 	$(MAKE) -C policy.4.0.FSharp.Core $@
+	$(MAKE) -C policy.2.3.FSharp.Core $@
+	$(MAKE) -C policy.4.3.FSharp.Core $@
 
 do-2-1:
 	$(MAKE) -C FSharp.Core $@
