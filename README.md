@@ -7,7 +7,7 @@ To bootstrap the compiler, binaries built from an earlier version of this projec
 
 ## Requirements
 
-Requires mono 2.9 or higher.
+Requires mono 2.9 or higher.  Prefer Mono 3.0.
 
 On OSX, requires automake 2.69. To install from [homebrew](http://mxcl.github.com/homebrew):
 ```
@@ -17,16 +17,18 @@ brew install automake
 
 ## Building
 
-To build, run:
+To build and install on non-MacOS systems:
 ```
 ./autogen.sh
 make
-make install
+sudo make install
 ```
 
-On OSX, to replace the installation of F# that comes with Mono you may need to use a prefix:
+On MacOS (OSX), use a prefix to your version of Mono:
 ```
-./autogen.sh --prefix=/Library/Frameworks/Mono.framework/Versions/2.10.9/
+./autogen.sh --prefix=/Library/Frameworks/Mono.framework/Versions/Current/
+make
+sudo make install
 ```
 
 To build the FSharp.Core.dll for [Mono for Android](http://xamarin.com/monoforandroid), use:
