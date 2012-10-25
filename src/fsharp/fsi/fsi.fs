@@ -1959,6 +1959,10 @@ type FsiInteractionProcessor(tcConfigB,
 type DummyForm() = 
     inherit Form() 
     member x.DoCreateHandle() = x.CreateHandle() 
+    /// Creating the dummy form object can crash on Mono Mac, and then prints a nasty background
+    /// error during finalization of the half-initialized object...
+    override x.Finalize() = ()
+    
 
 /// This is the event loop implementation for winforms
 type WinFormsEventLoop(fsiConsoleOutput: FsiConsoleOutput, lcid : int option) = 
@@ -2460,8 +2464,14 @@ type internal FsiEvaluationSession (argv:string[], inReader:TextReader, outWrite
                         ();
 
                 // This is the event loop for winforms
-                fsi.EventLoop <- WinFormsEventLoop(fsiConsoleOutput, fsiOptions.FsiLCID)
-                                        
+                try fsi.EventLoop <- WinFormsEventLoop(fsiConsoleOutput, fsiOptions.FsiLCID)
+                with e ->
+                    printfn "Your system doesn't seem to support WinForms correctly. You will"
+                    printfn "need to set fsi.EventLoop use GUI windows from F# Interactive."
+                    printfn "You can set different event loops for MonoMac, Gtk#, WinForms and other"
+                    printfn "UI toolkits. Drop the --gui argument if no event loop is required.""
+                    
+                                       
             istateRef := fsiInteractionProcessor.LoadInitialFiles (exitViaKillThread, !istateRef)
 
             StartStdinReadAndProcessThread(fsiOptions.FsiLCID, istateRef, errorLogger, fsiConsoleInput, fsiConsoleOutput, fsiStdinLexerProvider, fsiInteractionProcessor, exitViaKillThread)            
