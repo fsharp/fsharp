@@ -12,6 +12,9 @@
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <FSharpSourcesRoot>..\..</FSharpSourcesRoot>
+    <ProductVersion>10.0.0</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <UsePartialTypes>False</UsePartialTypes>
   </PropertyGroup>
   <Import Project="$(FSharpSourcesRoot)\FSharpSource.Settings.targets" />
   <PropertyGroup>
@@ -19,14 +22,18 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{649FA588-F02E-457C-9FCF-87E46407481E}</ProjectGuid>
     <OutputType>Library</OutputType>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <DefineConstants>EXTENSIONTYPING;$(DefineConstants)</DefineConstants>
     <AssemblyName>FSharp.Compiler.Interactive.Settings</AssemblyName>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
+  <!-- MonoDevelop likes these here to recognise the configurations -->
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' " />
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' " />
   <ItemGroup>
-      <FsSrGen Include="..\FSInteractiveSettings.txt">
-        <Link>FSInteractiveSettings.txt</Link>
-      </FsSrGen>
+    <FsSrGen Include="..\FSInteractiveSettings.txt">
+      <Link>FSInteractiveSettings.txt</Link>
+    </FsSrGen>
     <Compile Include="..\..\assemblyinfo\assemblyinfo.FSharp.Compiler.Interactive.Settings.dll.fs">
       <Link>assemblyinfo.FSharp.Compiler.Interactive.Settings.dll.fs</Link>
     </Compile>
@@ -41,13 +48,12 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-
     <Reference Include="mscorlib" />
     <Reference Include="System" />
-    <ProjectReference Include="$(FSharpSourcesRoot)\fsharp\FSharp.Core\FSharp.Core.fsproj">
-				<Project>{DED3BBD7-53F4-428A-8C9F-27968E768605}</Project>
-				<Name>FSharp.Core</Name>
-		</ProjectReference>
-	</ItemGroup>
+    <ProjectReference Include="..\FSharp.Core\FSharp.Core.fsproj">
+      <Project>{DED3BBD7-53F4-428A-8C9F-27968E768605}</Project>
+      <Name>FSharp.Core</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(FSharpSourcesRoot)\FSharpSource.targets" />
-  </Project>
+</Project>

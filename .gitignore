@@ -9,3 +9,15 @@ config.log
 config.make
 config.status
 
+
+Debug/net40/bin/FSharp.Build.dll
+
+Debug/net40/bin/FSharp.Build.xml
+
+src/fsharp/FSharp.Compiler/illex.fs
+
+src/fsharp/FSharp.Compiler/ilpars.fs
+
+src/fsharp/FSharp.Compiler/lex.fs
+
+src/fsharp/FSharp.Compiler/pars.fs

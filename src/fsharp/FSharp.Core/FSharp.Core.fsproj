@@ -30,10 +30,14 @@
     <BaseAddress>0x05000000</BaseAddress>
     <CompilingFsLib>true</CompilingFsLib>
     <AllowCrossTargeting>true</AllowCrossTargeting>
+    <TargetFrameworkVersion Condition=" '$(TargetFramework)'=='net20'">v2.0</TargetFrameworkVersion>
     <OtherFlags>$(OtherFlags) --warnon:1182 --compiling-fslib --optimize --maxerrors:20 --extraoptimizationloops:1 </OtherFlags>
     <OtherFlags Condition=" '$(TargetFramework)'=='net20'">$(OtherFlags) --compiling-fslib-20:"$(SystemRoot)\Microsoft.NET\Framework\v4.0.30319\mscorlib.dll" </OtherFlags>
     <OtherFlags Condition=" '$(TargetFramework)'=='net40'">$(OtherFlags) --compiling-fslib-40</OtherFlags>
   </PropertyGroup>
+  <!-- MonoDevelop likes these here to recognise the configurations -->
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' " />
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' " />
   <ItemGroup>
     <EmbeddedResource Include="FSCore.resx">
       <Link>FSCore.resx</Link>
@@ -203,7 +207,7 @@
     <Compile Include="..\..\assemblyinfo\assemblyinfo.FSharp.Core.dll.fs">
       <Link>assemblyinfo.FSharp.Core.dll.fs</Link>
     </Compile>
-    <CustomAdditionalCompileInputs Include="$(FSharpSourcesRoot)\..\Proto\$(protoCLIDir)\bin\fsc-proto.exe">
+    <CustomAdditionalCompileInputs Include="Proto\%24%28protoCLIDir%29\bin\fsc-proto.exe">
       <Visible>False</Visible>
     </CustomAdditionalCompileInputs>
   </ItemGroup>

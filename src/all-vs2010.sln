@@ -1,0 +1,85 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{D78E3B57-DAD1-4FE1-9DC8-84F7847B0C77}"
+	ProjectSection(SolutionItems) = preProject
+		fsharp-compiler-build.proj = fsharp-compiler-build.proj
+		fsharp-proto-build.proj = fsharp-proto-build.proj
+		root.traversal.targets = root.traversal.targets
+		source-build-version = source-build-version
+	EndProjectSection
+EndProject
+Project("{4925A630-B079-445d-BCD4-3A9C94FE9307}") = "Fsc", "fsharp\Fsc\Fsc.fsproj", "{C94C257C-3C0A-4858-B5D8-D746498D1F08}"
+EndProject
+Project("{4925A630-B079-445d-BCD4-3A9C94FE9307}") = "FSharp.Compiler", "fsharp\FSharp.Compiler\FSharp.Compiler.fsproj", "{2E4D67B4-522D-4CF7-97E4-BA940F0B18F3}"
+EndProject
+Project("{4925A630-B079-445d-BCD4-3A9C94FE9307}") = "FSharp.Compiler.Silverlight", "fsharp\FSharp.Compiler.Silverlight\FSharp.Compiler.Silverlight.fsproj", "{a90a57be-c2bd-4cb9-87dc-c0d18820ff6b}"
+EndProject
+Project("{4925A630-B079-445d-BCD4-3A9C94FE9307}") = "FSharp.Core", "fsharp\FSharp.Core\FSharp.Core.fsproj", "{DED3BBD7-53F4-428A-8C9F-27968E768605}"
+EndProject
+Project("{4925A630-B079-445d-BCD4-3A9C94FE9307}") = "FSharp.Build", "fsharp\FSharp.Build\FSharp.Build.fsproj", "{702A7979-BCF9-4C41-853E-3ADFC9897890}"
+EndProject
+Project("{4925A630-B079-445d-BCD4-3A9C94FE9307}") = "Unittests", "fsharp\unittests\Unittests.fsproj", "{EE85AAB7-CDA0-4C4E-BDA0-A64DDDD13E3F}"
+EndProject
+Project("{4925A630-B079-445d-BCD4-3A9C94FE9307}") = "Fsi", "fsharp\fsi\Fsi.fsproj", "{d0e98c0d-490b-4c61-9329-0862f6e87645}"
+EndProject
+Project("{4925A630-B079-445d-BCD4-3A9C94FE9307}") = "FSharp.Compiler.Interactive.Settings", "fsharp\FSharp.Compiler.Interactive.Settings\FSharp.Compiler.Interactive.Settings.fsproj", "{649FA588-F02E-457C-9FCF-87E46407481E}"
+EndProject
+Project("{4925A630-B079-445d-BCD4-3A9C94FE9307}") = "FSharp.Compiler.Server.Shared", "fsharp\FSharp.Compiler.Server.Shared\FSharp.Compiler.Server.Shared.fsproj", "{d5870cf0-ed51-4cbc-b3d7-6f56da84ac06}"
+EndProject
+Project("{4925A630-B079-445d-BCD4-3A9C94FE9307}") = "FSharp.Core.Unittests", "fsharp\FSharp.Core.Unittests\FSharp.Core.Unittests.fsproj", "{88E2D422-6852-46E3-A740-83E391DC7973}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{2E4D67B4-522D-4CF7-97E4-BA940F0B18F3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2E4D67B4-522D-4CF7-97E4-BA940F0B18F3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2E4D67B4-522D-4CF7-97E4-BA940F0B18F3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2E4D67B4-522D-4CF7-97E4-BA940F0B18F3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{649FA588-F02E-457C-9FCF-87E46407481E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{649FA588-F02E-457C-9FCF-87E46407481E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{649FA588-F02E-457C-9FCF-87E46407481E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{649FA588-F02E-457C-9FCF-87E46407481E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{702A7979-BCF9-4C41-853E-3ADFC9897890}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{702A7979-BCF9-4C41-853E-3ADFC9897890}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{702A7979-BCF9-4C41-853E-3ADFC9897890}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{702A7979-BCF9-4C41-853E-3ADFC9897890}.Release|Any CPU.Build.0 = Release|Any CPU
+		{88E2D422-6852-46E3-A740-83E391DC7973}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{88E2D422-6852-46E3-A740-83E391DC7973}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{88E2D422-6852-46E3-A740-83E391DC7973}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{88E2D422-6852-46E3-A740-83E391DC7973}.Release|Any CPU.Build.0 = Release|Any CPU
+		{a90a57be-c2bd-4cb9-87dc-c0d18820ff6b}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{a90a57be-c2bd-4cb9-87dc-c0d18820ff6b}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C94C257C-3C0A-4858-B5D8-D746498D1F08}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C94C257C-3C0A-4858-B5D8-D746498D1F08}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C94C257C-3C0A-4858-B5D8-D746498D1F08}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C94C257C-3C0A-4858-B5D8-D746498D1F08}.Release|Any CPU.Build.0 = Release|Any CPU
+		{d0e98c0d-490b-4c61-9329-0862f6e87645}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{d0e98c0d-490b-4c61-9329-0862f6e87645}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{d0e98c0d-490b-4c61-9329-0862f6e87645}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{d0e98c0d-490b-4c61-9329-0862f6e87645}.Release|Any CPU.Build.0 = Release|Any CPU
+		{d5870cf0-ed51-4cbc-b3d7-6f56da84ac06}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{d5870cf0-ed51-4cbc-b3d7-6f56da84ac06}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{d5870cf0-ed51-4cbc-b3d7-6f56da84ac06}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{d5870cf0-ed51-4cbc-b3d7-6f56da84ac06}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DED3BBD7-53F4-428A-8C9F-27968E768605}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DED3BBD7-53F4-428A-8C9F-27968E768605}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DED3BBD7-53F4-428A-8C9F-27968E768605}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DED3BBD7-53F4-428A-8C9F-27968E768605}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EE85AAB7-CDA0-4C4E-BDA0-A64DDDD13E3F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EE85AAB7-CDA0-4C4E-BDA0-A64DDDD13E3F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EE85AAB7-CDA0-4C4E-BDA0-A64DDDD13E3F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EE85AAB7-CDA0-4C4E-BDA0-A64DDDD13E3F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+	EndGlobalSection
+	GlobalSection(MonoDevelopProperties) = preSolution
+		StartupItem = fsharp\Fsc\Fsc.fsproj
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

@@ -18,7 +18,7 @@
   <Import Project="$(FSharpSourcesRoot)\fs2Sharp.Data.TypeProviders\FSharp.Data.TypeProviders.Shared.fsproj"  
           Condition="'$(TargetFramework)' 25' AND 
                      '$(TargetFramework)' 23-wp' " />
-  <ItemGroup>                             2
+  <ItemGroup>                             
     <!--This is used for compiling the run2ype provider DLL for WP7, Silverlight etc. -->
     <!--This is the only file used. -->
     <Compile Include="$(FSharpSourcesRoot)\fsharp\FSharp.Data.TypeProviders\TypeProviderRuntimeAttribute.fs"   Condition="'$(TargetFramework)' == 'net20' or '$(TargetFramework)' == 'sl3-wp' or '$(TargetFramework)'=='sl4' ">
