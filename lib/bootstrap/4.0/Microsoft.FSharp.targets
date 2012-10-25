@@ -22,10 +22,6 @@ Copyright (C) Microsoft Corporation. All rights reserved.
 
 
     <PropertyGroup>
-        <!-- FSharpTargetsDir is the directory where the targets file lives -->
-        <FSharpTargetsDir Condition="'$(FSharpTargetsDir)'==''">unused</FSharpTargetsDir>
-        <!-- FSharpTargetsFullPath is the full path (dir + filename) of the targets file -->
-        <FSharpTargetsFullPath Condition="'$(FSharpTargetsDir)'!=''">$(FSharpTargetsDir)\Microsoft.FSharp.targets</FSharpTargetsFullPath>
         <MSBuildAllProjects>$(MSBuildAllProjects);$(FSharpTargetsFullPath)</MSBuildAllProjects>
         <DefaultLanguageSourceExtension>.fs</DefaultLanguageSourceExtension>
         <Language>F#</Language>
@@ -58,42 +54,37 @@ Copyright (C) Microsoft Corporation. All rights reserved.
     <PropertyGroup>
         <CreateManifestResourceNamesDependsOn></CreateManifestResourceNamesDependsOn>
     </PropertyGroup>
-    <Target
-        Name="CreateManifestResourceNames"
+
+	<Target Name="CreateManifestResourceNames" 
         Condition="'@(EmbeddedResource)' != ''"
-        DependsOnTargets="$(CreateManifestResourceNamesDependsOn)"
-    >
+        DependsOnTargets="$(CreateManifestResourceNamesDependsOn)">
+		<CreateFSharpManifestResourceName Condition="'@(ResxWithNoCulture)' != ''"
+			ResourceFiles="@(ResxWithNoCulture)" RootNamespace="$(RootNamespace)">
+			<Output TaskParameter = "ManifestResourceNames" ItemName = "ManifestResourceWithNoCultureName" />
+		</CreateFSharpManifestResourceName>
 
-        <ItemGroup>
-            <_Temporary Remove="@(_Temporary)" />
-        </ItemGroup>
+		<CreateFSharpManifestResourceName Condition="'@(NonResxWithNoCulture)' != ''"
+			ResourceFiles="@(NonResxWithNoCulture)" RootNamespace="$(RootNamespace)">
+			<Output TaskParameter = "ManifestResourceNames" ItemName = "ManifestNonResxWithNoCulture" />
+		</CreateFSharpManifestResourceName>
 
-        <!-- Create manifest names for culture and non-culture Resx files, and for non-culture Non-Resx resources -->
-        <CreateFSharpManifestResourceName
-            ResourceFiles="@(EmbeddedResource)"
-            RootNamespace="$(RootNamespace)"
-            Condition="'%(EmbeddedResource.ManifestResourceName)' == '' and ('%(EmbeddedResource.WithCulture)' == 'false' or '%(EmbeddedResource.Type)' == 'Resx')">
+		<CreateFSharpManifestResourceName Condition="'@(ResxWithCulture)' != ''"
+			ResourceFiles="@(ResxWithCulture)" RootNamespace="$(RootNamespace)">
+			<Output TaskParameter = "ManifestResourceNames" ItemName = "ManifestResourceWithCultureName" />
+		</CreateFSharpManifestResourceName>
 
-            <Output TaskParameter="ResourceFilesWithManifestResourceNames" ItemName="_Temporary" />
+		<CreateFSharpManifestResourceName Condition="'@(NonResxWithCulture)' != ''"
+			ResourceFiles="@(NonResxWithCulture)" RootNamespace="$(RootNamespace)">
+			<Output TaskParameter = "ManifestResourceNames" ItemName = "ManifestNonResxWithCulture" />
+		</CreateFSharpManifestResourceName>
 
-        </CreateFSharpManifestResourceName>
-
-        <!-- Create manifest names for all culture non-resx resources -->
-        <CreateFSharpManifestResourceName
-            ResourceFiles="@(EmbeddedResource)"
-            RootNamespace="$(RootNamespace)"
-            PrependCultureAsDirectory="false"
-            Condition="'%(EmbeddedResource.ManifestResourceName)' == '' and '%(EmbeddedResource.WithCulture)' == 'true' and '%(EmbeddedResource.Type)' == 'Non-Resx'">
-
-            <Output TaskParameter="ResourceFilesWithManifestResourceNames" ItemName="_Temporary" />
-
-        </CreateFSharpManifestResourceName>
 
         <ItemGroup>
             <EmbeddedResource Remove="@(EmbeddedResource)" Condition="'%(EmbeddedResource.ManifestResourceName)' == ''"/>
             <EmbeddedResource Include="@(_Temporary)" />
             <_Temporary Remove="@(_Temporary)" />
         </ItemGroup>
+
     </Target>
 
     <ItemGroup>
@@ -167,7 +158,7 @@ Copyright (C) Microsoft Corporation. All rights reserved.
               Platform="$(PlatformTarget)"
               References="@(ReferencePath)"
               ReferencePath="$(ReferencePath)"
-              Resources="@(_CoreCompileResourceInputs);@(CompiledLicenseFile);@(AdditionalEmbeddedResource)"
+              Resources="@(ManifestResourceWithNoCulture);@(ManifestNonResxWithNoCultureOnDisk);@(CompiledLicenseFile);@(AdditionalEmbeddedResource)"
               Sources="@(CompileBefore);@(Compile);@(CompileAfter)"
               Tailcalls="$(Tailcalls)"
               TargetType="$(OutputType)"
@@ -193,4 +184,5 @@ Copyright (C) Microsoft Corporation. All rights reserved.
     <Import Project="$(MSBuildBinPath)\Microsoft.Common.targets"/>
 
 </Project>
+
 
