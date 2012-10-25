@@ -1,9 +1,5 @@
 SOURCES := $(patsubst $(srcdir)$(tmpdir)%,$(tmpdir)%,$(patsubst %,$(srcdir)%,$(sources)))
 
-# taken from FSharpSource.targets file:
-LKG_VERSION := 2.0.50726.900
-REPLACE_ARGS := {LkgVersion} $(LKG_VERSION) {BuildSuffix} "" {FSharpTargetsDir} unused
-
 .PHONY: install install-bin install-bin-2 install-bin-4 install-lib
 
 clean-2-0: TARGET := $(TARGET_2_0)
@@ -57,11 +53,11 @@ do-2-0: $(objdir) $(objdir)$(TARGET_2_0) $(objdir)$(TARGET_4_0) $(objdir)$(TARGE
 	@if test -e $(objdir)$(NAME).optdata; then \
 		cp $(objdir)$(NAME).optdata $(outdir); \
 	fi
-	@if test "x$(SIGN)" = "x1"; \
-		then sn -q -R $(outdir)$(ASSEMBLY) $(srcdir)../../../mono.snk; \
+	@if test "x$(SIGN)" = "x1"; then \
+		sn -q -R $(outdir)$(ASSEMBLY) $(srcdir)../../../mono.snk; \
 	fi
 	@if test -e Microsoft.FSharp.targets; then \
-		mono subst.exe $(REPLACE_ARGS) Microsoft.FSharp.targets > $(outdir)Microsoft.FSharp.targets; \
+		cp Microsoft.FSharp.targets $(outdir)Microsoft.FSharp.targets; \
 	fi
 
 do-2-1: DEFINES += $(DEFINES_2_1)
@@ -85,11 +81,11 @@ do-2-1: $(objdir) $(objdir)$(TARGET_2_1) $(objdir)$(TARGET_4_0) $(objdir)$(TARGE
 	@if test -e $(objdir)$(NAME).optdata; then \
 		cp $(objdir)$(NAME).optdata $(outdir); \
 	fi
-	@if test "x$(SIGN)" = "x1"; \
-		then sn -q -R $(outdir)$(ASSEMBLY) $(srcdir)../../../mono.snk; \
+	@if test "x$(SIGN)" = "x1"; then \
+		sn -q -R $(outdir)$(ASSEMBLY) $(srcdir)../../../mono.snk; \
 	fi
 	@if test -e Microsoft.FSharp.targets; then \
-		mono subst.exe $(REPLACE_ARGS) Microsoft.FSharp.targets > $(outdir)Microsoft.FSharp.targets; \
+		cp Microsoft.FSharp.targets $(outdir)Microsoft.FSharp.targets; \
 	fi
 
 do-4-0: DEFINES += $(DEFINES_4_0)
@@ -113,11 +109,11 @@ do-4-0: $(objdir) $(objdir)$(TARGET_2_0) $(objdir)$(TARGET_4_0) $(objdir)$(TARGE
 	@if test -e $(objdir)$(NAME).optdata; then \
 		cp $(objdir)$(NAME).optdata $(outdir); \
 	fi
-	@if test "x$(SIGN)" = "x1"; \
-		then sn -q -R $(outdir)$(ASSEMBLY) $(srcdir)../../../mono.snk; \
+	@if test "x$(SIGN)" = "x1"; then \
+		sn -q -R $(outdir)$(ASSEMBLY) $(srcdir)../../../mono.snk; \
 	fi
 	@if test -e Microsoft.FSharp.targets; then \
-		mono subst.exe $(REPLACE_ARGS) Microsoft.FSharp.targets > $(outdir)Microsoft.FSharp.targets; \
+		cp Microsoft.FSharp.targets $(outdir)Microsoft.FSharp.targets; \
 	fi
 
 install-lib-2: TARGET := $(TARGET_2_0)
