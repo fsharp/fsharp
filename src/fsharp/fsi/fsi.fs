@@ -2469,7 +2469,7 @@ type internal FsiEvaluationSession (argv:string[], inReader:TextReader, outWrite
                     printfn "Your system doesn't seem to support WinForms correctly. You will"
                     printfn "need to set fsi.EventLoop use GUI windows from F# Interactive."
                     printfn "You can set different event loops for MonoMac, Gtk#, WinForms and other"
-                    printfn "UI toolkits. Drop the --gui argument if no event loop is required.""
+                    printfn "UI toolkits. Drop the --gui argument if no event loop is required."
                     
                                        
             istateRef := fsiInteractionProcessor.LoadInitialFiles (exitViaKillThread, !istateRef)
