@@ -25,11 +25,11 @@ Copyright (C) Microsoft Corporation. All rights reserved.
     <!-- Create the output directory in case it doesn't exist yet -->
     <MakeDir Directories="$(IntermediateOutputPath)"/>
     <!-- Run the tool -->
+    <!-- Don't put the resx in the IntermediateOutputPath as the Mono targets ends up naming the resource incorrectly (it ignores ManifestResourceName) -->
     <FsSrGen
       InputFile="%(FsSrGen.FullPath)"
       ToolPath="$(FsSrGenToolPath)"
       OutputFsFile="$(IntermediateOutputPath)%(FsSrGen.Filename).fs"
-    <!-- Don't put the resx in the IntermediateOutputPath as the Mono targets ends up naming the resource incorrectly (it ignores ManifestResourceName) -->
       OutputResxFile="%(FsSrGen.Filename).resx"
       >
     </FsSrGen>
