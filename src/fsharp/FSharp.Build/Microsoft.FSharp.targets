@@ -97,7 +97,8 @@ Copyright (C) Microsoft Corporation. All rights reserved.
     </ItemGroup>
 
     <PropertyGroup>
-        <CoreCompileDependsOn>_ComputeNonExistentFileProperty</CoreCompileDependsOn>
+		<CreateManifestResourceNamesDependsOn></CreateManifestResourceNamesDependsOn>
+		<CoreCompileDependsOn></CoreCompileDependsOn>
     </PropertyGroup>
 
     <Target
