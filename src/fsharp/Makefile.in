@@ -23,7 +23,9 @@ do-final:
 	$(MAKE) -C policy.2.0.FSharp.Core $@
 	$(MAKE) -C policy.4.0.FSharp.Core $@
 
-install: do-final
+install: 
+	$(MAKE) do-proto
+	$(MAKE) do-final
 	$(MAKE) -C FSharp.Core $@
 	$(MAKE) -C FSharp.Build $@
 	$(MAKE) -C FSharp.Compiler $@

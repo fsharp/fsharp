@@ -17,8 +17,7 @@ monolibdir35 := $(monodir)3.5/
 monolibdir4 := $(monodir)4.0/
 tooldir := $(topdir)lib/bootstrap/4.0/
 
-#Enable this fo faster bulds, but not on Mono 2.11.5, see https://bugzilla.xamarin.com/show_bug.cgi?id=7815
-#MONO_OPTIONS += --gc=sgen
+MONO_OPTIONS += @mono_gc_options@
 
 CONFIG = release
 DISTVERSION = 201011
