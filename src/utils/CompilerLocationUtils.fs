@@ -191,49 +191,100 @@ module internal FSharpEnvironment =
     //     - default location of fsi.exe in FSharp.VS.FSI.dll
     //     - default location of fsc.exe in FSharp.Compiler.CodeDom.dll
     //     - default F# binaries directory in (project system) Project.fs
-    let BinFolderOfDefaultFSharpCompiler = 
-        // Check for an app.config setting to redirect the default compiler location
-        // Like fsharp-compiler-location
-        try 
-            let result = tryAppConfig "fsharp-compiler-location"
-            match result with 
-            | Some _ ->  result 
-            | None -> 
+    
+      /// Try to find the F# compiler location by looking at the "fsharpi" script installed by F# packages
+    let internal tryFsharpiScript(url:string) =
+      try
+        let str = File.ReadAllText(url)
+        let reg = new System.Text.RegularExpressions.Regex("mono.* (\/.*)\/fsi\.exe")
+        let res = reg.Match(str)
+        if res.Success then Some(res.Groups.[1].Value) else None
+      with e -> 
+        None
 
-                // Note: If the keys below change, be sure to update code in:
-                // Property pages (ApplicationPropPage.vb)
 
-#if FX_ATLEAST_45
-                let key20 = @"Software\Microsoft\FSharp\3.0\Runtime\v2.0"
-                let key40 = @"Software\Microsoft\FSharp\3.0\Runtime\v4.0"
-#else
-                let key20 = @"Software\Microsoft\FSharp\2.0\Runtime\v2.0"
-                let key40 = @"Software\Microsoft\FSharp\2.0\Runtime\v4.0"
-#endif
-                let key1,key2 = 
-                    match FSharpCoreLibRunningVersion with 
-                    | None -> key20,key40 
-                    | Some v -> if v.Length > 1 && v.[0] <= '3' then key20,key40 else key40,key20
+    let BackupInstallationProbePoints = 
+      [ // prefer the latest installation of Mono on Mac
+        "/Library/Frameworks/Mono.framework/Versions/Current"
+        // prefer freshly built F# compilers on Linux
+        "/usr/local"
+        // otherwise look in the standard place
+        "/usr" ]
+
+    // The default location of FSharp.Core.dll and fsc.exe based on the version of fsc.exe that is running
+  // Used for
+  //   - location of design-time copies of FSharp.Core.dll and FSharp.Compiler.Interactive.Settings.dll for the default assumed environment for scripts
+  //   - default ToolPath in tasks in FSharp.Build.dll (for Fsc tasks)
+  //   - default F# binaries directory in service.fs (REVIEW: check this)
+  //   - default location of fsi.exe in FSharp.VS.FSI.dll
+  //   - default location of fsc.exe in FSharp.Compiler.CodeDom.dll
+    let BinFolderOfDefaultFSharpCompiler() = 
+    // Check for an app.config setting to redirect the default compiler location
+    // Like fsharp-compiler-location
+     try 
+      // FSharp.Compiler support setting an appkey for compiler location. I've never seen this used.
+      //printfn "Resolution" "BinFolderOfDefaultFSharpCore: Probing app.config"
+      let result = tryAppConfig "fsharp-compiler-location"
+      match result with 
+      | Some _ ->  result 
+      | None -> 
+
+        // On windows the location of the compiler is via a registry key
+        let key20 = @"Software\Microsoft\FSharp\2.0\Runtime\v4.0"
+        let key40 = @"Software\Microsoft\FSharp\3.0\Runtime\v4.0"
+        let key1,key2 = 
+          match FSharpCoreLibRunningVersion with 
+          | None -> key40,key20 
+          | Some v -> if v.Length > 1 && v.[0] <= '3' then key20,key40 else key40,key20
+        
+        //printfn "Resolution" "BinFolderOfDefaultFSharpCore: Probing registry key %s" key1
+        let result = tryRegKey key1
+        match result with 
+        | Some _ ->  result 
+        | None -> 
+        //printfn "Resolution" "BinFolderOfDefaultFSharpCore: Probing registry key %s" key2
+        let result =  tryRegKey key2
+        match result with 
+        | Some _ ->  result 
+        | None ->
+
+        // On Unix we let you set FSHARP_COMILER_BIN. I've rarely seen this used and its not documented in the install isntructions.
+        //printfn "Resolution" "BinFolderOfDefaultFSharpCore: Probing environment variable FSHARP_COMPILER_BIN"
+        let result = 
+            let var = System.Environment.GetEnvironmentVariable("FSHARP_COMPILER_BIN")
+            if String.IsNullOrEmpty(var) then None
+            else Some(var)
+        match result with 
+        | Some _ -> result
+        | None -> 
+
+        // On Unix we probe 'bin' under various hardwired paths for the scripts 'fsharpc' and 'fsharpi'. 
+        // We then loko in the script to see the Mono location it is pointing to. 
+        // This is pretty fragile, e.g. the script lookup is done via a regular expression.
+        // Really we should just search the path or otherwise resolve the 'mono' command?
+        let result = 
+            BackupInstallationProbePoints |> List.tryPick (fun x -> 
+               //printfn "Resolution" "BinFolderOfDefaultFSharpCore: Probing  %s" x
+               let safeExists f = (try File.Exists(f) with _ -> false)
+               let file f = Path.Combine(Path.Combine(x,"bin"),f)
+               let exists f = safeExists(file f)
+               match (if exists "fsc" && exists "fsi" then tryFsharpiScript (file "fsi") else None) with
+               | Some res -> Some res
+               | None ->
+               match (if exists "fsharpc" && exists "fsharpi" then tryFsharpiScript (file "fsharpi") else None) with
+               | Some res -> Some res
+               | None -> None)
                 
-                let result = tryRegKey key1
-                match result with 
-                | Some _ ->  result 
-                | None -> 
-                    let result =  tryRegKey key2
-                    match result with 
-                    | Some _ ->  result 
-                    | None -> 
+        match result with 
+        | Some _ -> result
+        | None -> 
+               // For the prototype compiler, we can just use the current domain
+               tryCurrentDomain()
+     with e -> 
+      System.Diagnostics.Debug.Assert(false, "Error while determining default location of F# compiler")
+      //printfn "Resolution" "BinFolderOfDefaultFSharpCore: error %s" (e.ToString())
+      None
 
-            // This was failing on rolling build for staging because the prototype compiler doesn't have the key. Disable there.
-            #if FX_ATLEAST_40_COMPILER_LOCATION
-                        System.Diagnostics.Debug.Assert(result<>None, sprintf "Could not find location of compiler at '%s' or '%s'" key1 key2)
-            #endif                                
-                          
-                            // For the prototype compiler, we can just use the current domain
-                        tryCurrentDomain()
-        with e -> 
-            System.Diagnostics.Debug.Assert(false, "Error while determining default location of F# compiler")
-            None
 
 #endif // SILVERLIGHT
 #if FX_ATLEAST_45

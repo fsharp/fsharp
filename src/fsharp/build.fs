@@ -4473,7 +4473,7 @@ module private ScriptPreprocessClosure =
         let isInteractive = (codeContext = CodeContext.Evaluation)
         let isInvalidationSupported = (codeContext = CodeContext.Editing)
         
-        let tcConfigB = TcConfigBuilder.CreateNew(Internal.Utilities.FSharpEnvironment.BinFolderOfDefaultFSharpCompiler.Value, true (* optimize for memory *), projectDir, isInteractive, isInvalidationSupported) 
+        let tcConfigB = TcConfigBuilder.CreateNew(Internal.Utilities.FSharpEnvironment.BinFolderOfDefaultFSharpCompiler().Value, true (* optimize for memory *), projectDir, isInteractive, isInvalidationSupported) 
         BasicReferencesForScriptLoadClosure |> List.iter(fun f->tcConfigB.AddReferencedAssemblyByPath(range0,f)) // Add script references
         tcConfigB.resolutionEnvironment <-
             match codeContext with 
