@@ -12,6 +12,8 @@ if test "x$PKG_CONFIG" = "xno"; then
         AC_MSG_ERROR([You need to install pkg-config])
 fi
 
+AC_PATH_PROG(MONO_SGEN, mono-sgen, no)
+
 # PKG_CHECK_MODULES([MONO], [mono >= 2.9])
 # 
 # PKG_CHECK_MODULES([MONO_2_12],
@@ -54,6 +56,14 @@ if ! test -e $MONODIR/2.0/mscorlib.dll; then
 	AC_ERROR(Couldn't find the mono gac directory or mscorlib.dll in the usual places. Set --with-gacdir=<path>)
 fi
 AC_SUBST(MONODIR)
+
+if test "x$MONO_SGEN" = "xno"; then
+	mono_gc_options=
+else
+	mono_gc_options=--gc=sgen
+fi
+
+AC_SUBST(mono_gc_options)
 
 
 AC_CONFIG_FILES([

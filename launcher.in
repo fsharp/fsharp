@@ -16,5 +16,15 @@ if test x$1 = x--valgrind; then
   EXEC="valgrind $VALGRIND_OPTIONS"   
 fi
 
+MONO_GC_OPTIONS=@mono_gc_options@
+if test x$1 = x--gc=boehm; then
+  shift
+  MONO_GC_OPTIONS=--gc=boehm   
+fi
 
-$EXEC mono $DEBUG $MONO_OPTIONS @DIR@/@TOOL@ $@
+# Beware this line must match the regular expression " (\/.*)\/fsi\.exe" when @TOOL@ is fsi.exe.
+# That's because the FSharp MonoDevelop addin looks inside the text of this script to determine the installation
+# location of the default FSharp install in order to find the FSharp compiler binaries (see 
+# fsharpbinding/MonoDevelop.FSharpBinding/Services/CompilerLocationUtils.fs). That's a pretty unfortunate
+# way of finding those binaries. And really should be changed.
+$EXEC mono $DEBUG $MONO_OPTIONS $MONO_GC_OPTIONS @DIR@/@TOOL@ $@
