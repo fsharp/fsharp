@@ -17,8 +17,15 @@ Copyright (C) Microsoft Corporation. All rights reserved.
 
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
-    <UsingTask TaskName="Fsc" AssemblyFile="FSharp.Build.dll"/>
-    <UsingTask TaskName="CreateFSharpManifestResourceName" AssemblyFile="FSharp.Build.dll"/>
+
+    <UsingTask TaskName="Fsc" AssemblyFile="FSharp.Build.dll" Condition="Exists('$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll')" />
+    <UsingTask TaskName="CreateFSharpManifestResourceName" AssemblyFile="FSharp.Build.dll" Condition="Exists('$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll')" />
+
+    <!-- The next two are for when the ToolsVersion is 3.5, i.e. we're referencing .NET 2.0 -->
+    <UsingTask TaskName="Fsc" AssemblyFile="$(MSBuildExtensionsPath32)\..\2.0\FSharp.Build.dll" Condition="!Exists('$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll') AND Exists('$(MSBuildExtensionsPath32)\..\2.0\FSharp.Build.dll')" />
+    <UsingTask TaskName="CreateFSharpManifestResourceName" AssemblyFile="$(MSBuildExtensionsPath32)\..\2.0\FSharp.Build.dll" Condition="!Exists('$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll') AND Exists('$(MSBuildExtensionsPath32)\..\2.0\FSharp.Build.dll')" />
+
+
 
 
     <PropertyGroup>
@@ -97,7 +104,6 @@ Copyright (C) Microsoft Corporation. All rights reserved.
     </ItemGroup>
 
     <PropertyGroup>
-		<CreateManifestResourceNamesDependsOn></CreateManifestResourceNamesDependsOn>
 		<CoreCompileDependsOn></CoreCompileDependsOn>
     </PropertyGroup>
 
