@@ -114,6 +114,7 @@ Copyright (C) Microsoft Corporation. All rights reserved.
                 @(Compile);                               
                 @(CompileAfter);
                 @(_CoreCompileResourceInputs);
+                @(ManifestNonResxWithNoCultureOnDisk);
                 $(ApplicationIcon);
                 $(AssemblyOriginatorKeyFile);
                 @(ReferencePath);
