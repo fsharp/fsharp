@@ -438,7 +438,7 @@ type FsiCommandLineOptions(argv: string[], tcConfigB, fsiConsoleOutput: FsiConso
        // Mono on Win32 doesn't implement correct console processing
        not (runningOnMono && System.Environment.OSVersion.Platform = System.PlatformID.Win32NT) 
 #if MONO
-    let mutable gui        = false // override via "--gui", on by default
+    let mutable gui        = false // override via "--gui", off by default
 #else
     let mutable gui        = true // override via "--gui", on by default
 #endif
@@ -458,7 +458,11 @@ type FsiCommandLineOptions(argv: string[], tcConfigB, fsiConsoleOutput: FsiConso
 
     // internal options  
     let mutable probeToSeeIfConsoleWorks         = true 
+#if MONO
+    let mutable peekAheadOnConsoleToPermitTyping = false
+#else
     let mutable peekAheadOnConsoleToPermitTyping = true   
+#endif
 
     let isInteractiveServer() = fsiServerName <> ""  
     let recordExplicitArg arg = explicitArgs <- explicitArgs @ [arg]
@@ -726,13 +730,17 @@ type FsiConsoleInput(fsiOptions: FsiCommandLineOptions, inReader: TextReader, ou
 #else
     let consoleLooksOperational() =
         if fsiOptions.ProbeToSeeIfConsoleWorks then 
+            if !progress then fprintfn outWriter "probing to see if console works..."
             try
                 // Probe to see if the console looks functional on this version of .NET
                 let _ = Console.KeyAvailable 
-                let _ = Console.ForegroundColor
+                let c1 = Console.ForegroundColor
+                let c2 = Console.BackgroundColor
                 let _ = Console.CursorLeft <- Console.CursorLeft
-                true
+                if !progress then fprintfn outWriter "probe succeeded, we might have a console, comparing foreground (%A) and background (%A) colors, if they are the same then we're running in emacs or VS on unix and we turn off readline by default..." c1 c2
+                c1 <> c2
             with _ -> 
+                if !progress then fprintfn outWriter "probe failed, we have no console..."
                 (* warning(Failure("Note: there was a problem setting up custom readline console support. Consider starting fsi.exe with the --no-readline option")); *)
                 false
         else
@@ -780,6 +788,7 @@ type FsiConsoleInput(fsiOptions: FsiCommandLineOptions, inReader: TextReader, ou
             )).Start()
          else
 #endif                  
+           if !progress then fprintfn outWriter "first-line-reader-thread not in use."
            consoleReaderStartupDone.Set() |> ignore
 
     /// Try to get the first line, if we snarfed it while probing.
@@ -1548,6 +1557,7 @@ type FsiStdinLexerProvider(tcConfigB, fsiStdinSyphon,
     let LexbufFromLineReader (fsiStdinSyphon: FsiStdinSyphon) readf = 
         UnicodeLexing.FunctionAsLexbuf 
           (fun (buf: char[], start, len) -> 
+            if !progress then printfn "calling readf..."
             //fprintf fsiConsoleOutput.Out "Calling ReadLine\n";
             let inputOption = try Some(readf()) with :? EndOfStreamException -> None
             inputOption |> Option.iter (fun t -> fsiStdinSyphon.Add (t + "\n"));
@@ -1596,9 +1606,14 @@ type FsiStdinLexerProvider(tcConfigB, fsiStdinSyphon,
                 LexbufFromLineReader fsiStdinSyphon (fun () -> 
                     match fsiConsoleInput.TryGetFirstLine() with 
                     | Some firstLine -> firstLine
-                    | None -> console.ReadLine())
+                    | None -> 
+                          if !progress then printfn "have console... calling ReadLine..."
+                          console.ReadLine())
             | _ -> 
-                LexbufFromLineReader fsiStdinSyphon (fun () -> fsiConsoleInput.In.ReadLine() |> removeZeroCharsFromString)
+              
+               LexbufFromLineReader fsiStdinSyphon (fun () -> 
+                   if !progress then printfn "no console... calling ReadLine..."
+                   fsiConsoleInput.In.ReadLine() |> removeZeroCharsFromString)
 #endif                
 
         fsiStdinSyphon.Reset();
@@ -1667,6 +1682,7 @@ type FsiInteractionProcessor(tcConfigB,
                     Parser.interaction lexerWhichSavesLastToken tokenizer.LexBuffer)
             Some input
         with e ->
+            if !progress then fprintfn fsiConsoleOutput.Out "Error in ParseInteraction: %s" (e.ToString())
             // On error, consume tokens until to ;; or EOF.
             // Caveat: Unless the error parse ended on ;; - so check the lastToken returned by the lexer function.
             // Caveat: What if this was a look-ahead? That's fine! Since we need to skip to the ;; anyway.     
@@ -2409,8 +2425,10 @@ type internal FsiEvaluationSession (argv:string[], inReader:TextReader, outWrite
 
       DriveFsiEventLoop fsiConsoleOutput 
 #else        
+        progress := condition "FSHARP_INTERACTIVE_PROGRESS"
         // Update the console completion function now we've got an initial type checking state.
         // This means completion doesn't work until the initial type checking state has finished loading - fair enough!
+        if !progress then fprintfn fsiConsoleOutput.Out "Run: Calling TryGetConsole"
         match fsiConsoleInput.TryGetConsole() with 
         | Some console when fsiOptions.EnableConsoleKeyProcessing -> 
             console.SetCompletionFunction(fun (s1,s2) -> fsiIntellisenseProvider.CompletionsForPartialLID !istateRef (match s1 with | Some s -> s + "." + s2 | None -> s2)  |> Seq.ofList)
@@ -2430,7 +2448,10 @@ type internal FsiEvaluationSession (argv:string[], inReader:TextReader, outWrite
                     errorLogger.AbortOnError()
                 )
 
+
         if fsiOptions.Interact then 
+
+            if !progress then fprintfn fsiConsoleOutput.Out "Run: Interact..."
             // page in the type check env 
             istateRef := fsiInteractionProcessor.LoadDummyInteraction !istateRef
             if !progress then fprintfn fsiConsoleOutput.Out "MAIN: InstallKillThread!";
@@ -2479,7 +2500,9 @@ type internal FsiEvaluationSession (argv:string[], inReader:TextReader, outWrite
             DriveFsiEventLoop fsiConsoleOutput 
 
         else // not interact
+            if !progress then fprintfn fsiConsoleOutput.Out "Run: not interact, loading intitial files..."
             istateRef := fsiInteractionProcessor.LoadInitialFiles (false, !istateRef)
+            if !progress then fprintfn fsiConsoleOutput.Out "Run: done..."
             exit (min errorLogger.ErrorCount 1)
 
         // The Ctrl-C exception handler that we've passed to native code has
