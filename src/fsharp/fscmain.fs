@@ -170,8 +170,13 @@ module FSharpResidentCompiler =
             :?> FSharpCompilationServer 
 
         static member TryCompileUsingServer(fscServerExe,argv) =
+            // Enable these lines to write a log file, e.g. when running under xbuild
+            //let os = System.IO.File.CreateText "/tmp/fsc-client-log"
+            //let printfn fmt = Printf.kfprintf (fun () -> fprintfn os ""; os.Flush()) os fmt
+            progress := !progress ||  condition "FSHARP_SERVER_PROGRESS"
             let pwd = System.Environment.CurrentDirectory
             let clientOpt = 
+                if !progress then printfn "client: creating client"
                 // Detect the absence of the channel via the exception. Probably not the best way.
                 // Different exceptions get thrown here on Mono and Windows.
                 let client = FSharpCompilationServer.ConnectToServer()
@@ -181,23 +186,19 @@ module FSharpResidentCompiler =
                     if !progress then printfn "client: connected to existing service"
                     Some client
                 with _ ->
+                    if !progress then printfn "client: error while creating client, starting client instead"
                     let procInfo = 
                         if runningOnMono then
                             let shellName, useShellExecute = 
                                 match System.Environment.GetEnvironmentVariable("FSC_MONO") with 
                                 | null -> 
                                     if onWindows then 
+                                        // e.g. "C:\Program Files\Mono-2.6.1\lib\mono\2.0\mscorlib.dll" --> "C:\Program Files\Mono-2.6.1\bin\mono.exe"
                                         Path.Combine(Path.GetDirectoryName (typeof<Object>.Assembly.Location), @"..\..\..\bin\mono.exe"), false
                                     else
-                                        // create some garbage
-                                        for i in 0..1000 do [ 0 .. i ] |> ignore
-                                        // test if we're using mono-sgen
-                                        let notUsingMonoSGEN =   (System.GC.CollectionCount(0) = System.GC.CollectionCount(1)) 
-                                        let target = if notUsingMonoSGEN then "mono" else "mono-sgen"
-                                        target, true
-                                | path -> path, false
+                                        "mono-sgen", true
+                                | path -> path, true
                                      
-                            // e.g. "C:\Program Files\Mono-2.6.1\lib\mono20\mscorlib.dll" --> "C:\Program Files\Mono-2.6.1\bin\mono.exe"
                             ProcessStartInfo(FileName = shellName,
                                              Arguments = fscServerExe + " /server",
                                              CreateNoWindow = true,
@@ -218,6 +219,7 @@ module FSharpResidentCompiler =
                      
                     // Create the client proxy and attempt to connect to the server
                     let rec tryAcccesServer nRemaining =
+                        if !progress then printfn "client: trying to access server, nRemaining = '%d'" nRemaining
                         if nRemaining = 0 then 
                             // Failed to connect to server, give up 
                             None
