@@ -15,7 +15,7 @@ module internal FSharpEnvironment =
     let DotNetBuildString = "(private)"
 #endif
 #if STRONG_NAME_AND_DELAY_SIGN_FSHARP_COMPILER_WITH_MSFT_KEY
-    let DotNetBuildString = "(Mono build)"
+    let DotNetBuildString = "(Open Source Edition)"
 #endif
 #if STRONG_NAME_FSHARP_COMPILER_WITH_TEST_KEY
     let DotNetBuildString = "(private, test-signed)"
