@@ -458,11 +458,8 @@ type FsiCommandLineOptions(argv: string[], tcConfigB, fsiConsoleOutput: FsiConso
 
     // internal options  
     let mutable probeToSeeIfConsoleWorks         = true 
-#if MONO
-    let mutable peekAheadOnConsoleToPermitTyping = false
-#else
     let mutable peekAheadOnConsoleToPermitTyping = true   
-#endif
+
 
     let isInteractiveServer() = fsiServerName <> ""  
     let recordExplicitArg arg = explicitArgs <- explicitArgs @ [arg]
