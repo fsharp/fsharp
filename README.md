@@ -36,6 +36,12 @@ To build the FSharp.Core.dll for [Mono for Android](http://xamarin.com/monoforan
 make do-2-1
 ```
 
+You can also build using xbuild:
+```
+cd src
+xbuild fsharp-build.proj
+```
+though we haven't verified the binaries produced this way are 100% usable.
 
 ## Notes
 
