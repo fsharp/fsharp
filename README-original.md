@@ -31,11 +31,19 @@ When you build the compiler using the standard instructions below, you get `fsc.
 The compiler binaries produced are "private" and strong-named signed with a test key (`src\fsharp\test.snk`). They use CLI assembly version nunmber **2.9.9.999**. You can place these components in the GAC but they will not replace the components used by normal Visual Studio or normal F# programs.
 
 
-##Steps - Building a Proto Compiler
+##Building Everything
+
+To just build everything use:
+```
+cd src 
+msbuild fsharp-build.proj 
+```
+If on Mono, use 'xbuild' instead of 'msbuild'
+
+##Step by step - Building a Proto Compiler
 
 ```
 cd src 
-gacutil /i ..\lkg\FSharp-2.0.50726.900\bin\FSharp.Core.dll
 msbuild fsharp-proto-build.proj /p:TargetFramework=net40
 ```
 
