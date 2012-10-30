@@ -485,5 +485,5 @@
                           '$(TargetFramework)' == 'sl3-wp')"/>
   </Target>
 
-  <Import Project="$(LkgPath)\..\2.0\FSharp.SRGen.targets" />
+  <Import Project="$(LkgPath)\..\FSharp.SRGen.Buiild.Tasks\FSharp.SRGen.targets" />
 </Project>
