@@ -453,10 +453,13 @@
 
 
 
+  <!-- Include the proto targets file when building the final compiler suing the proto -->
   <Import Project="..\Proto\$(protoCLIDir)\bin\Microsoft.FSharp-proto.targets" 
-          Condition="'$(BuildWith)' == '' AND '$(ProjectLanguage)' == 'FSharp' "/>
+          Condition="Exists('..\Proto\$(protoCLIDir)\bin\Microsoft.FSharp-proto.targets') AND '$(BuildWith)' == '' AND '$(ProjectLanguage)' == 'FSharp' "/>
+  <!-- Include the bootstrap targets file when building the proto compiler using the bootstrap -->
+  <!-- Also include it if Proto targets file doesn't exist, e.g. when cleaning the build with /t:Clean -->
   <Import Project="$(LkgPath)\Microsoft.FSharp.targets"  
-          Condition="'$(BuildWith)' == 'LKG' AND '$(ProjectLanguage)' == 'FSharp'" />
+          Condition="(!Exists('..\Proto\$(protoCLIDir)\bin\Microsoft.FSharp-proto.targets')  OR '$(BuildWith)' == 'LKG') AND '$(ProjectLanguage)' == 'FSharp')" />
   <Import Project="Silverlight\$(SilverlightVersion)\FSharpSource.Silverlight.Common.targets"
           Condition="'$(TargetFramework)'=='sl3' or '$(TargetFramework)'=='sl4' or '$(TargetFramework)'=='sl5' or '$(TargetFramework)'=='sl5-compiler'"/>
 
