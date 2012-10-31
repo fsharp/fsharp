@@ -18,7 +18,7 @@ module internal FSharpEnvironment =
     let DotNetBuildString = "(Open Source Edition)"
 #endif
 #if STRONG_NAME_FSHARP_COMPILER_WITH_TEST_KEY
-    let DotNetBuildString = "(private, test-signed)"
+    let DotNetBuildString = "(Open Source Edition)"
 #endif
 
     // The F# binary format revision number. The first three digits of this form the significant part of the 
