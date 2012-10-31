@@ -25,18 +25,25 @@
     <VersionFile Condition="'$(TargetFramework)' == 'net40'">$(FSharpSourcesRoot)\source-build-version-4.3.0.0</VersionFile>
   </PropertyGroup>
 
-  <!-- We sign with the Microsoft key and use delay-signing. -->
+  <!-- We sign FSharp.Core with the Microsoft key and use delay-signing. -->
   <!-- These can then be signed with the special mono.snk (we don't do this as part of this build, -->
   <!-- but it can be done manually later, e.g. on the target machine). This is how the Mono team build the binaries -->
   <!-- at github.com/fsharp/fsharp and how they are shipped with Mono -->
   <!-- -->
   <!-- However FSharp.Core must use the Microsoft key name, otherwise the compiler can't load type provider components. -->
 
-  <PropertyGroup Condition="'$(Configuration)'=='Debug' OR '$(Configuration)'=='Release'">
+  <PropertyGroup Condition="('$(Configuration)'=='Debug' OR '$(Configuration)'=='Release') AND ('$(AssemblyName)'=='FSharp.Core')">
     <DefineConstants>STRONG_NAME_AND_DELAY_SIGN_FSHARP_COMPILER_WITH_MSFT_KEY;$(DefineConstants)</DefineConstants>
     <OtherFlags>$(OtherFlags) --delaysign+ --keyfile:$(FSharpSourcesRoot)\fsharp\msft.pubkey</OtherFlags>
     <StrongNames>true</StrongNames>
   </PropertyGroup>
+
+  <PropertyGroup Condition="('$(Configuration)'=='Debug' OR '$(Configuration)'=='Release') AND ('$(AssemblyName)'!='FSharp.Core')">
+    <DefineConstants>STRONG_NAME_FSHARP_COMPILER_WITH_TEST_KEY;$(DefineConstants)</DefineConstants>
+    <OtherFlags>$(OtherFlags) --keyfile:$(FSharpSourcesRoot)\fsharp\test.snk</OtherFlags>
+    <StrongNames>true</StrongNames>
+  </PropertyGroup>
+
 
   <!-- For the proto build and exotic framework implementations, we don't use strong names. For non-exotic framework implementations, this gets adjusted below -->
   <PropertyGroup Condition="'$(StrongNames)' != 'true'">

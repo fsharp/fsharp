@@ -52,10 +52,14 @@ FLAGS = \
 	--times \
 	--nowarn:9
 
-FINAL_FLAGS = \
+DELAY_SIGN_FLAGS = \
 	--define:STRONG_NAME_AND_DELAY_SIGN_FSHARP_COMPILER_WITH_MSFT_KEY \
 	--delaysign+ \
 	--keyfile:$(topdir)msfinal.pub
+
+SIGN_FLAGS = \
+	--define:STRONG_NAME_FSHARP_COMPILER_WITH_TEST_KEY \
+	--keyfile:$(topdir)/src/fsharp/test.snk
 
 DEFINES_GENERAL = \
 	--define:TRACE \
