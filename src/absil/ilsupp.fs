@@ -1401,7 +1401,13 @@ let getICLRStrongName () =
         sn
     | Some(sn) -> sn
 
-let signerGetPublicKeyForKeyPair kp =
+let signerGetPublicKeyForKeyPair (kp:byte[])  =
+ if IL.runningOnMono then 
+    let snt = System.Type.GetType("Mono.Security.StrongName") 
+    let sn = System.Activator.CreateInstance(snt, [| box kp |])
+    snt.InvokeMember("PublicKey", (BindingFlags.GetProperty ||| BindingFlags.Instance ||| BindingFlags.Public), null, sn, [| |], Globalization.CultureInfo.InvariantCulture) :?> byte[] 
+
+ else
     let mutable pSize = 0u
     let mutable pBuffer : nativeint = (nativeint)0
     let iclrSN = getICLRStrongName()
@@ -1414,6 +1420,9 @@ let signerGetPublicKeyForKeyPair kp =
     keybuffer
 
 let signerGetPublicKeyForKeyContainer kc =
+ if IL.runningOnMono then 
+    failwith "the use of key containers for strong name signing is not yet supported when running on Mono"
+ else
     let mutable pSize = 0u
     let mutable pBuffer : nativeint = (nativeint)0
     let iclrSN = getICLRStrongName()
@@ -1425,6 +1434,9 @@ let signerGetPublicKeyForKeyContainer kc =
     keybuffer
  
 let signerCloseKeyContainer kc = 
+ if IL.runningOnMono then 
+    failwith "the use of key containers for strong name signing is not yet supported when running on Mono"
+ else
     let iclrSN = getICLRStrongName()
     iclrSN.StrongNameKeyDelete(kc) |> ignore
 
@@ -1439,10 +1451,11 @@ let signerSignatureSize (pk:byte[]) =
 
 let signerSignFileWithKeyPair fileName (kp:byte[]) = 
  if IL.runningOnMono then 
-    let sn = System.Type.GetType("Mono.Security.StrongName") 
+    let snt = System.Type.GetType("Mono.Security.StrongName") 
+    let sn = System.Activator.CreateInstance(snt, [| box kp |])
     let conv (x:obj) = if (unbox x : bool) then 0 else -1
-    sn.GetType().InvokeMember("Sign", (BindingFlags.InvokeMethod ||| BindingFlags.Instance ||| BindingFlags.Public), null, sn, [| box fileName |], Globalization.CultureInfo.InvariantCulture) |> conv |> check "Sign"
-    sn.GetType().InvokeMember("Verify", (BindingFlags.InvokeMethod ||| BindingFlags.Instance ||| BindingFlags.Public), null, sn, [| box fileName |], Globalization.CultureInfo.InvariantCulture) |> conv |> check "Verify"
+    snt.InvokeMember("Sign", (BindingFlags.InvokeMethod ||| BindingFlags.Instance ||| BindingFlags.Public), null, sn, [| box fileName |], Globalization.CultureInfo.InvariantCulture) |> conv |> check "Sign"
+    snt.InvokeMember("Verify", (BindingFlags.InvokeMethod ||| BindingFlags.Instance ||| BindingFlags.Public), null, sn, [| box fileName |], Globalization.CultureInfo.InvariantCulture) |> conv |> check "Verify"
  else
     let mutable pcb = 0u
     let mutable ppb = (nativeint)0
@@ -1452,6 +1465,9 @@ let signerSignFileWithKeyPair fileName (kp:byte[]) =
     iclrSN.StrongNameSignatureVerificationEx(fileName, true, &ok) |> ignore
 
 let signerSignFileWithKeyContainer fileName kcName =
+ if IL.runningOnMono then 
+    failwith "the use of key containers for strong name signing is not yet supported when running on Mono"
+ else
     let mutable pcb = 0u
     let mutable ppb = (nativeint)0
     let mutable ok = false

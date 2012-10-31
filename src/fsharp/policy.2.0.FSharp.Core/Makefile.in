@@ -1,6 +1,6 @@
 NAME=policy.2.0.FSharp.Core
 ASSEMBLY = $(NAME).dll
-SIGN=1
+DELAY_SIGN=1
 
 srcdir := @abs_srcdir@/
 

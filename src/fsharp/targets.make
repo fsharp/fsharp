@@ -53,7 +53,7 @@ do-2-0: $(objdir) $(objdir)$(TARGET_2_0) $(objdir)$(TARGET_4_0) $(objdir)$(TARGE
 	@if test -e $(objdir)$(NAME).optdata; then \
 		cp $(objdir)$(NAME).optdata $(outdir); \
 	fi
-	@if test "x$(SIGN)" = "x1"; then \
+	@if test "x$(DELAY_SIGN)" = "x1"; then \
 		sn -q -R $(outdir)$(ASSEMBLY) $(srcdir)../../../mono.snk; \
 	fi
 	@if test -e Microsoft.FSharp.targets; then \
@@ -81,7 +81,7 @@ do-2-1: $(objdir) $(objdir)$(TARGET_2_1) $(objdir)$(TARGET_4_0) $(objdir)$(TARGE
 	@if test -e $(objdir)$(NAME).optdata; then \
 		cp $(objdir)$(NAME).optdata $(outdir); \
 	fi
-	@if test "x$(SIGN)" = "x1"; then \
+	@if test "x$(DELAY_SIGN)" = "x1"; then \
 		sn -q -R $(outdir)$(ASSEMBLY) $(srcdir)../../../mono.snk; \
 	fi
 	@if test -e Microsoft.FSharp.targets; then \
@@ -109,7 +109,7 @@ do-4-0: $(objdir) $(objdir)$(TARGET_2_0) $(objdir)$(TARGET_4_0) $(objdir)$(TARGE
 	@if test -e $(objdir)$(NAME).optdata; then \
 		cp $(objdir)$(NAME).optdata $(outdir); \
 	fi
-	@if test "x$(SIGN)" = "x1"; then \
+	@if test "x$(DELAY_SIGN)" = "x1"; then \
 		sn -q -R $(outdir)$(ASSEMBLY) $(srcdir)../../../mono.snk; \
 	fi
 	@if test -e Microsoft.FSharp.targets; then \
