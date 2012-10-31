@@ -30,7 +30,7 @@ module internal FSharpEnvironment =
 #if SILVERLIGHT
     let Get32BitRegistryStringValueViaPInvoke(_subKey:string) = 
         None
-    let BinFolderOfDefaultFSharpCompiler = 
+    let BinFolderOfDefaultFSharpCompiler(pathProbe) = 
         Some ""
 #else
 
@@ -211,6 +211,9 @@ module internal FSharpEnvironment =
         // otherwise look in the standard place
         "/usr" ]
 
+    let safeExists f = (try File.Exists(f) with _ -> false)
+
+
     // The default location of FSharp.Core.dll and fsc.exe based on the version of fsc.exe that is running
   // Used for
   //   - location of design-time copies of FSharp.Core.dll and FSharp.Compiler.Interactive.Settings.dll for the default assumed environment for scripts
@@ -218,7 +221,7 @@ module internal FSharpEnvironment =
   //   - default F# binaries directory in service.fs (REVIEW: check this)
   //   - default location of fsi.exe in FSharp.VS.FSI.dll
   //   - default location of fsc.exe in FSharp.Compiler.CodeDom.dll
-    let BinFolderOfDefaultFSharpCompiler() = 
+    let BinFolderOfDefaultFSharpCompiler(probePoint:string option) = 
     // Check for an app.config setting to redirect the default compiler location
     // Like fsharp-compiler-location
      try 
@@ -228,6 +231,11 @@ module internal FSharpEnvironment =
       match result with 
       | Some _ ->  result 
       | None -> 
+
+        // Look in the probePoint if given, e.g. look for a compiler alongside of FSharp.Build.dll
+        match probePoint with 
+        | Some p when safeExists (Path.Combine(p,"fsc.exe")) || safeExists (Path.Combine(p,"Fsc.exe")) -> Some p 
+        | _ -> 
 
         // On windows the location of the compiler is via a registry key
         let key20 = @"Software\Microsoft\FSharp\2.0\Runtime\v4.0"
@@ -265,7 +273,6 @@ module internal FSharpEnvironment =
         let result = 
             BackupInstallationProbePoints |> List.tryPick (fun x -> 
                //printfn "Resolution" "BinFolderOfDefaultFSharpCore: Probing  %s" x
-               let safeExists f = (try File.Exists(f) with _ -> false)
                let file f = Path.Combine(Path.Combine(x,"bin"),f)
                let exists f = safeExists(file f)
                match (if exists "fsc" && exists "fsi" then tryFsharpiScript (file "fsi") else None) with
