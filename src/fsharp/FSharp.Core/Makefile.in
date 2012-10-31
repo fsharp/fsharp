@@ -1,6 +1,6 @@
 NAME=FSharp.Core
 ASSEMBLY = $(NAME).dll
-SIGN=1
+DELAY_SIGN=1
 
 srcdir := @abs_srcdir@/
 
@@ -9,7 +9,7 @@ include @abs_top_builddir@/config.make
 FSC=$(protodir)fsc-proto.exe
 
 FLAGS_2_0 += \
-	$(FINAL_FLAGS) \
+	$(DELAY_SIGN_FLAGS) \
 	--compiling-fslib \
 	--nowarn:75,1204 \
 	--target:library \
@@ -17,14 +17,14 @@ FLAGS_2_0 += \
 	--extraoptimizationloops:1 
 
 FLAGS_2_1 += \
-	$(FINAL_FLAGS) \
+	$(DELAY_SIGN_FLAGS) \
 	--compiling-fslib \
 	--nowarn:75,1204 \
 	--target:library \
 	--extraoptimizationloops:1 
 
 FLAGS_4_0 += \
-	$(FINAL_FLAGS) \
+	$(DELAY_SIGN_FLAGS) \
 	--compiling-fslib \
 	--nowarn:75,1204 \
 	--target:library \
