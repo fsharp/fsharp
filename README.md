@@ -44,8 +44,14 @@ xbuild fsharp-build.proj
 However the binaries produced are NOT yet usable because they are not correcy strong-name signed. Further, building using
 xbuild does not create a Mono-ready distribution (see src/fsharp/targets.make).
 
-## Notes
+## Development notes
+
+We have a CI build set up with the JetBrains/Teamcity server as part of the F# community projects there:
+
+http://teamcity.codebetter.com/project.html?projectId=project61&tab=projectOverview
+
+@forki controls access. Right now this builds both a Mono 'make' install  and a Windows 'cd src; msbuild fsharp-build.proj' build.  No binaries are saved from  the build, it is just for sanity checking.
 
 Uses bootstrapping libraries, tools and F# compiler. The `lib/bootstrap/X.0` directories contain mono-built libraries, compiler and tools that can be used to bootstrap a build. You can also supply your own via the `--with-bootstrap` option.
 
-F# original powerpack sources are available from [fsharppowerpack.codeplex.com](http://fsharppowerpack.codeplex.com).
+F# compiler sources dropped by Microsoft are available from [fsharppowerpack.codeplex.com](http://fsharppowerpack.codeplex.com).
