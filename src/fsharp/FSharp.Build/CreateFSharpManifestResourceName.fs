@@ -43,8 +43,8 @@ type CreateFSharpManifestResourceName public () =
         // since we do not support resources dependent on a form, we always pass null for a binary stream 
         // rootNamespace is always empty - we do not support it
         let cSharpResult = base.CreateManifestName(fileName, linkFileName,  "", dependentUponFileName, null)
-        printfn "(fileName,linkFileName,embeddedFileName,rootNamespace) = '%A'" (fileName, linkFileName, embeddedFileName, rootNamespace)
-        printfn "cSharpResult = '%s'" cSharpResult
+        //printfn "(fileName,linkFileName,embeddedFileName,rootNamespace) = '%A'" (fileName, linkFileName, embeddedFileName, rootNamespace)
+        //printfn "cSharpResult = '%s'" cSharpResult
         // Workaround that makes us keep .resources extension on both 3.5 and 3.5SP1
         // 3.5 stripped ".resources", 3.5 SP1 does not. We should do 3.5SP1  thing
         let extensionToWorkaround = ".resources"
@@ -55,7 +55,7 @@ type CreateFSharpManifestResourceName public () =
           else
             cSharpResult
 
-        printfn "fSharpResult = '%s'" fSharpResult
+        //printfn "fSharpResult = '%s'" fSharpResult
         fSharpResult
             
         
