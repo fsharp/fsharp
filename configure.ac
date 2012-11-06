@@ -13,7 +13,7 @@ if test "x$PKG_CONFIG" = "xno"; then
 fi
 
 MONO_REQUIRED_VERSION=2.9
-MONO_RECOMMENDED_VERSION=2.11.5
+MONO_RECOMMENDED_VERSION=3.0
 
 if ! pkg-config --atleast-version=$MONO_REQUIRED_VERSION mono; then
 	AC_MSG_ERROR("You need mono $MONO_REQUIRED_VERSION")
