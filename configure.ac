@@ -12,16 +12,18 @@ if test "x$PKG_CONFIG" = "xno"; then
         AC_MSG_ERROR([You need to install pkg-config])
 fi
 
-AC_PATH_PROG(MONO_SGEN, mono-sgen, no)
+MONO_REQUIRED_VERSION=2.9
+MONO_RECOMMENDED_VERSION=2.11.5
 
-# PKG_CHECK_MODULES([MONO], [mono >= 2.9])
-# 
-# PKG_CHECK_MODULES([MONO_2_12],
-# 	[mono >= 2.11.5], HAVE_MONO_2_12_OR_HIGHER=yes, HAVE_MONO_2_12_OR_HIGHER=no)
-# 
-# if test "x$HAVE_MONO_2_12_OR_HIGHER" = "xno" ; then
-# 	AC_MSG_WARN([Mono 2.11.5 or higher is recommended, for better MSBuild (xbuild) compatibility])
-# fi
+if ! pkg-config --atleast-version=$MONO_REQUIRED_VERSION mono; then
+	AC_MSG_ERROR("You need mono $MONO_REQUIRED_VERSION")
+fi
+
+if ! pkg-config --atleast-version=$MONO_RECOMMENDED_VERSION mono; then
+	AC_MSG_WARN([Mono $MONO_RECOMMENDED_VERSION or higher is recommended, for better MSBuild (xbuild) compatibility])
+fi
+
+AC_PATH_PROG(MONO_SGEN, mono-sgen, no)
 
 # Checks for libraries.
 
