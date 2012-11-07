@@ -399,8 +399,10 @@ type [<Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:Iden
         // BaseAddress
         builder.AppendSwitchIfNotNull("--baseaddress:", baseAddress)
         // DefineConstants
-        for item in defineConstants do
-            builder.AppendSwitchIfNotNull("--define:", item.ItemSpec)          
+        if defineConstants <> null then 
+         for item in defineConstants do
+          if item <> null && item.ItemSpec <> null then 
+           builder.AppendSwitchIfNotNull("--define:", item.ItemSpec)          
         // DocumentationFile
         builder.AppendSwitchIfNotNull("--doc:", documentationFile)
         // GenerateInterfaceFile
