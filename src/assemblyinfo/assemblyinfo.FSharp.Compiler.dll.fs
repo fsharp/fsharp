@@ -5,7 +5,7 @@ open System.Reflection
 [<assembly:AssemblyDescription("FSharp.Compiler.dll")>]
 [<assembly:AssemblyCompany("Microsoft Corporation")>]
 [<assembly:AssemblyTitle("FSharp.Compiler.dll")>]
-[<assembly:AssemblyCopyright("\169 Microsoft Corporation.  All rights reserved.")>]
+[<assembly:AssemblyCopyright("\169 Microsoft Corporation.  Apache 2.0 License.")>]
 [<assembly:AssemblyProduct("Microsoft\174 F#")>]
 #if NO_STRONG_NAMES
 [<assembly:System.Runtime.CompilerServices.InternalsVisibleTo("fsc")>]
