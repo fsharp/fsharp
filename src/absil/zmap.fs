@@ -1,4 +1,4 @@
-(* (c) Microsoft Corporation. All rights reserved  *)
+(* (c) Microsoft Corporation. Apache 2.0 License  *)
 
 
 namespace Microsoft.FSharp.Compiler.AbstractIL.Internal

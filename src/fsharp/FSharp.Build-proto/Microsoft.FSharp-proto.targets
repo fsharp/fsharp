@@ -11,7 +11,7 @@ For example, it contains the step that actually calls the F# compiler.  The rema
 of the build process is defined in Microsoft.Common.targets, which is imported by 
 this file.
 
-Copyright (C) Microsoft Corporation. All rights reserved.
+Copyright (C) Microsoft Corporation. Apache 2.0 License.
 ***********************************************************************************************
 -->
 
