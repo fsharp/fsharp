@@ -1,4 +1,4 @@
-(* (c) Microsoft Corporation. All rights reserved  *)
+(* (c) Microsoft Corporation. Apache 2.0 License  *)
 
 /// Internal use only.  Erase closures
 module internal Microsoft.FSharp.Compiler.AbstractIL.Extensions.ILX.EraseIlxFuncs
