@@ -173,12 +173,12 @@ $(tmpdir)illex.fs: ../../absil/illex.fsl
 	cp -p $(tmpdir)illex.fs* ../FSharp.Compiler/.libs/
 
 $(tmpdir)pars.fs: ../pars.fsy
-	mono $(MONO_OPTIONS) $(FSYACC) $< -o $@ --internal --open Microsoft.FSharp.Compiler --module Microsoft.FSharp.Compiler.Parser --lexlib Internal.Utilities.Text.Lexing --parslib Internal.Utilities.Text.Parsing
+	mono $(MONO_OPTIONS) $(FSYACC) $< -o $@ --internal --open Microsoft.FSharp.Compiler --module Microsoft.FSharp.Compiler.Parser --lexlib Internal.Utilities.Text.Lexing --parslib Internal.Utilities.Text.Parsing | tee $@.report | grep  "time"
 	@-mkdir -p ../FSharp.Compiler/.libs/
 	cp -p $(tmpdir)pars.fs* ../FSharp.Compiler/.libs/
 
 $(tmpdir)ilpars.fs: ../../absil/ilpars.fsy
-	mono $(MONO_OPTIONS) $(FSYACC) $< -o $@ --internal --module Microsoft.FSharp.Compiler.AbstractIL.Internal.AsciiParser --lexlib Internal.Utilities.Text.Lexing --parslib Internal.Utilities.Text.Parsing
+	mono $(MONO_OPTIONS) $(FSYACC) $< -o $@ --internal --module Microsoft.FSharp.Compiler.AbstractIL.Internal.AsciiParser --lexlib Internal.Utilities.Text.Lexing --parslib Internal.Utilities.Text.Parsing | | tee $@.report | grep "time" 
 	@-mkdir -p ../FSharp.Compiler/.libs/
 	cp -p $(tmpdir)ilpars.fs* ../FSharp.Compiler/.libs/
 
