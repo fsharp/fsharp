@@ -190,10 +190,10 @@ $(tmpdir)illex.fs: ../../absil/illex.fsl
 	mono $(MONO_OPTIONS)  $(FSLEX) $< -o $@ --lexlib Internal.Utilities.Text.Lexing --unicode
 
 $(tmpdir)pars.fs: ../pars.fsy
-	mono $(MONO_OPTIONS)  $(FSYACC) $< -o $@ --internal --open Microsoft.FSharp.Compiler --module Microsoft.FSharp.Compiler.Parser --lexlib Internal.Utilities.Text.Lexing --parslib Internal.Utilities.Text.Parsing
+	mono $(MONO_OPTIONS)  $(FSYACC) $< -o $@ --internal --open Microsoft.FSharp.Compiler --module Microsoft.FSharp.Compiler.Parser --lexlib Internal.Utilities.Text.Lexing --parslib Internal.Utilities.Text.Parsing | tee $@.report | grep "time"
 
 $(tmpdir)ilpars.fs: ../../absil/ilpars.fsy
-	mono $(MONO_OPTIONS)  $(FSYACC) $< -o $@ --internal --module Microsoft.FSharp.Compiler.AbstractIL.Internal.AsciiParser --lexlib Internal.Utilities.Text.Lexing --parslib Internal.Utilities.Text.Parsing
+	mono $(MONO_OPTIONS)  $(FSYACC) $< -o $@ --internal --module Microsoft.FSharp.Compiler.AbstractIL.Internal.AsciiParser --lexlib Internal.Utilities.Text.Lexing --parslib Internal.Utilities.Text.Parsing | tee $@.report | grep "time"
 
 include $(topdir)/src/fsharp/targets.make
 
