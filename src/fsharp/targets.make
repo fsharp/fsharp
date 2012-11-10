@@ -97,7 +97,7 @@ do-4-0: monolibdir = $(monolibdir4)
 do-4-0: $(objdir) $(objdir)$(TARGET_2_0) $(objdir)$(TARGET_4_0) $(objdir)$(TARGET_4_0)/$(ASSEMBLY)
 	@mkdir -p $(outdir)
 	@cp $(objdir)$(ASSEMBLY) $(outdir)
-	@if test -e $(objdir)$(ASSEMBLY).xml; then \
+	@if test -e $(objdir)$(NAME).xml; then \
 	    cp $(objdir)$(NAME).xml $(outdir); \
 	fi
 	@if test -e $(objdir)$(ASSEMBLY).mdb; then \
@@ -156,6 +156,10 @@ install-lib-2 install-lib-2-1 install-lib-4:
 	    ln -fs $(DESTDIR)/$(libdir)mono/$(TARGET)/Microsoft.FSharp.targets $(DESTDIR)/$(libdir)mono/Microsoft\ F#/v$(TARGET)/Microsoft.FSharp.targets; \
 	    ln -fs $(DESTDIR)/$(libdir)mono/$(TARGET)/Microsoft.FSharp.targets $(DESTDIR)/$(libdir)mono/Microsoft\ SDKs/F#/3.0/Framework/v$(TARGET)/Microsoft.FSharp.targets; \
 	fi
+	@if test -e $(outdir)$(NAME).xml; then \
+		$(INSTALL_LIB) $(outdir)$(NAME).xml $(DESTDIR)/$(libdir)mono/gac/$(NAME)/$(VERSION)__$(TOKEN); \
+		ln -fs  ../gac/$(NAME)/$(VERSION)__$(TOKEN)/$(NAME).xml $(DESTDIR)/$(libdir)mono/$(TARGET)/$(NAME).xml; \
+	fi
 	@if test -e $(outdir)$(NAME).sigdata; then \
 		$(INSTALL_LIB) $(outdir)$(NAME).sigdata $(DESTDIR)/$(libdir)mono/gac/$(NAME)/$(VERSION)__$(TOKEN); \
 		ln -fs  ../gac/$(NAME)/$(VERSION)__$(TOKEN)/$(NAME).sigdata $(DESTDIR)/$(libdir)mono/$(TARGET)/$(NAME).sigdata; \
@@ -173,6 +177,9 @@ install-lib-4-5: install-lib-4
 		fi; \
 		if test -e $(DESTDIR)$(libdir)mono/4.0/$(NAME).sigdata; then \
 		    ln -fs $(DESTDIR)$(libdir)mono/4.0/$(NAME).sigdata $(DESTDIR)$(libdir)mono/4.5/$(NAME).sigdata; \
+		fi; \
+		if test -e $(DESTDIR)$(libdir)mono/4.0/$(NAME).xml; then \
+		    ln -fs $(DESTDIR)$(libdir)mono/4.0/$(NAME).xml $(DESTDIR)$(libdir)mono/4.5/$(NAME).xml; \
 		fi; \
 		if test -e $(DESTDIR)$(libdir)mono/4.0/$(NAME).optdata; then \
 		    ln -fs $(DESTDIR)$(libdir)mono/4.0/$(NAME).optdata $(DESTDIR)$(libdir)mono/4.5/$(NAME).optdata; \
