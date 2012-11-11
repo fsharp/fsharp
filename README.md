@@ -41,7 +41,7 @@ You can also build using xbuild:
 cd src
 xbuild fsharp-build.proj
 ```
-However the binaries produced are NOT yet usable because they are not correcy strong-name signed. Further, building using
+However the binaries produced are NOT yet usable because they are not correctly strong-name signed. Further, building using
 xbuild does not create a Mono-ready distribution (see src/fsharp/targets.make).
 
 ## Development notes
