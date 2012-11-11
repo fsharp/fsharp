@@ -455,8 +455,7 @@ rule token args skip = parse
        else WHITESPACE (LexCont.Token !args.ifdefStack) }
 
  | offwhite+  
-     { if args.lightSyntaxStatus.Status then errorR(Error(FSComp.SR.lexTabsNotAllowed(),lexbuf.LexemeRange));
-       if not skip then (WHITESPACE (LexCont.Token !args.ifdefStack)) else token args skip lexbuf }
+     { if not skip then (WHITESPACE (LexCont.Token !args.ifdefStack)) else token args skip lexbuf }
 
  | "////" op_char* 
      { // 4+ slash are 1-line comments, online 3 slash are XmlDoc 
