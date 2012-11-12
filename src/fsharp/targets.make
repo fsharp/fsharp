@@ -4,33 +4,33 @@ SOURCES := $(patsubst $(srcdir)$(tmpdir)%,$(tmpdir)%,$(patsubst %,$(srcdir)%,$(s
 
 clean-2-0: TARGET := $(TARGET_2_0)
 clean-2-0:
-	@-rm -rf $(tmpdir)
-	@-rm -rf $(objdir)
-	@-rm -f $(outdir)$(ASSEMBLY)
-	@-rm -f $(outdir)$(ASSEMBLY).mdb
-	@-rm -f $(outdir)$(NAME).xml
-	@-rm -f $(outdir)$(NAME).sigdata
-	@-rm -f $(outdir)$(NAME).optdata
+	-rm -rf $(tmpdir)
+	-rm -rf $(objdir)
+	-rm -f $(outdir)$(ASSEMBLY)
+	-rm -f $(outdir)$(ASSEMBLY).mdb
+	-rm -f $(outdir)$(NAME).xml
+	-rm -f $(outdir)$(NAME).sigdata
+	-rm -f $(outdir)$(NAME).optdata
 
 clean-2-1: TARGET := $(TARGET_2_1)
 clean-2-1:
-	@-rm -rf $(tmpdir)
-	@-rm -rf $(objdir)
-	@-rm -f $(outdir)$(ASSEMBLY)
-	@-rm -f $(outdir)$(ASSEMBLY).mdb
-	@-rm -f $(outdir)$(NAME).xml
-	@-rm -f $(outdir)$(NAME).sigdata
-	@-rm -f $(outdir)$(NAME).optdata
+	-rm -rf $(tmpdir)
+	-rm -rf $(objdir)
+	-rm -f $(outdir)$(ASSEMBLY)
+	-rm -f $(outdir)$(ASSEMBLY).mdb
+	-rm -f $(outdir)$(NAME).xml
+	-rm -f $(outdir)$(NAME).sigdata
+	-rm -f $(outdir)$(NAME).optdata
 
 clean-4-0: TARGET := $(TARGET_4_0)
 clean-4-0:
-	@-rm -rf $(tmpdir)
-	@-rm -rf $(objdir)
-	@-rm -f $(outdir)$(ASSEMBLY)
-	@-rm -f $(outdir)$(ASSEMBLY).mdb
-	@-rm -f $(outdir)$(NAME).xml
-	@-rm -f $(outdir)$(NAME).sigdata
-	@-rm -f $(outdir)$(NAME).optdata
+	-rm -rf $(tmpdir)
+	-rm -rf $(objdir)
+	-rm -f $(outdir)$(ASSEMBLY)
+	-rm -f $(outdir)$(ASSEMBLY).mdb
+	-rm -f $(outdir)$(NAME).xml
+	-rm -f $(outdir)$(NAME).sigdata
+	-rm -f $(outdir)$(NAME).optdata
 
 do-2-0: DEFINES += $(DEFINES_2_0)
 do-2-0: REFERENCES += $(REFERENCES_2_0)
