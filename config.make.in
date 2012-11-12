@@ -10,8 +10,8 @@ monolibdir2 := $(monodir)2.0/
 #This is where to find MonoTouch of MonoAndroid, for "make do-2-1"
 #
 #For now this is hardwired, it should be optionally detected by configure.ac
-monolibdir21 := /Developer/MonoAndroid/usr/lib/mono/2.1/
-#monolibdir21 := /Developer/MonoTouch/usr/lib/mono/2.1/
+monolibdir21 := @abs_top_srcdir@/dependencies/mono/2.1/
+
 
 monolibdir35 := $(monodir)3.5/
 monolibdir4 := $(monodir)4.0/
