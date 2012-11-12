@@ -31,11 +31,6 @@ make
 sudo make install
 ```
 
-To build the FSharp.Core.dll for [Mono for Android](http://xamarin.com/monoforandroid), use:
-```
-make do-2-1
-```
-
 You can also build using xbuild:
 ```
 cd src
@@ -43,6 +38,43 @@ xbuild fsharp-build.proj
 ```
 However the binaries produced are NOT yet usable because they are not correctly strong-name signed. Further, building using
 xbuild does not create a Mono-ready distribution (see src/fsharp/targets.make).
+
+
+## What you get
+
+On 'make' the main compiler binaries produced go in 
+    lib/release/4.0
+
+There are versions of FSharp.Core for .NET 2.0 and MonoAndroid (Mono profile 2.1) in 
+     lib/release/2.0
+     lib/release/2.1
+
+On 'make install' the binaries etc. go in the prefix, e.g. 
+
+   /Library/Frameworks/Mono.framework/Versions/Current/lib/mono/2.0/FSharp.Core.dll
+   /Library/Frameworks/Mono.framework/Versions/Current/lib/mono/2.1/FSharp.Core.dll
+   /Library/Frameworks/Mono.framework/Versions/Current/lib/mono/4.0/fsc.exe
+   /Library/Frameworks/Mono.framework/Versions/Current/lib/mono/4.0/FSharp.Compiler.dll
+   ...
+   /Library/Frameworks/Mono.framework/Versions/Current/lib/mono/4.5/fsc.exe
+   /Library/Frameworks/Mono.framework/Versions/Current/lib/mono/4.5/FSharp.Compiler.dll
+   ...
+   /Library/Frameworks/Mono.framework/Versions/Current/lib/mono/gac/.../FSharp.Compiler.dll
+   /Library/Frameworks/Mono.framework/Versions/Current/lib/mono/gac/.../FSharp.Compiler.dll
+   ...
+
+plus some files for xbuild support 
+
+    /Library/Frameworks/Mono.framework/Versions/Current/lib/mono/Microsoft\ F#/v4.0/*
+    /Library/Frameworks/Mono.framework/Versions/Current/lib/mono/Microsoft\ SDKs/F#/3.0/Framework/*
+
+(these names are the canonical names for Microsoft.FSharp.targets used by project files coming from Visual Studio)
+
+plus scripts
+
+   /usr/bin/fsharpc   (F# compiler)
+   /usr/bin/fsharpi   (F# Interactive)
+
 
 ## Development notes
 
