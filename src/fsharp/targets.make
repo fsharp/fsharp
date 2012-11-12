@@ -69,7 +69,7 @@ do-2-1: monolibdir = $(monolibdir2)
 do-2-1: $(objdir) $(objdir)$(TARGET_2_1) $(objdir)$(TARGET_4_0) $(objdir)$(TARGET_2_1)/$(ASSEMBLY)
 	@mkdir -p $(outdir)
 	@cp $(objdir)$(ASSEMBLY) $(outdir)
-	@if test -e $(objdir)$(ASSEMBLY).xml; then \
+	@if test -e $(objdir)$(NAME).xml; then \
 	    cp $(objdir)$(NAME).xml $(outdir); \
 	fi
 	@if test -e $(objdir)$(ASSEMBLY).mdb; then \
