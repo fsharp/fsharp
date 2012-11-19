@@ -1,5 +1,6 @@
 NAME=fsc
 ASSEMBLY = $(NAME).exe
+TOKEN=$(SIGN_TOKEN)
 
 srcdir := @abs_srcdir@/
 

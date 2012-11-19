@@ -28,7 +28,8 @@ VERSION_4_0 = 4.3.0.0
 TARGET_2_0 = 2.0
 TARGET_2_1 = 2.1
 TARGET_4_0 = 4.0
-TOKEN = b03f5f7f11d50a3a
+DELAY_SIGN_TOKEN = b03f5f7f11d50a3a
+SIGN_TOKEN = f536804aa0eb945b
 
 bootstrapdir = $(bootstrap)/4.0/
 tmpdir = .libs/
