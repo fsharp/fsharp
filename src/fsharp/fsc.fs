@@ -1284,7 +1284,7 @@ module StaticLinker =
               
         let ilBinaryReader = 
             let opts = { ILBinaryReader.defaults with 
-                            ilGlobals=mkILGlobals ILScopeRef.Local (Some tcConfig.mscorlibAssemblyName) tcConfig.noDebugData ;
+                            ilGlobals=mkILGlobals ILScopeRef.Local (Some tcConfig.mscorlibAssemblyName) (tcConfig.noDebugData,false) ;
                             optimizeForMemory=tcConfig.optimizeForMemory;
                             pdbPath = None; } 
             ILBinaryReader.OpenILModuleReader mscorlib40 opts

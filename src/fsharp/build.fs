@@ -2100,7 +2100,7 @@ type TcConfigBuilder =
 let OpenILBinary(filename,optimizeForMemory,openBinariesInMemory,ilGlobalsOpt,pdbPathOption,mscorlibAssemblyName,noDebugData) = 
       let ilGlobals   = 
           match ilGlobalsOpt with 
-          | None -> mkILGlobals ILScopeRef.Local (Some mscorlibAssemblyName) noDebugData
+          | None -> mkILGlobals ILScopeRef.Local (Some mscorlibAssemblyName) (noDebugData, true)
           | Some ilGlobals -> ilGlobals
       let opts = { ILBinaryReader.defaults with 
                       ILBinaryReader.ilGlobals=ilGlobals;
@@ -4128,7 +4128,12 @@ type TcImports(tcConfigP:TcConfigProvider, initialResolutions:TcAssemblyResoluti
             match frameworkTcImports.RegisterAndImportReferencedAssemblies(None, [mscorlibResolution])  with
             | (_, [ResolvedImportedAssembly(sysCcu)]) -> sysCcu
             | _        -> error(InternalError("BuildFoundationalTcImports: no sysCcu for "+mscorlibReference.Text,rangeStartup))
-        let ilGlobals   = mkILGlobals sysCcu.FSharpViewOfMetadata.ILScopeRef (Some tcConfig.mscorlibAssemblyName) tcConfig.noDebugData
+        
+        let generateDebugBrowsableData = 
+            ccuHasType sysCcu.FSharpViewOfMetadata ["System";"Diagnostics"] "DebuggerBrowsableAttribute" &&
+            ccuHasType sysCcu.FSharpViewOfMetadata ["System";"Diagnostics"] "DebuggerBrowsableState" 
+
+        let ilGlobals   = mkILGlobals sysCcu.FSharpViewOfMetadata.ILScopeRef (Some tcConfig.mscorlibAssemblyName) (tcConfig.noDebugData, not generateDebugBrowsableData)
         frameworkTcImports.SetILGlobals ilGlobals
 
         // Load the rest of the framework DLLs all at once (they may be mutually recursive)
