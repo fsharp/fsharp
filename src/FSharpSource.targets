@@ -10,7 +10,7 @@
     <TargetFramework Condition="'$(TargetFramework)'==''">net40</TargetFramework>
     <!-- Use a 4.0 proto compiler -->
     <protoCLIDir Condition="'$(protoCLIDir)' == ''">net40</protoCLIDir>
-    <LkgPath>..\lib\bootstrap\4.0</LkgPath>
+    <LkgPath>$(FSharpSourcesRoot)\..\lib\bootstrap\4.0</LkgPath>
     <FsLexUnicode>true</FsLexUnicode>
     <ProjectLanguage>FSharp</ProjectLanguage>
     <OtherFlags>$(OtherFlags) --times</OtherFlags>
@@ -465,9 +465,9 @@
 
   <!-- Reference an existing FSI.EXE for use from within MSBuild -->
   <PropertyGroup>
-    <FsSrGenToolPath>$(FSharpSourcesRoot)\$(LkgPath)\..\2.0</FsSrGenToolPath>
-    <FsLexToolPath>$(FSharpSourcesRoot)\$(LkgPath)\..\2.0</FsLexToolPath>
-    <FsYaccToolPath>$(FSharpSourcesRoot)\$(LkgPath)\..\2.0</FsYaccToolPath>
+    <FsSrGenToolPath>$(LkgPath)\..\2.0</FsSrGenToolPath>
+    <FsLexToolPath>$(LkgPath)\..\2.0</FsLexToolPath>
+    <FsYaccToolPath>$(LkgPath)\..\2.0</FsYaccToolPath>
     <FsLexToolExe>fslex.exe</FsLexToolExe>
     <FsYaccToolExe>fsyacc.exe</FsYaccToolExe>
   </PropertyGroup>
