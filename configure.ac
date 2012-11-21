@@ -90,6 +90,10 @@ src/fsharp/policy.4.3.FSharp.Core/Makefile
 ])
 AC_OUTPUT
 
+CANON_MONODIR=`cd $MONODIR/../..; pwd`
+
 if ! test -e $prefix/bin/mono; then
-	AC_WARN($prefix/bin/mono not found: it is recommended to use the same install prefix where mono is installed)
+	AC_WARN($prefix/bin/mono not found. Prefix should normally be set to the mono installation path. Consider using 
+   ./autogen.sh --prefix=$CANON_MONODIR
+)
 fi
