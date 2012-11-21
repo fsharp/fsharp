@@ -17,7 +17,7 @@ brew install automake
 
 ## Building
 
-To build and install on non-MacOS systems:
+To build and install on non-MacOS Unix systems:
 ```
 ./autogen.sh
 make
@@ -31,13 +31,19 @@ make
 sudo make install
 ```
 
-You can also build using xbuild:
+On Windows, build using msbuild (if .NET is installed) or xbuild (if only Mono 3.0.1 is installed):
 ```
 cd src
-xbuild fsharp-build.proj
+xbuild fsharp-proto-build.proj
+xbuild fsharp-library-build.proj
+xbuild fsharp-compiler-build.proj
 ```
-However the binaries produced are NOT yet usable because they are not correctly strong-name signed. Further, building using
-xbuild does not create a Mono-ready distribution (see src/fsharp/targets.make).
+Building using xbuild does not yet lay down a Mono-ready distribution (see src/fsharp/targets.make), so should only
+be used for private development rather than preparing distributions. The FSharp.Core.dll produced will be delay-signed,
+if a strong-name signed FSharp.Core.dll is needed then use the one in 
+```
+   lib\bootstrap\signed\3.0\v4.0\FSharp.Core.dll
+```
 
 
 ## What you get

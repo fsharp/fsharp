@@ -11,7 +11,7 @@
 -->
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
-    <FSharpSourcesRoot>..\..</FSharpSourcesRoot>
+    <FSharpSourcesRoot>$(MSBuildProjectDirectory)\..\..</FSharpSourcesRoot>
     <Configuration Condition=" '$(Configuration)' == '' ">Proto</Configuration>
     <ProductVersion>10.0.0</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
@@ -439,5 +439,5 @@
     <Reference Include="Microsoft.Build.Tasks.v4.0" Condition="'$(TargetFramework)'=='net40'" />
   </ItemGroup>
   <Import Project="$(FSharpSourcesRoot)\FSharpSource.targets" />
-  <Import Project="$(FSharpSourcesRoot)\$(LkgPath)\..\2.0\FSharp.PowerPack.targets" />
+  <Import Project="$(LkgPath)\..\2.0\FSharp.PowerPack.targets" />
 </Project>
