@@ -2425,6 +2425,7 @@ type ILGlobals =
     { mscorlibScopeRef: ILScopeRef;
       mscorlibAssemblyName: string;
       noDebugData: bool;
+      generateDebugBrowsableData: bool;
       tref_Object: ILTypeRef 
       ; tspec_Object: ILTypeSpec
       ; typ_Object: ILType
@@ -2527,7 +2528,7 @@ let tname_CompilerGeneratedAttribute = "System.Runtime.CompilerServices.Compiler
 let tname_DebuggableAttribute = "System.Diagnostics.DebuggableAttribute"
 
 
-let mkILGlobals mscorlibScopeRef mscorlibAssemblyNameOpt noDebugData =
+let mkILGlobals mscorlibScopeRef mscorlibAssemblyNameOpt (noDebugData,generateDebugBrowsableData) =
   let mscorlibAssemblyName =
       match mscorlibAssemblyNameOpt with
         | Some name -> name 
@@ -2680,6 +2681,7 @@ let mkILGlobals mscorlibScopeRef mscorlibAssemblyNameOpt noDebugData =
   {   mscorlibScopeRef           =mscorlibScopeRef
     ; mscorlibAssemblyName       =mscorlibAssemblyName
     ; noDebugData                =noDebugData
+    ; generateDebugBrowsableData =generateDebugBrowsableData
     ; tref_Object                =tref_Object                  
     ; tspec_Object               =tspec_Object                 
     ; typ_Object                 =typ_Object                   
@@ -2760,7 +2762,7 @@ let ecmaPublicKey = PublicKeyToken (Bytes.ofInt32Array [|0xde; 0xad; 0xbe; 0xef;
 
 let ecmaMscorlibScopeRef = ILScopeRef.Assembly (ILAssemblyRef.Create("mscorlib", None, Some ecmaPublicKey, true, None, None))
 
-let ecmaILGlobals = mkILGlobals ecmaMscorlibScopeRef None false
+let ecmaILGlobals = mkILGlobals ecmaMscorlibScopeRef None (false, true)
    
 let mkInitializeArrayMethSpec ilg = 
   mkILNonGenericStaticMethSpecInTy(mkILNonGenericBoxedTy(mkILTyRef(ilg.mscorlibScopeRef,"System.Runtime.CompilerServices.RuntimeHelpers")),"InitializeArray", [ilg.typ_Array;ilg.typ_RuntimeFieldHandle], ILType.Void)
@@ -4392,7 +4394,9 @@ let addMethodGeneratedAttrs ilg (mdef:ILMethodDef)   = {mdef with CustomAttrs   
 let addPropertyGeneratedAttrs ilg (pdef:ILPropertyDef) = {pdef with CustomAttrs = addGeneratedAttrs ilg pdef.CustomAttrs}
 let addFieldGeneratedAttrs ilg (fdef:ILFieldDef) = {fdef with CustomAttrs = addGeneratedAttrs ilg fdef.CustomAttrs}
 
-let add_never_attrs ilg (attrs: ILAttributes) = mkILCustomAttrs (attrs.AsList @ [mkDebuggerBrowsableNeverAttribute ilg])
+let add_never_attrs ilg (attrs: ILAttributes) = 
+    if ilg.generateDebugBrowsableData then mkILCustomAttrs (attrs.AsList @ [mkDebuggerBrowsableNeverAttribute ilg])
+    else attrs
 let addPropertyNeverAttrs ilg (pdef:ILPropertyDef) = {pdef with CustomAttrs = add_never_attrs ilg pdef.CustomAttrs}
 let addFieldNeverAttrs ilg (fdef:ILFieldDef) = {fdef with CustomAttrs = add_never_attrs ilg fdef.CustomAttrs}
 

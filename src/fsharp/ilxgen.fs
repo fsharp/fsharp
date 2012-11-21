@@ -1504,7 +1504,9 @@ let GenConstArray cenv (cgbuf:CodeGenBuffer) eenv ilElementType (data:'a[]) (wri
         let ilFieldName = CompilerGeneratedName ("field" + string(newUnique()))
         let fty = ILType.Value vtspec
         let ilFieldDef = mkILStaticField (ilFieldName,fty, None, Some bytes, ILMemberAccess.Assembly)
-        let ilFieldDef = { ilFieldDef with CustomAttrs = mkILCustomAttrs [ mkDebuggerBrowsableNeverAttribute cenv.g.ilg ] }
+        let ilFieldDef = { ilFieldDef with CustomAttrs = 
+                                             if cenv.g.ilg.generateDebugBrowsableData then mkILCustomAttrs [ mkDebuggerBrowsableNeverAttribute cenv.g.ilg ]
+                                             else emptyILCustomAttrs }
         let fspec = mkILFieldSpecInTy (mkILTyForCompLoc eenv.cloc,ilFieldName, fty)
         CountStaticFieldDef();
         cgbuf.mgbuf.AddFieldDef(fspec.EnclosingTypeRef,ilFieldDef); 
@@ -4804,7 +4806,11 @@ and GenBindAfterSequencePoint cenv cgbuf eenv sp (TBind(vspec,rhsExpr,_)) =
 
             let ilFieldDef = 
                 { ilFieldDef with 
-                   CustomAttrs = mkILCustomAttrs (ilAttribs @ [ mkDebuggerBrowsableNeverAttribute cenv.g.ilg ]) }
+                   CustomAttrs = 
+                       if cenv.g.ilg.generateDebugBrowsableData then 
+                           mkILCustomAttrs (ilAttribs @ [ mkDebuggerBrowsableNeverAttribute cenv.g.ilg ])
+                       else 
+                           mkILCustomAttrs ilAttribs }
             [ (fspec.EnclosingTypeRef, ilFieldDef) ]
           
 
@@ -6353,7 +6359,8 @@ and GenTypeDef cenv mgbuf lazyInitInfo eenv m (tycon:Tycon) =
                   
                   let extraAttribs = 
                      match tyconRepr with 
-                     | TRecdRepr _ when not useGenuineField -> [  mkDebuggerBrowsableNeverAttribute cenv.g.ilg ] // hide fields in records in debug display
+                     | TRecdRepr _ when not useGenuineField && cenv.g.ilg.generateDebugBrowsableData -> 
+                         [  mkDebuggerBrowsableNeverAttribute cenv.g.ilg ] // hide fields in records in debug display
                      | _ -> [] // don't hide fields in classes in debug display
 
                   yield

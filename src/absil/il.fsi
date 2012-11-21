@@ -1679,6 +1679,7 @@ type ILGlobals =
     { mscorlibScopeRef: ILScopeRef
       mscorlibAssemblyName: string
       noDebugData: bool
+      generateDebugBrowsableData: bool
       tref_Object: ILTypeRef
       tspec_Object: ILTypeSpec
       typ_Object: ILType
@@ -1753,7 +1754,7 @@ type ILGlobals =
       mutable debuggerTypeProxyAttributeCache : ILAttribute option }
 
 /// Build the table of commonly used references given a ILScopeRef for mscorlib. 
-val mkILGlobals : ILScopeRef -> string option -> bool -> ILGlobals
+val mkILGlobals : mscorlibScopeRef:ILScopeRef -> mscorlibAssemblyNameOpt:string option -> noDebugData:bool * generateDebugBrowsableData:bool -> ILGlobals
 
 
 /// When writing a binary the fake "toplevel" type definition (called <Module>)
