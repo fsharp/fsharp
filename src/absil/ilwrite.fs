@@ -4612,7 +4612,7 @@ type options =
 
 
 let WriteILBinary outfile (args: options) modul noDebugData =
-    ignore (writeBinaryAndReportMappings (outfile, args.mscorlib, args.pdbfile, args.signer, args.fixupOverlappingSequencePoints, args.emitTailcalls, args.showTimes, args.dumpDebugInfo) modul noDebugData)
+    ignore (writeBinaryAndReportMappings (outfile, args.mscorlib, args.pdbfile, args.signer, args.fixupOverlappingSequencePoints, args.emitTailcalls, args.showTimes, args.dumpDebugInfo) modul (noDebugData, true))
 
 
 
