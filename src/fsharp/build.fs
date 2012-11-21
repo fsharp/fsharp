@@ -4133,7 +4133,7 @@ type TcImports(tcConfigP:TcConfigProvider, initialResolutions:TcAssemblyResoluti
             ccuHasType sysCcu.FSharpViewOfMetadata ["System";"Diagnostics"] "DebuggerBrowsableAttribute" &&
             ccuHasType sysCcu.FSharpViewOfMetadata ["System";"Diagnostics"] "DebuggerBrowsableState" 
 
-        let ilGlobals   = mkILGlobals sysCcu.FSharpViewOfMetadata.ILScopeRef (Some tcConfig.mscorlibAssemblyName) (tcConfig.noDebugData, not generateDebugBrowsableData)
+        let ilGlobals   = mkILGlobals sysCcu.FSharpViewOfMetadata.ILScopeRef (Some tcConfig.mscorlibAssemblyName) (tcConfig.noDebugData, generateDebugBrowsableData)
         frameworkTcImports.SetILGlobals ilGlobals
 
         // Load the rest of the framework DLLs all at once (they may be mutually recursive)
