@@ -207,7 +207,7 @@
     <Compile Include="..\..\assemblyinfo\assemblyinfo.FSharp.Core.dll.fs">
       <Link>assemblyinfo.FSharp.Core.dll.fs</Link>
     </Compile>
-    <CustomAdditionalCompileInputs Include="Proto\$(protoCLIDir)\bin\fsc-proto.exe">
+    <CustomAdditionalCompileInputs Include="$(FscToolPath)\$(FscToolExe)">
       <Visible>False</Visible>
     </CustomAdditionalCompileInputs>
   </ItemGroup>
