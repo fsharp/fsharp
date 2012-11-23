@@ -20,6 +20,7 @@
     <ProjectFiles Include="fsharp\FSharp.Compiler.Interactive.Settings\FSharp.Compiler.Interactive.Settings.fsproj"/>
     <ProjectFiles Include="fsharp\Fsc\Fsc.fsproj"/>
     <ProjectFiles Include="fsharp\Fsi\Fsi.fsproj"/>
+    <ProjectFiles Include="fsharp\Fsi\FsiAnyCpu.fsproj"/>
   </ItemGroup>
 
 
