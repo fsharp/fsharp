@@ -9,7 +9,7 @@
     <Tailcalls>true</Tailcalls>
     <TargetFramework Condition="'$(TargetFramework)'==''">net40</TargetFramework>
     <!-- Use a 4.0 proto compiler -->
-    <protoCLIDir Condition="'$(protoCLIDir)' == ''">net40</protoCLIDir>
+    <protoCLIDir>4.0</protoCLIDir>
     <LkgPath>$(FSharpSourcesRoot)\..\lib\bootstrap\4.0</LkgPath>
     <FsLexUnicode>true</FsLexUnicode>
     <ProjectLanguage>FSharp</ProjectLanguage>
@@ -54,6 +54,7 @@
   <PropertyGroup Condition="'$(Configuration)'=='Debug'">
     <DefineConstants>DEBUG; $(DefineConstants)</DefineConstants>
     <Optimize>false</Optimize>
+    <ConfigurationOutputDirectory>debug</ConfigurationOutputDirectory>
     <!-- These flags provide a better debugging experience. Locals should be visible. -->
     <OtherFlags>$(OtherFlags) --no-jit-optimize --jit-tracking</OtherFlags>
     <DefineConstants>CODE_ANALYSIS; $(DefineConstants)</DefineConstants>
@@ -61,6 +62,7 @@
 
   <PropertyGroup Condition="'$(Configuration)'=='Release'">
     <Optimize>true</Optimize>
+    <ConfigurationOutputDirectory>release</ConfigurationOutputDirectory>
   </PropertyGroup>
 
   <!-- Flags used to build the bootstrap compiler.
@@ -68,6 +70,7 @@
   <PropertyGroup Condition="'$(Configuration)'=='Proto'">
     <Optimize>true</Optimize>
     <DefineConstants>DEBUG;NO_STRONG_NAMES;$(DefineConstants)</DefineConstants>
+    <ConfigurationOutputDirectory>proto</ConfigurationOutputDirectory>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -76,13 +79,14 @@
 
   <!-- Always qualify the IntermediateOutputPath by the TargetFramework if any exists -->
   <PropertyGroup>
-    <IntermediateOutputPath>obj\$(Configuration)\$(TargetFramework)\</IntermediateOutputPath>
+    <IntermediateOutputPath>obj\$(ConfigurationOutputDirectory)\$(TargetFramework)\</IntermediateOutputPath>
   </PropertyGroup>
 
   <!-- v2.0-specific flags -->
-  <PropertyGroup Condition="'$(TargetFramework)'=='net20' or '$(TargetFramework)'=='mono20'">
+  <PropertyGroup Condition="'$(TargetFramework)'=='net20'">
     <!-- If 3.5 is not configured explicitly, use 2.0 -->
     <TargetFrameworkVersion Condition="'$(TargetFrameworkVersion)'==''">v2.0</TargetFrameworkVersion>
+    <TargetFrameworkVersionShort>2.0</TargetFrameworkVersionShort>
     <DefineConstants>$(DefineConstants);FX_NO_STRUCTURAL_EQUALITY</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_CANCELLATIONTOKEN_CLASSES</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_TASK</DefineConstants>
@@ -98,6 +102,7 @@
 
   <PropertyGroup Condition="'$(TargetFramework)'=='net40'">
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkVersionShort>4.0</TargetFrameworkVersionShort>
     <DefineConstants>$(DefineConstants);FX_ATLEAST_40</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_ATLEAST_35</DefineConstants>
     <DefineConstants>$(DefineConstants);BE_SECURITY_TRANSPARENT</DefineConstants>
@@ -112,6 +117,7 @@
   <!-- Target MonoAndroid and MonoTouch -->
   <PropertyGroup Condition="'$(TargetFramework)'=='mono21'">
     <TargetFrameworkVersion>v2.1</TargetFrameworkVersion>
+    <TargetFrameworkVersionShort>2.1</TargetFrameworkVersionShort>
     <DefineConstants>$(DefineConstants);FX_NO_STRUCTURAL_EQUALITY</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_CUSTOMATTRIBUTEDATA</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_BIGINT_CULTURE_PARSE</DefineConstants>
@@ -119,13 +125,14 @@
     <DefineConstants>$(DefineConstants);FX_ATLEAST_35</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_ATLEAST_LINQ</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_BIGINT</DefineConstants>
-    <AssemblySearchPaths>/Developer/MonoAndroid/usr/lib/mono/2.1/;$(AssemblySearchPaths)</AssemblySearchPaths>
+    <AssemblySearchPaths>$(FSharpSourcesRoot)\..\dependencies\mono\2.1;$(AssemblySearchPaths)</AssemblySearchPaths>
   </PropertyGroup>
 
 
   <!-- Target Silverlight 3.0 -->
   <PropertyGroup Condition="'$(TargetFramework)'=='sl3'">
     <TargetFrameworkVersion>v3.0</TargetFrameworkVersion>
+    <TargetFrameworkVersionShort>sl3</TargetFrameworkVersionShort>
     <DefineConstants>$(DefineConstants);SILVERLIGHT</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_CANCELLATIONTOKEN_CLASSES</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_TASK</DefineConstants>
@@ -204,6 +211,7 @@
     <DefineConstants>$(DefineConstants);FX_ATLEAST_LINQ</DefineConstants>
     <TargetFrameworkIdentifier>Silverlight</TargetFrameworkIdentifier>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkVersionShort>sl4</TargetFrameworkVersionShort>
     <SilverlightVersion>v4.0</SilverlightVersion>
   </PropertyGroup>
 
@@ -249,6 +257,7 @@
     <TargetFrameworkIdentifier>Silverlight</TargetFrameworkIdentifier>
     <TargetFrameworkVersion>v5.0</TargetFrameworkVersion>
     <SilverlightVersion>v5.0</SilverlightVersion>
+    <TargetFrameworkVersionShort>$(TargetFramework)</TargetFrameworkVersionShort>
     <FrameworkRegistryBase>Software\Microsoft\Microsoft SDKs\$(TargetFrameworkIdentifier)</FrameworkRegistryBase>
     <AssemblySearchPaths>$(MSBuildExtensionsPath32)\..\Reference Assemblies\Microsoft\Framework\Silverlight\v5.0</AssemblySearchPaths>
   </PropertyGroup>
@@ -295,6 +304,7 @@
     <DefineConstants>$(DefineConstants);FX_ATLEAST_LINQ</DefineConstants>
     <Tailcalls>false</Tailcalls>
     <SilverlightVersion>$(TargetFrameworkVersion)</SilverlightVersion>
+    <TargetFrameworkVersionShort>$(TargetFramework)</TargetFrameworkVersionShort>
     <!-- It would be better to use MSBuild resolution here, but the TargetFrameworkIdentifier etc. aren't set up quite correctly as yet -->
     <OtherFlags>$(OtherFlags) --simpleresolution -r:"C:\Program Files\Reference Assemblies\Microsoft\Framework\Silverlight\v4.0\Profile\WindowsPhone\mscorlib.dll" </OtherFlags>
   </PropertyGroup>
@@ -345,6 +355,7 @@
     <DefineConstants>$(DefineConstants);FX_NO_TUPLE</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_DELEGATE_CREATE_DELEGATE_FROM_STATIC_METHOD</DefineConstants>
     <DefineConstants>$(DefineConstants)</DefineConstants>
+    <TargetFrameworkVersionShort>$(TargetFramework)</TargetFrameworkVersionShort>
     <!-- It would be better to use MSBuild resolution here, but the TargetFrameworkIdentifier etc. aren't set up quite correctly as yet -->
     <OtherFlags>$(OtherFlags) --simpleresolution -r:"C:\Program Files\Microsoft.NET\SDK\CompactFramework\v2.0\WindowsCE\mscorlib.dll"  -r:"C:\Program Files\Microsoft.NET\SDK\CompactFramework\v2.0\WindowsCE\System.dll"</OtherFlags>
   </PropertyGroup>
@@ -389,6 +400,7 @@
   <!-- Target CompactFramework 3.5 -->
   <PropertyGroup Condition="'$(TargetFramework)'=='net35-cf'">
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <TargetFrameworkVersionShort>3.5</TargetFrameworkVersionShort>
     <TargetFrameworkIdentifier>CompactFramework</TargetFrameworkIdentifier>
     <DefineConstants>$(DefineConstants);FX_ATLEAST_COMPACT_FRAMEWORK_35</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_CANCELLATIONTOKEN_CLASSES</DefineConstants>
@@ -439,27 +451,25 @@
   <!-- Build with LKG compiler (location is determined by Microsoft.FSharp.targets). The output compiler has suffix "-proto" -->
   <PropertyGroup Condition=" '$(BuildWith)' == 'LKG' And '$(ProjectLanguage)' == 'FSharp' ">
     <FsBuildSuffix>-proto</FsBuildSuffix>
-    <OutputPath>$(FSharpSourcesRoot)\..\$(Configuration)\$(protoCLIDir)\bin</OutputPath>
+    <OutputPath>$(FSharpSourcesRoot)\..\lib\$(ConfigurationOutputDirectory)\$(TargetFrameworkVersionShort)</OutputPath>
   </PropertyGroup>
 
   <!-- Build with prototype compiler (location is given by settings below). The output is the final bootstrapped compiler -->
   <PropertyGroup Condition=" '$(BuildWith)' == ''">
-    <FSharpTargetsDir>$(FSharpSourcesRoot)\..\Proto\$(protoCLIDir)\bin</FSharpTargetsDir>
-
-    <FscToolPath>$(FSharpSourcesRoot)\..\Proto\$(protoCLIDir)\bin</FscToolPath>
+    <FscToolPath>$(FSharpSourcesRoot)\..\lib\proto\$(protoCLIDir)</FscToolPath>
     <FscToolExe>fsc-proto.exe</FscToolExe>
-    <OutputPath>$(FSharpSourcesRoot)\..\$(Configuration)\$(TargetFramework)\bin</OutputPath>
+    <OutputPath>$(FSharpSourcesRoot)\..\lib\$(ConfigurationOutputDirectory)\$(TargetFrameworkVersionShort)</OutputPath>
   </PropertyGroup>
 
 
 
   <!-- Include the proto targets file when building the final compiler suing the proto -->
-  <Import Project="..\Proto\$(protoCLIDir)\bin\Microsoft.FSharp-proto.targets" 
-          Condition="Exists('..\Proto\$(protoCLIDir)\bin\Microsoft.FSharp-proto.targets') AND '$(BuildWith)' == '' AND '$(ProjectLanguage)' == 'FSharp' "/>
+  <Import Project="..\lib\proto\$(protoCLIDir)\Microsoft.FSharp-proto.targets" 
+          Condition="Exists('..\lib\proto\$(protoCLIDir)\Microsoft.FSharp-proto.targets') AND '$(BuildWith)' == '' AND '$(ProjectLanguage)' == 'FSharp' "/>
   <!-- Include the bootstrap targets file when building the proto compiler using the bootstrap -->
   <!-- Also include it if Proto targets file doesn't exist, e.g. when cleaning the build with /t:Clean -->
   <Import Project="$(LkgPath)\Microsoft.FSharp.targets"  
-          Condition="(!Exists('..\Proto\$(protoCLIDir)\bin\Microsoft.FSharp-proto.targets')  OR '$(BuildWith)' == 'LKG') AND '$(ProjectLanguage)' == 'FSharp'" />
+          Condition="(!Exists('..\lib\proto\$(protoCLIDir)\Microsoft.FSharp-proto.targets')  OR '$(BuildWith)' == 'LKG') AND '$(ProjectLanguage)' == 'FSharp'" />
   <Import Project="Silverlight\$(SilverlightVersion)\FSharpSource.Silverlight.Common.targets"
           Condition="'$(TargetFramework)'=='sl3' or '$(TargetFramework)'=='sl4' or '$(TargetFramework)'=='sl5' or '$(TargetFramework)'=='sl5-compiler'"/>
 
