@@ -344,6 +344,11 @@ type ReadLineConsole() =
                 input.Remove(!current, 1) |> ignore;
                 render();
         
+        let deleteToEndOfLine() =
+            if (!current < input.Length) then
+                input.Remove (!current, input.Length - !current) |> ignore;
+                render();
+
         let insert(key: ConsoleKeyInfo) =
             // REVIEW: is this F6 rewrite required? 0x1A looks like Ctrl-Z.
             // REVIEW: the Ctrl-Z code is not recognised as EOF by the lexer.
@@ -425,17 +430,25 @@ type ReadLineConsole() =
             | (ConsoleModifiers.Control, '\006') ->
                 moveRight()
                 change ()
+            // Control-k delete to end of line
+            | (ConsoleModifiers.Control, '\011') ->
+                deleteToEndOfLine()
+                change()
             // Control-P
-            | (ConsoleModifiers.Control, '\020') ->
+            | (ConsoleModifiers.Control, '\016') ->
                 setInput(history.Previous());
                 change()
             // Control-n
-            | (ConsoleModifiers.Control, '\016') ->
+            | (ConsoleModifiers.Control, '\014') ->
                 setInput(history.Next());
                 change()
             // Control-d
             | (ConsoleModifiers.Control, '\004') ->
-                raise <| new System.IO.EndOfStreamException()
+                if (input.Length = 0) then
+                    raise <| new System.IO.EndOfStreamException()
+                else
+                    delete ();
+                    change()
             | _ ->
                 // Note: If KeyChar=0, the not a proper char, e.g. it could be part of a multi key-press character,
                 //       e.g. e-acute is ' and e with the French (Belgium) IME and US Intl KB.
