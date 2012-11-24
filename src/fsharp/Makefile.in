@@ -20,6 +20,7 @@ do-final install:
 	$(MAKE) -C FSharp.Compiler.Interactive.Settings $@
 	$(MAKE) -C FSharp.Compiler.Server.Shared $@
 	$(MAKE) -C fsi $@
+	$(MAKE) -C fsiAnyCpu $@
 	$(MAKE) -C policy.2.0.FSharp.Core $@
 	$(MAKE) -C policy.4.0.FSharp.Core $@
 	$(MAKE) -C policy.2.3.FSharp.Core $@
@@ -36,6 +37,7 @@ clean clean-2-0 clean-4-0:
 	$(MAKE) -C FSharp.Compiler.Interactive.Settings $@
 	$(MAKE) -C FSharp.Compiler.Server.Shared $@
 	$(MAKE) -C fsi $@
+	$(MAKE) -C fsiAnyCpu $@
 	$(MAKE) -C policy.2.0.FSharp.Core $@
 	$(MAKE) -C policy.4.0.FSharp.Core $@
 	$(MAKE) -C policy.2.3.FSharp.Core $@
