@@ -2218,8 +2218,8 @@ let internal DriveFsiEventLoop (fsiConsoleOutput: FsiConsoleOutput) =
 type FsiEvaluationSession (argv:string[], inReader:TextReader, outWriter:TextWriter, errorWriter: TextWriter) = 
 #if SILVERLIGHT
     do
-        Microsoft.FSharp.Core.Printf.setWriter writer
-        Microsoft.FSharp.Core.Printf.setError error
+        Microsoft.FSharp.Core.Printf.setWriter outWriter
+        Microsoft.FSharp.Core.Printf.setError errorWriter
 #endif
     do if not runningOnMono then Lib.UnmanagedProcessExecutionOptions.EnableHeapTerminationOnCorruption() (* SDL recommendation *)
     // See Bug 735819 
