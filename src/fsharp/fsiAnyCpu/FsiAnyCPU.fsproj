@@ -49,13 +49,13 @@
     <Compile Include="..\InternalCollections.fs">
       <Link>InternalCollections.fs</Link>
     </Compile>
-    <Compile Include="console.fs">
+    <Compile Include="..\fsi\console.fs">
       <Link>console.fs</Link>
     </Compile>
-    <Compile Include="fsi.fs">
+    <Compile Include="..\fsi\fsi.fs">
       <Link>fsi.fs</Link>
     </Compile>
-    <Compile Include="fsimain.fs">
+    <Compile Include="..\fsi\fsimain.fs">
       <Link>fsimain.fs</Link>
     </Compile>
   </ItemGroup>
