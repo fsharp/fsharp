@@ -56,8 +56,8 @@ do-2-0: $(objdir) $(objdir)$(TARGET_2_0) $(objdir)$(TARGET_4_0) $(objdir)$(TARGE
 	@if test "x$(DELAY_SIGN)" = "x1"; then \
 		sn -q -R $(outdir)$(ASSEMBLY) $(srcdir)../../../mono.snk; \
 	fi
-	@if test -e Microsoft.FSharp.targets; then \
-		cp Microsoft.FSharp.targets $(outdir)Microsoft.FSharp.targets; \
+	@if test -e Microsoft.FSharp.Targets; then \
+		cp Microsoft.FSharp.Targets $(outdir)Microsoft.FSharp.Targets; \
 	fi
 
 do-2-1: DEFINES += $(DEFINES_2_1)
@@ -84,8 +84,8 @@ do-2-1: $(objdir) $(objdir)$(TARGET_2_1) $(objdir)$(TARGET_4_0) $(objdir)$(TARGE
 	@if test "x$(DELAY_SIGN)" = "x1"; then \
 		sn -q -R $(outdir)$(ASSEMBLY) $(srcdir)../../../mono.snk; \
 	fi
-	@if test -e Microsoft.FSharp.targets; then \
-		cp Microsoft.FSharp.targets $(outdir)Microsoft.FSharp.targets; \
+	@if test -e Microsoft.FSharp.Targets; then \
+		cp Microsoft.FSharp.Targets $(outdir)Microsoft.FSharp.Targets; \
 	fi
 
 do-4-0: DEFINES += $(DEFINES_4_0)
@@ -112,8 +112,8 @@ do-4-0: $(objdir) $(objdir)$(TARGET_2_0) $(objdir)$(TARGET_4_0) $(objdir)$(TARGE
 	@if test "x$(DELAY_SIGN)" = "x1"; then \
 		sn -q -R $(outdir)$(ASSEMBLY) $(srcdir)../../../mono.snk; \
 	fi
-	@if test -e Microsoft.FSharp.targets; then \
-		cp Microsoft.FSharp.targets $(outdir)Microsoft.FSharp.targets; \
+	@if test -e Microsoft.FSharp.Targets; then \
+		cp Microsoft.FSharp.Targets $(outdir)Microsoft.FSharp.Targets; \
 	fi
 
 install-lib-2: TARGET := $(TARGET_2_0)
@@ -136,24 +136,24 @@ install-bin-4: TARGET := $(TARGET_4_0)
 
 # Install the library binaries in the GAC and the framework directory, 
 # Install .optdata/.sigdata if they exist (they go alongside FSharp.Core)
-# Install the .targets file. The XBuild targets file gets installed into the place(s) expected for standard F# project
+# Install the .Targets file. The XBuild targets file gets installed into the place(s) expected for standard F# project
 # files. For F# 2.0 project files this is
-#     .../Microsoft F#/v4.0/Microsoft.FSharp.targets
+#     .../Microsoft F#/v4.0/Microsoft.FSharp.Targets
 # For F# 3.0 project files this is
-#     .../Microsoft SDKs/F#/3.0/Framework/v4.0/Microsoft.FSharp.targets
+#     .../Microsoft SDKs/F#/3.0/Framework/v4.0/Microsoft.FSharp.Targets
 # 
 install-lib-2 install-lib-2-1 install-lib-4:
 	@echo "Installing $(ASSEMBLY)"
 	@mkdir -p $(DESTDIR)$(monodir)/$(TARGET)
 	gacutil -i $(outdir)$(ASSEMBLY) -root $(DESTDIR)$(monorootdir) -package $(TARGET)
-	@if test -e $(outdir)Microsoft.FSharp.targets; then \
+	@if test -e $(outdir)Microsoft.FSharp.Targets; then \
 	    mkdir -p $(DESTDIR)$(monodir)/Microsoft\ F#/v$(TARGET)/; \
 	    mkdir -p $(DESTDIR)$(monodir)/Microsoft\ SDKs/F#/3.0/Framework/v$(TARGET)/; \
 	    ln -fs ../../$(TARGET)/$(ASSEMBLY) $(DESTDIR)$(monodir)/Microsoft\ F#/v$(TARGET)/$(ASSEMBLY); \
 	    ln -fs ../../../../../$(TARGET)/$(ASSEMBLY) $(DESTDIR)$(monodir)/Microsoft\ SDKs/F#/3.0/Framework/v$(TARGET)/$(ASSEMBLY); \
-	    $(INSTALL_LIB) $(outdir)Microsoft.FSharp.targets $(DESTDIR)$(monodir)/$(TARGET)/; \
-	    ln -fs ../../$(TARGET)/Microsoft.FSharp.targets $(DESTDIR)$(monodir)/Microsoft\ F#/v$(TARGET)/Microsoft.FSharp.targets; \
-	    ln -fs ../../../../../$(TARGET)/Microsoft.FSharp.targets $(DESTDIR)$(monodir)/Microsoft\ SDKs/F#/3.0/Framework/v$(TARGET)/Microsoft.FSharp.targets; \
+	    $(INSTALL_LIB) $(outdir)Microsoft.FSharp.Targets $(DESTDIR)$(monodir)/$(TARGET)/; \
+	    ln -fs ../../$(TARGET)/Microsoft.FSharp.Targets $(DESTDIR)$(monodir)/Microsoft\ F#/v$(TARGET)/Microsoft.FSharp.Targets; \
+	    ln -fs ../../../../../$(TARGET)/Microsoft.FSharp.Targets $(DESTDIR)$(monodir)/Microsoft\ SDKs/F#/3.0/Framework/v$(TARGET)/Microsoft.FSharp.Targets; \
 	fi
 	@if test -e $(outdir)$(NAME).xml; then \
 		$(INSTALL_LIB) $(outdir)$(NAME).xml $(DESTDIR)$(monodir)/gac/$(NAME)/$(VERSION)__$(TOKEN); \
