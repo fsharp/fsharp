@@ -112,7 +112,7 @@ plus some files for xbuild support
     /Library/Frameworks/Mono.framework/Versions/Current/lib/mono/Microsoft\ F#/v4.0/*
     /Library/Frameworks/Mono.framework/Versions/Current/lib/mono/Microsoft\ SDKs/F#/3.0/Framework/*
 
-(these names are the canonical names for Microsoft.FSharp.targets used by project files coming from Visual Studio)
+(these names are the canonical names for Microsoft.FSharp.Targets used by project files coming from Visual Studio)
 
 plus scripts
 
