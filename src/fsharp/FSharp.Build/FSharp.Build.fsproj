@@ -42,9 +42,9 @@
     <Compile Include="Fsc.fs" />
     <Compile Include="CreateFSharpManifestResourceName.fsi" />
     <Compile Include="CreateFSharpManifestResourceName.fs" />
-    <CustomCopyLocal Include="Microsoft.FSharp.targets">
-      <TargetFilename>Microsoft.FSharp.targets</TargetFilename>
-    </CustomCopyLocal>
+    <None Include="Microsoft.FSharp.targets">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Reference Include="mscorlib" />
