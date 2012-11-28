@@ -149,11 +149,11 @@ install-lib-2 install-lib-2-1 install-lib-4:
 	@if test -e $(outdir)Microsoft.FSharp.targets; then \
 	    mkdir -p $(DESTDIR)$(monodir)/Microsoft\ F#/v$(TARGET)/; \
 	    mkdir -p $(DESTDIR)$(monodir)/Microsoft\ SDKs/F#/3.0/Framework/v$(TARGET)/; \
-	    ln -fs $(DESTDIR)$(monodir)/$(TARGET)/$(ASSEMBLY) $(DESTDIR)$(monodir)/Microsoft\ F#/v$(TARGET)/$(ASSEMBLY); \
-	    ln -fs $(DESTDIR)$(monodir)/$(TARGET)/$(ASSEMBLY) $(DESTDIR)$(monodir)/Microsoft\ SDKs/F#/3.0/Framework/v$(TARGET)/$(ASSEMBLY); \
+	    ln -fs ../../$(TARGET)/$(ASSEMBLY) $(DESTDIR)$(monodir)/Microsoft\ F#/v$(TARGET)/$(ASSEMBLY); \
+	    ln -fs ../../../../../$(TARGET)/$(ASSEMBLY) $(DESTDIR)$(monodir)/Microsoft\ SDKs/F#/3.0/Framework/v$(TARGET)/$(ASSEMBLY); \
 	    $(INSTALL_LIB) $(outdir)Microsoft.FSharp.targets $(DESTDIR)$(monodir)/$(TARGET)/; \
-	    ln -fs $(DESTDIR)$(monodir)/$(TARGET)/Microsoft.FSharp.targets $(DESTDIR)$(monodir)/Microsoft\ F#/v$(TARGET)/Microsoft.FSharp.targets; \
-	    ln -fs $(DESTDIR)$(monodir)/$(TARGET)/Microsoft.FSharp.targets $(DESTDIR)$(monodir)/Microsoft\ SDKs/F#/3.0/Framework/v$(TARGET)/Microsoft.FSharp.targets; \
+	    ln -fs ../../$(TARGET)/Microsoft.FSharp.targets $(DESTDIR)$(monodir)/Microsoft\ F#/v$(TARGET)/Microsoft.FSharp.targets; \
+	    ln -fs ../../../../../$(TARGET)/Microsoft.FSharp.targets $(DESTDIR)$(monodir)/Microsoft\ SDKs/F#/3.0/Framework/v$(TARGET)/Microsoft.FSharp.targets; \
 	fi
 	@if test -e $(outdir)$(NAME).xml; then \
 		$(INSTALL_LIB) $(outdir)$(NAME).xml $(DESTDIR)$(monodir)/gac/$(NAME)/$(VERSION)__$(TOKEN); \
@@ -170,18 +170,18 @@ install-lib-2 install-lib-2-1 install-lib-4:
 
 install-lib-4-5: install-lib-4
 	@if test -e $(DESTDIR)$(monodir)/4.5/; then \
-		ln -fs $(DESTDIR)$(monodir)/4.0/$(ASSEMBLY) $(DESTDIR)$(monodir)/4.5/$(ASSEMBLY); \
+		ln -fs ../4.0/$(ASSEMBLY) $(DESTDIR)$(monodir)/4.5/$(ASSEMBLY); \
 		if test -e $(DESTDIR)$(monodir)/4.0/$(ASSEMBLY).config; then \
-		    ln -fs $(DESTDIR)$(monodir)/4.0/$(ASSEMBLY).config $(DESTDIR)$(monodir)/4.5/$(ASSEMBLY).config; \
+		    ln -fs ../4.0/$(ASSEMBLY).config $(DESTDIR)$(monodir)/4.5/$(ASSEMBLY).config; \
 		fi; \
 		if test -e $(DESTDIR)$(monodir)/4.0/$(NAME).sigdata; then \
-		    ln -fs $(DESTDIR)$(monodir)/4.0/$(NAME).sigdata $(DESTDIR)$(monodir)/4.5/$(NAME).sigdata; \
+		    ln -fs ../4.0/$(NAME).sigdata $(DESTDIR)$(monodir)/4.5/$(NAME).sigdata; \
 		fi; \
 		if test -e $(DESTDIR)$(monodir)/4.0/$(NAME).xml; then \
-		    ln -fs $(DESTDIR)$(monodir)/4.0/$(NAME).xml $(DESTDIR)$(monodir)/4.5/$(NAME).xml; \
+		    ln -fs ../4.0/$(NAME).xml $(DESTDIR)$(monodir)/4.5/$(NAME).xml; \
 		fi; \
 		if test -e $(DESTDIR)$(monodir)/4.0/$(NAME).optdata; then \
-		    ln -fs $(DESTDIR)$(monodir)/4.0/$(NAME).optdata $(DESTDIR)$(monodir)/4.5/$(NAME).optdata; \
+		    ln -fs ../4.0/$(NAME).optdata $(DESTDIR)$(monodir)/4.5/$(NAME).optdata; \
 		fi; \
 	fi
 
