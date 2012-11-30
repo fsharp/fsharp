@@ -57,7 +57,11 @@ fi
 if ! test -e $MONODIR/2.0/mscorlib.dll; then
 	AC_ERROR(Couldn't find the mono gac directory or mscorlib.dll in the usual places. Set --with-gacdir=<path>)
 fi
+
+MONOROOTDIR=$(cd "$MONODIR/.." && pwd)
+
 AC_SUBST(MONODIR)
+AC_SUBST(MONOROOTDIR)
 
 if test "x$MONO_SGEN" = "xno"; then
 	mono_gc_options=
