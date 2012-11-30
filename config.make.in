@@ -4,6 +4,7 @@ topdir := @abs_top_srcdir@/
 builddir := @abs_top_builddir@/
 libdir := ${prefix}/lib/
 bindir := ${prefix}/bin/
+monorootdir := @MONOROOTDIR@/
 monodir := @MONODIR@/
 monolibdir2 := $(monodir)2.0/
 

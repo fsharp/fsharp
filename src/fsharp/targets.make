@@ -144,57 +144,56 @@ install-bin-4: TARGET := $(TARGET_4_0)
 # 
 install-lib-2 install-lib-2-1 install-lib-4:
 	@echo "Installing $(ASSEMBLY)"
-	@mkdir -p $(DESTDIR)/$(libdir)
-	@mkdir -p $(DESTDIR)/$(libdir)mono/$(TARGET)
-	gacutil -i $(outdir)$(ASSEMBLY) -root $(DESTDIR)/$(libdir) -package $(TARGET)
+	@mkdir -p $(DESTDIR)$(monodir)/$(TARGET)
+	gacutil -i $(outdir)$(ASSEMBLY) -root $(DESTDIR)$(monorootdir) -package $(TARGET)
 	@if test -e $(outdir)Microsoft.FSharp.targets; then \
-	    mkdir -p $(DESTDIR)/$(libdir)mono/Microsoft\ F#/v$(TARGET)/; \
-	    mkdir -p $(DESTDIR)/$(libdir)mono/Microsoft\ SDKs/F#/3.0/Framework/v$(TARGET)/; \
-	    ln -fs $(DESTDIR)/$(libdir)mono/$(TARGET)/$(ASSEMBLY) $(DESTDIR)/$(libdir)mono/Microsoft\ F#/v$(TARGET)/$(ASSEMBLY); \
-	    ln -fs $(DESTDIR)/$(libdir)mono/$(TARGET)/$(ASSEMBLY) $(DESTDIR)/$(libdir)mono/Microsoft\ SDKs/F#/3.0/Framework/v$(TARGET)/$(ASSEMBLY); \
-	    $(INSTALL_LIB) $(outdir)Microsoft.FSharp.targets $(DESTDIR)/$(libdir)mono/$(TARGET)/; \
-	    ln -fs $(DESTDIR)/$(libdir)mono/$(TARGET)/Microsoft.FSharp.targets $(DESTDIR)/$(libdir)mono/Microsoft\ F#/v$(TARGET)/Microsoft.FSharp.targets; \
-	    ln -fs $(DESTDIR)/$(libdir)mono/$(TARGET)/Microsoft.FSharp.targets $(DESTDIR)/$(libdir)mono/Microsoft\ SDKs/F#/3.0/Framework/v$(TARGET)/Microsoft.FSharp.targets; \
+	    mkdir -p $(DESTDIR)$(monodir)/Microsoft\ F#/v$(TARGET)/; \
+	    mkdir -p $(DESTDIR)$(monodir)/Microsoft\ SDKs/F#/3.0/Framework/v$(TARGET)/; \
+	    ln -fs ../../$(TARGET)/$(ASSEMBLY) $(DESTDIR)$(monodir)/Microsoft\ F#/v$(TARGET)/$(ASSEMBLY); \
+	    ln -fs ../../../../../$(TARGET)/$(ASSEMBLY) $(DESTDIR)$(monodir)/Microsoft\ SDKs/F#/3.0/Framework/v$(TARGET)/$(ASSEMBLY); \
+	    $(INSTALL_LIB) $(outdir)Microsoft.FSharp.targets $(DESTDIR)$(monodir)/$(TARGET)/; \
+	    ln -fs ../../$(TARGET)/Microsoft.FSharp.targets $(DESTDIR)$(monodir)/Microsoft\ F#/v$(TARGET)/Microsoft.FSharp.targets; \
+	    ln -fs ../../../../../$(TARGET)/Microsoft.FSharp.targets $(DESTDIR)$(monodir)/Microsoft\ SDKs/F#/3.0/Framework/v$(TARGET)/Microsoft.FSharp.targets; \
 	fi
 	@if test -e $(outdir)$(NAME).xml; then \
-		$(INSTALL_LIB) $(outdir)$(NAME).xml $(DESTDIR)/$(libdir)mono/gac/$(NAME)/$(VERSION)__$(TOKEN); \
-		ln -fs  ../gac/$(NAME)/$(VERSION)__$(TOKEN)/$(NAME).xml $(DESTDIR)/$(libdir)mono/$(TARGET)/$(NAME).xml; \
+		$(INSTALL_LIB) $(outdir)$(NAME).xml $(DESTDIR)$(monodir)/gac/$(NAME)/$(VERSION)__$(TOKEN); \
+		ln -fs  ../gac/$(NAME)/$(VERSION)__$(TOKEN)/$(NAME).xml $(DESTDIR)$(monodir)/$(TARGET)/$(NAME).xml; \
 	fi
 	@if test -e $(outdir)$(NAME).sigdata; then \
-		$(INSTALL_LIB) $(outdir)$(NAME).sigdata $(DESTDIR)/$(libdir)mono/gac/$(NAME)/$(VERSION)__$(TOKEN); \
-		ln -fs  ../gac/$(NAME)/$(VERSION)__$(TOKEN)/$(NAME).sigdata $(DESTDIR)/$(libdir)mono/$(TARGET)/$(NAME).sigdata; \
+		$(INSTALL_LIB) $(outdir)$(NAME).sigdata $(DESTDIR)$(monodir)/gac/$(NAME)/$(VERSION)__$(TOKEN); \
+		ln -fs  ../gac/$(NAME)/$(VERSION)__$(TOKEN)/$(NAME).sigdata $(DESTDIR)$(monodir)/$(TARGET)/$(NAME).sigdata; \
 	fi
 	@if test -e $(outdir)$(NAME).optdata; then \
-		$(INSTALL_LIB) $(outdir)$(NAME).optdata $(DESTDIR)/$(libdir)mono/gac/$(NAME)/$(VERSION)__$(TOKEN); \
-		ln -fs ../gac/$(NAME)/$(VERSION)__$(TOKEN)/$(NAME).optdata $(DESTDIR)/$(libdir)mono/$(TARGET)/$(NAME).optdata; \
+		$(INSTALL_LIB) $(outdir)$(NAME).optdata $(DESTDIR)$(monodir)/gac/$(NAME)/$(VERSION)__$(TOKEN); \
+		ln -fs ../gac/$(NAME)/$(VERSION)__$(TOKEN)/$(NAME).optdata $(DESTDIR)$(monodir)/$(TARGET)/$(NAME).optdata; \
 	fi
 
 install-lib-4-5: install-lib-4
-	@if test -e $(DESTDIR)$(libdir)mono/4.5/; then \
-		ln -fs $(DESTDIR)$(libdir)mono/4.0/$(ASSEMBLY) $(DESTDIR)$(libdir)mono/4.5/$(ASSEMBLY); \
-		if test -e $(DESTDIR)$(libdir)mono/4.0/$(ASSEMBLY).config; then \
-		    ln -fs $(DESTDIR)$(libdir)mono/4.0/$(ASSEMBLY).config $(DESTDIR)$(libdir)mono/4.5/$(ASSEMBLY).config; \
+	@if test -e $(DESTDIR)$(monodir)/4.5/; then \
+		ln -fs ../4.0/$(ASSEMBLY) $(DESTDIR)$(monodir)/4.5/$(ASSEMBLY); \
+		if test -e $(DESTDIR)$(monodir)/4.0/$(ASSEMBLY).config; then \
+		    ln -fs ../4.0/$(ASSEMBLY).config $(DESTDIR)$(monodir)/4.5/$(ASSEMBLY).config; \
 		fi; \
-		if test -e $(DESTDIR)$(libdir)mono/4.0/$(NAME).sigdata; then \
-		    ln -fs $(DESTDIR)$(libdir)mono/4.0/$(NAME).sigdata $(DESTDIR)$(libdir)mono/4.5/$(NAME).sigdata; \
+		if test -e $(DESTDIR)$(monodir)/4.0/$(NAME).sigdata; then \
+		    ln -fs ../4.0/$(NAME).sigdata $(DESTDIR)$(monodir)/4.5/$(NAME).sigdata; \
 		fi; \
-		if test -e $(DESTDIR)$(libdir)mono/4.0/$(NAME).xml; then \
-		    ln -fs $(DESTDIR)$(libdir)mono/4.0/$(NAME).xml $(DESTDIR)$(libdir)mono/4.5/$(NAME).xml; \
+		if test -e $(DESTDIR)$(monodir)/4.0/$(NAME).xml; then \
+		    ln -fs ../4.0/$(NAME).xml $(DESTDIR)$(monodir)/4.5/$(NAME).xml; \
 		fi; \
-		if test -e $(DESTDIR)$(libdir)mono/4.0/$(NAME).optdata; then \
-		    ln -fs $(DESTDIR)$(libdir)mono/4.0/$(NAME).optdata $(DESTDIR)$(libdir)mono/4.5/$(NAME).optdata; \
+		if test -e $(DESTDIR)$(monodir)/4.0/$(NAME).optdata; then \
+		    ln -fs ../4.0/$(NAME).optdata $(DESTDIR)$(monodir)/4.5/$(NAME).optdata; \
 		fi; \
 	fi
 
 # The binaries fsc.exe and fsi.exe only get installed for Mono 4.0 profile
 # This also installs 'fsharpc' and 'fsharpi'
 install-bin-4:
-	sed -e 's,[@]DIR[@],$(libdir)mono/$(TARGET),g' -e 's,[@]TOOL[@],$(ASSEMBLY),g' < $(topdir)launcher > $(outdir)$(subst fs,fsharp,$(NAME))$(VERSION)
+	sed -e 's,[@]DIR[@],$(monodir)/$(TARGET),g' -e 's,[@]TOOL[@],$(ASSEMBLY),g' < $(topdir)launcher > $(outdir)$(subst fs,fsharp,$(NAME))$(VERSION)
 	chmod +x $(outdir)$(subst fs,fsharp,$(NAME))$(VERSION)
-	@mkdir -p $(DESTDIR)/$(libdir)
-	@mkdir -p $(DESTDIR)/$(bindir)
-	$(INSTALL_LIB) $(outdir)$(ASSEMBLY) $(DESTDIR)$(libdir)mono/$(TARGET)
-	$(INSTALL_BIN) $(outdir)$(subst fs,fsharp,$(NAME))$(VERSION) $(DESTDIR)/$(bindir)
+	@mkdir -p $(DESTDIR)$(monodir)/$(TARGET)
+	@mkdir -p $(DESTDIR)$(bindir)
+	$(INSTALL_LIB) $(outdir)$(ASSEMBLY) $(DESTDIR)$(monodir)/$(TARGET)
+	$(INSTALL_BIN) $(outdir)$(subst fs,fsharp,$(NAME))$(VERSION) $(DESTDIR)$(bindir)
 
 
 $(objdir) $(objdir)$(TARGET_2_0) $(objdir)$(TARGET_2_1) $(objdir)$(TARGET_4_0):
