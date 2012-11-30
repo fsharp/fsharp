@@ -42,7 +42,7 @@
     <Compile Include="Fsc.fs" />
     <Compile Include="CreateFSharpManifestResourceName.fsi" />
     <Compile Include="CreateFSharpManifestResourceName.fs" />
-    <None Include="Microsoft.FSharp.targets">
+    <None Include="Microsoft.FSharp.Targets">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
