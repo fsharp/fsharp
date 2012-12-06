@@ -33,8 +33,7 @@
     <TargetFrameworkVersion Condition=" '$(TargetFramework)'=='net20'">v2.0</TargetFrameworkVersion>
     <OtherFlags>$(OtherFlags) --warnon:1182 --compiling-fslib --optimize --maxerrors:20 --extraoptimizationloops:1 </OtherFlags>
     <OtherFlags Condition=" '$(TargetFramework)'=='net20'">$(OtherFlags) --compiling-fslib-20:"$(SystemRoot)\Microsoft.NET\Framework\v4.0.30319\mscorlib.dll" </OtherFlags>
-    <OtherFlags Condition=" '$(TargetFramework)'=='net40'">$(OtherFlags) --compiling-fslib-40</OtherFlags>
-	<OtherFlags Condition=" '$(TargetFramework)'=='mono21'">$(OtherFlags) --resource:FSCore.resx</OtherFlags>
+    <OtherFlags Condition=" '$(TargetFramework)'=='net40'">$(OtherFlags) --compiling-fslib-40</OtherFlags>	
   </PropertyGroup>
   <!-- MonoDevelop likes these here to recognise the configurations -->
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' " />
