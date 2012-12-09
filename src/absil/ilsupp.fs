@@ -1159,9 +1159,9 @@ type PdbSequencePoint =
       pdbSeqPointEndColumn: int; }
 
 let pdbReadOpen (moduleName:string) (path:string) :  PdbReader = 
-#if MONO
-  { symReader = null }
-#else
+  if IL.runningOnMono then 
+    { symReader = null }
+  else
     let CorMetaDataDispenser = System.Type.GetTypeFromProgID("CLRMetaData.CorMetaDataDispenser")
     let mutable IID_IMetaDataImport = new Guid("7DAC8207-D3AE-4c75-9B67-92801A497D44");
     let mdd = System.Activator.CreateInstance(CorMetaDataDispenser) :?> IMetaDataDispenser
@@ -1169,13 +1169,25 @@ let pdbReadOpen (moduleName:string) (path:string) :  PdbReader =
     mdd.OpenScope(moduleName, 0, &IID_IMetaDataImport, &o) ;
     let importerPtr = Marshal.GetComInterfaceForObject(o, typeof<IMetadataImport>)
     try 
-        let symbolBinder = System.Diagnostics.SymbolStore.SymBinder()
-        { symReader = symbolBinder.GetReader(importerPtr, moduleName, path) }
+#if CROSS_PLATFORM_COMPILER 
+        // ISymWrapper.dll is not available as a compile-time dependency for the cross-platform compiler, since it is Windows-only 
+        // Access it via reflection instead.System.Diagnostics.SymbolStore.SymBinder 
+        try  
+            let isym = System.Reflection.Assembly.Load("ISymWrapper, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a") 
+            let symbolBinder = isym.CreateInstance("System.Diagnostics.SymbolStore.SymBinder") 
+            let symbolBinderTy = symbolBinder.GetType() 
+            let reader = symbolBinderTy.InvokeMember("GetReader",BindingFlags.Public ||| BindingFlags.InvokeMethod ||| BindingFlags.Instance,  null,symbolBinder,[| box importerPtr; box moduleName; box path |]) 
+            { symReader = reader :?> ISymbolReader } 
+        with _ ->  
+            { symReader = null } 
+#else 
+        let symbolBinder = System.Diagnostics.SymbolStore.SymBinder() 
+        { symReader = symbolBinder.GetReader(importerPtr, moduleName, path) } 
+#endif
     finally
         // Marshal.GetComInterfaceForObject adds an extra ref for importerPtr
         if IntPtr.Zero <> importerPtr then
           Marshal.Release(importerPtr) |> ignore
-#endif
 
 // Note, the symbol reader's finalize method will clean up any unmanaged resources.
 // If file locks persist, we may want to manually invoke finalize

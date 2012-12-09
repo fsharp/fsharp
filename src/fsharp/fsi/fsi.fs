@@ -438,7 +438,8 @@ type internal FsiCommandLineOptions(argv: string[], tcConfigB, fsiConsoleOutput:
     let mutable enableConsoleKeyProcessing = 
        // Mono on Win32 doesn't implement correct console processing
        not (runningOnMono && System.Environment.OSVersion.Platform = System.PlatformID.Win32NT) 
-#if MONO
+// In the cross-platform edition of F#, 'gui' support is currently off by default
+#if CROSS_PLATFORM_COMPILER
     let mutable gui        = false // override via "--gui", off by default
 #else
     let mutable gui        = true // override via "--gui", on by default

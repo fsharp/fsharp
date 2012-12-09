@@ -4226,7 +4226,7 @@ namespace Microsoft.FSharp.Core
 
 #if BE_SECURITY_TRANSPARENT
             [<assembly: System.Security.SecurityTransparent>] // assembly is fully transparent
-#if MONO
+#if CROSS_PLATFORM_COMPILER
 #else
             [<assembly: System.Security.SecurityRules(System.Security.SecurityRuleSet.Level2)>] // v4 transparency; soon to be the default, but not yet
 #endif
