@@ -29,6 +29,7 @@ module internal MSBuildResolver =
 #if SILVERLIGHT
 #else
     open System
+    open System.Reflection
     open Microsoft.Build.Tasks
     open Microsoft.Build.Utilities
     open Microsoft.Build.Framework
