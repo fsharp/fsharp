@@ -1,4 +1,4 @@
-namespace Viz
+﻿namespace Viz
 
 /// This type exists to have a concrete 'Target' type for a DebuggerVisualizerAttribute.
 /// Ideally it would be out in its own assembly, but then the compiler would need to take a dependency on that assembly, so instead we 
@@ -205,7 +205,15 @@ module internal MSBuildResolver =
 #if BUILDING_WITH_LKG
         ignore targetProcessorArchitecture
 #else       
-#if MONO
+
+#if CROSS_PLATFORM_COMPILER 
+        // The properties TargetedRuntimeVersion and CopyLocalDependenciesWhenParentReferenceInGac 
+        // are not available to the cross-platform compiler since they are Windows only (not defined in the Mono  
+        // 4.0 XBuild support). So we only set them if available (to avoid a compile-time dependency). 
+        let runningOnMono = try System.Type.GetType("Mono.Runtime") <> null with e-> false         
+        if not runningOnMono then  
+            typeof<ResolveAssemblyReference>.InvokeMember("TargetedRuntimeVersion",(BindingFlags.Instance ||| BindingFlags.SetProperty ||| BindingFlags.Public),null,rar,[| box trv |])  |> ignore 
+            typeof<ResolveAssemblyReference>.InvokeMember("CopyLocalDependenciesWhenParentReferenceInGac",(BindingFlags.Instance ||| BindingFlags.SetProperty ||| BindingFlags.Public),null,rar,[| box true |])  |> ignore 
 #else
         rar.TargetedRuntimeVersion <- typeof<obj>.Assembly.ImageRuntimeVersion
         rar.CopyLocalDependenciesWhenParentReferenceInGac <- true

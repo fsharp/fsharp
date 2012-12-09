@@ -73,9 +73,9 @@
     <ConfigurationOutputDirectory>proto</ConfigurationOutputDirectory>
   </PropertyGroup>
 
-  <!-- For now define 'MONO', even when building using msbuild on Windows, see https://github.com/fsharp/fsharp/issues/69 -->
+  <!-- For now define 'CROSS_PLATFORM_COMPILER', even when building using msbuild on Windows, see https://github.com/fsharp/fsharp/issues/69 -->
   <PropertyGroup>
-    <DefineConstants>MONO;$(DefineConstants)</DefineConstants>
+    <DefineConstants>CROSS_PLATFORM_COMPILER;$(DefineConstants)</DefineConstants>
   </PropertyGroup>
 
   <!-- v2.0-specific flags -->
