@@ -65,7 +65,7 @@ SIGN_FLAGS = \
 
 DEFINES_GENERAL = \
 	--define:TRACE \
-	--define:MONO
+	--define:CROSS_PLATFORM_COMPILER
 	
 ifeq ($(CONFIG),debug)
 DEFINES_DEBUG = \
