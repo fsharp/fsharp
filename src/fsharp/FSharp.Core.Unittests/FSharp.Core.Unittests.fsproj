@@ -41,21 +41,21 @@
     <DebugSymbols>False</DebugSymbols>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="nunit.framework" Condition="'$(TargetFramework)' != 'sl5' AND '$(TargetFramework)' != 'sl5-compiler' AND '$(TargetFramework)' != 'sl3-wp'" />
-    <Reference Include="NUnitFramework" Condition="'$(TargetFramework)' == 'sl5' OR '$(TargetFramework)' == 'sl3-wp' OR '$(TargetFramework)' == 'sl5-compiler'" />
+    <Reference Include="nunit.framework" Condition="'$(TargetFramework)' != 'sl5' AND '$(TargetFramework)' != 'sl5-compiler' AND '$(TargetFramework)' != 'wp7'" />
+    <Reference Include="NUnitFramework" Condition="'$(TargetFramework)' == 'sl5' OR '$(TargetFramework)' == 'wp7' OR '$(TargetFramework)' == 'sl5-compiler'" />
     <Reference Include="mscorlib" />
     <Reference Include="System" />
     <Reference Include="System.Numerics" Condition="'$(TargetFramework)' == 'net40'" />
     <Reference Include="System.Core" />
     <Reference Include="System.Net" Condition="'$(TargetFramework)' == 'sl5' OR '$(TargetFramework)' == 'sl5-compiler' " />
-    <Reference Include="System.Observable" Condition="'$(TargetFramework)' == 'sl3-wp' " />
+    <Reference Include="System.Observable" Condition="'$(TargetFramework)' == 'wp7' " />
     <ProjectReference Include="..\FSharp.Core\FSharp.Core.fsproj">
       <Project>{DED3BBD7-53F4-428A-8C9F-27968E768605}</Project>
       <Name>FSharp.Core</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="NUnitFrameworkShims.fs" Condition="'$(TargetFramework)' == 'sl3-wp'" />
+    <Compile Include="NUnitFrameworkShims.fs" Condition="'$(TargetFramework)' == 'wp7'" />
     <Compile Include="LibraryTestFx.fs" />
     <Compile Include="FSharp.Core\Microsoft.FSharp.Collections\ArrayModule.fs" />
     <Compile Include="FSharp.Core\Microsoft.FSharp.Collections\ArrayModule2.fs" />
