@@ -40,27 +40,17 @@ msbuild fsharp-proto-build.proj
 msbuild fsharp-library-build.proj
 msbuild fsharp-compiler-build.proj
 ```
-You can also build the FSharp.Core for .NET 2.0, Mono 2.1 and Silverlight 5.0 profiles:
+You can also build the FSharp.Core for .NET 2.0, Mono 2.1, Silverlight 5.0 and Portable Profile47 (net4+sl4+wp71+win8) profiles:
 ```
 msbuild fsharp-library-build.proj /p:TargetFramework=net20 
 msbuild fsharp-library-build.proj /p:TargetFramework=mono21
+msbuild fsharp-library-build.proj /p:TargetFramework=portable-net4+sl4+wp71+win8
 msbuild fsharp-library-build.proj /p:TargetFramework=sl5
 ```
-
 You can also build the FSharp.Core and FSharp.Compiler.Silverlight.dll for Silverlight 5.0:
 ```
 msbuild fsharp-library-build.proj /p:TargetFramework=sl5-compiler 
 msbuild fsharp-compiler-build.proj /p:TargetFramework=sl5-compiler
-```
-And for Release versions of the same:
-```
-msbuild fsharp-library-build.proj /p:Configuration=Release
-msbuild fsharp-compiler-build.proj /p:Configuration=Release
-msbuild fsharp-library-build.proj /p:TargetFramework=net20 /p:Configuration=Release
-msbuild fsharp-library-build.proj /p:TargetFramework=mono21 /p:Configuration=Release
-msbuild fsharp-library-build.proj /p:TargetFramework=sl5  /p:Configuration=Release
-msbuild fsharp-library-build.proj /p:TargetFramework=sl5-compiler  /p:Configuration=Release
-msbuild fsharp-compiler-build.proj /p:TargetFramework=sl5-compiler  /p:Configuration=Release
 ```
 ### On Windows, using xbuild (e.g. if no .NET is installed and only Mono 3.0 is installed):
 
