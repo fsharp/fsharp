@@ -2,10 +2,9 @@
 namespace Microsoft.FSharp
 open System.Reflection
 [<assembly:AssemblyDescription("FSharp.Core.dll")>]
-[<assembly:AssemblyCompany("Microsoft Corporation")>]
 [<assembly:AssemblyTitle("FSharp.Core.dll")>]
-[<assembly:AssemblyCopyright("\169 Microsoft Corporation.  Apache 2.0 License.")>]
-[<assembly:AssemblyProduct("Microsoft\174 F#")>]
+[<assembly:AssemblyCopyright("\169 Microsoft Corporation and other contributors.  Apache 2.0 License.")>]
+[<assembly:AssemblyProduct("F# (open source edition)")>]
 
 #if PORTABLE
 [<assembly:AssemblyProduct("Microsoft\174 F#")>]

@@ -3,10 +3,9 @@ namespace Microsoft.FSharp
 open System.Reflection
 
 [<assembly:AssemblyDescription("FSharp.Compiler.Silverlight.dll")>]
-[<assembly:AssemblyCompany("Microsoft Corporation")>]
 [<assembly:AssemblyTitle("FSharp.Compiler.Silverlight.dll")>]
-[<assembly:AssemblyCopyright("\169 Microsoft Corporation.  Apache 2.0 License.")>]
-[<assembly:AssemblyProduct("Microsoft\174 F#")>]
+[<assembly:AssemblyCopyright("\169 Microsoft Corporation and other contributors.  Apache 2.0 License.")>]
+[<assembly:AssemblyProduct("F# (open source edition)")>]
 
 // Note: internals visible to unit test DLLs in Retail (and all) builds.
 [<assembly:System.Runtime.CompilerServices.InternalsVisibleTo("Salsa")>]
