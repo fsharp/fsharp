@@ -69,7 +69,6 @@
     <Reference Include="System.Xml" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml.Linq" />
-    <Reference Include="nunit.framework" Condition="'$(BuildUnittests)'!='false'" />
     <ProjectReference Include="..\FSharp.Core\FSharp.Core.fsproj">
       <Project>{DED3BBD7-53F4-428A-8C9F-27968E768605}</Project>
       <Name>FSharp.Core</Name>
