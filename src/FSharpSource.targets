@@ -65,13 +65,11 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <!-- These flags provide a better debugging experience. Locals should be visible. -->
     <OtherFlags>$(OtherFlags) --no-jit-optimize --jit-tracking</OtherFlags>
     <DefineConstants>CODE_ANALYSIS; $(DefineConstants)</DefineConstants>
-    <BuildWith>LKG</BuildWith>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)'=='Release'">
     <Optimize>true</Optimize>
     <ConfigurationOutputDirectory>release</ConfigurationOutputDirectory>
-    <BuildWith>LKG</BuildWith>
   </PropertyGroup>
 
   <!-- Flags used to build the bootstrap compiler.
