@@ -160,12 +160,18 @@ install-lib-2 install-lib-2-1 install-lib-4:
 		ln -fs  ../gac/$(NAME)/$(VERSION)__$(TOKEN)/$(NAME).xml $(DESTDIR)$(monodir)/$(TARGET)/$(NAME).xml; \
 	fi
 	@if test -e $(outdir)$(NAME).sigdata; then \
-		$(INSTALL_LIB) $(outdir)$(NAME).sigdata $(DESTDIR)$(monodir)/gac/$(NAME)/$(VERSION)__$(TOKEN); \
+		cp $(outdir)$(NAME).sigdata $(DESTDIR)$(monodir)/gac/$(NAME)/$(VERSION)__$(TOKEN); \
 		ln -fs  ../gac/$(NAME)/$(VERSION)__$(TOKEN)/$(NAME).sigdata $(DESTDIR)$(monodir)/$(TARGET)/$(NAME).sigdata; \
+		if test -e $(outdir)Microsoft.FSharp.Targets; then \
+			ln -fs  ../../gac/$(NAME)/$(VERSION)__$(TOKEN)/$(NAME).sigdata $(DESTDIR)$(monodir)/Microsoft\ F#/v$(TARGET)/$(NAME).sigdata; \
+		fi; \
 	fi
 	@if test -e $(outdir)$(NAME).optdata; then \
-		$(INSTALL_LIB) $(outdir)$(NAME).optdata $(DESTDIR)$(monodir)/gac/$(NAME)/$(VERSION)__$(TOKEN); \
+		cp $(outdir)$(NAME).optdata $(DESTDIR)$(monodir)/gac/$(NAME)/$(VERSION)__$(TOKEN); \
 		ln -fs ../gac/$(NAME)/$(VERSION)__$(TOKEN)/$(NAME).optdata $(DESTDIR)$(monodir)/$(TARGET)/$(NAME).optdata; \
+		if test -e $(outdir)Microsoft.FSharp.Targets; then \
+			ln -fs  ../../gac/$(NAME)/$(VERSION)__$(TOKEN)/$(NAME).optdata $(DESTDIR)$(monodir)/Microsoft\ F#/v$(TARGET)/$(NAME).optdata; \
+		fi; \
 	fi
 
 install-lib-4-5: install-lib-4
