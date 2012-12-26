@@ -51,5 +51,5 @@ src/fsharp/FSharp.Compiler-proto/pars.fs
 src/fsharp/FSharp.Compiler-proto/pars.fsi
 *~
 tests/projects/Sample_VS2012_FSharp_ConsoleApp_net45_with_resource/Sample_VS2012_FSharp_ConsoleApp_net45/Sample_VS2012_FSharp_ConsoleApp_net45.sln
-
 tests/projects/Sample_VS2012_FSharp_ConsoleApp_net45_with_resource/Sample_VS2012_FSharp_ConsoleApp_net45/Sample_VS2012_FSharp_ConsoleApp_net45.userprefs
+*.suo
