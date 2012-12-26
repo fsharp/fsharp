@@ -509,7 +509,51 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <OtherFlags>$(OtherFlags) --simpleresolution -r:"C:\Program Files\Microsoft.NET\SDK\CompactFramework\v3.5\WindowsCE\mscorlib.dll"  -r:"C:\Program Files\Microsoft.NET\SDK\CompactFramework\v3.5\WindowsCE\System.dll"</OtherFlags>
   </PropertyGroup>
 
-
+  <!-- XNA 4.0 Xbox360 -->
+  <PropertyGroup Condition="'$(TargetFramework)'=='Xbox360\CompactFramework\3.7'">
+  <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+  <XnaFrameworkVersion>v4.0</XnaFrameworkVersion>
+  <XnaPlatform>Xbox 360</XnaPlatform>
+  <DefineConstants>$(DefineConstants);FX_NO_ARRAY_LONG_LENGTH</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_DEBUG_PROXIES</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_EXIT</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_IOBSERVABLE</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_WEB_CLIENT</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_WEB_REQUESTS</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_CHAR_PARSE</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_DEFAULT_DEPENDENCY_TYPE</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_SIMPLE_SECURITY_PERMISSIONS</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_TRUNCATE</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_CULTURE_INFO_ARGS</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_REFLECTION_MODULE_HANDLES</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_OPERATION_CANCELLED</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_TO_LOWER_INVARIANT</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_EXIT_CONTEXT_FLAGS</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_BASED_ARRAYS</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_DOUBLE_BIT_CONVERTER</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_BINARY_SERIALIZATION</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_ASCII_ENCODING</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_DEFAULT_ENCODING</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_FILE_OPTIONS</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_NONBLOCK_IO</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_COMMAND_LINE_ARGS</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_ENVIRONMENT</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_PROCESS_START</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_APP_DOMAINS</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_PROCESS_DIAGNOSTICS</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_STRUCTURAL_EQUALITY</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_LAZY</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_TUPLE</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_REFLECTION_EMIT</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_BIGINT</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_MONITOR_REPORTS_LOCKTAKEN</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_TPL_PARALLEL</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_TASK</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_CUSTOMATTRIBUTEDATA</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_ATLEAST_PORTABLE</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_CANCELLATIONTOKEN_CLASSES</DefineConstants>
+  <Tailcalls>false</Tailcalls>
+  </PropertyGroup>
 
   <!-- Always qualify the IntermediateOutputPath by the TargetFramework if any exists -->
   <PropertyGroup>
@@ -575,7 +619,8 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
                           '$(TargetFramework)' == 'sl5' or 
                           '$(TargetFramework)' == 'sl5-compiler' or 
                           '$(TargetFramework)' == 'wp7' or 
-                          '$(TargetFramework)' == 'portable-net4+sl4+wp71+win8')"/>
+                          '$(TargetFramework)' == 'portable-net4+sl4+wp71+win8' or
+                          '$(TargetFramework)' == 'Xbox360\CompactFramework\3.7') "/>
   </Target>
 
   <Import Project="$(LkgPath)\..\2.0\FSharp.SRGen.targets" />
