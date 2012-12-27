@@ -620,7 +620,6 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
                           '$(TargetFramework)' == 'sl5-compiler' or 
                           '$(TargetFramework)' == 'wp7' or 
                           '$(TargetFramework)' == 'portable-net4+sl4+wp71+win8' or
-                          '$(TargetFramework)' == 'sl3-wp' or
                           '$(TargetFramework)' == 'Xbox360\CompactFramework\3.7') "/>
   </Target>
 
