@@ -510,7 +510,7 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
   </PropertyGroup>
 
   <!-- XNA 4.0 Xbox360 -->
-  <PropertyGroup Condition="'$(TargetFramework)'=='Xbox360\CompactFramework\3.7'">
+  <PropertyGroup Condition="'$(TargetFramework)'=='net40-xna40-xbox360'">
   <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
   <XnaFrameworkVersion>v4.0</XnaFrameworkVersion>
   <XnaPlatform>Xbox 360</XnaPlatform>
@@ -620,7 +620,7 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
                           '$(TargetFramework)' == 'sl5-compiler' or 
                           '$(TargetFramework)' == 'wp7' or 
                           '$(TargetFramework)' == 'portable-net4+sl4+wp71+win8' or
-                          '$(TargetFramework)' == 'Xbox360\CompactFramework\3.7') "/>
+                          '$(TargetFramework)' == 'net40-xna40-xbox360') "/>
   </Target>
 
   <Import Project="$(LkgPath)\..\2.0\FSharp.SRGen.targets" />

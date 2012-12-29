@@ -46,7 +46,7 @@ msbuild fsharp-library-build.proj /p:TargetFramework=net20
 msbuild fsharp-library-build.proj /p:TargetFramework=mono21
 msbuild fsharp-library-build.proj /p:TargetFramework=portable-net4+sl4+wp71+win8
 msbuild fsharp-library-build.proj /p:TargetFramework=sl5
-msbuild fsharp-library-build.proj /p:TargetFramework=Xbox360\CompactFramework\3.7
+msbuild fsharp-library-build.proj /p:TargetFramework=net40-xna40-xbox360
 ```
 You can also build the FSharp.Core and FSharp.Compiler.Silverlight.dll for Silverlight 5.0:
 ```
