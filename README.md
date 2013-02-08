@@ -37,6 +37,7 @@ sudo make install
 ```
 cd src
 msbuild fsharp-proto-build.proj
+ngen install ..\lib\proto\4.0\fsc-proto.exe
 msbuild fsharp-library-build.proj
 msbuild fsharp-compiler-build.proj
 ```
