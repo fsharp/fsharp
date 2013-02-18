@@ -63,6 +63,16 @@
               <File Id='FSharpCoreXml21' Name='FSharp.Core.xml' DiskId='1' Source='lib\release\2.1\FSharp.Core.xml' Vital='yes' />
             </Component>
           </Directory>
+
+          <Directory Id='Runtime_vPortable47' Name='Portable47'>
+
+            <Component Id='FSharp30.Runtime.Portable47' Guid='11A0B23D-AE21-4BB1-A117-3EB4E40BB20C'>
+              <File Id='FSharpCorePortable47' Name='FSharp.Core.dll' DiskId='1' Source='lib\release\portable-net4+sl4+wp71+win8\FSharp.Core.dll' Vital='yes' />
+              <File Id='FSharpCoreOptDataPortable47' Name='FSharp.Core.optdata' DiskId='1' Source='lib\release\portable-net4+sl4+wp71+win8\FSharp.Core.optdata' Vital='yes' />
+              <File Id='FSharpCoreSigDataPortable47' Name='FSharp.Core.sigdata' DiskId='1' Source='lib\release\portable-net4+sl4+wp71+win8\FSharp.Core.sigdata' Vital='yes' />
+              <File Id='FSharpCoreXmlPortable47' Name='FSharp.Core.xml' DiskId='1' Source='lib\release\portable-net4+sl4+wp71+win8\FSharp.Core.xml' Vital='yes' />
+            </Component>
+          </Directory>
         </Directory>
       </Directory>
     </Directory>
@@ -78,6 +88,8 @@
         <ComponentRef Id='FSharp30.SDK' />
         <ComponentRef Id='FSharp30.Runtime.2.0' />
         <ComponentRef Id='FSharp30.Runtime.2.1' />
+        <ComponentRef Id='FSharp30.Runtime.Portable47' />
+        
       </Feature>
 
     </Feature>
