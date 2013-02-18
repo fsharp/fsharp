@@ -402,7 +402,12 @@ namespace Microsoft.FSharp.Control
 
     [<AllowNullLiteral>]
     type Trampoline() = 
-    
+
+        let mutable cont = None
+        let mutable bindCount = 0
+        
+        static let unfake FakeUnit = ()
+
         [<Literal>]
         static let bindLimitBeforeHijack = 300 
 #if FX_NO_THREAD_STATIC
@@ -418,10 +423,6 @@ namespace Microsoft.FSharp.Control
 #else
             Trampoline.thisThreadHasTrampoline
 #endif
-        let mutable cont = None
-        let mutable bindCount = 0
-        
-        static let unfake FakeUnit = ()
         
         // Install a trampolineStack if none exists
         member this.ExecuteAction (firstAction : unit -> FakeUnitValue) =
@@ -529,6 +530,7 @@ namespace Microsoft.FSharp.Control
         member this.Protect firstAction =
             trampoline <- new Trampoline()
             trampoline.ExecuteAction(firstAction)
+            FakeUnit
             
         member this.Trampoline = trampoline
         
