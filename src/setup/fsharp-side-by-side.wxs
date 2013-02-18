@@ -1,0 +1,98 @@
+<?xml version='1.0'?>
+<Wix xmlns='http://schemas.microsoft.com/wix/2006/wi' xmlns:netfx="http://schemas.microsoft.com/wix/NetFxExtension">
+  <Product Id='279A66FC-168E-466B-B5AE-5F1C4358283A'
+           Name='F# 3.0 Tools (Open Source Edition, side-by-side install)'
+           Language='1033'
+           Version='3.0.0.0'
+           UpgradeCode='0017DEF4-596D-47B1-90DF-32EA98E6FC48'
+           Manufacturer='F# Open Source Group'>
+    <Package Id='*' Description='F# 3.0 Tools'
+             Comments='See http://fsharp.github.com'
+              Manufacturer='F# Open Source Group'
+              InstallerVersion='200'
+              Compressed='yes' />
+
+    <Media Id='1' Cabinet='FSCAB.cab' EmbedCab='yes' />
+
+    <Directory Id='TARGETDIR' Name='SourceDir'>
+      <Directory Id='ProgramFilesFolder' Name='PFiles' FileSource='.' SourceName='.'>
+        <Directory Id='INSTALLDIR' Name='FSharp-3.0.0.0'>
+          <Component Id='FSharp30.SDK' Guid='A8DBCA0C-1B27-4796-89E4-7AD7CBC27D38'>
+            <!-- Use Microsoft's signed FSharp.Core.dll instead of the delay-signed one produced by the open source build. -->
+            <!-- <File Id='FSharpCore40' Name='FSharp.Core.dll' DiskId='1' Source='lib\release\4.0\FSharp.Core.dll' Vital='yes' /> -->
+            <File Id='FSharpCore40' Name='FSharp.Core.dll' DiskId='1' Source='lib\bootstrap\signed\3.0\v4.0\FSharp.Core.dll' Vital='yes' />
+
+            <File Id='FSharpCoreOptData40' Name='FSharp.Core.optdata' DiskId='1' Source='lib\release\4.0\FSharp.Core.optdata' Vital='yes' />
+            <File Id='FSharpCoreSigData40' Name='FSharp.Core.sigdata' DiskId='1' Source='lib\release\4.0\FSharp.Core.sigdata' Vital='yes' />
+            <File Id='FSharpCoreXml40' Name='FSharp.Core.xml' DiskId='1' Source='lib\release\4.0\FSharp.Core.xml' Vital='yes' />
+            <File Id='MSBuildTargets40' Name='Microsoft.FSharp.Targets' DiskId='1' Source='lib\release\4.0\Microsoft.FSharp.Targets' Vital='yes' />
+            <File Id='MSBuildTask40' Name='FSharp.Build.dll' DiskId='1' Source='lib\release\4.0\FSharp.Build.dll' Vital='yes' />
+            <File Id='Fsc40' Name='fsc.exe' DiskId='1' Source='lib\release\4.0\fsc.exe' Vital='yes'>
+              <netfx:NativeImage Id="Fsc40NGenImage" Priority="1" />
+            </File>
+            <File Id='Fsi40' Name='fsi.exe' DiskId='1' Source='lib\release\4.0\fsi.exe' Vital='yes' >
+              <netfx:NativeImage Id="Fsi40NGenImage" Priority="1" />
+            </File>
+            <File Id='FsiConfig40' Name='fsi.exe.config' DiskId='1' Source='lib\release\4.0\fsi.exe.config' Vital='yes' />
+            <File Id='FsiAnyCpu40' Name='fsiAnyCpu.exe' DiskId='1' Source='lib\release\4.0\fsiAnyCpu.exe' Vital='yes'>
+              <netfx:NativeImage Id="FsiAnyCpu40NGenImage" Priority="1" />
+            </File>
+            <File Id='FsiAnyCpuConfig40' Name='fsiAnyCpu.exe.config' DiskId='1' Source='lib\release\4.0\fsiAnyCpu.exe.config' Vital='yes' />
+            <File Id='FSharpCompiler40' Name='FSharp.Compiler.dll' DiskId='1' Source='lib\release\4.0\FSharp.Compiler.dll' Vital='yes' />
+            <File Id='FSharpCompilerInteractiveSettings40' Name='FSharp.Compiler.Interactive.Settings.dll' DiskId='1' Source='lib\release\4.0\FSharp.Compiler.Interactive.Settings.dll' Vital='yes' />
+            <File Id='FSharpCompilerServerShared40' Name='FSharp.Compiler.Server.Shared.dll' DiskId='1' Source='lib\release\4.0\FSharp.Compiler.Server.Shared.dll' Vital='yes' />
+          </Component>
+          <Directory Id='Runtime_v2_0' Name='2.0'>
+
+            <Component Id='FSharp30.Runtime.2.0' Guid='8FCC33A3-3A63-4D39-A43F-7118C5C0E220'>
+              <!-- Use Microsoft's signed FSharp.Core.dll instead of the delay-signed one produced by the open source build. -->
+              <!-- <File Id='FSharpCore20' Name='FSharp.Core.dll' DiskId='1' Source='lib\release\2.0\FSharp.Core.dll' Vital='yes' /> -->
+              <File Id='FSharpCore20' Name='FSharp.Core.dll' DiskId='1' Source='lib\bootstrap\signed\3.0\v2.0\FSharp.Core.dll' Vital='yes' />
+
+              <File Id='FSharpCoreOptData20' Name='FSharp.Core.optdata' DiskId='1' Source='lib\release\2.0\FSharp.Core.optdata' Vital='yes' />
+              <File Id='FSharpCoreSigData20' Name='FSharp.Core.sigdata' DiskId='1' Source='lib\release\2.0\FSharp.Core.sigdata' Vital='yes' />
+              <File Id='FSharpCoreXml20' Name='FSharp.Core.xml' DiskId='1' Source='lib\release\2.0\FSharp.Core.xml' Vital='yes' />
+            </Component>
+          </Directory>
+          <Directory Id='Runtime_v2_1' Name='2.1'>
+
+            <Component Id='FSharp30.Runtime.2.1' Guid='AC8F2BC4-5809-44B3-8756-85B0A639F11E'>
+              <File Id='FSharpCore21' Name='FSharp.Core.dll' DiskId='1' Source='lib\release\2.1\FSharp.Core.dll' Vital='yes' />
+              <File Id='FSharpCoreOptData21' Name='FSharp.Core.optdata' DiskId='1' Source='lib\release\2.1\FSharp.Core.optdata' Vital='yes' />
+              <File Id='FSharpCoreSigData21' Name='FSharp.Core.sigdata' DiskId='1' Source='lib\release\2.1\FSharp.Core.sigdata' Vital='yes' />
+              <File Id='FSharpCoreXml21' Name='FSharp.Core.xml' DiskId='1' Source='lib\release\2.1\FSharp.Core.xml' Vital='yes' />
+            </Component>
+          </Directory>
+        </Directory>
+      </Directory>
+    </Directory>
+
+    <UI>
+      <InstallUISequence />
+    </UI>
+
+    <Feature Id='Complete' Title='Complete features' Description='Complete features' Display='expand' Level='1' >
+
+      <Feature Id='FSharp30' Title='F# 3.0 Tools'
+               Description='F# 3.0 Compiler, Library and Scripting (Open Source Edition, side-by-side install)' Level='1'>
+        <ComponentRef Id='FSharp30.SDK' />
+        <ComponentRef Id='FSharp30.Runtime.2.0' />
+        <ComponentRef Id='FSharp30.Runtime.2.1' />
+      </Feature>
+
+    </Feature>
+
+    <InstallExecuteSequence>
+      <RemoveRegistryValues/>
+      <RemoveFiles/>
+      <InstallFiles/>
+      <WriteRegistryValues/>
+    </InstallExecuteSequence>
+
+    <Property Id="WIXUI_INSTALLDIR" Value="INSTALLDIR" />
+    <WixVariable Id="WixUILicenseRtf" Value="src\setup\License.rtf" />
+
+    <UIRef Id="WixUI_InstallDir" />
+    <UIRef Id="WixUI_ErrorProgressText" />
+  </Product>
+</Wix>
