@@ -1497,7 +1497,7 @@ namespace Microsoft.FSharp.Control
                             Async.Start (async { do (ccont e |> unfake) })
 
                     // register cancellation handler
-                    let registration = aux.token.Register(fun () -> cancel (OperationCanceledException()))
+                    let registration = aux.token.Register((fun _ -> cancel (OperationCanceledException())), null)
 
                     // run actual await routine
                     // callback will be executed on the thread pool so we need to use TrampolineHolder.Protect to install trampoline
