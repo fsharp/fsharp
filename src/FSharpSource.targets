@@ -196,7 +196,7 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
   </PropertyGroup>
 
   <!-- Target Portable -->
-  <PropertyGroup Condition="'$(TargetFramework)'=='portable-net45+sl5+win8'">
+  <PropertyGroup Condition="'$(TargetFramework)'=='portable-net4+sl4+wp71+win8'">
 
     <TargetFrameworkProfile>Profile88</TargetFrameworkProfile>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
