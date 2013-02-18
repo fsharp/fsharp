@@ -37,14 +37,15 @@ sudo make install
 ```
 cd src
 msbuild fsharp-proto-build.proj
-ngen install ..\lib\proto\4.0\fsc-proto.exe
+ngen install ..\lib\proto\4.0\fsc-proto.exe (optional)
 msbuild fsharp-library-build.proj
 msbuild fsharp-compiler-build.proj
 ```
-You can also build the FSharp.Core for .NET 2.0, Mono 2.1, Silverlight 5.0, Windows Phone 7.1, Portable Profile88 (net4+sl4+wp71+win8) and XNA 4.0 for Xbox 360 profiles:
+You can also build the FSharp.Core for .NET 2.0, Mono 2.1, Silverlight 5.0, Windows Phone 7.1, Portable Profile47 (net45+sl5+win8), Portable Profile88 (net4+sl4+wp71+win8) and XNA 4.0 for Xbox 360 profiles:
 ```
 msbuild fsharp-library-build.proj /p:TargetFramework=net20 
 msbuild fsharp-library-build.proj /p:TargetFramework=mono21
+msbuild fsharp-library-build.proj /p:TargetFramework=portable-net45+sl5+win8
 msbuild fsharp-library-build.proj /p:TargetFramework=portable-net4+sl4+wp71+win8
 msbuild fsharp-library-build.proj /p:TargetFramework=sl5
 msbuild fsharp-library-build.proj /p:TargetFramework=wp7
