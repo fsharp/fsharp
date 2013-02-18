@@ -13,6 +13,7 @@
   <!-- Core library: all frameworks -->
   <ItemGroup>
     <ProjectFiles Include="fsharp\FSharp.Core\FSharp.Core.fsproj"/>
+    <ProjectFiles Include="fsharp\FSharp.Data.TypeProviders\FSharp.Data.TypeProviders.fsproj" Condition="'$(TargetFramework)'=='net40'"/>
   </ItemGroup>
 
   <Import Project="root.traversal.targets"/>

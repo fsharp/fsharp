@@ -19,11 +19,14 @@ if ! pkg-config --atleast-version=$MONO_REQUIRED_VERSION mono; then
 	AC_MSG_ERROR("You need mono $MONO_REQUIRED_VERSION")
 fi
 
+AC_PATH_PROG(MONO_SGEN, mono-sgen, no)
+
 if ! pkg-config --atleast-version=$MONO_RECOMMENDED_VERSION mono; then
 	AC_MSG_WARN([Mono $MONO_RECOMMENDED_VERSION or higher is recommended, for better MSBuild (xbuild) compatibility])
-fi
 
-AC_PATH_PROG(MONO_SGEN, mono-sgen, no)
+	# stability of Mono's SGEN GC is not so good in older versions than Mono v3.0
+	MONO_SGEN=no
+fi
 
 # Checks for libraries.
 

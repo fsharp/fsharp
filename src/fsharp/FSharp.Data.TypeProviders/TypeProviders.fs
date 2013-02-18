@@ -963,7 +963,7 @@ type public DataProviders(config:TypeProviderConfig) =
     let odataServiceType (typePath, itemName) = odataServiceTypeCache.Apply (typePath, itemName)
         
 
-    
+#if WSDL    
     let wsdlReorg namespaceName endpointNames (serviceUri:string, _localSchemaDir, _, _, _, _, _, _, _) (types: Type list) = 
         /// Make the expression that creates the instance of the underlying full context type stored in the simplified context object.
         /// This function is used when no endpoint name is available (because either none were in the config file, or there was trouble getting
@@ -1123,6 +1123,9 @@ type public DataProviders(config:TypeProviderConfig) =
     let wsdlServiceType (typePath, itemName) = wsdlServiceTypeCache.Apply (typePath, itemName) 
 
     let wsdlServiceTypeUninstantiated   = typeDefinition("WsdlService",       wsdlServiceTypeHelp)
+#endif
+
+
     let odataServiceTypeUninstantiated  = typeDefinition("ODataService",      odataServiceTypeHelp)
     let dbmlFileTypeUninstantiated      = typeDefinition("DbmlFile",          dbmlFileTypeHelp)
     let edmxFileTypeUninstantiated      = typeDefinition("EdmxFile",          edmxFileTypeHelp)
@@ -1144,7 +1147,10 @@ type public DataProviders(config:TypeProviderConfig) =
                sqlEntityConnectionTypeUninstantiated
                dbmlFileTypeUninstantiated
                odataServiceTypeUninstantiated
-               wsdlServiceTypeUninstantiated |]
+#if WSDL
+               wsdlServiceTypeUninstantiated 
+#endif
+            |]
         
         member this.ResolveTypeName typeName = 
             match typeName with
@@ -1153,7 +1159,9 @@ type public DataProviders(config:TypeProviderConfig) =
             | "SqlEntityConnection" -> sqlEntityConnectionTypeUninstantiated :> Type
             | "DbmlFile" -> dbmlFileTypeUninstantiated :> Type
             | "ODataService" -> odataServiceTypeUninstantiated :> Type
+#if WSDL
             | "WsdlService" -> wsdlServiceTypeUninstantiated :> Type
+#endif
             | _ -> null
 
     interface ITypeProvider with
@@ -1164,7 +1172,9 @@ type public DataProviders(config:TypeProviderConfig) =
             let parameters = 
                 match typeWithoutArguments.Name with
                 | "ODataService"  -> odataServiceStaticParameters
+#if WSDL
                 | "WsdlService"   -> wsdlServiceStaticParameters 
+#endif
                 | "SqlDataConnection" -> sqlDataConnectionStaticParameters
                 | "SqlEntityConnection" -> sqlEntityConnectionStaticParameters
                 | "DbmlFile"      -> dbmlStaticParameters
@@ -1222,6 +1232,7 @@ type public DataProviders(config:TypeProviderConfig) =
                               (oneNamedParam (dbmlStaticParameters, "ContextTypeName") : string),
                               (oneNamedParam (dbmlStaticParameters, "Serializable") : bool)))  
 
+#if WSDL
             | "WsdlService" -> 
                 wsdlServiceType
                     (typePath,
@@ -1234,6 +1245,7 @@ type public DataProviders(config:TypeProviderConfig) =
                                (oneNamedParam (wsdlServiceStaticParameters, "Serializable") : bool),
                                (oneNamedParam (wsdlServiceStaticParameters, "Async") : bool),
                                (oneNamedParam (wsdlServiceStaticParameters, "CollectionType") : string)))  
+#endif
 
             | "ODataService"   -> 
                 odataServiceType 

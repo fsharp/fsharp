@@ -40,12 +40,13 @@ msbuild fsharp-proto-build.proj
 msbuild fsharp-library-build.proj
 msbuild fsharp-compiler-build.proj
 ```
-You can also build the FSharp.Core for .NET 2.0, Mono 2.1, Silverlight 5.0 and Portable Profile47 (net4+sl4+wp71+win8) profiles:
+You can also build the FSharp.Core for .NET 2.0, Mono 2.1, Silverlight 5.0, Portable Profile47 (net4+sl4+wp71+win8) and XNA 4.0 for Xbox 360 profiles:
 ```
 msbuild fsharp-library-build.proj /p:TargetFramework=net20 
 msbuild fsharp-library-build.proj /p:TargetFramework=mono21
 msbuild fsharp-library-build.proj /p:TargetFramework=portable-net4+sl4+wp71+win8
 msbuild fsharp-library-build.proj /p:TargetFramework=sl5
+msbuild fsharp-library-build.proj /p:TargetFramework=net40-xna40-xbox360
 ```
 You can also build the FSharp.Core and FSharp.Compiler.Silverlight.dll for Silverlight 5.0:
 ```
