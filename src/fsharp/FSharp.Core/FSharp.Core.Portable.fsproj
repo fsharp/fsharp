@@ -1,0 +1,11 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
+         ToolsVersion="4.0">
+
+  <PropertyGroup>
+    <TargetFramework>portable-net4+sl4+wp71+win8</TargetFramework>
+  </PropertyGroup>
+
+  <Import Project="FSharp.Core.fsproj"/>
+
+</Project>
+
