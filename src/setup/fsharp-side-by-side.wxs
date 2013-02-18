@@ -76,7 +76,7 @@
               </Directory>
             </Directory>
             <Directory Id='Runtime_MonoAndroid' Name='MonoAndroid'>
-              <Component Id='FSharp30.Runtime.2.1' Guid='AC8F2BC4-5809-44B3-8756-85B0A639F11E'>
+              <Component Id='FSharp30.Runtime.MonoAndroid' Guid='AC8F2BC4-5809-44B3-8756-85B0A639F11E'>
                 <File Id='FSharpCore21' Name='FSharp.Core.dll' DiskId='1' Source='lib\release\2.1\FSharp.Core.dll' Vital='yes' />
                 <File Id='FSharpCoreOptData21' Name='FSharp.Core.optdata' DiskId='1' Source='lib\release\2.1\FSharp.Core.optdata' Vital='yes' />
                 <File Id='FSharpCoreSigData21' Name='FSharp.Core.sigdata' DiskId='1' Source='lib\release\2.1\FSharp.Core.sigdata' Vital='yes' />
@@ -85,12 +85,20 @@
             </Directory>
 
             <Directory Id='Runtime_NETPortable' Name='.NETPortable'>
-              <Directory Id='Runtime_vPortable47' Name='Profile47'>
+              <Directory Id='Runtime_vPortable47' Name='net45+sl5+win8'>
                 <Component Id='FSharp30.Runtime.Portable47' Guid='11A0B23D-AE21-4BB1-A117-3EB4E40BB20C'>
                   <File Id='FSharpCorePortable47' Name='FSharp.Core.dll' DiskId='1' Source='lib\release\portable-net45+sl5+win8\FSharp.Core.dll' Vital='yes' />
                   <File Id='FSharpCoreOptDataPortable47' Name='FSharp.Core.optdata' DiskId='1' Source='lib\release\portable-net45+sl5+win8\FSharp.Core.optdata' Vital='yes' />
                   <File Id='FSharpCoreSigDataPortable47' Name='FSharp.Core.sigdata' DiskId='1' Source='lib\release\portable-net45+sl5+win8\FSharp.Core.sigdata' Vital='yes' />
                   <File Id='FSharpCoreXmlPortable47' Name='FSharp.Core.xml' DiskId='1' Source='lib\release\portable-net45+sl5+win8\FSharp.Core.xml' Vital='yes' />
+                </Component>
+              </Directory>
+              <Directory Id='Runtime_vPortable88' Name='net4+sl4+wp71+win8'>
+                <Component Id='FSharp30.Runtime.Portable88' Guid='B1FBB537-6BE7-4839-8BAB-6212F8538D0E'>
+                  <File Id='FSharpCorePortable88' Name='FSharp.Core.dll' DiskId='1' Source='lib\release\portable-net4+sl4+wp71+win8\FSharp.Core.dll' Vital='yes' />
+                  <File Id='FSharpCoreOptDataPortable88' Name='FSharp.Core.optdata' DiskId='1' Source='lib\release\portable-net4+sl4+wp71+win8\FSharp.Core.optdata' Vital='yes' />
+                  <File Id='FSharpCoreSigDataPortable88' Name='FSharp.Core.sigdata' DiskId='1' Source='lib\release\portable-net4+sl4+wp71+win8\FSharp.Core.sigdata' Vital='yes' />
+                  <File Id='FSharpCoreXmlPortable88' Name='FSharp.Core.xml' DiskId='1' Source='lib\release\portable-net4+sl4+wp71+win8\FSharp.Core.xml' Vital='yes' />
                 </Component>
               </Directory>
             </Directory>
@@ -109,9 +117,10 @@
                Description='F# 3.0 Compiler, Library and Scripting (Open Source Edition, side-by-side install)' Level='1'>
         <ComponentRef Id='FSharp30.SDK' />
         <ComponentRef Id='FSharp30.Runtime.2.0' />
-        <ComponentRef Id='FSharp30.Runtime.2.1' />
+        <ComponentRef Id='FSharp30.Runtime.MonoAndroid' />
         <ComponentRef Id='FSharp30.Runtime.4.0' />
         <ComponentRef Id='FSharp30.Runtime.Portable47' />
+        <ComponentRef Id='FSharp30.Runtime.Portable88' />
         <ComponentRef Id='FSharp30.TypeProviders40' />
         
       </Feature>

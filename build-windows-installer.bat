@@ -14,6 +14,7 @@ pushd src
 %COR%\msbuild fsharp-library-build.proj /p:TargetFramework=net20  /p:Configuration=Release &&^
 %COR%\msbuild fsharp-library-build.proj /p:TargetFramework=mono21 /p:Configuration=Release &&^
 %COR%\msbuild fsharp-library-build.proj /p:TargetFramework=portable-net45+sl5+win8 /p:Configuration=Release &&^
+%COR%\msbuild fsharp-library-build.proj /p:TargetFramework=portable-net4+sl4+wp71+win8 /p:Configuration=Release &&^
 %COR%\msbuild fsharp-library-build.proj /p:TargetFramework=sl5 /p:Configuration=Release
 popd 
 %CANDLE%  -ext WixNetFxExtension src\setup\fsharp-side-by-side.wxs
