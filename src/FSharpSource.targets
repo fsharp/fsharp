@@ -22,7 +22,8 @@
     <VersionFile>$(FSharpSourcesRoot)\source-build-version</VersionFile>
     <VersionFile Condition="'$(TargetFramework)' == 'net20'">$(FSharpSourcesRoot)\source-build-version-2.3.0.0</VersionFile>
     <VersionFile Condition="'$(TargetFramework)' == 'net40'">$(FSharpSourcesRoot)\source-build-version-4.3.0.0</VersionFile>
-    <VersionFile Condition="'$(TargetFramework)' == 'portable-net45+sl5+win8'">$(FSharpSourcesRoot)\source-build-version-2.3.5.0</VersionFile>
+    <VersionFile Condition="'$(TargetFramework)' == 'portable-net4+sl4+wp71+win8'">$(FSharpSourcesRoot)\source-build-version-2.3.5.0</VersionFile>
+    <VersionFile Condition="'$(TargetFramework)' == 'portable-net45+sl5+win8'">$(FSharpSourcesRoot)\source-build-version-2.3.6.0</VersionFile>    
 <!--
 Some other NuGET monikers to support in the future, see http://docs.nuget.org/docs/creating-packages/creating-and-publishing-a-package#Package_Conventions
 
@@ -131,7 +132,6 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <AssemblySearchPaths>$(FSharpSourcesRoot)\..\dependencies\mono\2.1;$(AssemblySearchPaths)</AssemblySearchPaths>
   </PropertyGroup>
 
-
   <!-- Target Portable -->
   <PropertyGroup Condition="'$(TargetFramework)'=='portable-net45+sl5+win8'">
 
@@ -189,6 +189,80 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <DefineConstants>$(DefineConstants);FX_NO_BIGINT</DefineConstants>
     <DefineConstants>$(DefineConstants);DONT_INCLUDE_DEPRECATED</DefineConstants>
     <DefineConstants>$(DefineConstants);PUT_TYPE_PROVIDERS_IN_FSCORE</DefineConstants>
+
+    <AssemblySearchPaths>$(MSBuildExtensionsPath32)\..\Reference Assemblies\Microsoft\Framework\.NETPortable\v4.0\Profile\$(TargetFrameworkProfile)</AssemblySearchPaths>    
+    <OtherFlags>$(OtherFlags) --simpleresolution -r:"$(MSBuildExtensionsPath32)\..\Reference Assemblies\Microsoft\Framework\.NETPortable\v4.0\Profile\$(TargetFrameworkProfile)\mscorlib.dll" -r:"$(MSBuildExtensionsPath32)\..\Reference Assemblies\Microsoft\Framework\.NETPortable\v4.0\Profile\$(TargetFrameworkProfile)\System.dll" -r:"$(MSBuildExtensionsPath32)\..\Reference Assemblies\Microsoft\Framework\.NETPortable\v4.0\Profile\$(TargetFrameworkProfile)\System.Core.dll"</OtherFlags>
+
+  </PropertyGroup>
+
+  <!-- Target Portable -->
+  <PropertyGroup Condition="'$(TargetFramework)'=='portable-net45+sl5+win8'">
+
+    <TargetFrameworkProfile>Profile88</TargetFrameworkProfile>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkOutputDirectory>$(TargetFramework)</TargetFrameworkOutputDirectory>
+
+    <DefineConstants>$(DefineConstants);FSHARP_CORE_PORTABLE</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_CONCURRENT_DICTIONARY</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_ATLEAST_PORTABLE</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_ARRAY_LONG_LENGTH</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_DEBUG_PROXIES</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_EXIT</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_CHAR_PARSE</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_DEFAULT_DEPENDENCY_TYPE</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_SIMPLE_SECURITY_PERMISSIONS</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_TRUNCATE</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_CULTURE_INFO_ARGS</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_REFLECTION_MODULES</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_REFLECTION_METADATA_TOKENS</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_TO_LOWER_INVARIANT</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_EXIT_CONTEXT_FLAGS</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_BASED_ARRAYS</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_DOUBLE_BIT_CONVERTER</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_BINARY_SERIALIZATION</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_ASCII_ENCODING</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_DEFAULT_ENCODING</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_FILE_OPTIONS</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_NONBLOCK_IO</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_COMMAND_LINE_ARGS</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_ENVIRONMENT</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_PROCESS_START</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_APP_DOMAINS</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_PROCESS_DIAGNOSTICS</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_IOBSERVABLE</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_WEB_CLIENT</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_CONVERTER</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_GET_HASH_CODE_HELPER</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_COMVISIBLE</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_ICLONEABLE</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_SECURITY_PERMISSIONS</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_SYSTEM_CONSOLE</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_ARRAY_KEY_SORT</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_REFLECTION_EMIT</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_PARAMETERIZED_THREAD_START</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_EVENTWAITHANDLE_NO_IDISPOSABLE</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_REGISTERED_WAIT_HANDLES</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_ATLEAST_LINQ</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_THREAD</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_THREADPOOL</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_WAITONE_MILLISECONDS</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_TPL_PARALLEL</DefineConstants>
+    <DefineConstants>$(DefineConstants);PUT_TYPE_PROVIDERS_IN_FSCORE</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_CUSTOMATTRIBUTEDATA</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_BIGINT</DefineConstants>
+    <DefineConstants>$(DefineConstants);DONT_INCLUDE_DEPRECATED</DefineConstants>
+    <DefineConstants>$(DefineConstants);PUT_TYPE_PROVIDERS_IN_FSCORE</DefineConstants>
+
+    <DefineConstants>$(DefineConstants);FX_NO_STRUCTURAL_EQUALITY</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_CANCELLATIONTOKEN_CLASSES</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_LAZY</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_TUPLE</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_TASK</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_OPERATION_CANCELLED</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_THREAD_STATIC</DefineConstants>
+
+    <AssemblySearchPaths>$(MSBuildExtensionsPath32)\..\Reference Assemblies\Microsoft\Framework\.NETPortable\v4.0\Profile\$(TargetFrameworkProfile)</AssemblySearchPaths>    
+    <OtherFlags>$(OtherFlags) --simpleresolution -r:"$(MSBuildExtensionsPath32)\..\Reference Assemblies\Microsoft\Framework\.NETPortable\v4.0\Profile\$(TargetFrameworkProfile)\mscorlib.dll" -r:"$(MSBuildExtensionsPath32)\..\Reference Assemblies\Microsoft\Framework\.NETPortable\v4.0\Profile\$(TargetFrameworkProfile)\System.dll" -r:"$(MSBuildExtensionsPath32)\..\Reference Assemblies\Microsoft\Framework\.NETPortable\v4.0\Profile\$(TargetFrameworkProfile)\System.Core.dll"</OtherFlags>
 
   </PropertyGroup>
 
@@ -365,12 +439,20 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <DefineConstants>$(DefineConstants);FX_NO_CONCURRENT_DICTIONARY</DefineConstants>
     <DefineConstants>$(DefineConstants);PUT_TYPE_PROVIDERS_IN_FSCORE;</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_ATLEAST_LINQ</DefineConstants>
+
+    <DefineConstants>$(DefineConstants);FX_NO_TPL_PARALLEL</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_CUSTOMATTRIBUTEDATA</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_BIGINT</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_MONITOR_REPORTS_LOCKTAKEN</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_QUOTATIONS_COMPILE</DefineConstants>
+
     <Tailcalls>false</Tailcalls>
     <SilverlightVersion>$(TargetFrameworkVersion)</SilverlightVersion>
     <TargetFrameworkOutputDirectory>$(TargetFramework)</TargetFrameworkOutputDirectory>
     <!-- It would be better to use MSBuild resolution here, but the TargetFrameworkIdentifier etc. aren't set up quite correctly as yet -->
-    <OtherFlags>$(OtherFlags) --simpleresolution -r:"C:\Program Files\Reference Assemblies\Microsoft\Framework\Silverlight\v4.0\Profile\WindowsPhone\mscorlib.dll" </OtherFlags>
-  </PropertyGroup>
+    <AssemblySearchPaths>$(MSBuildExtensionsPath32)\..\Reference Assemblies\Microsoft\Framework\Silverlight\v4.0\Profile\WindowsPhone</AssemblySearchPaths>
+    <OtherFlags>$(OtherFlags) --simpleresolution -r:"$(MSBuildExtensionsPath32)\..\Reference Assemblies\Microsoft\Framework\Silverlight\v4.0\Profile\WindowsPhone\mscorlib.dll" </OtherFlags>
+</PropertyGroup>
 
   <!-- Target CompactFramework 2.0 -->
   <PropertyGroup Condition="'$(TargetFramework)'=='net20-cf'">
@@ -580,6 +662,8 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
 
   <!-- Include the portable targets file when building the portable FSharp.Core -->
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\v4.0\Microsoft.Portable.Common.targets"
+          Condition="'$(TargetFramework)'=='portable-net4+sl4+wp71+win8'"/>
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\v4.0\Microsoft.Portable.Common.targets"
           Condition="'$(TargetFramework)'=='portable-net45+sl5+win8'"/>
 
   <!-- Include the bootstrap targets file when building the proto compiler using the bootstrap -->
@@ -612,14 +696,15 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
             Text="Configuration '$(Configuration)' is not one of the supported configurations: Debug, Release, Proto"
             Condition="'$(Configuration)'!='Release' and '$(Configuration)'!='Debug' and '$(Configuration)'!='Proto'"/>
     <Error
-            Text="TargetFramework '$(TargetFramework)' is not one of the supported configurations: 'empty', net20, net40, mono21, wp7, sl5, sl5-compiler, portable-net45+sl5+win8"
+            Text="TargetFramework '$(TargetFramework)' is not one of the supported configurations: 'empty', net20, net40, mono21, wp7, sl5, sl5-compiler, portable-net4+sl4+wp71+win8, portable-net45+sl5+win8"
             Condition="! ('$(TargetFramework)' == 'net40' or 
                           '$(TargetFramework)' == 'net20' or 
                           '$(TargetFramework)' == 'mono21' or 
                           '$(TargetFramework)' == 'sl5' or 
                           '$(TargetFramework)' == 'sl5-compiler' or 
                           '$(TargetFramework)' == 'wp7' or 
-                          '$(TargetFramework)' == 'portable-net45+sl5+win8' or
+                          '$(TargetFramework)' == 'portable-net4+sl4+wp71+win8' or
+                          '$(TargetFramework)' == 'portable-net45+sl5+win8' or                          
                           '$(TargetFramework)' == 'net40-xna40-xbox360') "/>
   </Target>
 
