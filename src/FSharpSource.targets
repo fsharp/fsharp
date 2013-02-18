@@ -191,6 +191,10 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <DefineConstants>$(DefineConstants);PUT_TYPE_PROVIDERS_IN_FSCORE</DefineConstants>
 
     <DefineConstants>$(DefineConstants);FX_NO_STRUCTURAL_EQUALITY</DefineConstants>
+
+    <AssemblySearchPaths>$(MSBuildExtensionsPath32)\..\Reference Assemblies\Microsoft\Framework\.NETPortable\v4.0\Profile\$(TargetFrameworkProfile)</AssemblySearchPaths>    
+    <OtherFlags>$(OtherFlags) --simpleresolution -r:"$(MSBuildExtensionsPath32)\..\Reference Assemblies\Microsoft\Framework\.NETPortable\v4.0\Profile\$(TargetFrameworkProfile)\mscorlib.dll" -r:"$(MSBuildExtensionsPath32)\..\Reference Assemblies\Microsoft\Framework\.NETPortable\v4.0\Profile\$(TargetFrameworkProfile)\System.dll" -r:"$(MSBuildExtensionsPath32)\..\Reference Assemblies\Microsoft\Framework\.NETPortable\v4.0\Profile\$(TargetFrameworkProfile)\System.Core.dll"</OtherFlags>
+
   </PropertyGroup>
 
   <!-- Target Silverlight 3.0 -->
