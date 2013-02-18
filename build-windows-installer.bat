@@ -1,7 +1,7 @@
 @if "%_echo%"=="" echo off
 setlocal
 
-set COR=C:\Windows\Microsoft.NET\Framework\v4.0.30319
+set COR=%windir%\Microsoft.NET\Framework\v4.0.30319
 set WIX=dependencies\wix\3.7
 set CANDLE=%WIX%\candle.exe
 set LIGHT=%WIX%\light.exe
