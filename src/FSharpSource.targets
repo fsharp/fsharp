@@ -22,7 +22,7 @@
     <VersionFile>$(FSharpSourcesRoot)\source-build-version</VersionFile>
     <VersionFile Condition="'$(TargetFramework)' == 'net20'">$(FSharpSourcesRoot)\source-build-version-2.3.0.0</VersionFile>
     <VersionFile Condition="'$(TargetFramework)' == 'net40'">$(FSharpSourcesRoot)\source-build-version-4.3.0.0</VersionFile>
-    <VersionFile Condition="'$(TargetFramework)' == 'portable-net4+sl4+wp71+win8'">$(FSharpSourcesRoot)\source-build-version-2.3.5.0</VersionFile>
+    <VersionFile Condition="'$(TargetFramework)' == 'portable-net45+sl5+win8'">$(FSharpSourcesRoot)\source-build-version-2.3.5.0</VersionFile>
 <!--
 Some other NuGET monikers to support in the future, see http://docs.nuget.org/docs/creating-packages/creating-and-publishing-a-package#Package_Conventions
 
@@ -133,7 +133,7 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
 
 
   <!-- Target Portable -->
-  <PropertyGroup Condition="'$(TargetFramework)'=='portable-net4+sl4+wp71+win8'">
+  <PropertyGroup Condition="'$(TargetFramework)'=='portable-net45+sl5+win8'">
 
     <TargetFrameworkProfile>Profile47</TargetFrameworkProfile>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
@@ -580,7 +580,7 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
 
   <!-- Include the portable targets file when building the portable FSharp.Core -->
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\v4.0\Microsoft.Portable.Common.targets"
-          Condition="'$(TargetFramework)'=='portable-net4+sl4+wp71+win8'"/>
+          Condition="'$(TargetFramework)'=='portable-net45+sl5+win8'"/>
 
   <!-- Include the bootstrap targets file when building the proto compiler using the bootstrap -->
   <!-- Also include it if Proto targets file doesn't exist, e.g. when cleaning the build with /t:Clean -->
@@ -612,14 +612,14 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
             Text="Configuration '$(Configuration)' is not one of the supported configurations: Debug, Release, Proto"
             Condition="'$(Configuration)'!='Release' and '$(Configuration)'!='Debug' and '$(Configuration)'!='Proto'"/>
     <Error
-            Text="TargetFramework '$(TargetFramework)' is not one of the supported configurations: 'empty', net20, net40, mono21, wp7, sl5, sl5-compiler, portable-net4+sl4+wp71+win8"
+            Text="TargetFramework '$(TargetFramework)' is not one of the supported configurations: 'empty', net20, net40, mono21, wp7, sl5, sl5-compiler, portable-net45+sl5+win8"
             Condition="! ('$(TargetFramework)' == 'net40' or 
                           '$(TargetFramework)' == 'net20' or 
                           '$(TargetFramework)' == 'mono21' or 
                           '$(TargetFramework)' == 'sl5' or 
                           '$(TargetFramework)' == 'sl5-compiler' or 
                           '$(TargetFramework)' == 'wp7' or 
-                          '$(TargetFramework)' == 'portable-net4+sl4+wp71+win8' or
+                          '$(TargetFramework)' == 'portable-net45+sl5+win8' or
                           '$(TargetFramework)' == 'net40-xna40-xbox360') "/>
   </Target>
 

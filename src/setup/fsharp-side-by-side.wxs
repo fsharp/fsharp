@@ -52,20 +52,30 @@
           </Directory>
 
           <Directory Id='Runtime' Name='Runtime'>
-            <Directory Id='Runtime_v2_0' Name='2.0'>
+            <Directory Id='Runtime_NetFramework' Name='.NETFramework'>
+              <Directory Id='Runtime_v2_0' Name='v2.0'>
 
-              <Component Id='FSharp30.Runtime.2.0' Guid='8FCC33A3-3A63-4D39-A43F-7118C5C0E220'>
-                <!-- Use Microsoft's signed FSharp.Core.dll instead of the delay-signed one produced by the open source build. -->
-                <!-- <File Id='FSharpCore20' Name='FSharp.Core.dll' DiskId='1' Source='lib\release\2.0\FSharp.Core.dll' Vital='yes' /> -->
-                <File Id='FSharpCore20' Name='FSharp.Core.dll' DiskId='1' Source='lib\bootstrap\signed\3.0\v2.0\FSharp.Core.dll' Vital='yes' />
+                <Component Id='FSharp30.Runtime.2.0' Guid='8FCC33A3-3A63-4D39-A43F-7118C5C0E220'>
+                  <!-- Use Microsoft's signed FSharp.Core.dll instead of the delay-signed one produced by the open source build. -->
+                  <!-- <File Id='FSharpCore20' Name='FSharp.Core.dll' DiskId='1' Source='lib\release\2.0\FSharp.Core.dll' Vital='yes' /> -->
+                  <File Id='FSharpCore20' Name='FSharp.Core.dll' DiskId='1' Source='lib\bootstrap\signed\3.0\v2.0\FSharp.Core.dll' Vital='yes' />
 
-                <File Id='FSharpCoreOptData20' Name='FSharp.Core.optdata' DiskId='1' Source='lib\release\2.0\FSharp.Core.optdata' Vital='yes' />
-                <File Id='FSharpCoreSigData20' Name='FSharp.Core.sigdata' DiskId='1' Source='lib\release\2.0\FSharp.Core.sigdata' Vital='yes' />
-                <File Id='FSharpCoreXml20' Name='FSharp.Core.xml' DiskId='1' Source='lib\release\2.0\FSharp.Core.xml' Vital='yes' />
-              </Component>
+                  <File Id='FSharpCoreOptData20' Name='FSharp.Core.optdata' DiskId='1' Source='lib\release\2.0\FSharp.Core.optdata' Vital='yes' />
+                  <File Id='FSharpCoreSigData20' Name='FSharp.Core.sigdata' DiskId='1' Source='lib\release\2.0\FSharp.Core.sigdata' Vital='yes' />
+                  <File Id='FSharpCoreXml20' Name='FSharp.Core.xml' DiskId='1' Source='lib\release\2.0\FSharp.Core.xml' Vital='yes' />
+                </Component>
+              </Directory>
+
+              <Directory Id='Runtime_v4_0' Name='v4.0'>
+                <Component Id='FSharp30.Runtime.4.0' Guid='DBF41C79-22D1-4B2B-86E0-296A5877E904'>
+                  <File Id='FSharpCore40_2' Name='FSharp.Core.dll' DiskId='1' Source='lib\bootstrap\signed\3.0\v4.0\FSharp.Core.dll' Vital='yes' />
+                  <File Id='FSharpCoreOptData40_2' Name='FSharp.Core.optdata' DiskId='1' Source='lib\release\4.0\FSharp.Core.optdata' Vital='yes' />
+                  <File Id='FSharpCoreSigData40_2' Name='FSharp.Core.sigdata' DiskId='1' Source='lib\release\4.0\FSharp.Core.sigdata' Vital='yes' />
+                  <File Id='FSharpCoreXml40_2' Name='FSharp.Core.xml' DiskId='1' Source='lib\release\4.0\FSharp.Core.xml' Vital='yes' />
+                </Component>
+              </Directory>
             </Directory>
-            <Directory Id='Runtime_v2_1' Name='2.1'>
-
+            <Directory Id='Runtime_MonoAndroid' Name='MonoAndroid'>
               <Component Id='FSharp30.Runtime.2.1' Guid='AC8F2BC4-5809-44B3-8756-85B0A639F11E'>
                 <File Id='FSharpCore21' Name='FSharp.Core.dll' DiskId='1' Source='lib\release\2.1\FSharp.Core.dll' Vital='yes' />
                 <File Id='FSharpCoreOptData21' Name='FSharp.Core.optdata' DiskId='1' Source='lib\release\2.1\FSharp.Core.optdata' Vital='yes' />
@@ -74,22 +84,15 @@
               </Component>
             </Directory>
 
-            <Directory Id='Runtime_v4_0' Name='4.0'>
-              <Component Id='FSharp30.Runtime.4.0' Guid='DBF41C79-22D1-4B2B-86E0-296A5877E904'>
-                <File Id='FSharpCore40_2' Name='FSharp.Core.dll' DiskId='1' Source='lib\bootstrap\signed\3.0\v4.0\FSharp.Core.dll' Vital='yes' />
-                <File Id='FSharpCoreOptData40_2' Name='FSharp.Core.optdata' DiskId='1' Source='lib\release\4.0\FSharp.Core.optdata' Vital='yes' />
-                <File Id='FSharpCoreSigData40_2' Name='FSharp.Core.sigdata' DiskId='1' Source='lib\release\4.0\FSharp.Core.sigdata' Vital='yes' />
-                <File Id='FSharpCoreXml40_2' Name='FSharp.Core.xml' DiskId='1' Source='lib\release\4.0\FSharp.Core.xml' Vital='yes' />
-              </Component>
-            </Directory>
-
-            <Directory Id='Runtime_vPortable47' Name='Portable47'>
-              <Component Id='FSharp30.Runtime.Portable47' Guid='11A0B23D-AE21-4BB1-A117-3EB4E40BB20C'>
-                <File Id='FSharpCorePortable47' Name='FSharp.Core.dll' DiskId='1' Source='lib\release\portable-net4+sl4+wp71+win8\FSharp.Core.dll' Vital='yes' />
-                <File Id='FSharpCoreOptDataPortable47' Name='FSharp.Core.optdata' DiskId='1' Source='lib\release\portable-net4+sl4+wp71+win8\FSharp.Core.optdata' Vital='yes' />
-                <File Id='FSharpCoreSigDataPortable47' Name='FSharp.Core.sigdata' DiskId='1' Source='lib\release\portable-net4+sl4+wp71+win8\FSharp.Core.sigdata' Vital='yes' />
-                <File Id='FSharpCoreXmlPortable47' Name='FSharp.Core.xml' DiskId='1' Source='lib\release\portable-net4+sl4+wp71+win8\FSharp.Core.xml' Vital='yes' />
-              </Component>
+            <Directory Id='Runtime_NETPortable' Name='.NETPortable'>
+              <Directory Id='Runtime_vPortable47' Name='Profile47'>
+                <Component Id='FSharp30.Runtime.Portable47' Guid='11A0B23D-AE21-4BB1-A117-3EB4E40BB20C'>
+                  <File Id='FSharpCorePortable47' Name='FSharp.Core.dll' DiskId='1' Source='lib\release\portable-net45+sl5+win8\FSharp.Core.dll' Vital='yes' />
+                  <File Id='FSharpCoreOptDataPortable47' Name='FSharp.Core.optdata' DiskId='1' Source='lib\release\portable-net45+sl5+win8\FSharp.Core.optdata' Vital='yes' />
+                  <File Id='FSharpCoreSigDataPortable47' Name='FSharp.Core.sigdata' DiskId='1' Source='lib\release\portable-net45+sl5+win8\FSharp.Core.sigdata' Vital='yes' />
+                  <File Id='FSharpCoreXmlPortable47' Name='FSharp.Core.xml' DiskId='1' Source='lib\release\portable-net45+sl5+win8\FSharp.Core.xml' Vital='yes' />
+                </Component>
+              </Directory>
             </Directory>
           </Directory>
         </Directory>

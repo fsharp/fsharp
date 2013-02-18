@@ -44,7 +44,7 @@ You can also build the FSharp.Core for .NET 2.0, Mono 2.1, Silverlight 5.0, Port
 ```
 msbuild fsharp-library-build.proj /p:TargetFramework=net20 
 msbuild fsharp-library-build.proj /p:TargetFramework=mono21
-msbuild fsharp-library-build.proj /p:TargetFramework=portable-net4+sl4+wp71+win8
+msbuild fsharp-library-build.proj /p:TargetFramework=portable-net45+sl5+win8
 msbuild fsharp-library-build.proj /p:TargetFramework=sl5
 msbuild fsharp-library-build.proj /p:TargetFramework=net40-xna40-xbox360
 ```
