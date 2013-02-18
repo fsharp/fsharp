@@ -23,7 +23,7 @@
     <VersionFile Condition="'$(TargetFramework)' == 'net20'">$(FSharpSourcesRoot)\source-build-version-2.3.0.0</VersionFile>
     <VersionFile Condition="'$(TargetFramework)' == 'net40'">$(FSharpSourcesRoot)\source-build-version-4.3.0.0</VersionFile>
     <VersionFile Condition="'$(TargetFramework)' == 'portable-net4+sl4+wp71+win8'">$(FSharpSourcesRoot)\source-build-version-2.3.5.0</VersionFile>
-    <VersionFile Condition="'$(TargetFramework)' == 'portable-net45+sl5+win8'">$(FSharpSourcesRoot)\source-build-version-2.3.6.0</VersionFile>    
+    <VersionFile Condition="'$(TargetFramework)' == 'portable-net45+sl5+win8'">$(FSharpSourcesRoot)\source-build-version-2.3.588.0</VersionFile>    
 <!--
 Some other NuGET monikers to support in the future, see http://docs.nuget.org/docs/creating-packages/creating-and-publishing-a-package#Package_Conventions
 
