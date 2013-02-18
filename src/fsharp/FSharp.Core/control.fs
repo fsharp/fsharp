@@ -1502,6 +1502,16 @@ namespace Microsoft.FSharp.Control
                     // run actual await routine
                     // callback will be executed on the thread pool so we need to use TrampolineHolder.Protect to install trampoline
                     try
+#if FX_NO_TASK
+                        ThreadPool.QueueUserWorkItem((fun _ ->
+                            let asyncResult = WaitHandleIAsyncResult(waitHandle) :> System.IAsyncResult
+                            if asyncResult.IsCompleted then
+                                if latch.Enter() then
+                                    registration.Dispose()
+                                    aux.trampolineHolder.Protect(fun () -> scont true) 
+                                    |> unfake
+                        ), null) |> ignore
+#else
                         Task.Factory.FromAsync
                             (
                                 WaitHandleIAsyncResult(waitHandle),
@@ -1512,6 +1522,7 @@ namespace Microsoft.FSharp.Control
                                         |> unfake
                             )
                             |> ignore
+#endif
                         // if user has specified timeout different from Timeout.Infinite 
                         // then start another async to track timeout expiration
                         // StartWithContinuations already installs trampoline so we can invoke continuation directly
