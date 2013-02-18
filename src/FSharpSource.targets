@@ -376,6 +376,12 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <DefineConstants>$(DefineConstants);FX_NO_CONCURRENT_DICTIONARY</DefineConstants>
     <DefineConstants>$(DefineConstants);PUT_TYPE_PROVIDERS_IN_FSCORE;</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_ATLEAST_LINQ</DefineConstants>
+
+    <DefineConstants>$(DefineConstants);FX_NO_TPL_PARALLEL</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_CUSTOMATTRIBUTEDATA</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_BIGINT</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_MONITOR_REPORTS_LOCKTAKEN</DefineConstants>
+
     <Tailcalls>false</Tailcalls>
     <SilverlightVersion>$(TargetFrameworkVersion)</SilverlightVersion>
     <TargetFrameworkOutputDirectory>$(TargetFramework)</TargetFrameworkOutputDirectory>
