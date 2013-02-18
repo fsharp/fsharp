@@ -380,8 +380,9 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <SilverlightVersion>$(TargetFrameworkVersion)</SilverlightVersion>
     <TargetFrameworkOutputDirectory>$(TargetFramework)</TargetFrameworkOutputDirectory>
     <!-- It would be better to use MSBuild resolution here, but the TargetFrameworkIdentifier etc. aren't set up quite correctly as yet -->
-    <OtherFlags>$(OtherFlags) --simpleresolution -r:"C:\Program Files\Reference Assemblies\Microsoft\Framework\Silverlight\v4.0\Profile\WindowsPhone\mscorlib.dll" </OtherFlags>
-  </PropertyGroup>
+    <AssemblySearchPaths>$(MSBuildExtensionsPath32)\..\Reference Assemblies\Microsoft\Framework\Silverlight\v4.0\Profile\WindowsPhone</AssemblySearchPaths>
+    <OtherFlags>$(OtherFlags) --simpleresolution -r:"$(MSBuildExtensionsPath32)\..\Reference Assemblies\Microsoft\Framework\Silverlight\v4.0\Profile\WindowsPhone\mscorlib.dll" </OtherFlags>
+</PropertyGroup>
 
   <!-- Target CompactFramework 2.0 -->
   <PropertyGroup Condition="'$(TargetFramework)'=='net20-cf'">
