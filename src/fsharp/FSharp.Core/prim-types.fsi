@@ -1873,19 +1873,19 @@ namespace Microsoft.FSharp.Core
         /// <returns>The result of the operation.</returns>
         val inline ( % ) : x:^T1 -> y:^T2 -> ^T3    when (^T1 or ^T2) : (static member ( % ) : ^T1 * ^T2    -> ^T3) and default ^T2 : ^T3 and default ^T3 : ^T1 and default ^T3 : ^T2 and default ^T1 : ^T3 and default ^T1 : ^T2 and default ^T1 : int
         
-        /// <summary>Overloaded logical-AND operator</summary>
+        /// <summary>Overloaded bitwise-AND operator</summary>
         /// <param name="x">The first parameter.</param>
         /// <param name="y">The second parameter.</param>
         /// <returns>The result of the operation.</returns>
         val inline (&&&): x:^T -> y:^T -> ^T     when ^T : (static member (&&&) : ^T * ^T    -> ^T) and default ^T : int
         
-        /// <summary>Overloaded logical-OR operator</summary>
+        /// <summary>Overloaded bitwise-OR operator</summary>
         /// <param name="x">The first parameter.</param>
         /// <param name="y">The second parameter.</param>
         /// <returns>The result of the operation.</returns>
         val inline (|||) : x:^T -> y:^T -> ^T    when ^T : (static member (|||) : ^T * ^T    -> ^T) and default ^T : int
         
-        /// <summary>Overloaded logical-XOR operator</summary>
+        /// <summary>Overloaded bitwise-XOR operator</summary>
         /// <param name="x">The first parameter.</param>
         /// <param name="y">The second parameter.</param>
         /// <returns>The result of the operation.</returns>
