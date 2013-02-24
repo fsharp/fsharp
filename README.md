@@ -23,6 +23,13 @@ The usual:
 make
 sudo make install
 ```
+By default that makes release binaries. To make debug, use
+```
+make clean
+make CONFIG=debug
+sudo make install CONFIG=debug
+```
+
 
 ### On MacOS (OSX)
 
@@ -31,6 +38,12 @@ Use a prefix to your version of Mono:
 ./autogen.sh --prefix=/Library/Frameworks/Mono.framework/Versions/Current/
 make
 sudo make install
+```
+By default that makes release binaries. To make debug, use
+```
+make clean
+make CONFIG=debug
+sudo make install CONFIG=debug
 ```
 
 ### On Windows, using msbuild (e.g.. if .NET is installed) 
