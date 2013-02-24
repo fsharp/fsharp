@@ -33,7 +33,7 @@ DELAY_SIGN_TOKEN = b03f5f7f11d50a3a
 SIGN_TOKEN = f536804aa0eb945b
 
 bootstrapdir = $(bootstrap)/4.0/
-tmpdir = .libs/
+tmpdir = .libs/$(CONFIG)/
 objdir = $(tmpdir)$(TARGET)/
 protodir = $(builddir)/lib/proto/4.0/
 outdir = $(builddir)lib/$(CONFIG)/$(TARGET)/
