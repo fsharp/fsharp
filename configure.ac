@@ -8,20 +8,25 @@ AC_INIT([fsharp], [0.1], [avidigal@novell.com])
 AC_PROG_MAKE_SET
 
 AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
-if test "x$PKG_CONFIG" = "xno"; then
+
+# On OSX use Mono's private copy of pkg-config if it exists, see https://github.com/fsharp/fsharp/issues/107
+osx_pkg_config=/Library/Frameworks/Mono.framework/Versions/Current/bin/pkg-config
+if test -e $osx_pkg_config; then
+    PKG_CONFIG=$osx_pkg_config
+elif test "x$PKG_CONFIG" = "xno"; then
         AC_MSG_ERROR([You need to install pkg-config])
 fi
 
 MONO_REQUIRED_VERSION=2.9
 MONO_RECOMMENDED_VERSION=3.0
 
-if ! pkg-config --atleast-version=$MONO_REQUIRED_VERSION mono; then
+if ! $PKG_CONFIG --atleast-version=$MONO_REQUIRED_VERSION mono; then
 	AC_MSG_ERROR("You need mono $MONO_REQUIRED_VERSION")
 fi
 
 AC_PATH_PROG(MONO_SGEN, mono-sgen, no)
 
-if ! pkg-config --atleast-version=$MONO_RECOMMENDED_VERSION mono; then
+if ! $PKG_CONFIG --atleast-version=$MONO_RECOMMENDED_VERSION mono; then
 	AC_MSG_WARN([Mono $MONO_RECOMMENDED_VERSION or higher is recommended, for better MSBuild (xbuild) compatibility])
 
 	# stability of Mono's SGEN GC is not so good in older versions than Mono v3.0
@@ -49,9 +54,9 @@ AC_ARG_WITH([gacdir],
         )
 
 if test "x$with_gacdir" = "xno"; then
-	MONODIR=`pkg-config --variable=libdir mono`/mono
+	MONODIR=`$PKG_CONFIG --variable=libdir mono`/mono
 	if ! test -e $MONODIR/2.0/mscorlib.dll; then
-		MONODIR=`pkg-config --variable=prefix mono`/lib/mono
+		MONODIR=`$PKG_CONFIG --variable=prefix mono`/lib/mono
 	fi
 else
 	MONODIR=$(cd "$with_gacdir/.." && pwd)
