@@ -23,12 +23,7 @@ The usual:
 make
 sudo make install
 ```
-By default that makes release binaries. To make debug, use
-```
-make clean
-make CONFIG=debug
-sudo make install CONFIG=debug
-```
+By default that makes optimized binaries. To make debug, use ```make CONFIG=debug```
 
 
 ### On MacOS (OSX)
@@ -39,12 +34,7 @@ Use a prefix to your version of Mono:
 make
 sudo make install
 ```
-By default that makes release binaries. To make debug, use
-```
-make clean
-make CONFIG=debug
-sudo make install CONFIG=debug
-```
+By default that makes optimized binaries. To make debug, use ```make CONFIG=debug```
 
 ### On Windows, using msbuild (e.g.. if .NET is installed) 
 ```
