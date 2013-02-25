@@ -39,7 +39,7 @@ By default that makes optimized binaries. To make debug, use ```make CONFIG=debu
 ### On Windows, using msbuild (e.g.. if .NET is installed) 
 ```
 cd src
-msbuild fsharp-proto-build.proj /p:Configuration=Release
+msbuild fsharp-proto-build.proj
 ngen install ..\lib\proto\4.0\fsc-proto.exe (optional)
 msbuild fsharp-library-build.proj /p:Configuration=Release
 msbuild fsharp-compiler-build.proj /p:Configuration=Release
