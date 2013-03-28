@@ -2437,11 +2437,9 @@ type TcConfig private (data : TcConfigBuilder,validate:bool) =
             []
 #else                    
             // When running on Mono we lead everyone to believe we're doing .NET 4.0 compilation 
-            // by default. 
+            // by default. Why? See https://github.com/fsharp/fsharp/issues/99
             if runningOnMono then 
-                let sysDir = System.Runtime.InteropServices.RuntimeEnvironment.GetRuntimeDirectory() 
-                let mono40SysDir = Path.Combine(Path.GetDirectoryName sysDir, "4.0")
-                [mono40SysDir]
+                [System.Runtime.InteropServices.RuntimeEnvironment.GetRuntimeDirectory()]
             else                                
                 try 
                     match tcConfig.resolutionEnvironment with
