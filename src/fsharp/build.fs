@@ -4077,10 +4077,11 @@ type TcImports(tcConfigP:TcConfigProvider, initialResolutions:TcAssemblyResoluti
             match resolutions.TryFindByResolvedPath assemblyReference.Text with 
             | Some assemblyResolution -> 
                 ResultD [assemblyResolution]
-            | None ->      
-                                  
+            | None ->                                  
                 if tcConfigP.Get().useMonoResolution then
-                    ResultD [tcConfig.ResolveLibWithDirectories assemblyReference]
+                    let resolved = [tcConfig.ResolveLibWithDirectories assemblyReference]
+                    resolutions <- resolutions.AddResolutionResults resolved
+                    ResultD resolved
                 else 
                     // This is a previously unencounterd assembly. Resolve it and add it to the list.
                     // But don't cache resolution failures because the assembly may appear on the disk later.
