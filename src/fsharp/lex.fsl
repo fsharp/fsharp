@@ -163,14 +163,14 @@ let extractIdentFromHashIf (lexed:string) =
     trimIf.Substring(0, identEnd)
 } 
 
-let letter = '\Lu' | '\Ll' | '\Lt' | '\Lm' | '\Lo' | '\Nl'
+let letter = '\Lu' | '\Ll' | '\Lt' | '\Lm' | '\Lo' | '\Nl' | '\So'
 let surrogateChar = '\Cs'
 let digit = '\Nd'
 let hex = ['0'-'9'] | ['A'-'F'] | ['a'-'f']
 let truewhite = [' ']
 let offwhite = ['\t']
 let anywhite = truewhite | offwhite
-let op_char = '!'|'$'|'%'|'&'|'*'|'+'|'-'|'.'|'/'|'<'|'='|'>'|'?'|'@'|'^'|'|'|'~'|':'
+let op_char = '!'|'$'|'%'|'&'|'*'|'+'|'-'|'.'|'/'|'<'|'='|'>'|'?'|'@'|'^'|'|'|'~'|':'|'\So'
 let ignored_op_char = '.' | '$' | '?'
 let xinteger = 
   (  '0' ('x'| 'X')  hex + 
