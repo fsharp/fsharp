@@ -118,7 +118,7 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <!-- MSbuild works out the assembly references -->
   </PropertyGroup>
 
-  <!-- Target MonoAndroid and MonoTouch -->
+  <!-- Target MonoAndroid -->
   <PropertyGroup Condition="'$(TargetFramework)'=='mono21'">
     <TargetFrameworkVersion>v2.1</TargetFrameworkVersion>
     <TargetFrameworkOutputDirectory>2.1</TargetFrameworkOutputDirectory>
@@ -130,6 +130,22 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <DefineConstants>$(DefineConstants);FX_ATLEAST_LINQ</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_BIGINT</DefineConstants>
     <AssemblySearchPaths>$(FSharpSourcesRoot)\..\dependencies\mono\2.1;$(AssemblySearchPaths)</AssemblySearchPaths>
+  </PropertyGroup>
+
+  <!-- Target MonoTouch -->
+  <PropertyGroup Condition="'$(TargetFramework)'=='monotouch'">
+    <TargetFrameworkVersion>v2.1</TargetFrameworkVersion>
+    <TargetFrameworkOutputDirectory>2.1monotouch</TargetFrameworkOutputDirectory>
+    <DefineConstants>$(DefineConstants);FX_NO_STRUCTURAL_EQUALITY</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_CUSTOMATTRIBUTEDATA</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_BIGINT_CULTURE_PARSE</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_ATLEAST_40</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_ATLEAST_35</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_ATLEAST_LINQ</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_BIGINT</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_REFLECTION_EMIT</DefineConstants>
+    <OtherFlags>$(OtherFlags) --simpleresolution -r:"$(FSharpSourcesRoot)\..\dependencies\mono\2.1\MonoTouch\mscorlib-runtime.dll"</OtherFlags>
+    <AssemblySearchPaths>$(FSharpSourcesRoot)\..\dependencies\mono\2.1\MonoTouch;$(AssemblySearchPaths)</AssemblySearchPaths>
   </PropertyGroup>
 
   <!-- Target Portable -->
@@ -696,10 +712,11 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
             Text="Configuration '$(Configuration)' is not one of the supported configurations: Debug, Release, Proto"
             Condition="'$(Configuration)'!='Release' and '$(Configuration)'!='Debug' and '$(Configuration)'!='Proto'"/>
     <Error
-            Text="TargetFramework '$(TargetFramework)' is not one of the supported configurations: 'empty', net20, net40, mono21, wp7, sl5, sl5-compiler, portable-net4+sl4+wp71+win8, portable-net45+sl5+win8"
+            Text="TargetFramework '$(TargetFramework)' is not one of the supported configurations: 'empty', net20, net40, mono21, monotouch, wp7, sl5, sl5-compiler, portable-net4+sl4+wp71+win8, portable-net45+sl5+win8"
             Condition="! ('$(TargetFramework)' == 'net40' or 
                           '$(TargetFramework)' == 'net20' or 
                           '$(TargetFramework)' == 'mono21' or 
+                          '$(TargetFramework)' == 'monotouch' or 
                           '$(TargetFramework)' == 'sl5' or 
                           '$(TargetFramework)' == 'sl5-compiler' or 
                           '$(TargetFramework)' == 'wp7' or 
