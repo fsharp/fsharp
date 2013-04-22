@@ -213,7 +213,9 @@ namespace Microsoft.FSharp.Compiler.SimpleSourceCodeServices
                             (ilGlobals ,
                              Microsoft.FSharp.Compiler.AbstractIL.ILRuntimeWriter.emEnv0,
                              assemblyBuilder,moduleBuilder,
-                             ilxMainModule,
+                             // Omit resources in dynamic assemblies, because the module builder is constructed without a filename the module 
+                             // is tagged as transient and as such DefineManifestResource will throw an invalid operation if resources are present
+                             { ilxMainModule with Resources=Microsoft.FSharp.Compiler.AbstractIL.IL.mkILResources [] },
                              debugInfo,
                              (fun s -> 
                                  match tcImportsRef.Value.Value.TryFindExistingFullyQualifiedPathFromAssemblyRef s with 
