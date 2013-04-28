@@ -42,13 +42,13 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
 
   <PropertyGroup Condition="('$(Configuration)'=='Debug' OR '$(Configuration)'=='Release') AND ('$(AssemblyName)'=='FSharp.Core')">
     <DefineConstants>STRONG_NAME_AND_DELAY_SIGN_FSHARP_COMPILER_WITH_MSFT_KEY;$(DefineConstants)</DefineConstants>
-    <OtherFlags>$(OtherFlags) --delaysign+ --keyfile:$(FSharpSourcesRoot)\fsharp\msft.pubkey</OtherFlags>
+    <OtherFlags>$(OtherFlags) --delaysign+ --keyfile:"$(FSharpSourcesRoot)\fsharp\msft.pubkey"</OtherFlags>
     <StrongNames>true</StrongNames>
   </PropertyGroup>
 
   <PropertyGroup Condition="('$(Configuration)'=='Debug' OR '$(Configuration)'=='Release') AND ('$(AssemblyName)'!='FSharp.Core')">
     <DefineConstants>STRONG_NAME_FSHARP_COMPILER_WITH_TEST_KEY;$(DefineConstants)</DefineConstants>
-    <OtherFlags>$(OtherFlags) --keyfile:$(FSharpSourcesRoot)\fsharp\test.snk</OtherFlags>
+    <OtherFlags>$(OtherFlags) --keyfile:"$(FSharpSourcesRoot)\fsharp\test.snk"</OtherFlags>
     <StrongNames>true</StrongNames>
   </PropertyGroup>
 
