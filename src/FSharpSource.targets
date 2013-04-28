@@ -48,7 +48,7 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
 
   <PropertyGroup Condition="('$(Configuration)'=='Debug' OR '$(Configuration)'=='Release') AND ('$(AssemblyName)'!='FSharp.Core')">
     <DefineConstants>STRONG_NAME_FSHARP_COMPILER_WITH_TEST_KEY;$(DefineConstants)</DefineConstants>
-    <OtherFlags>$(OtherFlags) --keyfile:$(FSharpSourcesRoot)\fsharp\test.snk</OtherFlags>
+    <OtherFlags>$(OtherFlags) --keyfile:"$(FSharpSourcesRoot)\fsharp\test.snk"</OtherFlags>
     <StrongNames>true</StrongNames>
   </PropertyGroup>
 
