@@ -3614,17 +3614,17 @@ and GenObjectExpr cenv cgbuf eenvouter expr (baseType,baseValOpt,basecall,overri
     let ilCtorBody = CodeGenMethodForExpr cenv cgbuf.mgbuf (SPAlways,[],cloName,eenvinner,1,0,basecall,discardAndReturnVoid)
 
 
-    let genMethodAndOptionalMethodImpl tmethod = 
-        [ for ((useMethodImpl,methodImplGeneratorFunction,methTyparsOfOverridingMethod),mdef) in GenObjectMethod cenv eenvinner cgbuf (isInterfaceTy cenv.g baseType) tmethod do
+    let genMethodAndOptionalMethodImpl tmethod useMethodImpl = 
+        [ for ((useMethodImpl,methodImplGeneratorFunction,methTyparsOfOverridingMethod),mdef) in GenObjectMethod cenv eenvinner cgbuf useMethodImpl tmethod do
               let mimpl = (if useMethodImpl then Some(methodImplGeneratorFunction (ilTyForOverriding,methTyparsOfOverridingMethod)) else None)
               yield (mimpl,mdef) ]  
 
     let mimpls,mdefs = 
         [ for ov in overrides do 
-              yield! genMethodAndOptionalMethodImpl ov 
+              yield! genMethodAndOptionalMethodImpl ov (isInterfaceTy cenv.g baseType)
           for (_,tmethods) in interfaceImpls do 
              for tmethod in tmethods do 
-                 yield! genMethodAndOptionalMethodImpl tmethod ]
+                 yield! genMethodAndOptionalMethodImpl tmethod true ]
         |> List.unzip 
 
     let mimpls = mimpls |> List.choose id // choose the ones that actually have method impls
