@@ -541,17 +541,19 @@ module internal Array =
             | _,_ when valuesExist && (keys.Length <> values.Length) -> raise (ArgumentException())
             | _,_ ->   
             qsort(keys,values,0,keys.Length-1,LanguagePrimitives.FastGenericComparer<'Key>)
+(*
         static member Sort<'Key,'Value when 'Key : comparison>(keys : 'Key[], values : 'Value[], start : int, last : int) =
             match keys with
             | null -> raise (ArgumentNullException())
             | _ ->        
             qsort(keys,values,start,last,LanguagePrimitives.FastGenericComparer<'Key>)
-        static member Sort<'Key,'Value when 'Key : comparison>(keys : 'Key[], values : 'Value[], start : int, last : int, comparer : IComparer<'Key>) =
+*)
+        static member Sort<'Key,'Value when 'Key : comparison>(keys : 'Key[], values : 'Value[], start : int, length : int, comparer : IComparer<'Key>) =
             match keys with
             | null -> raise (ArgumentNullException())
             | _ ->        
             let comparer = match comparer with null -> LanguagePrimitives.FastGenericComparer<'Key> | _ -> comparer
-            qsort(keys,values,start,last,comparer)
+            qsort(keys,values,start,start+length-1,comparer)
 #else
 #endif
 
