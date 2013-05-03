@@ -3112,6 +3112,10 @@ namespace Microsoft.FSharp.Core
 
     type FSharpFunc<'T,'Res> with
 #if FX_NO_CONVERTER
+        [<CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2225:OperatorOverloadsHaveNamedAlternates")>]
+        static member op_Implicit(f : System.Func<_,_>) : ('T -> 'Res) =  (fun t -> f.Invoke(t))
+        [<CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2225:OperatorOverloadsHaveNamedAlternates")>]
+        static member op_Implicit( f : ('T -> 'Res) ) =  new System.Func<'T,'Res>(f)
 #else    
         [<CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2225:OperatorOverloadsHaveNamedAlternates")>]
         static member op_Implicit(f : System.Converter<_,_>) : ('T -> 'Res) =  (fun t -> f.Invoke(t))

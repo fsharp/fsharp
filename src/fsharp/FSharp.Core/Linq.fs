@@ -207,14 +207,15 @@ module LeafExpressionConverter =
         let gmd = if isg1 then minfo.GetGenericMethodDefinition() else null
         (fun tm -> 
             match tm with
+            | Call(obj,minfo2,args) 
+                when (
 #if FX_NO_REFLECTION_METADATA_TOKENS
-            | Call(obj,minfo2,args) when (minfo = minfo2) -> 
-                ignore gmd
 #else
-            | Call(obj,minfo2,args) when (minfo.MetadataToken = minfo2.MetadataToken &&
-                                          if isg1 then minfo2.IsGenericMethod && gmd = minfo2.GetGenericMethodDefinition()
-                                          else minfo = minfo2) -> 
-#endif                                          
+                        minfo.MetadataToken = minfo2.MetadataToken &&
+#endif
+                        if isg1 then minfo2.IsGenericMethod && gmd = minfo2.GetGenericMethodDefinition()
+                        else minfo = minfo2
+                     ) -> 
                 Some(obj,(minfo2.GetGenericArguments() |> Array.toList),args)
             | _ -> None)
 
@@ -733,9 +734,9 @@ module LeafExpressionConverter =
             let vP = ConvVarToLinq v
             let env = { env with varEnv = Map.add v (vP |> asExpr) env.varEnv }
 #if FX_NO_CONVERTER             
-            let tyargs = [| v.Type |]
+            let tyargs = [| v.Type; body.Type |]
             let bodyP = ConvExprToLinqInContext env body    
-            let convType = typedefof<Action<_>>.MakeGenericType tyargs
+            let convType = typedefof<Func<_, _>>.MakeGenericType tyargs
 #else
             let tyargs = [| v.Type; body.Type |]
             let bodyP = ConvExprToLinqInContext env body   
