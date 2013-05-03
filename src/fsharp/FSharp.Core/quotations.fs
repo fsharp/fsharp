@@ -911,11 +911,7 @@ module Patterns =
           bindMethodBySearch(parentT,nm,marity,argtys,rty)
 
     let bindModuleProperty (ty:Type,nm) = 
-#if FX_ATLEAST_PORTABLE
-        match ty.GetProperty(nm) with
-#else    
         match ty.GetProperty(nm,staticBindingFlags) with
-#endif        
         | null -> raise <| System.InvalidOperationException (SR.GetString2(SR.QcannotBindProperty, nm, ty.ToString()))
         | res -> res
 
@@ -1765,7 +1761,7 @@ module DerivedPatterns =
                match tm with
                | Call(obj,minfo2,args) 
 #if FX_NO_REFLECTION_METADATA_TOKENS
-                  when (minfo1.MethodHandle = minfo2.MethodHandle &&
+                  when ( // if metadata tokens are not available we'll rely only on equality of method references
 #else               
                   when (minfo1.MetadataToken = minfo2.MetadataToken &&
 #endif                  

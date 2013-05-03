@@ -515,6 +515,9 @@ type ILAssemblyRef(data)  =
                       let v = pkt.[i]
                       addC (convDigit(System.Convert.ToInt32(v)/16))
                       addC (convDigit(System.Convert.ToInt32(v)%16))
+            // retargetable can be true only for system assemblies that definitely have Version
+            if aref.Retargetable then
+                add ", Retargetable=Yes" 
         b.ToString()
 
 

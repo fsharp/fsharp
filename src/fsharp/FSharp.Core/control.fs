@@ -446,6 +446,7 @@ namespace Microsoft.FSharp.Control
                 loop firstAction
             finally
 #if FX_NO_THREAD_STATIC
+                ()
 #else
                 if thisIsTopTrampoline then
                     Trampoline.thisThreadHasTrampoline <- false
@@ -530,7 +531,6 @@ namespace Microsoft.FSharp.Control
         member this.Protect firstAction =
             trampoline <- new Trampoline()
             trampoline.ExecuteAction(firstAction)
-            FakeUnit
             
         member this.Trampoline = trampoline
         
@@ -1829,7 +1829,7 @@ namespace Microsoft.FSharp.Control
                             resultCell.RegisterResult(res,reuseThread=true) |> unfake) 
                     and del = 
 #if FX_ATLEAST_PORTABLE
-                        let invokeMeth = (typeof<Closure<'T>>).GetMethod("Invoke")
+                        let invokeMeth = (typeof<Closure<'T>>).GetMethod("Invoke", System.Reflection.BindingFlags.NonPublic ||| System.Reflection.BindingFlags.Public ||| System.Reflection.BindingFlags.Instance)
                         System.Delegate.CreateDelegate(typeof<'Delegate>, obj, invokeMeth) :?> 'Delegate
 #else                    
                         System.Delegate.CreateDelegate(typeof<'Delegate>, obj, "Invoke") :?> 'Delegate
