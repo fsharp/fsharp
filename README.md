@@ -37,6 +37,7 @@ sudo make install
 By default that makes optimized binaries. To make debug, use ```make CONFIG=debug```
 
 ### On Windows, using msbuild (e.g.. if .NET is installed) 
+If you have only VS2012 installed, and not VS2010, you'll need to install the F# 2.0 Runtime (http://www.microsoft.com/en-us/download/details.aspx?id=13450)
 ```
 cd src
 msbuild fsharp-proto-build.proj
