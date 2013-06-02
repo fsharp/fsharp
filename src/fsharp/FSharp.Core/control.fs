@@ -1338,8 +1338,6 @@ namespace Microsoft.FSharp.Control
                 if tasks.Length = 0 then args.cont [| |] else  // must not be in a 'protect' if we call cont explicitly; if cont throws, it should unwind the stack, preserving Dev10 behavior
                 protectedPrimitiveCore args (fun args ->
                     let ({ aux = aux } as args) = delimitSyncContext args  // manually resync
-                    let tasks = Seq.toArray l
-                    if tasks.Length = 0 then args.cont [| |] else
                     let count = ref tasks.Length
                     let firstExn = ref None
                     let results = Array.zeroCreate tasks.Length
