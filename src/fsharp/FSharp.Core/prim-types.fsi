@@ -676,7 +676,7 @@ namespace Microsoft.FSharp.Core
     /// <summary>This attribute is used for two purposes. When applied to an assembly, it must be given a string
     /// argument, and this argument must indicate a valid module or namespace in that assembly. Source
     /// code files compiled with a reference to this assembly are processed in an environment
-    /// where the given path is automatically oepned.</summary>
+    /// where the given path is automatically opened.</summary>
     ///
     /// <remarks>When applied to a module within an assembly, then the attribute must not be given any arguments.
     /// When the enclosing namespace is opened in user source code, the module is also implicitly opened.</remarks>
