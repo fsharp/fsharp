@@ -3089,40 +3089,35 @@ let AnalyzeArbitraryExprAsEnumerable cenv (env: TcEnv) localAlloc m exprty expr 
         // Compute the element type of the strongly typed enumerator
         //
         // Like C#, we detect the 'GetEnumerator' pattern for .NET version 1.x abstractions that don't 
-        // support the correct generic interface. However unlike C# we also go looking for a 'get_Item' or 'Item' method
-        // with a single integer indexer argument to try to get a strong type for the enumeration should the Enumerator
+        // support the correct generic interface. However unlike C# we also go looking for an indexer property
+        // with a single integer argument to try to get a strong type for the enumeration should the Enumerator
         // not provide anything useful. To enable interop with some legacy COM APIs,
-        // the single integer indexer argument is allowed to have type 'object'.
+        // the single integer argument is allowed to have type 'object'.
 
         let enumElemTy = 
 
             if isObjTy cenv.g enumElemTy then
-                // Look for an 'Item' property, or a set of these with consistent return types 
-                let allEquivReturnTypes (minfo:MethInfo) (others:MethInfo list) = 
-                    let returnTy = minfo.GetFSharpReturnTy(cenv.amap, m, [])
-                    others |> List.forall (fun other -> typeEquiv cenv.g (other.GetFSharpReturnTy(cenv.amap, m, [])) returnTy)
+                // Look for an indexer property, or a set of these with consistent property types 
+                let allEquivPropTypes (pinfo:PropInfo) (others:PropInfo list) = 
+                    let returnTy = pinfo.GetPropertyType(cenv.amap, m)
+                    others |> List.forall (fun other -> typeEquiv cenv.g (other.GetPropertyType(cenv.amap, m)) returnTy)
                 
-                let isInt32OrObjectIndexer (minfo:MethInfo) = 
-                    match minfo.GetParamTypes(cenv.amap, m, []) with
-                    | [[ty]] -> 
+                let isInt32OrObjectIndexer (pinfo:PropInfo) = 
+                    match pinfo.GetParamTypes(cenv.amap, m) with
+                    | [ty] -> 
                         // e.g. MatchCollection
                         typeEquiv cenv.g cenv.g.int32_ty ty || 
                         // e.g. EnvDTE.Documents.Item
                         typeEquiv cenv.g cenv.g.obj_ty ty
                     | _ -> false
                 
-                match TryFindIntrinsicOrExtensionMethInfo cenv env m ad "get_Item" tyToSearchForGetEnumeratorAndItem with
-                | (minfo :: others) when (allEquivReturnTypes minfo others &&
-                                          List.exists isInt32OrObjectIndexer (minfo :: others)) -> 
-                    minfo.GetFSharpReturnTy(cenv.amap, m, [])
+                let tcref = tcrefOfAppTy cenv.g tyToSearchForGetEnumeratorAndItem
+                let indexerName = TryFindTyconRefStringAttribute cenv.g m cenv.g.attrib_DefaultMemberAttribute tcref
                 
-                | _ -> 
-                
-                // Some types such as XmlNodeList have only an Item method  
-                match TryFindIntrinsicOrExtensionMethInfo cenv env m ad "Item" tyToSearchForGetEnumeratorAndItem with
-                | (minfo :: others) when (allEquivReturnTypes minfo others &&
-                                          List.exists isInt32OrObjectIndexer (minfo :: others)) -> 
-                    minfo.GetFSharpReturnTy(cenv.amap, m, [])
+                match TryFindPropInfo cenv.infoReader m ad (defaultArg indexerName "Item") tyToSearchForGetEnumeratorAndItem with
+                | (pinfo :: others) when (allEquivPropTypes pinfo others &&
+                                          List.exists isInt32OrObjectIndexer (pinfo :: others)) -> 
+                    pinfo.GetPropertyType(cenv.amap, m)
                 
                 | _ -> enumElemTy
             else 
