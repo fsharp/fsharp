@@ -1359,6 +1359,7 @@ type ErrorStyle =
     | EmacsErrors 
     | TestErrors 
     | VSErrors
+    | GccErrors
 
 let SanitizeFileName fileName implicitIncludeDir =
     // The assert below is almost ok, but it fires in two cases:
@@ -1394,6 +1395,7 @@ let rec OutputErrorOrWarning (implicitIncludeDir,showFullPaths,flattenErrors,err
               | ErrorStyle.EmacsErrors   -> Printf.bprintf os "File \"%s\", line %d, characters %d-%d: " (file.Replace("\\","/")) m.StartLine m.StartColumn m.EndColumn
               // We're adjusting the columns here to be 1-based - both for parity with C# and for MSBuild, which assumes 1-based columns for error output
               | ErrorStyle.DefaultErrors -> Printf.bprintf os "%s(%d,%d): " (file.Replace('/',System.IO.Path.DirectorySeparatorChar)) m.StartLine (m.StartColumn + 1)
+              | ErrorStyle.GccErrors     -> Printf.bprintf os "%s:%d:%d: " (file.Replace('/',System.IO.Path.DirectorySeparatorChar)) m.StartLine (m.StartColumn + 1)
               // We may also want to change TestErrors to be 1-based
               | ErrorStyle.TestErrors    -> Printf.bprintf os "%s(%d,%d-%d,%d): " (file.Replace("/","\\")) m.StartLine (m.StartColumn + 1) m.EndLine (m.EndColumn + 1) 
               // Here, we want the complete range information so Project Systems can generate proper squiggles
