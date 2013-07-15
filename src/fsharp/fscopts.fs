@@ -451,6 +451,7 @@ let vsSpecificFlags (tcConfigB: TcConfigBuilder) =
     CompilerOption("validate-type-providers", tagNone, OptionUnit (fun () -> tcConfigB.validateTypeProviders <- true), None, None);
     CompilerOption("LCID", tagInt, OptionInt (fun n -> tcConfigB.lcid <- Some(n)), None, None);
     CompilerOption("flaterrors", tagNone, OptionUnit (fun () -> tcConfigB.flatErrors <- true), None, None); 
+    CompilerOption("gccerrors", tagNone, OptionUnit (fun () -> tcConfigB.errorStyle <- ErrorStyle.GccErrors), None, None); 
     CompilerOption("maxerrors", tagInt, OptionInt (fun n -> tcConfigB.maxErrors <- n), None, None); ]
       
           
