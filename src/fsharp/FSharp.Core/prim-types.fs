@@ -960,7 +960,7 @@ namespace Microsoft.FSharp.Core
                 abstract CompareC : obj * obj -> int   // implemented further below
                 member  c.ThrowsOnPER() = throwsOnPER
 
-            let NaNException = new System.Exception()                                                 
+            let NaNException = new System.NotFiniteNumberException()
                     
             let rec GenericCompare (comp:GenericComparer) (xobj:obj,yobj:obj) = 
                 (*if objEq xobj yobj then 0 else *)
