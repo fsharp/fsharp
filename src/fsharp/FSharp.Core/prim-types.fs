@@ -963,7 +963,7 @@ namespace Microsoft.FSharp.Core
             let NaNException = new System.Exception()                                                 
                     
             let rec GenericCompare (comp:GenericComparer) (xobj:obj,yobj:obj) = 
-                (*if objEq xobj yobj then 0 else *)
+                  if objEq xobj yobj then 0 else
                   //System.Console.WriteLine("xobj = {0}, yobj = {1}, NaNs = {2}, PERMode.mode = {3}", [| xobj; yobj; box PER_NAN_PAIR_DETECTED; box PERMode.mode |])
                   match xobj,yobj with 
                    | null,null -> 0
@@ -1012,6 +1012,7 @@ namespace Microsoft.FSharp.Core
 
             /// specialcase: Core implementation of structural comparison on arbitrary arrays.
             and GenericComparisonArbArrayWithComparer (comp:GenericComparer) (x:System.Array) (y:System.Array) : int  =
+                if objEq x y then 0 else
 #if FX_NO_ARRAY_LONG_LENGTH            
                 if x.Rank = 1 && y.Rank = 1 then 
                     let lenx = x.Length
@@ -1158,6 +1159,7 @@ namespace Microsoft.FSharp.Core
               
             /// optimized case: Core implementation of structural comparison on object arrays.
             and GenericComparisonObjArrayWithComparer (comp:GenericComparer) (x:obj[]) (y:obj[]) : int  =
+                if objEq x y then 0 else
                 let lenx = x.Length 
                 let leny = y.Length 
                 let c = intOrder lenx leny 
@@ -1173,6 +1175,7 @@ namespace Microsoft.FSharp.Core
 
             /// optimized case: Core implementation of structural comparison on arrays.
             and GenericComparisonByteArray (x:byte[]) (y:byte[]) : int =
+                if objEq x y then 0 else
                 let lenx = x.Length 
                 let leny = y.Length 
                 let c = intOrder lenx leny 
@@ -1388,6 +1391,7 @@ namespace Microsoft.FSharp.Core
 
             /// optimized case: Core implementation of structural equality on arrays.
             let GenericEqualityByteArray (x:byte[]) (y:byte[]) : bool=
+                if objEq x y then true else
                 let lenx = x.Length 
                 let leny = y.Length 
                 let c = (lenx = leny)
@@ -1403,6 +1407,7 @@ namespace Microsoft.FSharp.Core
 
             /// optimized case: Core implementation of structural equality on arrays.
             let GenericEqualityInt32Array (x:int[]) (y:int[]) : bool=
+                if objEq x y then true else
                 let lenx = x.Length 
                 let leny = y.Length 
                 let c = (lenx = leny)
@@ -1418,6 +1423,7 @@ namespace Microsoft.FSharp.Core
 
             /// optimized case: Core implementation of structural equality on arrays
             let GenericEqualitySingleArray er (x:float32[]) (y:float32[]) : bool=
+                if objEq x y then true else
                 let lenx = x.Length 
                 let leny = y.Length 
                 let f32eq x y = if er && not(float32Eq x x) && not(float32Eq y y) then true else (float32Eq x y)
@@ -1434,6 +1440,7 @@ namespace Microsoft.FSharp.Core
 
             /// optimized case: Core implementation of structural equality on arrays.
             let GenericEqualityDoubleArray er (x:float[]) (y:float[]) : bool=
+                if objEq x y then true else
                 let lenx = x.Length 
                 let leny = y.Length 
                 let c = (lenx = leny)
@@ -1450,6 +1457,7 @@ namespace Microsoft.FSharp.Core
 
             /// optimized case: Core implementation of structural equality on arrays.
             let GenericEqualityCharArray (x:char[]) (y:char[]) : bool=
+                if objEq x y then true else
                 let lenx = x.Length 
                 let leny = y.Length 
                 let c = (lenx = leny)
@@ -1465,6 +1473,7 @@ namespace Microsoft.FSharp.Core
 
             /// optimized case: Core implementation of structural equality on arrays.
             let GenericEqualityInt64Array (x:int64[]) (y:int64[]) : bool=
+                if objEq x y then true else
                 let lenx = x.Length 
                 let leny = y.Length 
                 let c = (lenx = leny)
@@ -1481,7 +1490,7 @@ namespace Microsoft.FSharp.Core
 
 
             let rec GenericEqualityObj (er:bool) (iec:System.Collections.IEqualityComparer) ((xobj:obj),(yobj:obj)) : bool = 
-                (*if objEq xobj yobj then true else  *)
+                if objEq xobj yobj then true else
                 match xobj,yobj with 
                  | null,null -> true
                  | null,_ -> false
@@ -1513,6 +1522,7 @@ namespace Microsoft.FSharp.Core
 
             /// specialcase: Core implementation of structural equality on arbitrary arrays.
             and GenericEqualityArbArray er (iec:System.Collections.IEqualityComparer) (x:System.Array) (y:System.Array) : bool =
+                if objEq x y then true else
 #if FX_NO_ARRAY_LONG_LENGTH
                 if x.Rank = 1 && y.Rank = 1 then 
                     // check lengths 
@@ -1629,6 +1639,7 @@ namespace Microsoft.FSharp.Core
               
             /// optimized case: Core implementation of structural equality on object arrays.
             and GenericEqualityObjArray er iec (x:obj[]) (y:obj[]) : bool =
+                if objEq x y then true else
                 let lenx = x.Length 
                 let leny = y.Length 
                 let c = (lenx = leny )
