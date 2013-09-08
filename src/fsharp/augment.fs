@@ -80,6 +80,7 @@ let mkHashWithComparerTy g ty = (mkThisTy g ty) --> (g.mk_IEqualityComparer_ty -
 let mkRelBinOp g op m e1 e2 = mkAsmExpr ([ op  ],[],  [e1; e2],[g.bool_ty],m)
 let mkClt g m e1 e2 = mkRelBinOp g IL.AI_clt m e1 e2 
 let mkCgt g m e1 e2 = mkRelBinOp g IL.AI_cgt m e1 e2
+let mkCeq g m e1 e2 = mkRelBinOp g IL.AI_ceq m e1 e2
 
 //-------------------------------------------------------------------------
 // REVIEW: make this a .constrained call, not a virtual call.
@@ -175,10 +176,16 @@ let mkMinimalTy g (tcref:TyconRef) =
 let mkBindNullComparison g m thise thate expr = 
     let expr = mkNonNullCond g m g.int_ty thate expr (mkOne g m) 
     let expr = mkNonNullCond g m g.int_ty thise expr (mkNonNullCond g m g.int_ty thate (mkMinusOne g m) (mkZero g m) )
+    let expr =
+        let refEqualsTest = mkCeq g m thise thate
+        mkCond NoSequencePointAtStickyBinding SuppressSequencePointAtTarget m g.int_ty refEqualsTest (mkZero g m) expr
     expr
 
 let mkBindThisNullEquals g m thise thate expr = 
     let expr = mkNonNullCond g m g.bool_ty thise expr (mkNonNullCond g m g.int_ty thate (mkFalse g m) (mkTrue g m) )
+    let expr =
+        let refEqualsTest = mkCeq g m thise thate
+        mkCond NoSequencePointAtStickyBinding SuppressSequencePointAtTarget m g.int_ty refEqualsTest (mkTrue g m) expr 
     expr
 
 let mkBindThatNullEquals g m thise thate expr = 
