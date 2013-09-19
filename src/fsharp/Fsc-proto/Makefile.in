@@ -1,3 +1,4 @@
+VPATH=@abs_srcdir@
 NAME=fsc-proto
 ASSEMBLY = $(NAME).exe
 

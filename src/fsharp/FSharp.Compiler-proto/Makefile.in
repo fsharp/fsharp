@@ -1,3 +1,4 @@
+VPATH=@abs_srcdir@
 NAME=FSharp.Compiler-proto
 ASSEMBLY = $(NAME).dll
 
