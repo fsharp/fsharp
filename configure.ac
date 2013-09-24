@@ -53,11 +53,10 @@ AC_ARG_WITH([gacdir],
                 [with_gacdir=no]
         )
 
+MONOPREFIX=$(cd `$PKG_CONFIG --variable=prefix mono` && pwd)
+
 if test "x$with_gacdir" = "xno"; then
-	MONODIR=`$PKG_CONFIG --variable=libdir mono`/mono
-	if ! test -e $MONODIR/2.0/mscorlib.dll; then
-		MONODIR=`$PKG_CONFIG --variable=prefix mono`/lib/mono
-	fi
+	MONODIR="$MONOPREFIX"/lib/mono
 else
 	MONODIR=$(cd "$with_gacdir/.." && pwd)
 fi
@@ -104,10 +103,7 @@ src/fsharp/policy.4.3.FSharp.Core/Makefile
 ])
 AC_OUTPUT
 
-CANON_MONODIR=`cd $MONODIR/../..; pwd`
-
-if ! test -e $prefix/bin/mono; then
-	AC_WARN($prefix/bin/mono not found. Prefix should normally be set to the mono installation path. Consider using 
-   ./autogen.sh --prefix=$CANON_MONODIR
-)
+if ! test "x$MONOPREFIX" = "x$prefix"; then
+	AC_WARN([Prefix to use is not the same as mono's: $prefix
+		Consider using: ./autogen.sh --prefix=$MONOPREFIX])
 fi
