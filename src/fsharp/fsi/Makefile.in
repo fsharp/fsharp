@@ -1,3 +1,4 @@
+VPATH=@abs_srcdir@
 NAME=fsi
 ASSEMBLY = $(NAME).exe
 TOKEN=$(SIGN_TOKEN)

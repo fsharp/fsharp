@@ -1,3 +1,4 @@
+VPATH=@abs_srcdir@
 NAME=FSharp.Compiler.Interactive.Settings
 ASSEMBLY = $(NAME).dll
 TOKEN=$(SIGN_TOKEN)

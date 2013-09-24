@@ -1,3 +1,4 @@
+VPATH=@abs_srcdir@
 NAME=policy.4.3.FSharp.Core
 ASSEMBLY = $(NAME).dll
 DELAY_SIGN=1
@@ -12,12 +13,12 @@ include $(topdir)/src/fsharp/targets.make
 
 $(objdir)$(TARGET_2_0)/policy.4.3.FSharp.Core.dll: policy.4.3.FSharp.Core.dll.config 
 	@mkdir -p $(@D)
-	cp policy.4.3.FSharp.Core.dll.config $(@D)
+	cp $(srcdir)policy.4.3.FSharp.Core.dll.config $(@D)
 	al /link:policy.4.3.FSharp.Core.dll.config /out:$@ /delaysign /keyfile:$(topdir)msfinal.pub /version:$(VERSION_2_0)
 
 $(objdir)$(TARGET_4_0)/policy.4.3.FSharp.Core.dll: policy.4.3.FSharp.Core.dll.config 
 	@mkdir -p $(@D)
-	cp policy.4.3.FSharp.Core.dll.config $(@D)
+	cp $(srcdir)policy.4.3.FSharp.Core.dll.config $(@D)
 	al /link:policy.4.3.FSharp.Core.dll.config /out:$@ /delaysign /keyfile:$(topdir)msfinal.pub /version:$(VERSION_4_0)
 
 do-final: do-2-0 do-4-0 
