@@ -17,8 +17,8 @@ REFERENCES += \
 	-r:$(outdir)FSharp.Compiler.dll \
 	-r:$(outdir)FSharp.Compiler.Interactive.Settings.dll \
 	-r:$(outdir)FSharp.Compiler.Server.Shared.dll \
-	-r:$(monolibdir)System.Windows.Forms.dll \
-	-r:$(monolibdir)System.Drawing.dll
+	-r:$(monogacdirXX)/System.Windows.Forms.dll \
+	-r:$(monogacdirXX)/System.Drawing.dll
 
 sources = \
 	$(tmpdir)FSIstrings.fs \

@@ -15,8 +15,8 @@ FLAGS += \
 REFERENCES += \
 	-r:$(outdir)FSharp.Core.dll \
 	-r:$(outdir)FSharp.Compiler.dll \
-	-r:$(monolibdir)System.Runtime.Remoting.dll \
-	-r:$(monolibdir)System.Windows.Forms.dll
+	-r:$(monogacdirXX)/System.Runtime.Remoting.dll \
+	-r:$(monogacdirXX)/System.Windows.Forms.dll
 
 sources = \
 	../../assemblyinfo/assemblyinfo.fsc.exe.fs \

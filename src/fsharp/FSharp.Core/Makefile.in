@@ -14,7 +14,7 @@ FLAGS_2_0 += \
 	--compiling-fslib \
 	--nowarn:75,1204 \
 	--target:library \
-	--compiling-fslib-20:$(monolibdir)../4.0/mscorlib.dll \
+	--compiling-fslib-20:$(monogacdir40)/mscorlib.dll \
 	--extraoptimizationloops:1 
 
 FLAGS_2_1 += \
