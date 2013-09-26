@@ -4,18 +4,23 @@ topdir := @abs_top_srcdir@/
 builddir := @abs_top_builddir@/
 libdir := ${prefix}/lib/
 bindir := ${prefix}/bin/
-monorootdir := @MONOROOTDIR@/
-monodir := @MONODIR@/
-monolibdir2 := $(monodir)2.0/
+monolibdir := @MONOLIBDIR@
+monogacdir := @MONOGACDIR@
+
+monogacdir20 := @MONOGACDIR20@
 
 #This is where to find MonoTouch of MonoAndroid, for "make do-2-1"
 #
 #For now this is hardwired, it should be optionally detected by configure.ac
-monolibdir21 := @abs_top_srcdir@/dependencies/mono/2.1/
+monogacdir21 := @abs_top_srcdir@/dependencies/mono/2.1
 
+monogacdir35 := @MONOGACDIR35@
+monogacdir40 := @MONOGACDIR40@
 
-monolibdir35 := $(monodir)3.5/
-monolibdir4 := $(monodir)4.0/
+gacdir := ${libdir}mono
+gacdir20 := ${gacdir}/2.0
+gacdir40 := ${gacdir}/4.0
+
 tooldir := $(topdir)lib/bootstrap/4.0/
 
 MONO_OPTIONS += @mono_gc_options@
@@ -110,28 +115,28 @@ DEFINES_4_0 = \
 	--define:FX_ATLEAST_LINQ
 
 REFERENCES_2_0 = \
-	-r:$(monolibdir)Microsoft.Build.Engine.dll \
-	-r:$(monolibdir)Microsoft.Build.Framework.dll \
-	-r:$(monolibdir35)Microsoft.Build.Tasks.v3.5.dll \
-	-r:$(monolibdir35)Microsoft.Build.Utilities.v3.5.dll \
-	-r:$(monolibdir)mscorlib.dll \
-	-r:$(monolibdir)System.Core.dll \
-	-r:$(monolibdir)System.dll
+	-r:$(monogacdirXX)/Microsoft.Build.Engine.dll \
+	-r:$(monogacdirXX)/Microsoft.Build.Framework.dll \
+	-r:$(monogacdir35)/Microsoft.Build.Tasks.v3.5.dll \
+	-r:$(monogacdir35)/Microsoft.Build.Utilities.v3.5.dll \
+	-r:$(monogacdirXX)/mscorlib.dll \
+	-r:$(monogacdirXX)/System.Core.dll \
+	-r:$(monogacdirXX)/System.dll
 
 REFERENCES_2_1 = \
-	-r:$(monolibdir21)mscorlib.dll \
-	-r:$(monolibdir21)System.Core.dll \
-	-r:$(monolibdir21)System.dll
+	-r:$(monogacdir21)/mscorlib.dll \
+	-r:$(monogacdir21)/System.Core.dll \
+	-r:$(monogacdir21)/System.dll
 
 REFERENCES_4_0 = \
-	-r:$(monolibdir)Microsoft.Build.Engine.dll \
-	-r:$(monolibdir)Microsoft.Build.Framework.dll \
-	-r:$(monolibdir)Microsoft.Build.Tasks.v4.0.dll \
-	-r:$(monolibdir)Microsoft.Build.Utilities.v4.0.dll \
-	-r:$(monolibdir)mscorlib.dll \
-	-r:$(monolibdir)System.Core.dll \
-	-r:$(monolibdir)System.dll \
-	-r:$(monolibdir)System.Numerics.dll
+	-r:$(monogacdirXX)/Microsoft.Build.Engine.dll \
+	-r:$(monogacdirXX)/Microsoft.Build.Framework.dll \
+	-r:$(monogacdirXX)/Microsoft.Build.Tasks.v4.0.dll \
+	-r:$(monogacdirXX)/Microsoft.Build.Utilities.v4.0.dll \
+	-r:$(monogacdirXX)/mscorlib.dll \
+	-r:$(monogacdirXX)/System.Core.dll \
+	-r:$(monogacdirXX)/System.dll \
+	-r:$(monogacdirXX)/System.Numerics.dll
 
 INSTALL = $(SHELL) $(topdir)install-sh
 INSTALL_DATA = $(INSTALL) -c -m 644

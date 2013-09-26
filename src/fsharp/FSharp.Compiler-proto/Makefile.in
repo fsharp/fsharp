@@ -21,7 +21,7 @@ DEFINES += \
 
 REFERENCES += \
 	-r:$(bootstrapdir)FSharp.Core.dll \
-	-r:$(monolibdir)System.Windows.Forms.dll
+	-r:$(monogacdirXX)/System.Windows.Forms.dll
 
 
 sources = \
