@@ -7,8 +7,8 @@ if %PROCESSOR_ARCHITECTURE%==x86 (
 )
 
 ::Clean
-rm -rf lib/proto
-rm -rf lib/release
+del /F /S /Q lib\proto
+del /F /S /Q lib\release
 
 ::Build
 pushd .
