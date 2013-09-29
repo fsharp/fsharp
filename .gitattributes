@@ -20,3 +20,8 @@
 *.PDF	 diff=astextplain
 *.rtf	 diff=astextplain
 *.RTF	 diff=astextplain
+
+install-sh text eol=lf
+*.in text eol=lf
+*.ac text eol=lf
+*.sh text eol=lf
