@@ -6,43 +6,13 @@ srcdir := @abs_srcdir@/
 
 include @abs_top_builddir@/config.make
 
-FSC=$(protodir)fsc-proto.exe
-
-FLAGS += \
-	$(SIGN_FLAGS) \
-	--target:exe
-
-REFERENCES += \
-	-r:$(outdir)FSharp.Core.dll \
-	-r:$(outdir)FSharp.Compiler.dll \
-	-r:$(outdir)FSharp.Compiler.Interactive.Settings.dll \
-	-r:$(outdir)FSharp.Compiler.Server.Shared.dll \
-	-r:$(monogacdirXX)/System.Windows.Forms.dll \
-	-r:$(monogacdirXX)/System.Drawing.dll
-
-sources = \
-	$(tmpdir)FSIstrings.fs \
-	../../assemblyinfo/assemblyinfo.fsi.exe.fs \
-	../InternalCollections.fsi \
-	../InternalCollections.fs \
-	console.fs \
-	fsi.fs \
-	fsimain.fs
-
-RESOURCES = \
-	$(tmpdir)FSIstrings.resources
-
-$(tmpdir)FSIstrings.fs $(tmpdir)FSIstrings.resources: FSIstrings.txt
-	mono $(MONO_OPTIONS) $(FSSRGEN) $< $(tmpdir)FSIstrings.fs $(tmpdir)FSIstrings.resx
-	resgen $(tmpdir)FSIstrings.resx $(tmpdir)FSIstrings.resources
-
 include $(topdir)/src/fsharp/targets.make
 
-do-final: do-4-0 
+build-final: build-4-0 
 
 clean: clean-4-0
 
-install: install-bin-4  install-lib-4-5
+install: install-bin
 
 
 

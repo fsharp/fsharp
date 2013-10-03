@@ -221,3 +221,14 @@ F# compiler sources dropped by Microsoft are available from [fsharppowerpack.cod
 
 Uses bootstrapping libraries, tools and F# compiler. The `lib/bootstrap/X.0` directories contain mono-built libraries, compiler and tools that can be used to bootstrap a build. You can also supply your own via the `--with-bootstrap` option.
 
+
+### Wheezy build
+
+vagrant up
+vagrant ssh
+cd /vagrant
+sudo apt-get install dos2unix autoconf
+dos2unix ./autogen.sh launcher.in Makefile.in config.make.in configure.ac
+./autogen.sh --prefix=/usr
+make
+sudo make install

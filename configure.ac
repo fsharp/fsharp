@@ -102,8 +102,9 @@ src/fsharp/FSharp.Data.TypeProviders/Makefile
 src/fsharp/fsi/Makefile
 src/fsharp/fsiAnyCpu/Makefile
 src/fsharp/policy.2.0.FSharp.Core/Makefile
-src/fsharp/policy.4.0.FSharp.Core/Makefile
 src/fsharp/policy.2.3.FSharp.Core/Makefile
+src/fsharp/policy.3.3.FSharp.Core/Makefile
+src/fsharp/policy.4.0.FSharp.Core/Makefile
 src/fsharp/policy.4.3.FSharp.Core/Makefile
 ])
 AC_OUTPUT

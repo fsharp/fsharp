@@ -6,45 +6,13 @@ srcdir := @abs_srcdir@/
 
 include @abs_top_builddir@/config.make
 
-FSC=$(protodir)fsc-proto.exe
-
-FLAGS += \
-	$(SIGN_FLAGS) \
-	--target:library \
-	--define:TPEMIT_INTERNAL_AND_MINIMAL_FOR_TYPE_CONTAINERS
-
-REFERENCES += \
-	-r:$(outdir)FSharp.Core.dll \
-	-r:System.Xml.dll \
-	-r:System.Configuration.dll \
-	-r:System.ServiceModel.dll \
-	-r:System.Xml.Linq.dll \
-	-r:System.Core.dll \
-	-r:System.Data.dll
-
-sources = \
-	$(tmpdir)FSData.fs \
-	../../assemblyinfo/assemblyinfo.FSharp.Data.TypeProviders.dll.fs \
-	Util.fsi Util.fs \
-	TypeProviderEmit.fsi TypeProviderEmit.fs \
-	TypeProvidersImpl.fs \
-	TypeProviders.fs
-
-RESOURCES= \
-	$(tmpdir)FSData.resources
-
-$(tmpdir)FSData.fs $(tmpdir)FSData.resources: FSData.txt
-	mono $(MONO_OPTIONS) $(FSSRGEN) $< $(tmpdir)FSData.fs $(tmpdir)FSData.resx
-	resgen $(tmpdir)FSData.resx $(tmpdir)FSData.resources
-
-
 include $(topdir)/src/fsharp/targets.make
 
-do-final: do-4-0 
+build-final: build-4-0 
 
 clean: clean-4-0
 
-install: install-lib-4 install-lib-4-5
+install: install-lib-4-0 install-lib-4-5
 
 
 

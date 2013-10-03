@@ -6,36 +6,11 @@ srcdir := @abs_srcdir@/
 
 include @abs_top_builddir@/config.make
 
-FSC=$(protodir)fsc-proto.exe
-
-FLAGS += \
-	$(SIGN_FLAGS) \
-	--target:library
-
-REFERENCES += \
-	-r:$(outdir)FSharp.Core.dll
-
-sources= \
-	$(tmpdir)FSBuild.fs \
-	../../assemblyinfo/assemblyinfo.FSharp.Build.dll.fs \
-	../../utils/CompilerLocationUtils.fs \
-	Fsc.fsi \
-	Fsc.fs \
-	CreateFSharpManifestResourceName.fsi \
-	CreateFSharpManifestResourceName.fs
-
-RESOURCES = \
-	$(tmpdir)FSBuild.resources
-
-$(tmpdir)FSBuild.fs $(tmpdir)FSBuild.resources: FSBuild.txt
-	mono $(MONO_OPTIONS) $(FSSRGEN) $< $(tmpdir)FSBuild.fs $(tmpdir)FSBuild.resx
-	resgen $(tmpdir)FSBuild.resx $(tmpdir)FSBuild.resources
-
 include $(topdir)/src/fsharp/targets.make
 
-do-final: do-2-0 do-4-0 
+build-final: build-4-0
 
-clean: clean-2-0 clean-4-0
+clean: clean-4-0
 
-install: install-lib-2 install-lib-4 install-lib-4-5
+install: install-lib-4-0 install-lib-4-5
 

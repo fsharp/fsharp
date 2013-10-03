@@ -1,18 +1,18 @@
 
 # Make the proto using the bootstrap, then make the final compiler using the proto
-# We call MAKE sequentially because we don't want do-final to explicitly depend on do-proto,
+# We call MAKE sequentially because we don't want build-final to explicitly depend on build-proto,
 # as that causes a complete recompilation of both proto and final everytime you touch the 
 # compiler sources.
 all:
-	$(MAKE) do-proto
-	$(MAKE) do-final
+	$(MAKE) build-proto
+	$(MAKE) build-final
 
-do-proto:
+build-proto:
 	$(MAKE) -C FSharp.Build-proto $@
 	$(MAKE) -C FSharp.Compiler-proto $@
 	$(MAKE) -C Fsc-proto $@
 
-do-final install:
+build-2-0 build-4-0 build-final install:
 	$(MAKE) -C FSharp.Core $@
 	$(MAKE) -C FSharp.Build $@
 	$(MAKE) -C FSharp.Compiler $@
@@ -47,10 +47,10 @@ clean clean-2-0 clean-4-0:
 	$(MAKE) -C policy.3.3.FSharp.Core $@
 	$(MAKE) -C policy.4.3.FSharp.Core $@
 
-clean-2-1 do-2-1:
+clean-2-1 build-2-1:
 	$(MAKE) -C FSharp.Core $@
 
-install-2-1: do-2-1
+install-2-1: build-2-1
 	$(MAKE) -C FSharp.Core $@
 
 

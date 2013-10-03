@@ -5,30 +5,11 @@ srcdir := @abs_srcdir@/
 
 include @abs_top_builddir@/config.make
 
-CONFIG=proto
+build-proto: $(protodir)FSharp.Core.dll
+	xbuild /p:Configuration=Proto
 
-FSC=$(bootstrapdir)fsc.exe
-
-FLAGS += --target:exe
-
-DEFINES += \
-	--define:BUILDING_PROTO \
-	--define:BUILDING_WITH_LKG \
-	--define:COMPILER \
-	--define:NO_STRONG_NAMES
-
-REFERENCES += \
-	-r:$(bootstrapdir)FSharp.Core.dll \
-	-r:$(outdir)FSharp.Compiler-proto.dll \
-	-r:$(monogacdirXX)/System.Runtime.Remoting.dll \
-	-r:$(monogacdirXX)/System.Windows.Forms.dll
-
-sources = \
-	../fscmain.fs
-
-do-proto: do-4-0 $(protodir)FSharp.Core.dll
-
-clean: clean-4-0
+clean: 
+	xbuild /p:Configuration=Proto /t:Clean
 
 include $(topdir)/src/fsharp/targets.make
 

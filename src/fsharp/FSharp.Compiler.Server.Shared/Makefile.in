@@ -6,28 +6,13 @@ srcdir := @abs_srcdir@/
 
 include @abs_top_builddir@/config.make
 
-FSC=$(protodir)fsc-proto.exe
-
-FLAGS += \
-	$(SIGN_FLAGS) \
-	--target:library
-
-REFERENCES += \
-	-r:$(outdir)FSharp.Core.dll \
-	-r:System.Runtime.Remoting.dll \
-	-r:Mono.Security.dll
-
-sources = \
-	../../assemblyinfo/assemblyinfo.FSharp.Compiler.Server.Shared.dll.fs \
-	../fsiserver/fsiserver.fs
-
 include $(topdir)/src/fsharp/targets.make
 
-do-final: do-4-0 
+build-final: build-4-0 
 
 clean: clean-4-0
 
-install: install-lib-4 install-lib-4-5
+install: install-lib-4-0 install-lib-4-5
 
 
 

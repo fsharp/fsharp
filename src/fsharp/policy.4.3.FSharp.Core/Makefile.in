@@ -10,21 +10,28 @@ include $(topdir)/src/fsharp/targets.make
 
 # override the targets to build the assembly
 
-$(objdir)$(TARGET_2_0)/policy.4.3.FSharp.Core.dll: policy.4.3.FSharp.Core.dll.config 
+$(outdir20)/$(NAME).dll: $(NAME).dll.config 
 	@mkdir -p $(@D)
-	cp policy.4.3.FSharp.Core.dll.config $(@D)
-	al /link:policy.4.3.FSharp.Core.dll.config /out:$@ /delaysign /keyfile:$(topdir)msfinal.pub /version:$(VERSION_2_0)
+	cp $(NAME).dll.config $(@D)
+	al /link:$(NAME).dll.config /out:$@ /delaysign /keyfile:$(topdir)msfinal.pub
 
-$(objdir)$(TARGET_4_0)/policy.4.3.FSharp.Core.dll: policy.4.3.FSharp.Core.dll.config 
+$(outdir40)/$(NAME).dll: $(NAME).dll.config 
 	@mkdir -p $(@D)
-	cp policy.4.3.FSharp.Core.dll.config $(@D)
-	al /link:policy.4.3.FSharp.Core.dll.config /out:$@ /delaysign /keyfile:$(topdir)msfinal.pub /version:$(VERSION_4_0)
+	cp $(NAME).dll.config $(@D)
+	al /link:$(NAME).dll.config /out:$@ /delaysign /keyfile:$(topdir)msfinal.pub
 
-do-final: do-2-0 do-4-0 
+build-2-0: 
+	$(MAKE) $(outdir20)/$(NAME).dll
 
-clean: clean-2-0 clean-4-0
+build-4-0: 
+	$(MAKE) $(outdir40)/$(NAME).dll
 
-install: install-lib-2 install-lib-4
+build-final: build-2-0 build-4-0
+
+clean: 
+	-rm -f $(outdir20)/$(NAME).dll $(outdir20)/$(NAME).dll
+
+install: install-lib-2 install-lib-4-0
 
 
 

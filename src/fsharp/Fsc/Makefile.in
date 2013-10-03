@@ -24,11 +24,11 @@ sources = \
 
 include $(topdir)/src/fsharp/targets.make
 
-do-final: do-4-0 
+build-final: build-4-0 
 
 clean: clean-4-0
 
-install: install-bin-4 install-lib-4-5
+install: install-bin 
 
 
 

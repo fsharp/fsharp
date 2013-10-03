@@ -5,36 +5,11 @@ srcdir := @abs_srcdir@/
 
 include @abs_top_builddir@/config.make
 
-CONFIG=proto
+build-proto:
+	xbuild /p:Configuration=Proto
 
-FSC=$(bootstrapdir)fsc.exe
-
-FLAGS += --target:library
-
-DEFINES += \
-	--define:BUILDING_WITH_LKG
-
-REFERENCES += \
-	-r:$(bootstrapdir)FSharp.Core.dll
-
-sources= \
-	$(tmpdir)FSBuild.fs \
-	../../utils/CompilerLocationUtils.fs \
-	../FSharp.Build/CreateFSharpManifestResourceName.fsi \
-	../FSharp.Build/CreateFSharpManifestResourceName.fs \
-	../FSharp.Build/Fsc.fsi \
-	../FSharp.Build/Fsc.fs
-
-RESOURCES = \
-	$(tmpdir)FSBuild.resources
-
-$(tmpdir)FSBuild.fs $(tmpdir)FSBuild.resources: ../FSharp.Build/FSBuild.txt
-	mono $(MONO_OPTIONS) $(FSSRGEN) $< $(tmpdir)FSBuild.fs $(tmpdir)FSBuild.resx
-	resgen $(tmpdir)FSBuild.resx $(tmpdir)FSBuild.resources
-
-do-proto: do-4-0
-
-clean: clean-4-0
+clean: 
+	xbuild /p:Configuration=Proto /t:Clean
 
 include $(topdir)/src/fsharp/targets.make
 
