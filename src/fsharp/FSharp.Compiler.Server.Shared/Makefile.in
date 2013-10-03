@@ -1,6 +1,6 @@
 NAME=FSharp.Compiler.Server.Shared
 ASSEMBLY = $(NAME).dll
-SIGN=1
+TOKEN=$(SIGN_TOKEN)
 
 srcdir := @abs_srcdir@/
 
@@ -9,7 +9,7 @@ include @abs_top_builddir@/config.make
 FSC=$(protodir)fsc-proto.exe
 
 FLAGS += \
-	$(FINAL_FLAGS) \
+	$(SIGN_FLAGS) \
 	--target:library
 
 REFERENCES += \
@@ -21,15 +21,14 @@ sources = \
 	../../assemblyinfo/assemblyinfo.FSharp.Compiler.Server.Shared.dll.fs \
 	../fsiserver/fsiserver.fs
 
-RESOURCES= \
-	$(tmpdir)FSServerShared.resources
-
-$(tmpdir)FSServerShared.resources: $(srcdir)../fsiserver/FSServerShared.txt
-	mono --debug $(FSSRGEN) $< $(@:.resources=.fs) $(@:.resources=.resx)
-	resgen $(@:.resources=.resx) $@
-
 include $(topdir)/src/fsharp/targets.make
 
-install: install-lib-2 install-lib-4
+do-final: do-4-0 
+
+clean: clean-4-0
+
+install: install-lib-4 install-lib-4-5
+
+
 
 

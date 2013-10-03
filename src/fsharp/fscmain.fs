@@ -13,8 +13,12 @@
 
 module internal Microsoft.FSharp.Compiler.CommandLineMain
 
+open System.IO
+open System.Text
+open System.Reflection
 open Microsoft.FSharp.Compiler
 open Microsoft.FSharp.Compiler.AbstractIL.IL // runningOnMono 
+open Microsoft.FSharp.Compiler.AbstractIL.Internal.Library 
 open Microsoft.FSharp.Compiler.ErrorLogger
 open Microsoft.FSharp.Compiler.Driver
 open Internal.Utilities
@@ -24,7 +28,6 @@ open Microsoft.FSharp.Compiler.Build
 open System.Runtime.CompilerServices
 
 type TypeInThisAssembly() = member x.Dummy = 1
-
 
 [<Dependency("FSharp.Compiler",LoadHint.Always)>] 
 do ()

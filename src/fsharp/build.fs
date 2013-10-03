@@ -1359,6 +1359,7 @@ type ErrorStyle =
     | EmacsErrors 
     | TestErrors 
     | VSErrors
+    | GccErrors
 
 let SanitizeFileName fileName implicitIncludeDir =
     // The assert below is almost ok, but it fires in two cases:
@@ -1434,6 +1435,10 @@ let CollectErrorOrWarning (implicitIncludeDir,showFullPaths,flattenErrors,errorS
                     let file = file.Replace("/","\\")
                     let m = mkRange m.FileName (mkPos m.StartLine (m.StartColumn + 1)) (mkPos m.EndLine (m.EndColumn + 1) )
                     sprintf "%s(%d,%d-%d,%d): " file m.StartLine m.StartColumn m.EndLine m.EndColumn, m, file
+
+                  | ErrorStyle.GccErrors     -> 
+                    let file = file.Replace('/',System.IO.Path.DirectorySeparatorChar)
+                    sprintf "%s:%d:%d: " file m.StartLine (m.StartColumn + 1), m, file
 
                   // Here, we want the complete range information so Project Systems can generate proper squiggles
                   | ErrorStyle.VSErrors      -> 
@@ -2671,7 +2676,7 @@ type TcConfig private (data : TcConfigBuilder,validate:bool) =
             []
 #else                    
             // When running on Mono we lead everyone to believe we're doing .NET 4.0 compilation 
-            // by default. 
+            // by default. Why? See https://github.com/fsharp/fsharp/issues/99
             if runningOnMono then 
                 [System.Runtime.InteropServices.RuntimeEnvironment.GetRuntimeDirectory()]
             else                                
@@ -4299,10 +4304,11 @@ type TcImports(tcConfigP:TcConfigProvider, initialResolutions:TcAssemblyResoluti
             match resolutions.TryFindByResolvedPath assemblyReference.Text with 
             | Some assemblyResolution -> 
                 ResultD [assemblyResolution]
-            | None ->      
-                                  
+            | None ->                                  
                 if tcConfigP.Get().useMonoResolution then
-                    ResultD [tcConfig.ResolveLibWithDirectories assemblyReference]
+                    let resolved = [tcConfig.ResolveLibWithDirectories assemblyReference]
+                    resolutions <- resolutions.AddResolutionResults resolved
+                    ResultD resolved
                 else 
                     // This is a previously unencounterd assembly. Resolve it and add it to the list.
                     // But don't cache resolution failures because the assembly may appear on the disk later.
@@ -4697,8 +4703,8 @@ module private ScriptPreprocessClosure =
         let projectDir = Path.GetDirectoryName(filename)
         let isInteractive = (codeContext = CodeContext.Evaluation)
         let isInvalidationSupported = (codeContext = CodeContext.Editing)
-        // always use primary assembly = mscorlib for scripts
-        let tcConfigB = TcConfigBuilder.CreateNew(Internal.Utilities.FSharpEnvironment.BinFolderOfDefaultFSharpCompiler.Value, true (* optimize for memory *), projectDir, isInteractive, isInvalidationSupported) 
+        
+        let tcConfigB = TcConfigBuilder.CreateNew(Internal.Utilities.FSharpEnvironment.BinFolderOfDefaultFSharpCompiler(None).Value, true (* optimize for memory *), projectDir, isInteractive, isInvalidationSupported) 
         BasicReferencesForScriptLoadClosure |> List.iter(fun f->tcConfigB.AddReferencedAssemblyByPath(range0,f)) // Add script references
         tcConfigB.resolutionEnvironment <-
             match codeContext with 

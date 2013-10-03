@@ -275,7 +275,9 @@ type internal Method =
 type MethodOverloads( name: string, unsortedMethods: Method[] ) = 
     // BUG 413009 : [ParameterInfo] takes about 3 seconds to move from one overload parameter to another
     // cache allows to avoid recomputing parameterinfo for the same item
+#if FX_ATLEAST_40
     static let methodOverloadsCache = System.Runtime.CompilerServices.ConditionalWeakTable()
+#endif
 
     let methods = 
         unsortedMethods 
@@ -291,9 +293,11 @@ type MethodOverloads( name: string, unsortedMethods: Method[] ) =
         if isNil items then new MethodOverloads("", [| |]) else
         let name = items.Head.DisplayName g 
         let getOverloadsForItem item =
+#if FX_ATLEAST_40
             match methodOverloadsCache.TryGetValue item with
             | true, overloads -> overloads
             | false, _ ->
+#endif
                 let items =
                     match item with 
                     | Item.MethodGroup(nm,minfos) -> List.map (fun minfo -> Item.MethodGroup(nm,[minfo])) minfos 
@@ -329,7 +333,9 @@ type MethodOverloads( name: string, unsortedMethods: Method[] ) =
                           Parameters = Array.ofList (Params.ParamsOfItem infoReader m denv item) 
                           IsStaticArguments = match item with | Item.Types _ -> true | _ -> false
                           })
+#if FX_ATLEAST_40
                 methodOverloadsCache.Add(item, methods)
+#endif
                 methods
         let methods = [| for item in items do yield! getOverloadsForItem item |]
 
@@ -1782,6 +1788,8 @@ type BackgroundCompiler(notifyFileTypeCheckStateIsDirty:NotifyFileTypeCheckState
     let CreateOneIncrementalBuilder (options:CheckOptions) = 
         use t = Trace.Call("Reactor","CreateOneIncrementalBuilder", fun () -> sprintf "options = %+A" options)
         let builder, errorsAndWarnings = 
+            // PROBLEM: This call can currently fail if an error happens while setting up the TcConfig
+            // This leaves us completely horked.
             IncrementalFSharpBuild.IncrementalBuilder.CreateBackgroundBuilderForProjectOptions
                   (scriptClosure.TryGet options, Array.toList options.ProjectFileNames, 
                    Array.toList options.ProjectOptions, options.ProjectDirectory, 

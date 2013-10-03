@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
-    <FSharpSourcesRoot>..\..</FSharpSourcesRoot>
+    <FSharpSourcesRoot>$(MSBuildProjectDirectory)\..\..</FSharpSourcesRoot>
+    <ProductVersion>10.0.0</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <UsePartialTypes>False</UsePartialTypes>
   </PropertyGroup>
   <Import Project="$(FSharpSourcesRoot)\FSharpSource.Settings.targets" />
   <PropertyGroup>
@@ -10,12 +13,14 @@
     <ProjectGuid>{d5870cf0-ed51-4cbc-b3d7-6f56da84ac06}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AssemblyName>FSharp.Compiler.Server.Shared</AssemblyName>
-    <TargetFrameworkVersion Condition="'$(TargetFramework)'=='net20'">v2.0</TargetFrameworkVersion>
   </PropertyGroup>
+  <!-- MonoDevelop likes these here to recognise the configurations -->
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' " />
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' " />
   <ItemGroup>
-      <FsSrGen Include="..\fsiserver\FSServerShared.txt">
-        <Link>FSServerShared.txt</Link>
-      </FsSrGen>
+    <FsSrGen Include="..\fsiserver\FSServerShared.txt">
+      <Link>FSServerShared.txt</Link>
+    </FsSrGen>
     <Compile Include="..\..\assemblyinfo\assemblyinfo.FSharp.Compiler.Server.Shared.dll.fs">
       <Link>assemblyinfo.FSharp.Compiler.Server.Shared.dll.fs</Link>
     </Compile>
@@ -27,10 +32,10 @@
     <Reference Include="mscorlib" />
     <Reference Include="System" />
     <Reference Include="System.Runtime.Remoting" />
-    <ProjectReference Include="$(FSharpSourcesRoot)\fsharp\FSharp.Core\FSharp.Core.fsproj">
-		  <Project>{DED3BBD7-53F4-428A-8C9F-27968E768605}</Project>
-		  <Name>FSharp.Core</Name>
-	  </ProjectReference>
+    <ProjectReference Include="..\FSharp.Core\FSharp.Core.fsproj">
+      <Project>{DED3BBD7-53F4-428A-8C9F-27968E768605}</Project>
+      <Name>FSharp.Core</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(FSharpSourcesRoot)\FSharpSource.targets" />
 </Project>

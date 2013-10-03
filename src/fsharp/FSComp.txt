@@ -18,7 +18,7 @@ buildUnexpectedTypeArgs,"The non-generic type '%s' does not expect any type argu
 203,buildInvalidWarningNumber,"Invalid warning number '%s'"
 204,buildInvalidVersionString,"Invalid version string '%s'"
 205,buildInvalidVersionFile,"Invalid version file '%s'"
-buildProductName,"Microsoft (R) F# 3.0 Compiler version %s"
+buildProductName,"F# Compiler for F# 3.0 %s"
 206,buildProblemWithFilename,"Problem with filename '%s': %s"
 207,buildNoInputsSpecified,"No inputs specified"
 208,buildMismatchOutputExtension,"The output name extension doesn't match the options used. If '-a' or '--target:library' is used the output file name must end with '.dll', if '--target:module' is used the output extension must be '.netmodule', otherwise '.exe'."
@@ -851,7 +851,7 @@ ilDynamicInvocationNotSupported,"Dynamic invocation of %s is not supported"
 # fscopts text
 # -----------------------------------------------------------------------------
 1000,optsProblemWithCodepage,"Problem with codepage '%d': %s"
-optsCopyright,"Copyright (c) Microsoft Corporation. Apache 2.0 License."
+optsCopyright,"Freely distributed under the Apache 2.0 Open Source License"
 optsNameOfOutputFile,"Name of the output file (Short form: -o)"
 optsBuildConsole,"Build a console executable"
 optsBuildWindows,"Build a Windows executable"

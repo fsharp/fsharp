@@ -1,6 +1,6 @@
 NAME=FSharp.Build
 ASSEMBLY = $(NAME).dll
-SIGN=1
+TOKEN=$(SIGN_TOKEN)
 
 srcdir := @abs_srcdir@/
 
@@ -9,7 +9,7 @@ include @abs_top_builddir@/config.make
 FSC=$(protodir)fsc-proto.exe
 
 FLAGS += \
-	$(FINAL_FLAGS) \
+	$(SIGN_FLAGS) \
 	--target:library
 
 REFERENCES += \
@@ -27,11 +27,15 @@ sources= \
 RESOURCES = \
 	$(tmpdir)FSBuild.resources
 
-$(tmpdir)FSBuild.resources: $(srcdir)FSBuild.txt
-	mono --debug $(FSSRGEN) $< $(@:.resources=.fs) $(@:.resources=.resx)
-	resgen $(@:.resources=.resx) $@
+$(tmpdir)FSBuild.fs $(tmpdir)FSBuild.resources: FSBuild.txt
+	mono $(MONO_OPTIONS) $(FSSRGEN) $< $(tmpdir)FSBuild.fs $(tmpdir)FSBuild.resx
+	resgen $(tmpdir)FSBuild.resx $(tmpdir)FSBuild.resources
 
 include $(topdir)/src/fsharp/targets.make
 
-install: install-lib-2 install-lib-4
+do-final: do-2-0 do-4-0 
+
+clean: clean-2-0 clean-4-0
+
+install: install-lib-2 install-lib-4 install-lib-4-5
 

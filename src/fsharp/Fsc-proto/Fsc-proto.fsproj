@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
-    <FSharpSourcesRoot>..\..</FSharpSourcesRoot>
+    <FSharpSourcesRoot>$(MSBuildProjectDirectory)\..\..</FSharpSourcesRoot>
     <Configuration Condition=" '$(Configuration)' == '' ">Proto</Configuration>
   </PropertyGroup>
   <Import Project="$(FSharpSourcesRoot)\FSharpSource.Settings.targets" />
@@ -20,7 +20,11 @@
     <AllowCrossTargeting>true</AllowCrossTargeting>
     <OtherFlags>$(OtherFlags) --stackReserveSize:4096000</OtherFlags>
     <TargetFrameworkVersion Condition="'$(TargetFramework)'=='net20'">v2.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
   </PropertyGroup>
+  <!-- MonoDevelop likes these here to recognise the configurations -->
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' " />
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' " />
   <ItemGroup>
     <Compile Include="..\fscmain.fs">
       <Link>fscmain.fs</Link>
@@ -33,6 +37,7 @@
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Runtime.Remoting" />
     <Reference Include="System.Numerics" Condition="'$(TargetFramework)'=='net40'" />
+    <Reference Include="System.Numerics" Condition="'$(TargetFramework)' == 'net40'" />
     <ProjectReference Include="..\FSharp.Compiler-proto\FSharp.Compiler-proto.fsproj">
       <Project>{33E0FB8C-93DC-4AD7-9DCD-9FBDA6C2F061}</Project>
       <Name>FSharp.Compiler-proto</Name>

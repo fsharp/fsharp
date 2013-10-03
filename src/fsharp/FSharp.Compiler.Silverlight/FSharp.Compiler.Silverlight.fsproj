@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
-    <FSharpSourcesRoot>..\..</FSharpSourcesRoot>
+    <FSharpSourcesRoot>$(MSBuildProjectDirectory)\..\..</FSharpSourcesRoot>
     <TargetFramework Condition="'$(TargetFramework)' == ''">sl5-compiler</TargetFramework>
+    <ProductVersion>10.0.0</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <UsePartialTypes>False</UsePartialTypes>
   </PropertyGroup>
   <Import Project="$(FSharpSourcesRoot)\FSharpSource.Settings.targets" />
   <PropertyGroup>
@@ -479,16 +482,16 @@
 -->
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="$(FSharpSourcesRoot)\fsharp\FSharp.Core\FSharp.Core.fsproj">
-      <Project>{5ed79cd6-eda7-4052-972a-053d3e8391b6}</Project>
-      <Name>FSharp.Core</Name>
-    </ProjectReference>
     <Reference Include="mscorlib" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Windows" />
+    <ProjectReference Include="..\FSharp.Core\FSharp.Core.fsproj">
+      <Project>{DED3BBD7-53F4-428A-8C9F-27968E768605}</Project>
+      <Name>FSharp.Core</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(FSharpSourcesRoot)\FSharpTeam.targets" Condition=" Exists('$(FSharpSourcesRoot)\FSharpTeam.targets') " />
   <Import Project="$(FSharpSourcesRoot)\FSharpSource.targets" Condition=" !Exists('$(FSharpSourcesRoot)\FSharpTeam.targets') " />
-  <Import Project="$(FSharpSourcesRoot)\..\lkg\FSharp-$(LkgVersion)\bin\FSharp.PowerPack.targets" />
+  <Import Project="$(LkgPath)\..\2.0\FSharp.PowerPack.targets" />
 </Project>

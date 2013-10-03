@@ -137,7 +137,12 @@ type [<Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:Iden
     let mutable treatWarningsAsErrors : bool = false
     let mutable warningsAsErrors : string = null
     let mutable toolPath : string = 
-        match FSharpEnvironment.BinFolderOfDefaultFSharpCompiler with
+        // We expect to find an fsc.exe next to FSharp.Build.dll. Note FSharp.Build.dll
+        // is not in the GAC, at least on Windows.
+        let locationOfThisDll = 
+            try Some(System.IO.Path.GetDirectoryName(typeof<FscCommandLineBuilder>.Assembly.Location))
+            with _ -> None
+        match FSharpEnvironment.BinFolderOfDefaultFSharpCompiler(locationOfThisDll) with
         | Some s -> s
         | None -> ""
     let mutable versionFile : string = null
@@ -155,7 +160,14 @@ type [<Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:Iden
     let mutable capturedArguments : string list = []  // list of individual args, to pass to HostObject Compile()
     let mutable capturedFilenames : string list = []  // list of individual source filenames, to pass to HostObject Compile()
 
-#if MONO
+
+#if CROSS_PLATFORM_COMPILER 
+    // The properties TargetedRuntimeVersion and CopyLocalDependenciesWhenParentReferenceInGac 
+    // are not available to the cross-platform compiler since they are Windows only (not defined in the Mono  
+    // 4.0 XBuild support). So we only set them if available (to avoid a compile-time dependency). 
+    let runningOnMono = try System.Type.GetType("Mono.Runtime") <> null with e-> false         
+    do if not runningOnMono then  
+        typeof<ToolTask>.InvokeMember("YieldDuringToolExecution",(BindingFlags.Instance ||| BindingFlags.SetProperty ||| BindingFlags.Public),null,this,[| box true |])  |> ignore 
 #else
     do
         this.YieldDuringToolExecution <- true  // See bug 6483; this makes parallel build faster, and is fine to set unconditionally
@@ -370,12 +382,17 @@ type [<Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:Iden
                                                 System.Globalization.CultureInfo.InvariantCulture)
                 unbox ret
             with 
-#if MONO
+            
+#if CROSS_PLATFORM_COMPILER 
+            // The type "Microsoft.Build.Exceptions.BuildAbortedException is not available to   
+            // the cross-platform compiler since it is Windows only (not defined in the Mono  
+            // 4.0 XBuild support). So we test for the type using a string comparison. 
+            | :? System.Reflection.TargetInvocationException as tie when (match tie.InnerException with | null -> false | x when x.GetType().Name = "Microsoft.Build.Exceptions.BuildAbortedException" -> true | _ -> false) -> 
 #else
             | :? System.Reflection.TargetInvocationException as tie when (match tie.InnerException with | :? Microsoft.Build.Exceptions.BuildAbortedException -> true | _ -> false) ->
+#endif
                 fsc.Log.LogError(tie.InnerException.Message, [| |])
                 -1  // ok, this is what happens when VS IDE cancels the build, no need to assert, just log the build-canceled error and return -1 to denote task failed
-#endif
             | e ->
                 System.Diagnostics.Debug.Assert(false, "HostObject received by Fsc task did not have a Compile method or the compile method threw an exception. "+(e.ToString()))
                 reraise()
@@ -404,8 +421,10 @@ type [<Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:Iden
         // BaseAddress
         builder.AppendSwitchIfNotNull("--baseaddress:", baseAddress)
         // DefineConstants
-        for item in defineConstants do
-            builder.AppendSwitchIfNotNull("--define:", item.ItemSpec)          
+        if defineConstants <> null then 
+         for item in defineConstants do
+          if item <> null && item.ItemSpec <> null then 
+           builder.AppendSwitchIfNotNull("--define:", item.ItemSpec)          
         // DocumentationFile
         builder.AppendSwitchIfNotNull("--doc:", documentationFile)
         // GenerateInterfaceFile

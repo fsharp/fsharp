@@ -4809,7 +4809,6 @@ and GenBindAfterSequencePoint cenv cgbuf eenv sp (TBind(vspec,rhsExpr,_)) =
             let ilFieldDef = 
                 { ilFieldDef with 
                    CustomAttrs = mkILCustomAttrs (ilAttribs @ [ cenv.g.ilg.mkDebuggerBrowsableNeverAttribute() ]) }
-
             [ (fspec.EnclosingTypeRef, ilFieldDef) ]
           
         let ilTypeRefForProperty = ilTyForProperty.TypeRef

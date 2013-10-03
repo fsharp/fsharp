@@ -8,52 +8,66 @@
     <!-- Tail calls on, even in debug -->
     <Tailcalls>true</Tailcalls>
     <TargetFramework Condition="'$(TargetFramework)'==''">net40</TargetFramework>
-    <!-- For .NET 2.0 use a 2.0 proto compiler, otherwise use a 4.0 proto compiler -->
-    <protoCLIDir Condition="'$(protoCLIDir)' == ''">net40</protoCLIDir>
-    <LkgVersion>4.0.30319.1</LkgVersion>
+    <!-- Use a 4.0 proto compiler -->
+    <protoCLIDir>4.0</protoCLIDir>
+    <LkgPath>$(FSharpSourcesRoot)\..\lib\bootstrap\4.0</LkgPath>
     <FsLexUnicode>true</FsLexUnicode>
-    <ProjectLanguage>FSharp</ProjectLanguage>
     <OtherFlags>$(OtherFlags) --times</OtherFlags>
     <NoWarn>$(NoWarn);69;65;54;61;75</NoWarn>
     <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
 
-  <!-- For .NET 2.0 and 4.0, we use the version in 'source-build-version', initially 2.9.999 -->
-  <!-- For Mono 2.0 and 4.0, we use the same versions as VS2012 (see strong naming below) -->
-  <!-- -->
-  <!-- However FSharp.Core must always use the same version and name as VS, with delay signing, see below  -->
-  <PropertyGroup Condition="'$(AssemblyName)' != 'FSharp.Core'">
-    <VersionFile>$(FSharpSourcesRoot)\source-build-version</VersionFile>
-    <VersionFile Condition="'$(TargetFramework)' == 'mono20'">$(FSharpSourcesRoot)\source-build-version-2.3.0.0</VersionFile>
-    <VersionFile Condition="'$(TargetFramework)' == 'mono40'">$(FSharpSourcesRoot)\source-build-version-4.3.0.0</VersionFile>
+  <!-- We use the same versions as VS2012 (see strong naming below) -->
+  <PropertyGroup>
+    <!-- Compute the assembly version numbers to use -->
+    <AssemblyVersion>2.9.9.999</AssemblyVersion>
+    <!-- This is the primary framework, used to run the compiler itself -->
+    <AssemblyVersion Condition="'$(AssemblyName)' == 'FSharp.Core' AND '$(TargetFramework)' == 'net40'">4.3.1.0</AssemblyVersion>
+    <!-- These correspond to the frameworks supported by Microsoft -->
+    <AssemblyVersion Condition="'$(AssemblyName)' == 'FSharp.Core' AND '$(TargetFramework)' == 'net20'">2.3.1.0</AssemblyVersion>
+    <AssemblyVersion Condition="'$(AssemblyName)' == 'FSharp.Core' AND '$(TargetFramework)' == 'portable-net45+sl5+win8' ">2.3.5.1</AssemblyVersion>
+    <AssemblyVersion Condition="'$(AssemblyName)' == 'FSharp.Core' AND '$(TargetFramework)' == 'portable-net4+sl4+wp71+win8' ">2.3.6.1</AssemblyVersion>
+    <AssemblyVersion Condition="'$(AssemblyName)' == 'FSharp.Core' AND '$(TargetFramework)' == 'mono21' ">2.3.98.1</AssemblyVersion>
+    <AssemblyVersion Condition="'$(AssemblyName)' == 'FSharp.Core' AND '$(TargetFramework)' == 'monotouch' ">2.3.99.1</AssemblyVersion>
+    <AssemblyVersion Condition="'$(AssemblyName)' == 'FSharp.Core' AND '$(TargetFramework)' == 'portable-windows8+net45'">3.3.1.0</AssemblyVersion>
+
+    <!-- These are simulations of previous versions of FSharp.Core for F# 3.0, useable to support the 'build a library compatible with a back version of F#' multi-targeting option supported by some IDEs -->
+    <!-- The actual libraries will contain additional functionality related to F# 3.1 etc. but that doesn't matter - the version number will be right which is what counts -->
+    <AssemblyVersion Condition="'$(AssemblyName)' == 'FSharp.Core' AND '$(TargetFramework)' == 'net20' AND '$(FSharpCoreBackVersion)' == '3.0' ">2.3.0.0</AssemblyVersion>
+    <AssemblyVersion Condition="'$(AssemblyName)' == 'FSharp.Core' AND '$(TargetFramework)' == 'net40' AND '$(FSharpCoreBackVersion)' == '3.0' ">4.3.0.0</AssemblyVersion>
+    <AssemblyVersion Condition="'$(AssemblyName)' == 'FSharp.Core' AND '$(TargetFramework)' == 'portable-net45+sl5+win8' AND '$(FSharpCoreBackVersion)' == '3.0' ">2.3.5.0</AssemblyVersion>
+    <AssemblyVersion Condition="'$(AssemblyName)' == 'FSharp.Core' AND '$(TargetFramework)' == 'portable-net4+sl4+wp71+win8' AND '$(FSharpCoreBackVersion)' == '3.0' ">2.3.6.0</AssemblyVersion>
+    <AssemblyVersion Condition="'$(AssemblyName)' == 'FSharp.Core' AND '$(TargetFramework)' == 'mono21' AND '$(FSharpCoreBackVersion)' == '3.0' ">2.3.98.0</AssemblyVersion>
+    <AssemblyVersion Condition="'$(AssemblyName)' == 'FSharp.Core' AND '$(TargetFramework)' == 'monotouch' AND '$(FSharpCoreBackVersion)' == '3.0' ">2.3.99.0</AssemblyVersion>
+    <!-- FSharp.Core using System.Runtime -->
+    <OtherFlags>$(OtherFlags) --version:$(AssemblyVersion)</OtherFlags>
+    <!--
+Some other NuGET monikers to support in the future, see http://docs.nuget.org/docs/creating-packages/creating-and-publishing-a-package#Package_Conventions
+
+    <VersionFile Condition="'$(TargetFramework)' == 'windows8'">$(FSharpSourcesRoot)\source-build-version-2.3.7.0</VersionFile>
+    <VersionFile Condition="'$(TargetFramework)' == 'windowsphone8'">$(FSharpSourcesRoot)\source-build-version-2.3.8.0</VersionFile>
+-->
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(AssemblyName)' == 'FSharp.Core'">
-    <VersionFile>$(FSharpSourcesRoot)\source-build-version</VersionFile>
-    <VersionFile Condition="'$(TargetFramework)' == 'net20' OR '$(TargetFramework)' == 'mono20'">$(FSharpSourcesRoot)\source-build-version-2.3.0.0</VersionFile>
-    <VersionFile Condition="'$(TargetFramework)' == 'net40' OR '$(TargetFramework)' == 'mono40'">$(FSharpSourcesRoot)\source-build-version-4.3.0.0</VersionFile>
-  </PropertyGroup>
-
-  <!-- For .NET 2.0 and 4.0, we use test-signed binaries, apart from FSharp.Core. We do this because there's no point creating Microsoft-named binaries. -->
-  <!-- -->
-  <!-- For Mono 2.0 and 4.0, we sign with the Microsoft key and use delay-signing. -->
+  <!-- We sign FSharp.Core with the Microsoft key and use delay-signing. -->
   <!-- These can then be signed with the special mono.snk (we don't do this as part of this build, -->
   <!-- but it can be done manually later, e.g. on the target machine). This is how the Mono team build the binaries -->
   <!-- at github.com/fsharp/fsharp and how they are shipped with Mono -->
   <!-- -->
   <!-- However FSharp.Core must use the Microsoft key name, otherwise the compiler can't load type provider components. -->
-  <PropertyGroup Condition="('$(Configuration)'=='Debug' OR '$(Configuration)'=='Release') AND ('$(TargetFramework)' == 'net20' OR '$(TargetFramework)' == 'net40')">
-    <DefineConstants>STRONG_NAME_FSHARP_COMPILER_WITH_TEST_KEY;$(DefineConstants)</DefineConstants>
-    <OtherFlags Condition="'$(AssemblyName)' == 'FSharp.Core'">$(OtherFlags) --delaysign+ --keyfile:$(FSharpSourcesRoot)\fsharp\msft.pubkey</OtherFlags>
-    <OtherFlags Condition="'$(AssemblyName)' != 'FSharp.Core'">$(OtherFlags) --keyfile:$(FSharpSourcesRoot)\fsharp\test.snk</OtherFlags>
+
+  <PropertyGroup Condition="('$(Configuration)'=='Debug' OR '$(Configuration)'=='Release') AND ('$(AssemblyName)'=='FSharp.Core')">
+    <DefineConstants>STRONG_NAME_AND_DELAY_SIGN_FSHARP_COMPILER_WITH_MSFT_KEY;$(DefineConstants)</DefineConstants>
+    <OtherFlags>$(OtherFlags) --delaysign+ --keyfile:"$(FSharpSourcesRoot)\fsharp\msft.pubkey"</OtherFlags>
     <StrongNames>true</StrongNames>
   </PropertyGroup>
 
-  <PropertyGroup Condition="('$(Configuration)'=='Debug' OR '$(Configuration)'=='Release') AND ('$(TargetFramework)' == 'mono20' OR '$(TargetFramework)' == 'mono40')">
-    <DefineConstants>STRONG_NAME_AND_DELAY_SIGN_FSHARP_COMPILER_WITH_MSFT_KEY;$(DefineConstants)</DefineConstants>
-    <OtherFlags>$(OtherFlags) --delaysign+ --keyfile:$(FSharpSourcesRoot)\fsharp\msft.pubkey</OtherFlags>
+  <PropertyGroup Condition="('$(Configuration)'=='Debug' OR '$(Configuration)'=='Release') AND ('$(AssemblyName)'!='FSharp.Core')">
+    <DefineConstants>STRONG_NAME_FSHARP_COMPILER_WITH_TEST_KEY;$(DefineConstants)</DefineConstants>
+    <OtherFlags>$(OtherFlags) --keyfile:"$(FSharpSourcesRoot)\fsharp\test.snk"</OtherFlags>
     <StrongNames>true</StrongNames>
   </PropertyGroup>
+
 
   <!-- For the proto build and exotic framework implementations, we don't use strong names. For non-exotic framework implementations, this gets adjusted below -->
   <PropertyGroup Condition="'$(StrongNames)' != 'true'">
@@ -64,6 +78,7 @@
   <PropertyGroup Condition="'$(Configuration)'=='Debug'">
     <DefineConstants>DEBUG; $(DefineConstants)</DefineConstants>
     <Optimize>false</Optimize>
+    <ConfigurationOutputDirectory>debug</ConfigurationOutputDirectory>
     <!-- These flags provide a better debugging experience. Locals should be visible. -->
     <OtherFlags>$(OtherFlags) --no-jit-optimize --jit-tracking</OtherFlags>
     <DefineConstants>CODE_ANALYSIS; $(DefineConstants)</DefineConstants>
@@ -71,6 +86,7 @@
 
   <PropertyGroup Condition="'$(Configuration)'=='Release'">
     <Optimize>true</Optimize>
+    <ConfigurationOutputDirectory>release</ConfigurationOutputDirectory>
   </PropertyGroup>
 
   <!-- Flags used to build the bootstrap compiler.
@@ -78,17 +94,19 @@
   <PropertyGroup Condition="'$(Configuration)'=='Proto'">
     <Optimize>true</Optimize>
     <DefineConstants>DEBUG;NO_STRONG_NAMES;$(DefineConstants)</DefineConstants>
+    <ConfigurationOutputDirectory>proto</ConfigurationOutputDirectory>
   </PropertyGroup>
 
-  <!-- Always qualify the IntermediateOutputPath by the TargetFramework if any exists -->
+  <!-- For now define 'CROSS_PLATFORM_COMPILER', even when building using msbuild on Windows, see https://github.com/fsharp/fsharp/issues/69 -->
   <PropertyGroup>
-    <IntermediateOutputPath>obj\$(Configuration)\$(TargetFramework)\</IntermediateOutputPath>
+    <DefineConstants>CROSS_PLATFORM_COMPILER;$(DefineConstants)</DefineConstants>
   </PropertyGroup>
 
   <!-- v2.0-specific flags -->
-  <PropertyGroup Condition="'$(TargetFramework)'=='net20' or '$(TargetFramework)'=='mono20'">
+  <PropertyGroup Condition="'$(TargetFramework)'=='net20'">
     <!-- If 3.5 is not configured explicitly, use 2.0 -->
     <TargetFrameworkVersion Condition="'$(TargetFrameworkVersion)'==''">v2.0</TargetFrameworkVersion>
+    <TargetFrameworkOutputDirectory>2.0</TargetFrameworkOutputDirectory>
     <DefineConstants>$(DefineConstants);FX_NO_STRUCTURAL_EQUALITY</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_CANCELLATIONTOKEN_CLASSES</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_TASK</DefineConstants>
@@ -102,22 +120,188 @@
     <OtherFlags>$(OtherFlags) --simpleresolution</OtherFlags>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(TargetFramework)'=='net40' or '$(TargetFramework)'=='mono40'">
+  <PropertyGroup Condition="'$(TargetFramework)'=='net40'">
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkOutputDirectory>4.0</TargetFrameworkOutputDirectory>
     <DefineConstants>$(DefineConstants);FX_ATLEAST_40</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_ATLEAST_35</DefineConstants>
     <DefineConstants>$(DefineConstants);BE_SECURITY_TRANSPARENT</DefineConstants>
     <DefineConstants>$(DefineConstants);QUERIES_IN_FSLIB</DefineConstants>
     <DefineConstants>$(DefineConstants);PUT_TYPE_PROVIDERS_IN_FSCORE;</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_ATLEAST_LINQ</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_BIGINT_CULTURE_PARSE</DefineConstants>
     <TargetFrameworkProfile></TargetFrameworkProfile>
     <!-- MSbuild works out the assembly references -->
   </PropertyGroup>
 
+  <!-- Target MonoAndroid -->
+  <PropertyGroup Condition="'$(TargetFramework)'=='mono21'">
+    <TargetFrameworkVersion>v2.1</TargetFrameworkVersion>
+    <TargetFrameworkOutputDirectory>2.1</TargetFrameworkOutputDirectory>
+    <DefineConstants>$(DefineConstants);FX_NO_STRUCTURAL_EQUALITY</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_CUSTOMATTRIBUTEDATA</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_BIGINT_CULTURE_PARSE</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_ATLEAST_40</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_ATLEAST_35</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_ATLEAST_LINQ</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_BIGINT</DefineConstants>
+    <AssemblySearchPaths>$(FSharpSourcesRoot)\..\dependencies\mono\2.1;$(AssemblySearchPaths)</AssemblySearchPaths>
+  </PropertyGroup>
+
+  <!-- Target MonoTouch -->
+  <PropertyGroup Condition="'$(TargetFramework)'=='monotouch'">
+    <TargetFrameworkVersion>v2.1</TargetFrameworkVersion>
+    <TargetFrameworkOutputDirectory>2.1monotouch</TargetFrameworkOutputDirectory>
+    <DefineConstants>$(DefineConstants);FX_NO_STRUCTURAL_EQUALITY</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_CUSTOMATTRIBUTEDATA</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_BIGINT_CULTURE_PARSE</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_ATLEAST_40</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_ATLEAST_35</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_ATLEAST_LINQ</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_BIGINT</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_REFLECTION_EMIT</DefineConstants>
+    <OtherFlags>$(OtherFlags) --simpleresolution -r:"$(FSharpSourcesRoot)\..\dependencies\mono\2.1\MonoTouch\mscorlib-runtime.dll"</OtherFlags>
+    <AssemblySearchPaths>$(FSharpSourcesRoot)\..\dependencies\mono\2.1\MonoTouch;$(AssemblySearchPaths)</AssemblySearchPaths>
+  </PropertyGroup>
+
+  <!-- Target Portable -->
+  <PropertyGroup Condition="'$(TargetFramework)'=='portable-net45+sl5+win8'">
+
+    <TargetFrameworkProfile>Profile47</TargetFrameworkProfile>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkOutputDirectory>$(TargetFramework)</TargetFrameworkOutputDirectory>
+
+    <DefineConstants>$(DefineConstants);FSHARP_CORE_PORTABLE</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_CONCURRENT_DICTIONARY</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_ATLEAST_PORTABLE</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_ARRAY_LONG_LENGTH</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_DEBUG_PROXIES</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_EXIT</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_CHAR_PARSE</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_DEFAULT_DEPENDENCY_TYPE</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_SIMPLE_SECURITY_PERMISSIONS</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_TRUNCATE</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_CULTURE_INFO_ARGS</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_REFLECTION_MODULES</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_REFLECTION_METADATA_TOKENS</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_TO_LOWER_INVARIANT</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_EXIT_CONTEXT_FLAGS</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_BASED_ARRAYS</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_DOUBLE_BIT_CONVERTER</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_BINARY_SERIALIZATION</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_ASCII_ENCODING</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_DEFAULT_ENCODING</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_FILE_OPTIONS</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_NONBLOCK_IO</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_COMMAND_LINE_ARGS</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_ENVIRONMENT</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_PROCESS_START</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_APP_DOMAINS</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_PROCESS_DIAGNOSTICS</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_IOBSERVABLE</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_WEB_CLIENT</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_CONVERTER</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_GET_HASH_CODE_HELPER</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_COMVISIBLE</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_ICLONEABLE</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_SECURITY_PERMISSIONS</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_SYSTEM_CONSOLE</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_ARRAY_KEY_SORT</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_REFLECTION_EMIT</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_PARAMETERIZED_THREAD_START</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_EVENTWAITHANDLE_NO_IDISPOSABLE</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_REGISTERED_WAIT_HANDLES</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_ATLEAST_LINQ</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_THREAD</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_THREADPOOL</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_WAITONE_MILLISECONDS</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_TPL_PARALLEL</DefineConstants>
+    <DefineConstants>$(DefineConstants);PUT_TYPE_PROVIDERS_IN_FSCORE</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_CUSTOMATTRIBUTEDATA</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_BIGINT</DefineConstants>
+    <DefineConstants>$(DefineConstants);DONT_INCLUDE_DEPRECATED</DefineConstants>
+    <DefineConstants>$(DefineConstants);PUT_TYPE_PROVIDERS_IN_FSCORE</DefineConstants>
+
+    <AssemblySearchPaths>$(MSBuildExtensionsPath32)\..\Reference Assemblies\Microsoft\Framework\.NETPortable\v4.0\Profile\$(TargetFrameworkProfile)</AssemblySearchPaths>    
+    <OtherFlags>$(OtherFlags) --simpleresolution -r:"$(MSBuildExtensionsPath32)\..\Reference Assemblies\Microsoft\Framework\.NETPortable\v4.0\Profile\$(TargetFrameworkProfile)\mscorlib.dll" -r:"$(MSBuildExtensionsPath32)\..\Reference Assemblies\Microsoft\Framework\.NETPortable\v4.0\Profile\$(TargetFrameworkProfile)\System.dll" -r:"$(MSBuildExtensionsPath32)\..\Reference Assemblies\Microsoft\Framework\.NETPortable\v4.0\Profile\$(TargetFrameworkProfile)\System.Core.dll"</OtherFlags>
+
+  </PropertyGroup>
+
+  <!-- Target Portable -->
+  <PropertyGroup Condition="'$(TargetFramework)'=='portable-net4+sl4+wp71+win8'">
+
+    <TargetFrameworkProfile>Profile88</TargetFrameworkProfile>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkOutputDirectory>$(TargetFramework)</TargetFrameworkOutputDirectory>
+
+    <DefineConstants>$(DefineConstants);FSHARP_CORE_PORTABLE</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_CONCURRENT_DICTIONARY</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_ATLEAST_PORTABLE</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_ARRAY_LONG_LENGTH</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_DEBUG_PROXIES</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_EXIT</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_CHAR_PARSE</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_DEFAULT_DEPENDENCY_TYPE</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_SIMPLE_SECURITY_PERMISSIONS</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_TRUNCATE</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_CULTURE_INFO_ARGS</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_REFLECTION_MODULES</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_REFLECTION_METADATA_TOKENS</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_TO_LOWER_INVARIANT</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_EXIT_CONTEXT_FLAGS</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_BASED_ARRAYS</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_DOUBLE_BIT_CONVERTER</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_BINARY_SERIALIZATION</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_ASCII_ENCODING</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_DEFAULT_ENCODING</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_FILE_OPTIONS</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_NONBLOCK_IO</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_COMMAND_LINE_ARGS</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_ENVIRONMENT</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_PROCESS_START</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_APP_DOMAINS</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_PROCESS_DIAGNOSTICS</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_IOBSERVABLE</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_WEB_CLIENT</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_CONVERTER</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_GET_HASH_CODE_HELPER</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_COMVISIBLE</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_ICLONEABLE</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_SECURITY_PERMISSIONS</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_SYSTEM_CONSOLE</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_ARRAY_KEY_SORT</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_REFLECTION_EMIT</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_PARAMETERIZED_THREAD_START</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_EVENTWAITHANDLE_NO_IDISPOSABLE</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_REGISTERED_WAIT_HANDLES</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_ATLEAST_LINQ</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_THREAD</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_THREADPOOL</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_WAITONE_MILLISECONDS</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_TPL_PARALLEL</DefineConstants>
+    <DefineConstants>$(DefineConstants);PUT_TYPE_PROVIDERS_IN_FSCORE</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_CUSTOMATTRIBUTEDATA</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_BIGINT</DefineConstants>
+    <DefineConstants>$(DefineConstants);DONT_INCLUDE_DEPRECATED</DefineConstants>
+    <DefineConstants>$(DefineConstants);PUT_TYPE_PROVIDERS_IN_FSCORE</DefineConstants>
+
+    <DefineConstants>$(DefineConstants);FX_NO_STRUCTURAL_EQUALITY</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_CANCELLATIONTOKEN_CLASSES</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_LAZY</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_TUPLE</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_TASK</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_OPERATION_CANCELLED</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_THREAD_STATIC</DefineConstants>
+
+    <AssemblySearchPaths>$(MSBuildExtensionsPath32)\..\Reference Assemblies\Microsoft\Framework\.NETPortable\v4.0\Profile\$(TargetFrameworkProfile)</AssemblySearchPaths>    
+    <OtherFlags>$(OtherFlags) --simpleresolution -r:"$(MSBuildExtensionsPath32)\..\Reference Assemblies\Microsoft\Framework\.NETPortable\v4.0\Profile\$(TargetFrameworkProfile)\mscorlib.dll" -r:"$(MSBuildExtensionsPath32)\..\Reference Assemblies\Microsoft\Framework\.NETPortable\v4.0\Profile\$(TargetFrameworkProfile)\System.dll" -r:"$(MSBuildExtensionsPath32)\..\Reference Assemblies\Microsoft\Framework\.NETPortable\v4.0\Profile\$(TargetFrameworkProfile)\System.Core.dll"</OtherFlags>
+
+  </PropertyGroup>
 
   <!-- Target Silverlight 3.0 -->
   <PropertyGroup Condition="'$(TargetFramework)'=='sl3'">
     <TargetFrameworkVersion>v3.0</TargetFrameworkVersion>
+    <TargetFrameworkOutputDirectory>sl3</TargetFrameworkOutputDirectory>
     <DefineConstants>$(DefineConstants);SILVERLIGHT</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_CANCELLATIONTOKEN_CLASSES</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_TASK</DefineConstants>
@@ -196,6 +380,7 @@
     <DefineConstants>$(DefineConstants);FX_ATLEAST_LINQ</DefineConstants>
     <TargetFrameworkIdentifier>Silverlight</TargetFrameworkIdentifier>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkOutputDirectory>sl4</TargetFrameworkOutputDirectory>
     <SilverlightVersion>v4.0</SilverlightVersion>
   </PropertyGroup>
 
@@ -241,11 +426,12 @@
     <TargetFrameworkIdentifier>Silverlight</TargetFrameworkIdentifier>
     <TargetFrameworkVersion>v5.0</TargetFrameworkVersion>
     <SilverlightVersion>v5.0</SilverlightVersion>
+    <TargetFrameworkOutputDirectory>$(TargetFramework)</TargetFrameworkOutputDirectory>
     <FrameworkRegistryBase>Software\Microsoft\Microsoft SDKs\$(TargetFrameworkIdentifier)</FrameworkRegistryBase>
     <AssemblySearchPaths>$(MSBuildExtensionsPath32)\..\Reference Assemblies\Microsoft\Framework\Silverlight\v5.0</AssemblySearchPaths>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(TargetFramework)'=='sl3-wp'">
+  <PropertyGroup Condition="'$(TargetFramework)'=='wp7'">
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <TargetFrameworkProfile>WindowsPhone</TargetFrameworkProfile>
     <TargetFrameworkIdentifier>Silverlight</TargetFrameworkIdentifier>
@@ -285,11 +471,20 @@
     <DefineConstants>$(DefineConstants);FX_NO_CONCURRENT_DICTIONARY</DefineConstants>
     <DefineConstants>$(DefineConstants);PUT_TYPE_PROVIDERS_IN_FSCORE;</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_ATLEAST_LINQ</DefineConstants>
+
+    <DefineConstants>$(DefineConstants);FX_NO_TPL_PARALLEL</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_CUSTOMATTRIBUTEDATA</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_BIGINT</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_MONITOR_REPORTS_LOCKTAKEN</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_QUOTATIONS_COMPILE</DefineConstants>
+
     <Tailcalls>false</Tailcalls>
     <SilverlightVersion>$(TargetFrameworkVersion)</SilverlightVersion>
+    <TargetFrameworkOutputDirectory>$(TargetFramework)</TargetFrameworkOutputDirectory>
     <!-- It would be better to use MSBuild resolution here, but the TargetFrameworkIdentifier etc. aren't set up quite correctly as yet -->
-    <OtherFlags>$(OtherFlags) --simpleresolution -r:"C:\Program Files\Reference Assemblies\Microsoft\Framework\Silverlight\v4.0\Profile\WindowsPhone\mscorlib.dll" </OtherFlags>
-  </PropertyGroup>
+    <AssemblySearchPaths>$(MSBuildExtensionsPath32)\..\Reference Assemblies\Microsoft\Framework\Silverlight\v4.0\Profile\WindowsPhone</AssemblySearchPaths>
+    <OtherFlags>$(OtherFlags) --simpleresolution -r:"$(MSBuildExtensionsPath32)\..\Reference Assemblies\Microsoft\Framework\Silverlight\v4.0\Profile\WindowsPhone\mscorlib.dll" </OtherFlags>
+</PropertyGroup>
 
   <!-- Target CompactFramework 2.0 -->
   <PropertyGroup Condition="'$(TargetFramework)'=='net20-cf'">
@@ -337,6 +532,7 @@
     <DefineConstants>$(DefineConstants);FX_NO_TUPLE</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_DELEGATE_CREATE_DELEGATE_FROM_STATIC_METHOD</DefineConstants>
     <DefineConstants>$(DefineConstants)</DefineConstants>
+    <TargetFrameworkOutputDirectory>$(TargetFramework)</TargetFrameworkOutputDirectory>
     <!-- It would be better to use MSBuild resolution here, but the TargetFrameworkIdentifier etc. aren't set up quite correctly as yet -->
     <OtherFlags>$(OtherFlags) --simpleresolution -r:"C:\Program Files\Microsoft.NET\SDK\CompactFramework\v2.0\WindowsCE\mscorlib.dll"  -r:"C:\Program Files\Microsoft.NET\SDK\CompactFramework\v2.0\WindowsCE\System.dll"</OtherFlags>
   </PropertyGroup>
@@ -381,6 +577,7 @@
   <!-- Target CompactFramework 3.5 -->
   <PropertyGroup Condition="'$(TargetFramework)'=='net35-cf'">
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <TargetFrameworkOutputDirectory>3.5</TargetFrameworkOutputDirectory>
     <TargetFrameworkIdentifier>CompactFramework</TargetFrameworkIdentifier>
     <DefineConstants>$(DefineConstants);FX_ATLEAST_COMPACT_FRAMEWORK_35</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_CANCELLATIONTOKEN_CLASSES</DefineConstants>
@@ -426,51 +623,98 @@
     <OtherFlags>$(OtherFlags) --simpleresolution -r:"C:\Program Files\Microsoft.NET\SDK\CompactFramework\v3.5\WindowsCE\mscorlib.dll"  -r:"C:\Program Files\Microsoft.NET\SDK\CompactFramework\v3.5\WindowsCE\System.dll"</OtherFlags>
   </PropertyGroup>
 
+  <!-- XNA 4.0 Xbox360 -->
+  <PropertyGroup Condition="'$(TargetFramework)'=='net40-xna40-xbox360'">
+  <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+  <XnaFrameworkVersion>v4.0</XnaFrameworkVersion>
+  <XnaPlatform>Xbox 360</XnaPlatform>
+  <DefineConstants>$(DefineConstants);FX_NO_ARRAY_LONG_LENGTH</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_DEBUG_PROXIES</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_EXIT</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_IOBSERVABLE</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_WEB_CLIENT</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_WEB_REQUESTS</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_CHAR_PARSE</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_DEFAULT_DEPENDENCY_TYPE</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_SIMPLE_SECURITY_PERMISSIONS</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_TRUNCATE</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_CULTURE_INFO_ARGS</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_REFLECTION_MODULE_HANDLES</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_OPERATION_CANCELLED</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_TO_LOWER_INVARIANT</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_EXIT_CONTEXT_FLAGS</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_BASED_ARRAYS</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_DOUBLE_BIT_CONVERTER</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_BINARY_SERIALIZATION</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_ASCII_ENCODING</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_DEFAULT_ENCODING</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_FILE_OPTIONS</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_NONBLOCK_IO</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_COMMAND_LINE_ARGS</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_ENVIRONMENT</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_PROCESS_START</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_APP_DOMAINS</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_PROCESS_DIAGNOSTICS</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_STRUCTURAL_EQUALITY</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_LAZY</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_TUPLE</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_REFLECTION_EMIT</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_BIGINT</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_MONITOR_REPORTS_LOCKTAKEN</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_TPL_PARALLEL</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_TASK</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_CUSTOMATTRIBUTEDATA</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_ATLEAST_PORTABLE</DefineConstants>
+  <DefineConstants>$(DefineConstants);FX_NO_CANCELLATIONTOKEN_CLASSES</DefineConstants>
+  <Tailcalls>false</Tailcalls>
+  </PropertyGroup>
 
+  <!-- If building an FSharp.Core for F# 3.0, put it in the 3.0 directory -->
+  <PropertyGroup>
+    <TargetFrameworkOutputDirectory Condition="'$(FSharpCoreBackVersion)' != '3.0'">$(TargetFrameworkOutputDirectory)\$(FSharpCoreBackVersion)</TargetFrameworkOutputDirectory>
+  </PropertyGroup>
 
-  <!-- Build with LKG compiler (location is determined by Microsoft.FSharp.targets). The output compiler has suffix "-proto" -->
-  <PropertyGroup Condition=" '$(BuildWith)' == 'LKG' And '$(ProjectLanguage)' == 'FSharp' ">
+  <!-- Always qualify the IntermediateOutputPath by the TargetFramework if any exists -->
+  <PropertyGroup>
+    <IntermediateOutputPath>obj\$(ConfigurationOutputDirectory)\$(TargetFrameworkOutputDirectory)\</IntermediateOutputPath>
+  </PropertyGroup>
+
+  <!-- Build with LKG compiler (location is determined by Microsoft.FSharp.Targets). The output compiler has suffix "-proto" -->
+  <PropertyGroup Condition=" '$(BuildWith)' == 'LKG'">
     <FsBuildSuffix>-proto</FsBuildSuffix>
-    <OutputPath>$(FSharpSourcesRoot)\..\$(Configuration)\$(protoCLIDir)\bin</OutputPath>
+    <OutputPath>$(FSharpSourcesRoot)\..\lib\$(ConfigurationOutputDirectory)\$(TargetFrameworkOutputDirectory)</OutputPath>
   </PropertyGroup>
 
   <!-- Build with prototype compiler (location is given by settings below). The output is the final bootstrapped compiler -->
   <PropertyGroup Condition=" '$(BuildWith)' == ''">
-    <FSharpTargetsDir>$(FSharpSourcesRoot)\..\Proto\$(protoCLIDir)\bin</FSharpTargetsDir>
-
-    <FscToolPath>$(FSharpSourcesRoot)\..\Proto\$(protoCLIDir)\bin</FscToolPath>
+    <FscToolPath>$(FSharpSourcesRoot)\..\lib\proto\$(protoCLIDir)</FscToolPath>
     <FscToolExe>fsc-proto.exe</FscToolExe>
-    <OutputPath>$(FSharpSourcesRoot)\..\$(Configuration)\$(TargetFramework)\bin</OutputPath>
+    <OutputPath>$(FSharpSourcesRoot)\..\lib\$(ConfigurationOutputDirectory)\$(TargetFrameworkOutputDirectory)</OutputPath>
   </PropertyGroup>
 
 
+  <!-- Include the proto targets file when building the final compiler using the proto -->
+  <Import Project="..\lib\proto\$(protoCLIDir)\Microsoft.FSharp-proto.targets" 
+          Condition="Exists('..\lib\proto\$(protoCLIDir)\Microsoft.FSharp-proto.targets') AND '$(BuildWith)' == ''"/>
 
-  <Import Project="..\Proto\$(protoCLIDir)\bin\Microsoft.FSharp-proto.Targets" 
-          Condition="'$(BuildWith)' == '' 
-                     AND '$(ProjectLanguage)' == 'FSharp' "/>
-  <Import Project="$(MSBuildExtensionsPath32)\FSharp\1.0\Microsoft.FSharp.Targets" 
-          Condition="'$(BuildWith)' == 'LKG' AND 
-                     '$(ProjectLanguage)' == 'FSharp' AND 
-                     !Exists('$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll') " />
-  <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.0\Framework\v4.0\Microsoft.FSharp.Targets" 
-          Condition="'$(BuildWith)' == 'LKG' 
-                      AND '$(ProjectLanguage)' == 'FSharp' 
-                      AND Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll') 
-                      AND Exists('$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.0\Framework\v4.0\Microsoft.FSharp.Targets')" />
-  <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft F#\v4.0\Microsoft.FSharp.Targets" 
-          Condition="'$(BuildWith)' == 'LKG' 
-                      AND '$(ProjectLanguage)' == 'FSharp' 
-                      AND Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll') 
-                      AND (!Exists('$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.0\Framework\v4.0\Microsoft.FSharp.Targets')) 
-                      AND (Exists('$(MSBuildExtensionsPath32)\..\Microsoft F#\v4.0\Microsoft.FSharp.Targets'))" />
+  <!-- Include the portable targets file when building the portable FSharp.Core -->
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\v4.0\Microsoft.Portable.Common.targets"
+          Condition="'$(TargetFramework)'=='portable-net4+sl4+wp71+win8'"/>
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\v4.0\Microsoft.Portable.Common.targets"
+          Condition="'$(TargetFramework)'=='portable-net45+sl5+win8'"/>
+
+  <!-- Include the bootstrap targets file when building the proto compiler using the bootstrap -->
+  <!-- Also include it if Proto targets file doesn't exist, e.g. when cleaning the build with /t:Clean -->
+  <Import Project="$(LkgPath)\Microsoft.FSharp.Targets"  
+          Condition="(!Exists('..\lib\proto\$(protoCLIDir)\Microsoft.FSharp-proto.targets')  OR '$(BuildWith)' == 'LKG') " />
   <Import Project="Silverlight\$(SilverlightVersion)\FSharpSource.Silverlight.Common.targets"
           Condition="'$(TargetFramework)'=='sl3' or '$(TargetFramework)'=='sl4' or '$(TargetFramework)'=='sl5' or '$(TargetFramework)'=='sl5-compiler'"/>
 
   <!-- Reference an existing FSI.EXE for use from within MSBuild -->
   <PropertyGroup>
-    <FsSrGenToolPath>$(FSharpSourcesRoot)\..\lkg\FSharp-$(LkgVersion)\bin</FsSrGenToolPath>
-    <FsLexToolPath>$(FSharpSourcesRoot)\..\lkg\FSharp-$(LkgVersion)\bin</FsLexToolPath>
-    <FsYaccToolPath>$(FSharpSourcesRoot)\..\lkg\FSharp-$(LkgVersion)\bin</FsYaccToolPath>
+    <FsSrGenToolPath>$(LkgPath)\..\2.0</FsSrGenToolPath>
+    <FsLexToolPath>$(LkgPath)\..\2.0</FsLexToolPath>
+    <FsYaccToolPath>$(LkgPath)\..\2.0</FsYaccToolPath>
     <FsLexToolExe>fslex.exe</FsLexToolExe>
     <FsYaccToolExe>fsyacc.exe</FsYaccToolExe>
   </PropertyGroup>
@@ -478,7 +722,7 @@
 
   <PropertyGroup>
     <!-- Hook compilation phase to do custom work -->
-    <CompileDependsOn>ValidateConfiguration;$(CompileDependsOn);CustomCopyLocalFiles</CompileDependsOn>
+    <CompileDependsOn>ValidateConfiguration;$(CompileDependsOn)</CompileDependsOn>
     <RootNamespace></RootNamespace>
     <DocumentationFile>$(OutputPath)$(AssemblyName).xml</DocumentationFile>
     <EnsureThereAreNoUnusedFsSrGenResources>false</EnsureThereAreNoUnusedFsSrGenResources>
@@ -489,30 +733,10 @@
             Text="Configuration '$(Configuration)' is not one of the supported configurations: Debug, Release, Proto"
             Condition="'$(Configuration)'!='Release' and '$(Configuration)'!='Debug' and '$(Configuration)'!='Proto'"/>
     <Error
-            Text="TargetFramework '$(TargetFramework)' is not one of the supported configurations: 'empty', net20, net40, mono20, mono40, sl3-wp, sl5, sl5-compiler"
-            Condition="! ('$(TargetFramework)' == 'net40' or 
-                          '$(TargetFramework)' == 'net20' or 
-                          '$(TargetFramework)' == 'mono40' or 
-                          '$(TargetFramework)' == 'mono20' or 
-                          '$(TargetFramework)' == 'sl5' or 
-                          '$(TargetFramework)' == 'sl5-compiler' or 
-                          '$(TargetFramework)' == 'sl3-wp')"/>
+            Text="Portable profile '$(TargetFramework)' is not yet supported"
+            Condition="'$(TargetFramework)' == 'portable-windows8+net45'"/>
+
   </Target>
 
-  <!-- This build step copies files to the output folder while replacing build variables in the text of
-             those file. -->
-  <Target
-          Name="CustomCopyLocalFiles"
-          Inputs="@(CustomCopyLocal)"
-          Outputs="@(CustomCopyLocal->'$(OutDir)%(TargetFilename)')"
-          Condition="'$(targetCLIDir)'!='Silverlight/4.0/'"
-                >
-    <Exec Command="$(FSharpSourcesRoot)\fsharp\FSharp.Build\subst.exe {LkgVersion} $(LkgVersion) {BuildSuffix} &quot;$(FsBuildSuffix)&quot; {FSharpTargetsDir} unused &quot;%(CustomCopyLocal.FullPath)&quot; &gt; $(OutDir)%(CustomCopyLocal.TargetFilename)  "/>
-    <!-- Make sure it will get cleaned  -->
-    <CreateItem Include="$(OutDir)%(CustomCopyLocal.TargetFilename)">
-      <Output TaskParameter="Include" ItemName="FileWrites"/>
-    </CreateItem>
-  </Target>
-
-  <Import Project="..\lkg\FSharp-$(LkgVersion)\bin\FSharp.SRGen.targets" />
+  <Import Project="$(LkgPath)\..\2.0\FSharp.SRGen.targets" />
 </Project>

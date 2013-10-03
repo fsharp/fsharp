@@ -4,30 +4,49 @@ topdir := @abs_top_srcdir@/
 builddir := @abs_top_builddir@/
 libdir := ${prefix}/lib/
 bindir := ${prefix}/bin/
-monodir := @MONODIR@/
-monolibdir2 := $(monodir)2.0/
-monolibdir35 := $(monodir)3.5/
-monolibdir4 := $(monodir)4.0/
-tooldir := $(topdir)lib/bootstrap/2.0/
+monolibdir := @MONOLIBDIR@
+monogacdir := @MONOGACDIR@
 
-bootstrapdir = $(bootstrap)/$(TARGET)/
-tmpdir = .libs/
+monogacdir20 := @MONOGACDIR20@
+
+#This is where to find MonoTouch of MonoAndroid, for "make do-2-1"
+#
+#For now this is hardwired, it should be optionally detected by configure.ac
+monogacdir21 := @abs_top_srcdir@/dependencies/mono/2.1
+
+monogacdir35 := @MONOGACDIR35@
+monogacdir40 := @MONOGACDIR40@
+
+gacdir := ${libdir}mono
+gacdir20 := ${gacdir}/2.0
+gacdir40 := ${gacdir}/4.0
+
+tooldir := $(topdir)lib/bootstrap/4.0/
+
+MONO_OPTIONS += @mono_gc_options@
+
+CONFIG = release
+DISTVERSION = 201011
+
+VERSION_2_0 = 2.3.0.0
+VERSION_2_1 = 2.3.1.0
+VERSION_4_0 = 4.3.0.0
+TARGET_2_0 = 2.0
+TARGET_2_1 = 2.1
+TARGET_4_0 = 4.0
+DELAY_SIGN_TOKEN = b03f5f7f11d50a3a
+SIGN_TOKEN = f536804aa0eb945b
+
+bootstrapdir = $(bootstrap)/4.0/
+tmpdir = .libs/$(CONFIG)/
 objdir = $(tmpdir)$(TARGET)/
-protodir = $(builddir)/lib/proto/$(TARGET)/
+protodir = $(builddir)/lib/proto/4.0/
 outdir = $(builddir)lib/$(CONFIG)/$(TARGET)/
 
-FSSRGEN := $(tooldir)fssrgen.exe
-FSLEX := $(tooldir)fslex.exe
-FSYACC := $(tooldir)fsyacc.exe
+FSSRGEN = $(tooldir)../2.0/fssrgen.exe
+FSLEX = $(tooldir)../2.0/fslex.exe
+FSYACC = $(tooldir)../2.0/fsyacc.exe
 
-CONFIG := debug
-DISTVERSION := 201011
-
-VERSION_2_0 := 2.0.0.0
-VERSION_4_0 := 4.0.0.0
-TARGET_2_0 := 2.0
-TARGET_4_0 := 4.0
-TOKEN := b03f5f7f11d50a3a
 
 FLAGS = \
 	--doc:$(objdir)$(NAME).xml \
@@ -40,54 +59,84 @@ FLAGS = \
 	--times \
 	--nowarn:9
 
-FINAL_FLAGS = \
+DELAY_SIGN_FLAGS = \
+	--define:STRONG_NAME_AND_DELAY_SIGN_FSHARP_COMPILER_WITH_MSFT_KEY \
 	--delaysign+ \
 	--keyfile:$(topdir)msfinal.pub
 
+SIGN_FLAGS = \
+	--define:STRONG_NAME_FSHARP_COMPILER_WITH_TEST_KEY \
+	--keyfile:$(topdir)/src/fsharp/test.snk
+
 DEFINES_GENERAL = \
-	--define:NO_STRONG_NAMES \
 	--define:TRACE \
-	--define:FX_ATLEAST_35 \
-	--define:MONO
+	--define:CROSS_PLATFORM_COMPILER
 	
+ifeq ($(CONFIG),debug)
 DEFINES_DEBUG = \
 	--define:CODE_ANALYSIS \
 	--define:DEBUG
+else
+DEFINES_DEBUG =
+endif
 
 DEFINES_2_0 = \
 	$(DEFINES_GENERAL) \
 	$(DEFINES_DEBUG) \
-	--define:FX_FSLIB_STRUCTURAL_EQUALITY \
-	--define:FX_FSLIB_IOBSERVABLE \
-	--define:FX_FSLIB_TUPLE \
-	--define:FX_FSLIB_LAZY \
+	--define:FX_NO_STRUCTURAL_EQUALITY \
+	--define:FX_NO_IOBSERVABLE \
+	--define:FX_NO_TUPLE \
+	--define:FX_ATLEAST_35 \
+	--define:FX_NO_LAZY \
 	--define:FX_NO_CANCELLATIONTOKEN_CLASSES \
-	--define:FX_NO_TASK
+	--define:FX_NO_MONITOR_REPORTS_LOCKTAKEN \
+	--define:FX_NO_TPL_PARALLEL \
+	--define:FX_NO_CUSTOMATTRIBUTEDATA \
+	--define:FX_NO_TASK \
+	--define:FX_NO_BIGINT
+
+DEFINES_2_1 = \
+	$(DEFINES_GENERAL) \
+	$(DEFINES_DEBUG) \
+	--define:FX_NO_STRUCTURAL_EQUALITY \
+	--define:FX_NO_CUSTOMATTRIBUTEDATA \
+	--define:FX_NO_BIGINT_CULTURE_PARSE \
+	--define:FX_ATLEAST_40 \
+	--define:FX_ATLEAST_35 \
+	--define:FX_ATLEAST_LINQ \
+	--define:FX_NO_BIGINT
 
 DEFINES_4_0 = \
 	$(DEFINES_GENERAL) \
 	$(DEFINES_DEBUG) \
+	--define:FX_NO_BIGINT_CULTURE_PARSE \
 	--define:FX_ATLEAST_40 \
-	--define:BE_SECURITY_TRANSPARENT
+	--define:FX_ATLEAST_35 \
+	--define:FX_ATLEAST_LINQ
 
 REFERENCES_2_0 = \
-	-r:$(monolibdir)Microsoft.Build.Engine.dll \
-	-r:$(monolibdir)Microsoft.Build.Framework.dll \
-	-r:$(monolibdir35)Microsoft.Build.Tasks.v3.5.dll \
-	-r:$(monolibdir35)Microsoft.Build.Utilities.v3.5.dll \
-	-r:$(monolibdir)mscorlib.dll \
-	-r:$(monolibdir)System.Core.dll \
-	-r:$(monolibdir)System.dll
+	-r:$(monogacdirXX)/Microsoft.Build.Engine.dll \
+	-r:$(monogacdirXX)/Microsoft.Build.Framework.dll \
+	-r:$(monogacdir35)/Microsoft.Build.Tasks.v3.5.dll \
+	-r:$(monogacdir35)/Microsoft.Build.Utilities.v3.5.dll \
+	-r:$(monogacdirXX)/mscorlib.dll \
+	-r:$(monogacdirXX)/System.Core.dll \
+	-r:$(monogacdirXX)/System.dll
+
+REFERENCES_2_1 = \
+	-r:$(monogacdir21)/mscorlib.dll \
+	-r:$(monogacdir21)/System.Core.dll \
+	-r:$(monogacdir21)/System.dll
 
 REFERENCES_4_0 = \
-	-r:$(monolibdir)Microsoft.Build.Engine.dll \
-	-r:$(monolibdir)Microsoft.Build.Framework.dll \
-	-r:$(monolibdir35)Microsoft.Build.Tasks.v3.5.dll \
-	-r:$(monolibdir35)Microsoft.Build.Utilities.v3.5.dll \
-	-r:$(monolibdir)mscorlib.dll \
-	-r:$(monolibdir)System.Core.dll \
-	-r:$(monolibdir)System.dll \
-	-r:$(monolibdir)System.Numerics.dll
+	-r:$(monogacdirXX)/Microsoft.Build.Engine.dll \
+	-r:$(monogacdirXX)/Microsoft.Build.Framework.dll \
+	-r:$(monogacdirXX)/Microsoft.Build.Tasks.v4.0.dll \
+	-r:$(monogacdirXX)/Microsoft.Build.Utilities.v4.0.dll \
+	-r:$(monogacdirXX)/mscorlib.dll \
+	-r:$(monogacdirXX)/System.Core.dll \
+	-r:$(monogacdirXX)/System.dll \
+	-r:$(monogacdirXX)/System.Numerics.dll
 
 INSTALL = $(SHELL) $(topdir)install-sh
 INSTALL_DATA = $(INSTALL) -c -m 644

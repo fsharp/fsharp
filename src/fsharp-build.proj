@@ -1,0 +1,12 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+
+  <ItemGroup>
+    <ProjectFiles Include="fsharp-proto-build.proj"/>
+    <ProjectFiles Include="fsharp-library-build.proj"/>
+    <ProjectFiles Include="fsharp-compiler-build.proj"/>
+  </ItemGroup>
+
+  <Import Project="root.traversal.targets"/>
+
+</Project>
+

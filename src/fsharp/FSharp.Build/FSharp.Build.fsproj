@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
-    <FSharpSourcesRoot>..\..</FSharpSourcesRoot>
+    <FSharpSourcesRoot>$(MSBuildProjectDirectory)\..\..</FSharpSourcesRoot>
+    <ProductVersion>10.0.0</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <UsePartialTypes>False</UsePartialTypes>
   </PropertyGroup>
   <Import Project="$(FSharpSourcesRoot)\FSharpSource.Settings.targets" />
   <PropertyGroup>
@@ -13,10 +16,13 @@
     <TargetFrameworkVersion Condition="'$(TargetFramework)'=='net20'">v3.5</TargetFrameworkVersion>
     <ProjectGuid>{702A7979-BCF9-4C41-853E-3ADFC9897890}</ProjectGuid>
   </PropertyGroup>
+  <!-- MonoDevelop likes these here to recognise the configurations -->
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' " />
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' " />
   <ItemGroup>
-      <FsSrGen Include="FSBuild.txt">
-        <Link>FSBuild.txt</Link>
-      </FsSrGen>
+    <FsSrGen Include="FSBuild.txt">
+      <Link>FSBuild.txt</Link>
+    </FsSrGen>
     <Compile Include="..\..\assemblyinfo\assemblyinfo.FSharp.Build.dll.fs">
       <Link>assemblyinfo.FSharp.Build.dll.fs</Link>
     </Compile>
@@ -27,17 +33,13 @@
     <Compile Include="Fsc.fs" />
     <Compile Include="CreateFSharpManifestResourceName.fsi" />
     <Compile Include="CreateFSharpManifestResourceName.fs" />
-    <CustomCopyLocal Include="Microsoft.FSharp.targets">
-      <TargetFilename>Microsoft.FSharp.targets</TargetFilename>
-    </CustomCopyLocal>
-    <Content Include="Microsoft.FSharp.targets">
-      <SubType>Content</SubType>
-    </Content>
+    <None Include="Microsoft.FSharp.Targets">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Reference Include="mscorlib" />
     <Reference Include="System" />
-
     <Reference Include="Microsoft.Build.Engine" />
     <Reference Include="Microsoft.Build.Framework" />
     <Reference Include="Microsoft.Build.Utilities.v3.5" Condition="'$(TargetFramework)'=='net20'" />
@@ -50,6 +52,13 @@
 		  <Project>{DED3BBD7-53F4-428A-8C9F-27968E768605}</Project>
 		  <Name>FSharp.Core</Name>
 	  </ProjectReference>
+    <Reference Include="Microsoft.Build" Condition="'$(TargetFramework)'=='net40'" />
+    <Reference Include="Microsoft.Build.Utilities.v4.0" Condition="'$(TargetFramework)'=='net40'" />
+    <Reference Include="Microsoft.Build.Tasks.v4.0" Condition="'$(TargetFramework)'=='net40'" />
+    <ProjectReference Include="..\FSharp.Core\FSharp.Core.fsproj">
+      <Project>{DED3BBD7-53F4-428A-8C9F-27968E768605}</Project>
+      <Name>FSharp.Core</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(FSharpSourcesRoot)\FSharpSource.targets" />
 </Project>

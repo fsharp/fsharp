@@ -409,7 +409,12 @@ namespace Microsoft.FSharp.Control
 
     [<AllowNullLiteral>]
     type Trampoline() = 
-    
+
+        let mutable cont = None
+        let mutable bindCount = 0
+        
+        static let unfake FakeUnit = ()
+
         [<Literal>]
         static let bindLimitBeforeHijack = 300 
 #if FX_NO_THREAD_STATIC
@@ -425,10 +430,6 @@ namespace Microsoft.FSharp.Control
 #else
             Trampoline.thisThreadHasTrampoline
 #endif
-        let mutable cont = None
-        let mutable bindCount = 0
-        
-        static let unfake FakeUnit = ()
         
         // Install a trampolineStack if none exists
         member this.ExecuteAction (firstAction : unit -> FakeUnitValue) =
@@ -1564,11 +1565,21 @@ namespace Microsoft.FSharp.Control
                             Async.Start (async { do (ccont e |> unfake) })
 
                     // register cancellation handler
-                    let registration = aux.token.Register(fun () -> cancel (OperationCanceledException()))
+                    let registration = aux.token.Register((fun _ -> cancel (OperationCanceledException())), null)
 
                     // run actual await routine
                     // callback will be executed on the thread pool so we need to use TrampolineHolder.Protect to install trampoline
                     try
+#if FX_NO_TASK
+                        ThreadPool.QueueUserWorkItem((fun _ ->
+                            let asyncResult = WaitHandleIAsyncResult(waitHandle) :> System.IAsyncResult
+                            if asyncResult.IsCompleted then
+                                if latch.Enter() then
+                                    registration.Dispose()
+                                    aux.trampolineHolder.Protect(fun () -> scont true) 
+                                    |> unfake
+                        ), null) |> ignore
+#else
                         Task.Factory.FromAsync
                             (
                                 WaitHandleIAsyncResult(waitHandle),
@@ -1579,6 +1590,7 @@ namespace Microsoft.FSharp.Control
                                         |> unfake
                             )
                             |> ignore
+#endif
                         // if user has specified timeout different from Timeout.Infinite 
                         // then start another async to track timeout expiration
                         if millisecondsTimeout <> Timeout.Infinite then 

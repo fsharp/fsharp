@@ -1,4 +1,34 @@
-all clean do-2-0 do-4-0 clean-2-0 clean-4-0:
+
+# Make the proto using the bootstrap, then make the final compiler using the proto
+# We call MAKE sequentially because we don't want do-final to explicitly depend on do-proto,
+# as that causes a complete recompilation of both proto and final everytime you touch the 
+# compiler sources.
+all:
+	$(MAKE) do-proto
+	$(MAKE) do-final
+
+do-proto:
+	$(MAKE) -C FSharp.Build-proto $@
+	$(MAKE) -C FSharp.Compiler-proto $@
+	$(MAKE) -C Fsc-proto $@
+
+do-final install:
+	$(MAKE) -C FSharp.Core $@
+	$(MAKE) -C FSharp.Build $@
+	$(MAKE) -C FSharp.Compiler $@
+	$(MAKE) -C Fsc $@
+	$(MAKE) -C FSharp.Compiler.Interactive.Settings $@
+	$(MAKE) -C FSharp.Compiler.Server.Shared $@
+	$(MAKE) -C FSharp.Data.TypeProviders $@
+	$(MAKE) -C fsi $@
+	$(MAKE) -C fsiAnyCpu $@
+	$(MAKE) -C policy.2.0.FSharp.Core $@
+	$(MAKE) -C policy.4.0.FSharp.Core $@
+	$(MAKE) -C policy.2.3.FSharp.Core $@
+	$(MAKE) -C policy.3.3.FSharp.Core $@
+	$(MAKE) -C policy.4.3.FSharp.Core $@
+
+clean clean-2-0 clean-4-0:
 	$(MAKE) -C FSharp.Build-proto $@
 	$(MAKE) -C FSharp.Compiler-proto $@
 	$(MAKE) -C Fsc-proto $@
@@ -8,13 +38,21 @@ all clean do-2-0 do-4-0 clean-2-0 clean-4-0:
 	$(MAKE) -C Fsc $@
 	$(MAKE) -C FSharp.Compiler.Interactive.Settings $@
 	$(MAKE) -C FSharp.Compiler.Server.Shared $@
+	$(MAKE) -C FSharp.Data.TypeProviders $@
 	$(MAKE) -C fsi $@
+	$(MAKE) -C fsiAnyCpu $@
+	$(MAKE) -C policy.2.0.FSharp.Core $@
+	$(MAKE) -C policy.4.0.FSharp.Core $@
+	$(MAKE) -C policy.2.3.FSharp.Core $@
+	$(MAKE) -C policy.3.3.FSharp.Core $@
+	$(MAKE) -C policy.4.3.FSharp.Core $@
 
-install:
+clean-2-1 do-2-1:
 	$(MAKE) -C FSharp.Core $@
-	$(MAKE) -C FSharp.Build $@
-	$(MAKE) -C FSharp.Compiler $@
-	$(MAKE) -C Fsc $@
-	$(MAKE) -C FSharp.Compiler.Interactive.Settings $@
-	$(MAKE) -C FSharp.Compiler.Server.Shared $@
-	$(MAKE) -C fsi $@
+
+install-2-1: do-2-1
+	$(MAKE) -C FSharp.Core $@
+
+
+
+

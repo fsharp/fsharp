@@ -1179,9 +1179,9 @@ type PdbSequencePoint =
       pdbSeqPointEndColumn: int; }
 
 let pdbReadOpen (moduleName:string) (path:string) :  PdbReader = 
-#if MONO
-  { symReader = null }
-#else
+  if IL.runningOnMono then 
+    { symReader = null }
+  else
     let CorMetaDataDispenser = System.Type.GetTypeFromProgID("CLRMetaData.CorMetaDataDispenser")
     let mutable IID_IMetaDataImport = new Guid("7DAC8207-D3AE-4c75-9B67-92801A497D44");
     let mdd = System.Activator.CreateInstance(CorMetaDataDispenser) :?> IMetaDataDispenser
@@ -1189,13 +1189,25 @@ let pdbReadOpen (moduleName:string) (path:string) :  PdbReader =
     mdd.OpenScope(moduleName, 0, &IID_IMetaDataImport, &o) ;
     let importerPtr = Marshal.GetComInterfaceForObject(o, typeof<IMetadataImport>)
     try 
-        let symbolBinder = System.Diagnostics.SymbolStore.SymBinder()
-        { symReader = symbolBinder.GetReader(importerPtr, moduleName, path) }
+#if CROSS_PLATFORM_COMPILER 
+        // ISymWrapper.dll is not available as a compile-time dependency for the cross-platform compiler, since it is Windows-only 
+        // Access it via reflection instead.System.Diagnostics.SymbolStore.SymBinder 
+        try  
+            let isym = System.Reflection.Assembly.Load("ISymWrapper, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a") 
+            let symbolBinder = isym.CreateInstance("System.Diagnostics.SymbolStore.SymBinder") 
+            let symbolBinderTy = symbolBinder.GetType() 
+            let reader = symbolBinderTy.InvokeMember("GetReader",BindingFlags.Public ||| BindingFlags.InvokeMethod ||| BindingFlags.Instance,  null,symbolBinder,[| box importerPtr; box moduleName; box path |]) 
+            { symReader = reader :?> ISymbolReader } 
+        with _ ->  
+            { symReader = null } 
+#else 
+        let symbolBinder = System.Diagnostics.SymbolStore.SymBinder() 
+        { symReader = symbolBinder.GetReader(importerPtr, moduleName, path) } 
+#endif
     finally
         // Marshal.GetComInterfaceForObject adds an extra ref for importerPtr
         if IntPtr.Zero <> importerPtr then
           Marshal.Release(importerPtr) |> ignore
-#endif
 
 // Note, the symbol reader's finalize method will clean up any unmanaged resources.
 // If file locks persist, we may want to manually invoke finalize
@@ -1421,7 +1433,13 @@ let getICLRStrongName () =
         sn
     | Some(sn) -> sn
 
-let signerGetPublicKeyForKeyPair kp =
+let signerGetPublicKeyForKeyPair (kp:byte[])  =
+ if IL.runningOnMono then 
+    let snt = System.Type.GetType("Mono.Security.StrongName") 
+    let sn = System.Activator.CreateInstance(snt, [| box kp |])
+    snt.InvokeMember("PublicKey", (BindingFlags.GetProperty ||| BindingFlags.Instance ||| BindingFlags.Public), null, sn, [| |], Globalization.CultureInfo.InvariantCulture) :?> byte[] 
+
+ else
     let mutable pSize = 0u
     let mutable pBuffer : nativeint = (nativeint)0
     let iclrSN = getICLRStrongName()
@@ -1434,6 +1452,9 @@ let signerGetPublicKeyForKeyPair kp =
     keybuffer
 
 let signerGetPublicKeyForKeyContainer kc =
+ if IL.runningOnMono then 
+    failwith "the use of key containers for strong name signing is not yet supported when running on Mono"
+ else
     let mutable pSize = 0u
     let mutable pBuffer : nativeint = (nativeint)0
     let iclrSN = getICLRStrongName()
@@ -1445,16 +1466,29 @@ let signerGetPublicKeyForKeyContainer kc =
     keybuffer
  
 let signerCloseKeyContainer kc = 
+ if IL.runningOnMono then 
+    failwith "the use of key containers for strong name signing is not yet supported when running on Mono"
+ else
     let iclrSN = getICLRStrongName()
     iclrSN.StrongNameKeyDelete(kc) |> ignore
 
-let signerSignatureSize pk = 
+let signerSignatureSize (pk:byte[]) = 
+ if IL.runningOnMono then
+   if pk.Length > 32 then pk.Length - 32 else 128
+ else
     let mutable pSize =  0u
     let iclrSN = getICLRStrongName()
     iclrSN.StrongNameSignatureSize(pk, uint32 pk.Length, &pSize) |> ignore
     int pSize
 
-let signerSignFileWithKeyPair fileName kp = 
+let signerSignFileWithKeyPair fileName (kp:byte[]) = 
+ if IL.runningOnMono then 
+    let snt = System.Type.GetType("Mono.Security.StrongName") 
+    let sn = System.Activator.CreateInstance(snt, [| box kp |])
+    let conv (x:obj) = if (unbox x : bool) then 0 else -1
+    snt.InvokeMember("Sign", (BindingFlags.InvokeMethod ||| BindingFlags.Instance ||| BindingFlags.Public), null, sn, [| box fileName |], Globalization.CultureInfo.InvariantCulture) |> conv |> check "Sign"
+    snt.InvokeMember("Verify", (BindingFlags.InvokeMethod ||| BindingFlags.Instance ||| BindingFlags.Public), null, sn, [| box fileName |], Globalization.CultureInfo.InvariantCulture) |> conv |> check "Verify"
+ else
     let mutable pcb = 0u
     let mutable ppb = (nativeint)0
     let mutable ok = false
@@ -1463,6 +1497,9 @@ let signerSignFileWithKeyPair fileName kp =
     iclrSN.StrongNameSignatureVerificationEx(fileName, true, &ok) |> ignore
 
 let signerSignFileWithKeyContainer fileName kcName =
+ if IL.runningOnMono then 
+    failwith "the use of key containers for strong name signing is not yet supported when running on Mono"
+ else
     let mutable pcb = 0u
     let mutable ppb = (nativeint)0
     let mutable ok = false

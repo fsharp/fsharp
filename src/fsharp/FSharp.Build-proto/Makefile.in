@@ -18,7 +18,7 @@ REFERENCES += \
 	-r:$(bootstrapdir)FSharp.Core.dll
 
 sources= \
-	$(objdir)FSBuild.fs \
+	$(tmpdir)FSBuild.fs \
 	../../utils/CompilerLocationUtils.fs \
 	../FSharp.Build/CreateFSharpManifestResourceName.fsi \
 	../FSharp.Build/CreateFSharpManifestResourceName.fs \
@@ -28,9 +28,13 @@ sources= \
 RESOURCES = \
 	$(tmpdir)FSBuild.resources
 
-$(tmpdir)FSBuild.resources: $(srcdir)../FSharp.Build/FSBuild.txt
-	mono --debug $(FSSRGEN) $< $(@:.resources=.fs) $(@:.resources=.resx)
-	resgen $(@:.resources=.resx) $@
+$(tmpdir)FSBuild.fs $(tmpdir)FSBuild.resources: ../FSharp.Build/FSBuild.txt
+	mono $(MONO_OPTIONS) $(FSSRGEN) $< $(tmpdir)FSBuild.fs $(tmpdir)FSBuild.resx
+	resgen $(tmpdir)FSBuild.resx $(tmpdir)FSBuild.resources
+
+do-proto: do-4-0
+
+clean: clean-4-0
 
 include $(topdir)/src/fsharp/targets.make
 

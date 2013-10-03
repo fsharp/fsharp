@@ -2227,7 +2227,7 @@ type InProcCompiler() =
 
 /// Collect the output from the stdout and stderr streams, character by character,
 /// recording the console color used along the way.
-type private OutputCollector() = 
+type OutputCollector() = 
     let output = ResizeArray()
     let outWriter isOut = 
         { new TextWriter() with 
@@ -2292,12 +2292,16 @@ module FSharpResidentCompiler =
                                       if !progress then printfn "server: finished compilation request, argv = %A" argv
                                       0
                                   with e -> 
-                                      if !progress then printfn "server: finished compilation request with errors, argv = %A" argv
-                                      errorRecoveryNoRange e
+                                      if !progress then printfn "server: finished compilation request with errors, argv = %A, e = %s" argv (e.ToString())
+                                      stopProcessingRecovery e range0
                                       1
                               let output = outputCollector.GetTextAndClear()
+                              if !progress then printfn "ouput: %A" output
+                              if !progress then printfn "sending reply..." 
                               reply.Reply(output, exitCode)
+                              if !progress then printfn "collecting..." 
                               GC.Collect(3)
+                              if !progress then printfn "considering exit..." 
                               // Exit the server if there are no outstanding requests and the 
                               // current memory usage after collection is over 200MB
                               if inbox.CurrentQueueLength = 0 && GC.GetTotalMemory(true) > 200L * 1024L * 1024L then 
@@ -2314,8 +2318,10 @@ module FSharpResidentCompiler =
         default x.Ping() = "ping"
         default x.Compile (pwd,argv) = 
             if !progress then printfn "server: got compilation request, (pwd, argv) = %A" (pwd, argv)
-            agent.PostAndReply(fun reply -> (pwd,argv,reply))
-
+            let res = agent.PostAndReply(fun reply -> (pwd,argv,reply))
+            if !progress then printfn "server: got response, response = %A" res
+            res 
+            
         override x.Finalize() =
             serverExists <- false
 
@@ -2330,7 +2336,7 @@ module FSharpResidentCompiler =
             box lease
             
         static member RunServer(exiter:Exiter) =
-            progress := condition "FSHARP_SERVER_PROGRESS"
+            progress := !progress ||  condition "FSHARP_SERVER_PROGRESS"
             if !progress then printfn "server: initializing server object" 
             let server = new FSharpCompilationServer(exiter)
             let chan = new Ipc.IpcChannel(channelName) 
@@ -2348,7 +2354,7 @@ module FSharpResidentCompiler =
                   // Add 0x00000180 (UserReadWriteExecute) to the access permissions on Unix
                   monoUnixFileInfo.InvokeMember("set_FileAccessPermissions", (BindingFlags.InvokeMethod ||| BindingFlags.Instance ||| BindingFlags.Public), null, fileEntry, [| box 0x00000180 |],System.Globalization.CultureInfo.InvariantCulture) |> ignore
 #if DEBUG
-                  printfn "server: good, set permissions on socket name '%s'"  socketName
+                  if !progress then printfn "server: good, set permissions on socket name '%s'"  socketName
                   let fileEntry = monoUnixFileInfo.InvokeMember("GetFileSystemEntry", (BindingFlags.InvokeMethod ||| BindingFlags.Static ||| BindingFlags.Public), null, null, [| box socketName |],System.Globalization.CultureInfo.InvariantCulture)
                   let currPermissions = monoUnixFileInfo.InvokeMember("get_FileAccessPermissions", (BindingFlags.InvokeMethod ||| BindingFlags.Instance ||| BindingFlags.Public), null, fileEntry, [| |],System.Globalization.CultureInfo.InvariantCulture) |> unbox<int>
                   if !progress then printfn "server: currPermissions = '%o' (octal)"  currPermissions
@@ -2366,8 +2372,13 @@ module FSharpResidentCompiler =
             :?> FSharpCompilationServer 
 
         static member TryCompileUsingServer(fscServerExe,argv) =
+            // Enable these lines to write a log file, e.g. when running under xbuild
+            //let os = System.IO.File.CreateText "/tmp/fsc-client-log"
+            //let printfn fmt = Printf.kfprintf (fun () -> fprintfn os ""; os.Flush()) os fmt
+            progress := !progress ||  condition "FSHARP_SERVER_PROGRESS"
             let pwd = System.Environment.CurrentDirectory
             let clientOpt = 
+                if !progress then printfn "client: creating client"
                 // Detect the absence of the channel via the exception. Probably not the best way.
                 // Different exceptions get thrown here on Mono and Windows.
                 let client = FSharpCompilationServer.ConnectToServer()
@@ -2377,18 +2388,19 @@ module FSharpResidentCompiler =
                     if !progress then printfn "client: connected to existing service"
                     Some client
                 with _ ->
+                    if !progress then printfn "client: error while creating client, starting client instead"
                     let procInfo = 
                         if runningOnMono then
                             let shellName, useShellExecute = 
                                 match System.Environment.GetEnvironmentVariable("FSC_MONO") with 
                                 | null -> 
                                     if onWindows then 
+                                        // e.g. "C:\Program Files\Mono-2.6.1\lib\mono\2.0\mscorlib.dll" --> "C:\Program Files\Mono-2.6.1\bin\mono.exe"
                                         Path.Combine(Path.GetDirectoryName (typeof<Object>.Assembly.Location), @"..\..\..\bin\mono.exe"), false
                                     else
-                                        "mono", true
-                                | path -> path, false
+                                        "mono-sgen", true
+                                | path -> path, true
                                      
-                            // e.g. "C:\Program Files\Mono-2.6.1\lib\mono20\mscorlib.dll" --> "C:\Program Files\Mono-2.6.1\bin\mono.exe"
                             ProcessStartInfo(FileName = shellName,
                                              Arguments = fscServerExe + " /server",
                                              CreateNoWindow = true,
@@ -2409,6 +2421,7 @@ module FSharpResidentCompiler =
                      
                     // Create the client proxy and attempt to connect to the server
                     let rec tryAcccesServer nRemaining =
+                        if !progress then printfn "client: trying to access server, nRemaining = '%d'" nRemaining
                         if nRemaining = 0 then 
                             // Failed to connect to server, give up 
                             None
@@ -2461,6 +2474,7 @@ module FSharpResidentCompiler =
                    None
             | None -> 
                 None
+
 
 let main (fscServerExe, argv) = 
     let inline hasArgument name args = 

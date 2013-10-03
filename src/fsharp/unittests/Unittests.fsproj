@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
-    <FSharpSourcesRoot>..\..</FSharpSourcesRoot>
+    <FSharpSourcesRoot>$(MSBuildProjectDirectory)\..\..</FSharpSourcesRoot>
+    <ProductVersion>10.0.0</ProductVersion>
+    <UsePartialTypes>False</UsePartialTypes>
   </PropertyGroup>
-  <Import Project="$(FSharpSourcesRoot)\FSharpSource.Settings.targets"/>
+  <Import Project="$(FSharpSourcesRoot)\FSharpSource.Settings.targets" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
@@ -31,7 +33,7 @@
     <Compile Include="..\..\utils\CompilerLocationUtils.fs">
       <Link>Internal.Utilities.CompilerLocationUtils.fs</Link>
     </Compile>
-<!--
+    <!--
 <Compile Include="TestLib.Utils.fs">
       <Link>TestLib.Utils.fs</Link>
     </Compile>
@@ -129,7 +131,7 @@
       <Link>Tests.ProjectSystem.RoundTrip.fs</Link>
     </Compile>
 -->
-<CustomCopyLocal Include="Unittests.dll.config" />
+    <CustomCopyLocal Include="Unittests.dll.config" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -145,16 +147,14 @@
     <Reference Include="Microsoft.Build.Engine" />
     <Reference Include="Microsoft.Build.Framework" />
     <Reference Include="Microsoft.Build.Utilities.v4.0" />
-    <Reference Include="Microsoft.Build.Utilities.v3.5" />    
+    <Reference Include="Microsoft.Build.Utilities.v3.5" />
     <ProjectReference Include="..\Fsc\Fsc.fsproj">
       <Name>Fsc</Name>
       <Project>{C94C257C-3C0A-4858-B5D8-D746498D1F08}</Project>
-      <Private>True</Private>
     </ProjectReference>
     <ProjectReference Include="..\FSharp.Build\FSharp.Build.fsproj">
       <Name>FSharp.Build</Name>
-      <Project>{702a7979-bcf9-4c41-853e-3adfc9897890}</Project>
-      <Private>True</Private>
+      <Project>{702A7979-BCF9-4C41-853E-3ADFC9897890}</Project>
     </ProjectReference>
     <ProjectReference Include="..\FSharp.Compiler\FSharp.Compiler.fsproj">
       <Project>{2E4D67B4-522D-4CF7-97E4-BA940F0B18F3}</Project>
@@ -163,10 +163,9 @@
     <ProjectReference Include="..\FSharp.Compiler\FSharp.Compiler.fsproj">
       <Name>FSharp.Compiler</Name>
       <Project>{2E4D67B4-522D-4CF7-97E4-BA940F0B18F3}</Project>
-      <Private>True</Private>
     </ProjectReference>
   </ItemGroup>
-  <Import Project="$(FSharpSourcesRoot)\FSharpSource.targets"/>
+  <Import Project="$(FSharpSourcesRoot)\FSharpSource.targets" />
   <PropertyGroup>
     <PrepareForRunDependsOn>$(PrepareForRunDependsOn);CopyToTempDir</PrepareForRunDependsOn>
   </PropertyGroup>

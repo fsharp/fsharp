@@ -14,6 +14,8 @@
 
 namespace Microsoft.FSharp.Compiler
 
+#if EXTENSIONTYPING
+
 module internal ExtensionTyping =
     open System
     open System.IO
@@ -1341,3 +1343,4 @@ module internal ExtensionTyping =
     let IsGeneratedTypeDirectReference (st: Tainted<ProvidedType>, m) =
         st.PUntaint((fun st -> st.TryGetTyconRef() |> isNone), m)
 
+#endif

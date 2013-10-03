@@ -3,6 +3,9 @@
   <PropertyGroup>
     <FSharpSourcesRoot>..\..</FSharpSourcesRoot>
     <ProjectGuid>{88e2d422-6852-46e3-a740-83e391dc7973}</ProjectGuid>
+    <FSharpSourcesRoot>$(MSBuildProjectDirectory)\..\..</FSharpSourcesRoot>
+    <ProductVersion>10.0.0</ProductVersion>
+    <UsePartialTypes>False</UsePartialTypes>
   </PropertyGroup>
   <Import Project="$(FSharpSourcesRoot)\FSharpSource.Settings.targets" />
   <PropertyGroup>
@@ -13,7 +16,6 @@
     <ReferenceVsAssemblies>true</ReferenceVsAssemblies>
     <OutputType>Library</OutputType>
     <AssemblyName>FSharp.Core.Unittests</AssemblyName>
-    <TargetFrameworkVersion Condition=" '$(TargetFramework)' == 'net20' ">v3.5</TargetFrameworkVersion>
     <Name>SystematicUnitTests</Name>
     <!-- Prevent compiler from inlining calls to FSharp.Core to improve code coverage accuracy -->
     <Optimize>false</Optimize>
@@ -23,9 +25,8 @@
     <DefineConstants Condition=" '$(TargetFramework)' == 'sl5' OR '$(TargetFramework)' == 'sl5-compiler' ">$(DefineConstants);SILVERLIGHT</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
+    <DebugSymbols>True</DebugSymbols>
     <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
@@ -33,11 +34,12 @@
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
+    <Optimize>True</Optimize>
     <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>3</WarningLevel>
+    <DebugSymbols>False</DebugSymbols>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="nunit.framework" Condition="'$(TargetFramework)' != 'sl5' AND '$(TargetFramework)' != 'sl5-compiler' AND '$(TargetFramework)' != 'sl3-wp'" />
@@ -46,6 +48,8 @@
       <Project>{DED3BBD7-53F4-428A-8C9F-27968E768605}</Project>
       <Name>FSharp.Core</Name>
     </ProjectReference>
+    <Reference Include="nunit.framework" Condition="'$(TargetFramework)' != 'sl5' AND '$(TargetFramework)' != 'sl5-compiler' AND '$(TargetFramework)' != 'wp7'" />
+    <Reference Include="NUnitFramework" Condition="'$(TargetFramework)' == 'sl5' OR '$(TargetFramework)' == 'wp7' OR '$(TargetFramework)' == 'sl5-compiler'" />
     <Reference Include="mscorlib" />
     <Reference Include="System" />
     <Reference Include="System.Numerics" Condition="'$(TargetFramework)' == 'net40'" />
@@ -55,6 +59,14 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="NUnitFrameworkShims.fs" Condition="'$(TargetFramework)' == 'sl3-wp'" />
+    <Reference Include="System.Observable" Condition="'$(TargetFramework)' == 'wp7' " />
+    <ProjectReference Include="..\FSharp.Core\FSharp.Core.fsproj">
+      <Project>{DED3BBD7-53F4-428A-8C9F-27968E768605}</Project>
+      <Name>FSharp.Core</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="NUnitFrameworkShims.fs" Condition="'$(TargetFramework)' == 'wp7'" />
     <Compile Include="LibraryTestFx.fs" />
     <Compile Include="FSharp.Core\Microsoft.FSharp.Collections\ArrayModule.fs" />
     <Compile Include="FSharp.Core\Microsoft.FSharp.Collections\ArrayModule2.fs" />

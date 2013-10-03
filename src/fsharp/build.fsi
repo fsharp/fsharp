@@ -83,6 +83,7 @@ type ErrorStyle =
     | EmacsErrors 
     | TestErrors 
     | VSErrors
+    | GccErrors
     
 
 val RangeOfError : PhasedError -> range option
