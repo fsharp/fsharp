@@ -319,10 +319,12 @@ module internal FSharpEnvironment =
 
     // Check if the framework version 4.5 or above is installed at the given key entry 
     let IsNetFx45OrAboveInstalledAt subkey =
+       try 
         useKey subkey (fun regkey ->
             match regkey with
             | null -> false
             | _ -> regkey.GetValue("Release", 0) :?> int |> (fun s -> s >= 0x50000)) // 0x50000 implies 4.5.0
+       with _ -> false
 
     // Check if the framework version 4.5 or above is installed
     let IsNetFx45OrAboveInstalled =

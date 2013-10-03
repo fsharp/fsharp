@@ -78,7 +78,7 @@ module internal MSBuildResolver =
     // 1. List of frameworks
     // 2. DeriveTargetFrameworkDirectoriesFor45Plus
     // 3. HighestInstalledNetFrameworkVersionMajorMinor
-    // 4. GetPathToDotNetFramework
+    // 4. GetPathToDotNetFrameworkForLastResortCompileTimeAssemblySearch
     [<Literal>]    
     let private Net10 = "v1.0"
     [<Literal>]    
@@ -98,8 +98,13 @@ module internal MSBuildResolver =
 
     let SupportedNetFrameworkVersions = set [ Net20; Net30; Net35; Net40; Net45; Net451; (*SL only*) "v5.0" ]
     
-    let GetPathToDotNetFramework(v) =
-#if FX_ATLEAST_45
+#if CROSS_PLATFORM_COMPILER
+    // Mono doesn't have GetPathToDotNetFramework. In this case we simply don't search this extra directory.
+    // When the x-plat compiler is run on Mono this is ok since implementation assembly folder is the same as the target framework folder.
+    // When the x-plat compiler is run on Windows/.NET this will curently cause slightly divergent behaviour.
+    let GetPathToDotNetFrameworkForLastResortCompileTimeAssemblySearch _v = []
+#else
+    let GetPathToDotNetFrameworkForLastResortCompileTimeAssemblySearch v =
         let v =
             match v with
             | Net11 ->  Some TargetDotNetFrameworkVersion.Version11
@@ -116,21 +121,28 @@ module internal MSBuildResolver =
             | null -> []
             | x -> [x]
         | _ -> []
-#else
-        // FX_ATLEAST_45 is not defined is required for step when we build compiler with proto compiler and this branch should not be hit
-        assert false
-        []
 #endif        
 
+#if CROSS_PLATFORM_COMPILER
+    // GetPathToDotNetFrameworkReferenceAssemblies is not available on Mono.
+    // We currently use the old values that the F# 2.0 compiler assumed. 
+    // When the x-plat compiler is run on Mono this is ok since the asemblies are all in the framework folder
+    // When the x-plat compiler is run on Windows/.NET this will curently cause slightly divergent behaviour this directory 
+    // may not be the same as the Microsoft compiler in all cases.
+    let DeriveTargetFrameworkDirectoriesFor40Plus(version) = 
+        match version with 
+        | Net40 -> ReplaceFrameworkVariables([@"{ReferenceAssemblies}\v4.0"])  
+        | Net45 -> ReplaceFrameworkVariables([@"{ReferenceAssemblies}\v4.5"])         
+        | Net451 -> ReplaceFrameworkVariables([@"{ReferenceAssemblies}\v4.5"])         
+        | _ -> []
+#else
     let DeriveTargetFrameworkDirectoriesFor40Plus(version) = 
         // starting with .Net 4.0, the runtime dirs (WindowsFramework) are never used by MSBuild RAR
         let v =
             match version with
             | Net40 -> Some TargetDotNetFrameworkVersion.Version40
-#if FX_ATLEAST_45
             | Net45 -> Some TargetDotNetFrameworkVersion.Version45
             | Net451 -> Some TargetDotNetFrameworkVersion.Version451
-#endif
             | _ -> assert false; None // unknown version - some parts in the code are not synced
         match v with
         | Some v -> 
@@ -138,17 +150,18 @@ module internal MSBuildResolver =
             | null -> []
             | x -> [x]
         | None -> []        
+#endif
 
     /// Determine the default "frameworkVersion" (which is passed into MSBuild resolve).
     /// This code uses MSBuild to determine version of the highest installed framework.
     let HighestInstalledNetFrameworkVersionMajorMinor() =
-#if FX_ATLEAST_45    
+#if CROSS_PLATFORM_COMPILER
+       // Mono doesn't have GetPathToDotNetFramework
+        4, Net40
+#else
         if box (ToolLocationHelper.GetPathToDotNetFramework(TargetDotNetFrameworkVersion.Version451)) <> null then 4, Net451
         elif box (ToolLocationHelper.GetPathToDotNetFramework(TargetDotNetFrameworkVersion.Version45)) <> null then 4, Net45
         else 4, Net40 // version is 4.0 assumed since this code is running.
-#else
-        // FX_ATLEAST_45 is not defined is required for step when we build compiler with proto compiler and this branch should not be hit
-        4, Net40
 #endif
 
     /// Derive the target framework directories.        
@@ -329,7 +342,7 @@ module internal MSBuildResolver =
                 ["{AssemblyFolders}"] @
                 [outputDirectory] @
                 ["{GAC}"] @
-                GetPathToDotNetFramework targetFrameworkVersion // use path to implementation assemblies as the last resort
+                GetPathToDotNetFrameworkForLastResortCompileTimeAssemblySearch targetFrameworkVersion // use path to implementation assemblies as the last resort
     
         rar.SearchPaths <- searchPaths |> Array.ofList
                                   

@@ -550,11 +550,6 @@ type [<Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:Iden
         fsc.GenerateCommandLineCommands()
     member internal fsc.InternalExecuteTool(pathToTool, responseFileCommands, commandLineCommands) =
         fsc.ExecuteTool(pathToTool, responseFileCommands, commandLineCommands)
-    member internal fsc.GetCapturedArguments() = 
-        [|
-            yield! capturedArguments
-            yield! capturedFilenames
-        |]
 
 module Attributes =
     //[<assembly: System.Security.SecurityTransparent>]

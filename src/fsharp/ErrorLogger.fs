@@ -240,10 +240,8 @@ type ErrorLogger(nameForDebugging:string) =
         this.ErrorSinkImpl err
     member this.DebugDisplay() = sprintf "ErrorLogger(%s)" nameForDebugging
     // record the reported error/warning numbers for SQM purpose
-    abstract ErrorNumbers : int list
-    abstract WarningNumbers : int list
-    default this.ErrorNumbers = []
-    default this.WarningNumbers = []
+    abstract ErrorOrWarningNumbers : int list
+    default this.ErrorOrWarningNumbers = []
 
 let DiscardErrorsLogger = 
     { new ErrorLogger("DiscardErrorsLogger") with 
