@@ -1185,7 +1185,11 @@ module internal PrintfImpl =
             )
 #endif
 
-        [<DefaultValue; ThreadStatic>]
+        [<DefaultValue>]
+#if FX_NO_THREAD_STATIC
+#else
+        [<ThreadStatic>]
+#endif
         static val mutable private last : string * CachedItem<'T, 'State, 'Residue, 'Result>
     
         static member Get(key : Format<'T, 'State, 'Residue, 'Result>) =

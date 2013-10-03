@@ -1,4 +1,4 @@
-﻿namespace Viz
+namespace Viz
 
 /// This type exists to have a concrete 'Target' type for a DebuggerVisualizerAttribute.
 /// Ideally it would be out in its own assembly, but then the compiler would need to take a dependency on that assembly, so instead we 
