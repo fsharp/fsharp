@@ -858,7 +858,7 @@ ilDynamicInvocationNotSupported,"Dynamic invocation of %s is not supported"
 # fscopts text
 # -----------------------------------------------------------------------------
 1000,optsProblemWithCodepage,"Problem with codepage '%d': %s"
-optsCopyright,"Copyright (c) Microsoft Corporation. All Rights Reserved."
+optsCopyright,"Copyright (c) Microsoft Corporation. Apache 2.0 License."
 optsNameOfOutputFile,"Name of the output file (Short form: -o)"
 optsBuildConsole,"Build a console executable"
 optsBuildWindows,"Build a Windows executable"
