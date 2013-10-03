@@ -27,6 +27,8 @@ module internal MSBuildResolver =
     type ResolutionEnvironment = CompileTimeLike | RuntimeLike | DesigntimeLike
     
 #if SILVERLIGHT
+    let HighestInstalledNetFrameworkVersionMajorMinor() =
+        4,"v5.0"
 #else
     open System
     open Microsoft.Build.Tasks
@@ -63,17 +65,94 @@ module internal MSBuildResolver =
             | null -> System.Environment.GetEnvironmentVariable("ProgramFiles")  // if PFx86 is null, then we are 32-bit and just get PF
             | s -> s 
         PF + @"\Reference Assemblies\Microsoft\Framework\.NETFramework"
-        
+
+
     let ReplaceFrameworkVariables(dirs) =
         let windowsFramework = System.Environment.GetEnvironmentVariable("windir")+ @"\Microsoft.NET\Framework"
         let referenceAssemblies = DotNetFrameworkReferenceAssembliesRootDirectory
         dirs|>List.map(fun (d:string)->d.Replace("{WindowsFramework}",windowsFramework).Replace("{ReferenceAssemblies}",referenceAssemblies))
-               
+
+    
+    // ATTENTION!: the following code needs to be updated every time we are switching to the new MSBuild version because new .NET framework version was released
+    // 1. List of frameworks
+    // 2. DeriveTargetFrameworkDirectoriesFor45Plus
+    // 3. HighestInstalledNetFrameworkVersionMajorMinor
+    // 4. GetPathToDotNetFramework
+    [<Literal>]    
+    let private Net10 = "v1.0"
+    [<Literal>]    
+    let private Net11 = "v1.1"
+    [<Literal>]    
+    let private Net20 = "v2.0"
+    [<Literal>]    
+    let private Net30 = "v3.0"
+    [<Literal>]    
+    let private Net35 = "v3.5"
+    [<Literal>]    
+    let private Net40 = "v4.0"
+    [<Literal>]    
+    let private Net45 = "v4.5"
+    [<Literal>]    
+    let private Net451 = "v4.5.1"
+
+    let SupportedNetFrameworkVersions = set [ Net20; Net30; Net35; Net40; Net45; Net451; (*SL only*) "v5.0" ]
+    
+    let GetPathToDotNetFramework(v) =
+#if FX_ATLEAST_45
+        let v =
+            match v with
+            | Net11 ->  Some TargetDotNetFrameworkVersion.Version11
+            | Net20 ->  Some TargetDotNetFrameworkVersion.Version20
+            | Net30 ->  Some TargetDotNetFrameworkVersion.Version30
+            | Net35 ->  Some TargetDotNetFrameworkVersion.Version35
+            | Net40 ->  Some TargetDotNetFrameworkVersion.Version40
+            | Net45 ->  Some TargetDotNetFrameworkVersion.Version45
+            | Net451 -> Some TargetDotNetFrameworkVersion.Version451
+            | _ -> assert false; None
+        match v with
+        | Some v -> 
+            match ToolLocationHelper.GetPathToDotNetFramework v with
+            | null -> []
+            | x -> [x]
+        | _ -> []
+#else
+        // FX_ATLEAST_45 is not defined is required for step when we build compiler with proto compiler and this branch should not be hit
+        assert false
+        []
+#endif        
+
+    let DeriveTargetFrameworkDirectoriesFor40Plus(version) = 
+        // starting with .Net 4.0, the runtime dirs (WindowsFramework) are never used by MSBuild RAR
+        let v =
+            match version with
+            | Net40 -> Some TargetDotNetFrameworkVersion.Version40
+#if FX_ATLEAST_45
+            | Net45 -> Some TargetDotNetFrameworkVersion.Version45
+            | Net451 -> Some TargetDotNetFrameworkVersion.Version451
+#endif
+            | _ -> assert false; None // unknown version - some parts in the code are not synced
+        match v with
+        | Some v -> 
+            match ToolLocationHelper.GetPathToDotNetFrameworkReferenceAssemblies v with
+            | null -> []
+            | x -> [x]
+        | None -> []        
+
+    /// Determine the default "frameworkVersion" (which is passed into MSBuild resolve).
+    /// This code uses MSBuild to determine version of the highest installed framework.
+    let HighestInstalledNetFrameworkVersionMajorMinor() =
+#if FX_ATLEAST_45    
+        if box (ToolLocationHelper.GetPathToDotNetFramework(TargetDotNetFrameworkVersion.Version451)) <> null then 4, Net451
+        elif box (ToolLocationHelper.GetPathToDotNetFramework(TargetDotNetFrameworkVersion.Version45)) <> null then 4, Net45
+        else 4, Net40 // version is 4.0 assumed since this code is running.
+#else
+        // FX_ATLEAST_45 is not defined is required for step when we build compiler with proto compiler and this branch should not be hit
+        4, Net40
+#endif
 
     /// Derive the target framework directories.        
     let DeriveTargetFrameworkDirectories
-                (targetFrameworkVersion:string,             // e.g. v2.0, v3.0, v3.5, v4.0 etc
-                 excludeNonExecutableAssemblies:bool,       // True when the assembly must be executable and not just a stub meta assembly.
+                (targetFrameworkVersion:string,             // e.g. v2.0, v3.0, v3.5, v4.0 etc                 
                  logmessage:string->unit) =
         let targetFrameworkVersion =
             if not(targetFrameworkVersion.StartsWith("v",StringComparison.Ordinal)) then "v"^targetFrameworkVersion
@@ -81,14 +160,12 @@ module internal MSBuildResolver =
         let FrameworkStartsWith(short) =
             targetFrameworkVersion.StartsWith(short,StringComparison.Ordinal)
         let result =
-            if FrameworkStartsWith("v1.0") then ReplaceFrameworkVariables([@"{WindowsFramework}\v1.0.3705"])
-            else if FrameworkStartsWith("v1.1") then ReplaceFrameworkVariables([@"{WindowsFramework}\v1.1.4322"])
-            else if FrameworkStartsWith("v2.0") then ReplaceFrameworkVariables([@"{WindowsFramework}\v2.0.50727"])
-            else if FrameworkStartsWith("v3.0") then ReplaceFrameworkVariables([@"{ReferenceAssemblies}\v3.0"; @"{WindowsFramework}\v3.0"; @"{WindowsFramework}\v2.0.50727"])
-            else if FrameworkStartsWith("v3.5") then ReplaceFrameworkVariables([@"{ReferenceAssemblies}\v3.5"; @"{WindowsFramework}\v3.5"; @"{ReferenceAssemblies}\v3.0"; @"{WindowsFramework}\v3.0"; @"{WindowsFramework}\v2.0.50727"])
-            else if FrameworkStartsWith("v4.0") then ReplaceFrameworkVariables([@"{ReferenceAssemblies}\v4.0"])  // starting with .Net 4.0, the runtime dirs (WindowsFramework) are never used by MSBuild RAR
-            else if FrameworkStartsWith("v4.5") then ReplaceFrameworkVariables([@"{ReferenceAssemblies}\v4.5"])         
-            else (ignore(excludeNonExecutableAssemblies); [])
+            if FrameworkStartsWith(Net10) then ReplaceFrameworkVariables([@"{WindowsFramework}\v1.0.3705"])
+            else if FrameworkStartsWith(Net11) then ReplaceFrameworkVariables([@"{WindowsFramework}\v1.1.4322"])
+            else if FrameworkStartsWith(Net20) then ReplaceFrameworkVariables([@"{WindowsFramework}\v2.0.50727"])
+            else if FrameworkStartsWith(Net30) then ReplaceFrameworkVariables([@"{ReferenceAssemblies}\v3.0"; @"{WindowsFramework}\v3.0"; @"{WindowsFramework}\v2.0.50727"])
+            else if FrameworkStartsWith(Net35) then ReplaceFrameworkVariables([@"{ReferenceAssemblies}\v3.5"; @"{WindowsFramework}\v3.5"; @"{ReferenceAssemblies}\v3.0"; @"{WindowsFramework}\v3.0"; @"{WindowsFramework}\v2.0.50727"])
+            else DeriveTargetFrameworkDirectoriesFor40Plus(targetFrameworkVersion)
 
         let result = result |> Array.ofList                
         logmessage (sprintf "Derived target framework directories for version %s are: %s" targetFrameworkVersion (String.Join(",", result)))                
@@ -187,9 +264,8 @@ module internal MSBuildResolver =
         rar.BuildEngine <- engine
         
         // Derive target framework directory if none was supplied.
-        let excludeNonExecutableAssemblies = (resolutionEnvironment = RuntimeLike)
         let targetFrameworkDirectories =
-            if targetFrameworkDirectories=[] then DeriveTargetFrameworkDirectories(targetFrameworkVersion,excludeNonExecutableAssemblies,logmessage) 
+            if targetFrameworkDirectories=[] then DeriveTargetFrameworkDirectories(targetFrameworkVersion, logmessage) 
             else targetFrameworkDirectories |> Array.ofList
             
         // Filter for null and zero length, and escape backslashes so legitimate path characters aren't mistaken for
@@ -240,7 +316,8 @@ module internal MSBuildResolver =
                 [sprintf "{Registry:%s,%s,%s%s}" frameworkRegistryBase targetFrameworkVersion assemblyFoldersSuffix assemblyFoldersConditions] @ // Like {Registry:Software\Microsoft\.NETFramework,v2.0,AssemblyFoldersEx}
                 ["{AssemblyFolders}"] @
                 [outputDirectory] @
-                ["{GAC}"]     
+                ["{GAC}"] @
+                GetPathToDotNetFramework targetFrameworkVersion // use path to implementation assemblies as the last resort
     
         rar.SearchPaths <- searchPaths |> Array.ofList
                                   

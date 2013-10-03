@@ -307,6 +307,13 @@ namespace Microsoft.FSharp.Control
     open Microsoft.FSharp.Control
     open Microsoft.FSharp.Collections
 
+#if FX_RESHAPED_REFLECTION
+    open ReflectionAdapters
+    type BindingFlags = ReflectionAdapters.BindingFlags
+#else
+    type BindingFlags = System.Reflection.BindingFlags
+#endif
+
 #if FX_NO_TASK
 #else
     open System.Threading
@@ -463,6 +470,34 @@ namespace Microsoft.FSharp.Control
                     bindCount <- 0
                     cont <- Some action
             |   _ -> failwith "Internal error: attempting to install continuation twice"
+
+
+#if FSHARP_CORE_NETCORE_PORTABLE
+    // Imitation of desktop functionality for .NETCore
+    // 1. QueueUserWorkItem reimplemented as Task.Run
+    // 2. Thread.CurrentThread type in the code is typically used to check if continuation is called on the same thread that initiated the async computation
+    // if this condition holds we may decide to invoke continuation directly rather than queueing it.
+    // Thread type here is barely a wrapper over CurrentManagedThreadId value - it should be enough to uniquely identify the actual thread
+
+    [<NoComparison; NoEquality>]
+    type internal WaitCallback = WaitCallback of (obj -> unit)
+
+    type ThreadPool =
+        static member QueueUserWorkItem(WaitCallback(cb), state : obj) = 
+            System.Threading.Tasks.Task.Run (fun () -> cb(state)) |> ignore
+            true
+
+    [<AllowNullLiteral>]
+    type Thread(threadId : int) = 
+        static member CurrentThread = Thread(Environment.CurrentManagedThreadId)
+        member this.ThreadId = threadId
+        override this.GetHashCode() = threadId
+        override this.Equals(other : obj) = 
+            match other with
+            | :? Thread as other -> threadId = other.ThreadId
+            | _ -> false
+
+#endif
 
     type TrampolineHolder() as this =
         let mutable trampoline = null
@@ -862,8 +897,6 @@ namespace Microsoft.FSharp.Control
 
         let sequentialA p1 p2 = 
             bindA p1 (fun () -> p2)
-
-
 
 
     open AsyncBuilderImpl
@@ -1294,8 +1327,10 @@ namespace Microsoft.FSharp.Control
 
         static member CancelDefaultToken() =
             let cts = !defaultCancellationTokenSource
-            cts.Cancel()
+            // set new CancellationTokenSource before calling Cancel - otherwise if Cancel throws token will stay unchanged
             defaultCancellationTokenSource := new CancellationTokenSource()
+            // we do not dispose the old default CTS - let GC collect it
+            cts.Cancel()
             // we do not dispose the old default CTS - let GC collect it
             
         static member Catch (p: Async<'T>) =
@@ -1337,8 +1372,6 @@ namespace Microsoft.FSharp.Control
                 if tasks.Length = 0 then args.cont [| |] else  // must not be in a 'protect' if we call cont explicitly; if cont throws, it should unwind the stack, preserving Dev10 behavior
                 protectedPrimitiveCore args (fun args ->
                     let ({ aux = aux } as args) = delimitSyncContext args  // manually resync
-                    let tasks = Seq.toArray l
-                    if tasks.Length = 0 then args.cont [| |] else
                     let count = ref tasks.Length
                     let firstExn = ref None
                     let results = Array.zeroCreate tasks.Length
@@ -1348,7 +1381,8 @@ namespace Microsoft.FSharp.Control
                     let trampolineHolder = aux.trampolineHolder
                     
                     let finishTask(remaining) = 
-                        if (remaining=0) then 
+                        if (remaining = 0) then 
+                            innerCTS.Dispose()
                             match (!firstExn) with 
                             | None -> trampolineHolder.Protect(fun () -> args.cont results)
                             | Some (Choice1Of2 exn) -> trampolineHolder.Protect(fun () -> aux.econt exn)
@@ -1361,27 +1395,21 @@ namespace Microsoft.FSharp.Control
                 
                     let recordSuccess i res = 
                         results.[i] <- res;
-                        let remaining = 
-                            lock count (fun () -> 
-                                decr count; 
-                                if !count = 0 then 
-                                    innerCTS.Dispose() 
-                                !count)
-                        finishTask(remaining) 
+                        finishTask(Interlocked.Decrement count) 
 
                     let recordFailure exn = 
-                        let remaining = 
-                            lock count (fun () -> 
-                                decr count; 
-                                match !firstExn with 
-                                | None -> firstExn := Some exn  // save the cancellation as the first exception
-                                | _ -> ()
-                                if !count = 0 then
-                                    innerCTS.Dispose()
-                                else
-                                    innerCTS.Cancel()
-                                !count) 
-                        finishTask(remaining)
+                        // capture first exception and then decrement the counter to avoid race when
+                        // - thread 1 decremented counter and preempted by the scheduler
+                        // - thread 2 decremented counter and called finishTask
+                        // since exception is not yet captured - finishtask will fall into success branch
+                        match Interlocked.CompareExchange(firstExn, Some exn, None) with
+                        | None -> 
+                            // signal cancellation before decrementing the counter - this guarantees that no other thread can sneak to finishTask and dispose innerCTS
+                            // NOTE: Cancel may introduce reentrancy - i.e. when handler registered for the cancellation token invokes cancel continuation that will call 'recordFailure'
+                            // to correctly handle this we need to return decremented value, not the current value of 'count' otherwise we may invoke finishTask with value '0' several times
+                            innerCTS.Cancel()
+                        | _ -> ()
+                        finishTask(Interlocked.Decrement count)
                 
                     tasks |> Array.iteri (fun i p ->
                         queueAsync
@@ -1396,6 +1424,34 @@ namespace Microsoft.FSharp.Control
                             |> unfake);
                     FakeUnit))
 
+#if FX_NO_TASK
+#else
+    // Contains helpers that will attach continuation to the given task.
+    // Should be invoked as a part of protectedPrimitive(withResync) call
+    module TaskHelpers = 
+        let continueWith (task : Task<'T>, ({ aux = aux } as args)) = 
+            let continuation (completedTask : Task<_>) : unit =
+                aux.trampolineHolder.Protect((fun () ->
+                    if completedTask.IsCanceled then
+                        aux.ccont (new OperationCanceledException())
+                    elif completedTask.IsFaulted then
+                        aux.econt (upcast completedTask.Exception)
+                    else
+                        args.cont completedTask.Result)) |> unfake
+            task.ContinueWith(Action<Task<'T>>(continuation), TaskContinuationOptions.None) |> ignore |> fake
+
+        let continueWithUnit (task : Task, ({ aux = aux } as args)) = 
+            let continuation (completedTask : Task) : unit =
+                aux.trampolineHolder.Protect((fun () ->
+                    if completedTask.IsCanceled then
+                        aux.ccont (new OperationCanceledException())
+                    elif completedTask.IsFaulted then
+                        aux.econt (upcast completedTask.Exception)
+                    else
+                        args.cont ())) |> unfake
+            task.ContinueWith(Action<Task>(continuation), TaskContinuationOptions.None) |> ignore |> fake
+#endif
+
 #if FX_NO_REGISTERED_WAIT_HANDLES
     [<Sealed>]
     [<AutoSerializable(false)>]
@@ -1407,7 +1463,11 @@ namespace Microsoft.FSharp.Control
 #if FX_NO_WAITONE_MILLISECONDS
                 wh.WaitOne(TimeSpan(0L))
 #else
+#if FX_NO_EXIT_CONTEXT_FLAGS
+                wh.WaitOne(0)
+#else
                 wh.WaitOne(0,exitContext=false)
+#endif
 #endif
             member this.CompletedSynchronously = false // always reschedule
 #endif
@@ -1421,6 +1481,13 @@ namespace Microsoft.FSharp.Control
         static member StartImmediate(a:Async<unit>,?cancellationToken) : unit =
             Async.StartWithContinuations(a,id,raise,ignore,?cancellationToken=cancellationToken)
 
+#if FSHARP_CORE_NETCORE_PORTABLE
+        static member Sleep(dueTime : int) : Async<unit> = 
+            // use combo protectedPrimitiveWithResync + continueWith instead of AwaitTask so we can pass cancellation token to the Delay task
+            unprotectedPrimitiveWithResync ( fun ({ aux = aux} as args) ->
+                TaskHelpers.continueWithUnit(Task.Delay(dueTime, aux.token), args)
+                )
+#else
         static member Sleep(dueTime) : Async<unit> =
             unprotectedPrimitiveWithResync (fun ({ aux = aux } as args) ->
                 let timer = ref (None : Timer option)
@@ -1464,6 +1531,7 @@ namespace Microsoft.FSharp.Control
                 | exn -> 
                     aux.econt exn
                 )
+#endif
         
         static member AwaitWaitHandle(waitHandle:WaitHandle,?millisecondsTimeout:int) =
             let millisecondsTimeout = defaultArg millisecondsTimeout Threading.Timeout.Infinite
@@ -1513,7 +1581,6 @@ namespace Microsoft.FSharp.Control
                             |> ignore
                         // if user has specified timeout different from Timeout.Infinite 
                         // then start another async to track timeout expiration
-                        // StartWithContinuations already installs trampoline so we can invoke continuation directly
                         if millisecondsTimeout <> Timeout.Infinite then 
                             Async.StartWithContinuations
                                 (
@@ -1521,7 +1588,7 @@ namespace Microsoft.FSharp.Control
                                     cont = (fun () -> 
                                         if latch.Enter() then 
                                             registration.Dispose()
-                                            scont false 
+                                            aux.trampolineHolder.Protect(fun () ->  scont false)
                                             |> unfake),
                                     econt = ignore, // we do not expect exceptions here
                                     ccont = cancel,
@@ -1817,7 +1884,7 @@ namespace Microsoft.FSharp.Control
                             resultCell.RegisterResult(res,reuseThread=true) |> unfake) 
                     and del = 
 #if FX_ATLEAST_PORTABLE
-                        let invokeMeth = (typeof<Closure<'T>>).GetMethod("Invoke", System.Reflection.BindingFlags.NonPublic ||| System.Reflection.BindingFlags.Public ||| System.Reflection.BindingFlags.Instance)
+                        let invokeMeth = (typeof<Closure<'T>>).GetMethod("Invoke", BindingFlags.Public ||| BindingFlags.NonPublic ||| BindingFlags.Instance)
                         System.Delegate.CreateDelegate(typeof<'Delegate>, obj, invokeMeth) :?> 'Delegate
 #else                    
                         System.Delegate.CreateDelegate(typeof<'Delegate>, obj, "Invoke") :?> 'Delegate
@@ -1896,18 +1963,10 @@ namespace Microsoft.FSharp.Control
 
 #if FX_NO_TASK
 #else
-        static member AwaitTask (task:Task<'T>) : Async<'T> =
-            protectedPrimitiveWithResync(fun ({aux = aux} as args) ->
-                let continuation (completedTask : Task<_>) : unit =
-                    aux.trampolineHolder.Protect((fun () ->
-                        if completedTask.IsCanceled then
-                            aux.ccont (new OperationCanceledException())
-                        elif completedTask.IsFaulted then
-                            aux.econt (upcast completedTask.Exception)
-                        else
-                            args.cont completedTask.Result)) |> unfake
-                task.ContinueWith(Action<Task<'T>>(continuation), TaskContinuationOptions.None) |> ignore |> fake
-            )
+        static member AwaitTask (task:Task<'T>) : Async<'T> = 
+            protectedPrimitiveWithResync (fun args -> 
+                TaskHelpers.continueWith(task, args)
+                )
 #endif
 
     module CommonExtensions =
@@ -1920,7 +1979,14 @@ namespace Microsoft.FSharp.Control
             member stream.AsyncRead(buffer: byte[],?offset,?count) =
                 let offset = defaultArg offset 0
                 let count  = defaultArg count buffer.Length
+#if FSHARP_CORE_NETCORE_PORTABLE
+                // use combo protectedPrimitiveWithResync + continueWith instead of AwaitTask so we can pass cancellation token to the ReadAsync task
+                protectedPrimitiveWithResync (fun ({ aux = aux } as args) ->
+                    TaskHelpers.continueWith(stream.ReadAsync(buffer, offset, count, aux.token), args)
+                    )
+#else
                 Async.FromBeginEnd (buffer,offset,count,stream.BeginRead,stream.EndRead)
+#endif
 
             [<CompiledName("AsyncReadBytes")>] // give the extension member a 'nice', unmangled compiled name, unique within this module
             member stream.AsyncRead(count) =
@@ -1937,7 +2003,14 @@ namespace Microsoft.FSharp.Control
             member stream.AsyncWrite(buffer:byte[], ?offset:int, ?count:int) =
                 let offset = defaultArg offset 0
                 let count  = defaultArg count buffer.Length
+#if FSHARP_CORE_NETCORE_PORTABLE
+                // use combo protectedPrimitiveWithResync + continueWith instead of AwaitTask so we can pass cancellation token to the WriteAsync task
+                protectedPrimitiveWithResync ( fun ({ aux = aux} as args) ->
+                    TaskHelpers.continueWithUnit(stream.WriteAsync(buffer, offset, count, aux.token), args)
+                    )
+#else
                 Async.FromBeginEnd (buffer,offset,count,stream.BeginWrite,stream.EndWrite)
+#endif
                 
         type System.Threading.WaitHandle with
             member waitHandle.AsyncWaitOne(?millisecondsTimeout:int) =  // only used internally, not a public API

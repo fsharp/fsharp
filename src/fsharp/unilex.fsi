@@ -10,7 +10,7 @@
 // You must not remove this notice, or any other, from this software.
 //----------------------------------------------------------------------------
 
-module Microsoft.FSharp.Compiler.UnicodeLexing
+module internal Microsoft.FSharp.Compiler.UnicodeLexing
 
 open Microsoft.FSharp.Text
 open Internal.Utilities.Text.Lexing

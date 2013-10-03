@@ -21,7 +21,8 @@ open Microsoft.FSharp.Compiler.AbstractIL.Diagnostics
 open Microsoft.FSharp.Compiler.AbstractIL.Extensions.ILX.Types 
 open Microsoft.FSharp.Compiler.AbstractIL.IL 
 
-let parseILGlobals = ref ecmaILGlobals
+// set to the proper value at build.fs (BuildFrameworkTcImports)
+let parseILGlobals = ref EcmaILGlobals
 
 // -------------------------------------------------------------------- 
 // Table of parsing and pretty printing data for instructions.

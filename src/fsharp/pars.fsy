@@ -447,8 +447,9 @@ let rangeOfLongIdent(lid:LongIdent) =
 %right COLON_EQUALS 
 %nonassoc pat_tuple expr_tuple
 %left COMMA
-%nonassoc slice_comma  /* for matrix.[1..2,3..4] the ".." has higher precedence than "2,3" */
-%nonassoc DOT_DOT /* for matrix.[1..2,3..4] the ".." has higher precedence than "2,3" */
+%nonassoc slice_expr  /* matrix.[e COMMA e] has higher precedence than "e COMMA e" */
+%nonassoc DOT_DOT /* for matrix.[1..2,3..4] the ".." has higher precedence than expression "2 COMMA 3" */
+%nonassoc slice_comma  /* for matrix.[1..2,3..4] the "," has higher precedence than ".." */
 %nonassoc paren_pat_colon
 %nonassoc paren_pat_attribs
 %left OR BAR_BAR JOIN_IN
@@ -1494,7 +1495,7 @@ memberCore:
                    
                        let lidOuter,lidVisOuter = 
                            match bindingPatOuter with 
-                           | SynPat.LongIdent (lid,None,None,[],lidVisOuter,m) ->  lid,lidVisOuter
+                           | SynPat.LongIdent (lid,None,None, SynConstructorArgs.Pats [],lidVisOuter,m) ->  lid,lidVisOuter
                            | SynPat.Named (_,id,_,visOuter,m) -> LongIdentWithDots([id],[]),visOuter
                            | p -> raiseParseErrorAt mBindLhs (FSComp.SR.parsInvalidDeclarationSyntax()) 
 
@@ -1512,7 +1513,7 @@ memberCore:
                        // Replace the "get" or the "set" with the right name
                        let rec go p = 
                            match p with 
-                           | SynPat.LongIdent (LongIdentWithDots([id],_),_,tyargs,args,lidVisInner,m) ->  
+                           | SynPat.LongIdent (LongIdentWithDots([id],_),_,tyargs,SynConstructorArgs.Pats args,lidVisInner,m) ->  
                                // Setters have all arguments tupled in their internal form, though they don't 
                                // appear to be tupled from the syntax. Somewhat unfortunate
                                let args = 
@@ -1529,8 +1530,8 @@ memberCore:
                                    else 
                                        args
 //                               let idTool : Ident list = lidOuter |> List.map (fun (li:Ident) -> ident(li.idText,id.idRange)) |> List.rev |> List.take 1
-                               SynPat.LongIdent (lidOuter,Some(id),tyargs,args,mergeLidVisOuter lidVisInner,m)
-                           | SynPat.Named (_,nm,_,lidVisInner,m) ->  SynPat.LongIdent (lidOuter,None,None,[],mergeLidVisOuter lidVisInner,m)
+                               SynPat.LongIdent (lidOuter,Some(id),tyargs, SynConstructorArgs.Pats args,mergeLidVisOuter lidVisInner,m)
+                           | SynPat.Named (_,nm,_,lidVisInner,m) ->  SynPat.LongIdent (lidOuter,None,None, SynConstructorArgs.Pats [], mergeLidVisOuter lidVisInner,m)
                            | SynPat.Typed (p,ty,m) ->  SynPat.Typed(go p,ty,m)
                            | SynPat.Attrib (p,attribs,m) ->  SynPat.Attrib(go p,attribs,m)
                            | SynPat.Wild(m) ->  SynPat.Wild(m)
@@ -1605,7 +1606,7 @@ classDefnMember:
         let expr = $7
         let valSynData = SynValData (Some CtorMemberFlags, SynValInfo([SynInfo.InferSynArgInfoFromPat $4],SynInfo.unnamedRetVal), $5) 
         let vis = $2 
-        let declPat = SynPat.LongIdent (LongIdentWithDots([mkSynId (rhs parseState 3) "new"],[]),None,Some noInferredTypars,[$4],vis,rhs parseState 3)
+        let declPat = SynPat.LongIdent (LongIdentWithDots([mkSynId (rhs parseState 3) "new"],[]),None,Some noInferredTypars, SynConstructorArgs.Pats [$4],vis,rhs parseState 3)
         // Check that 'SynPatForConstructorDecl' matches this correctly
         assert (match declPat with SynPatForConstructorDecl _ -> true | _ -> false);
         [ SynMemberDefn.Member(Binding (None,NormalBinding,false,false,$1,grabXmlDoc(parseState,3),valSynData, declPat,None,expr,m,NoSequencePointAtInvisibleBinding),m) ] }
@@ -1800,10 +1801,10 @@ tyconNameAndTyparDecls:
 
 prefixTyparDecls:
   | typar { [ TyparDecl([],$1) ] }
-  | LPAREN prefixTyparDeclList rparen {  List.rev $2 }
+  | LPAREN typarDeclList rparen {  List.rev $2 }
 
-prefixTyparDeclList: 
-  | prefixTyparDeclList COMMA typarDecl { $3 :: $1 } 
+typarDeclList: 
+  | typarDeclList COMMA typarDecl { $3 :: $1 } 
   | typarDecl { [$1] }
 
 typarDecl : 
@@ -1813,16 +1814,16 @@ typarDecl :
 /* Any tokens in this grammar must be added to the lex filter rule 'peekAdjacentTypars' */
 /* See the F# specification "Lexical analysis of type applications and type parameter definitions" */
 postfixTyparDecls: 
-  | opt_HIGH_PRECEDENCE_TYAPP LESS prefixTyparDeclList opt_typeConstraints GREATER 
+  | opt_HIGH_PRECEDENCE_TYAPP LESS typarDeclList opt_typeConstraints GREATER 
       { if not $2 then warning(Error(FSComp.SR.parsNonAdjacentTypars(),rhs2 parseState 2 5));
         List.rev $3, $4 }
 
 /* Any tokens in this grammar must be added to the lex filter rule 'peekAdjacentTypars' */
 /* See the F# specification "Lexical analysis of type applications and type parameter definitions" */
 explicitValTyparDeclsCore: 
-  | prefixTyparDeclList COMMA DOT_DOT 
+  | typarDeclList COMMA DOT_DOT 
       { (List.rev $1,true) }
-  | prefixTyparDeclList 
+  | typarDeclList 
       { (List.rev $1,false) }
   | 
       { ([],false) }
@@ -1965,14 +1966,19 @@ firstUnionCaseDecl:
         Choice1Of2 (EnumCase ([],$1,$3,PreXmlDoc.Empty,rhs2 parseState 1 3)) 
       }
 
+unionCaseReprElements:
+  | unionCaseReprElement STAR unionCaseReprElements { $1::$3 }
+  | unionCaseReprElement %prec prec_toptuptyptail_prefix { [$1] }
+
+unionCaseReprElement:
+  | ident COLON appType { mkNamedField($1, $3) }
+  | appType { mkAnonField $1 }
+
 unionCaseRepr:
   | braceFieldDeclList
      { errorR(Deprecated(FSComp.SR.parsConsiderUsingSeparateRecordType(),lhs parseState)); 
        $1 }
-  | appType STAR tupleTypeElements 
-     { List.map mkAnonField ($1 :: $3) }
-  | appType 
-     { [mkAnonField $1] }
+  | unionCaseReprElements { $1 }
 
 recdFieldDeclList: 
   | recdFieldDecl seps recdFieldDeclList 
@@ -2122,7 +2128,7 @@ cPrototype:
                                   SynExpr.Const(SynConst.String("extern was not given a DllImport attribute",rhs parseState 8),rhs parseState 8),
                                   mRhs)
         (fun attrs vis -> 
-            let bindingId = SynPat.LongIdent (LongIdentWithDots([nm],[]), None, Some noInferredTypars, [SynPat.Tuple(args,argsm)], vis, nmm)
+            let bindingId = SynPat.LongIdent (LongIdentWithDots([nm],[]), None, Some noInferredTypars, SynConstructorArgs.Pats [SynPat.Tuple(args,argsm)], vis, nmm)
             let binding = mkSynBinding 
                               (xmlDoc, bindingId) 
                               (vis, false, false, mBindLhs, NoSequencePointAtInvisibleBinding, Some rty ,rhsExpr, mRhs, [], attrs, None)
@@ -2348,7 +2354,7 @@ headBindingPattern:
   | headBindingPattern BAR headBindingPattern  
       { SynPat.Or($1,$3,rhs2 parseState 1 3) }
   | headBindingPattern COLON_COLON  headBindingPattern 
-      { SynPat.LongIdent (LongIdentWithDots(mkSynCaseName (rhs parseState 2) opNameCons,[]), None, None,[SynPat.Tuple ([$1;$3],rhs2 parseState 1 3)],None,lhs parseState) }
+      { SynPat.LongIdent (LongIdentWithDots(mkSynCaseName (rhs parseState 2) opNameCons,[]), None, None, SynConstructorArgs.Pats [SynPat.Tuple ([$1;$3],rhs2 parseState 1 3)],None,lhs parseState) }
   | tuplePatternElements  %prec pat_tuple 
       { SynPat.Tuple(List.rev $1, lhs parseState) }
   | conjPatternElements   %prec pat_conj
@@ -2368,19 +2374,30 @@ conjPatternElements:
   | headBindingPattern AMP headBindingPattern 
       { $3 :: $1 :: [] }
 
+namePatPairs:
+   | namePatPair opt_seps { [$1], lhs parseState }
+   | namePatPair seps namePatPairs { let (rs, _) = $3 in ($1::rs), lhs parseState }
+
+namePatPair:
+   | ident EQUALS parenPattern { ($1, $3) }
+
 constrPattern:
   | atomicPatternLongIdent explicitValTyparDecls                                                          
-      { let vis,lid = $1 in SynPat.LongIdent (lid,None,Some $2,[],vis,lhs parseState) }
-  | atomicPatternLongIdent opt_explicitValTyparDecls2                     atomicPatterns    %prec pat_app 
-      { let vis,lid = $1 in SynPat.LongIdent (lid,None,$2,$3,vis,lhs parseState) }
-  | atomicPatternLongIdent opt_explicitValTyparDecls2 HIGH_PRECEDENCE_PAREN_APP atomicPatterns                  
-      { let vis,lid = $1 in SynPat.LongIdent (lid,None,$2,$4,vis,lhs parseState) }
-  | atomicPatternLongIdent opt_explicitValTyparDecls2 HIGH_PRECEDENCE_BRACK_APP atomicPatterns                  
-      { let vis,lid = $1 in SynPat.LongIdent (lid,None,$2,$4,vis,lhs parseState) }
+      { let vis,lid = $1 in SynPat.LongIdent (lid,None,Some $2, SynConstructorArgs.Pats [],vis,lhs parseState) }
+  | atomicPatternLongIdent opt_explicitValTyparDecls2                     atomicPatsOrNamePatPairs    %prec pat_app 
+      { let vis,lid = $1 in SynPat.LongIdent (lid,None,$2, $3,vis,lhs parseState) }
+  | atomicPatternLongIdent opt_explicitValTyparDecls2 HIGH_PRECEDENCE_PAREN_APP atomicPatsOrNamePatPairs                  
+      { let vis,lid = $1 in SynPat.LongIdent (lid,None,$2, $4,vis,lhs parseState) }
+  | atomicPatternLongIdent opt_explicitValTyparDecls2 HIGH_PRECEDENCE_BRACK_APP atomicPatsOrNamePatPairs                  
+      { let vis,lid = $1 in SynPat.LongIdent (lid,None,$2, $4,vis,lhs parseState) }
   | COLON_QMARK atomType  %prec pat_isinst 
       { SynPat.IsInst($2,lhs parseState) }
   | atomicPattern 
       { $1 }
+
+atomicPatsOrNamePatPairs:
+  | LPAREN namePatPairs rparen { SynConstructorArgs.NamePatPairs $2 }
+  | atomicPatterns { SynConstructorArgs.Pats $1 }
 
 atomicPatterns: 
   | atomicPattern atomicPatterns %prec pat_args 
@@ -2482,7 +2499,7 @@ parenPattern:
       { let lhsm = lhs parseState 
         SynPat.Attrib($2,$1,lhsm) } 
   | parenPattern COLON_COLON  parenPattern 
-      { SynPat.LongIdent (LongIdentWithDots(mkSynCaseName (rhs parseState 2) opNameCons,[]), None, None, [ SynPat.Tuple ([$1;$3],rhs2 parseState 1 3) ],None,lhs parseState) }
+      { SynPat.LongIdent (LongIdentWithDots(mkSynCaseName (rhs parseState 2) opNameCons,[]), None, None, SynConstructorArgs.Pats [ SynPat.Tuple ([$1;$3],rhs2 parseState 1 3) ],None,lhs parseState) }
   | constrPattern { $1 }
 
 tupleParenPatternElements:
@@ -3198,10 +3215,12 @@ atomicExprQualification:
       { (fun e lhsm dotm -> 
             libraryOnlyError(lhs parseState);
             SynExpr.LibraryOnlyUnionCaseFieldGet (e,mkSynCaseName lhsm opNameCons,(fst $5),lhsm)) }
+
   |   LPAREN  typedSeqExpr rparen  
       { (fun e lhsm dotm -> 
             mlCompatWarning (FSComp.SR.parsParenFormIsForML()) (lhs parseState); 
             mkSynDotParenGet lhsm dotm e $2) }
+
   |   LBRACK  typedSeqExpr RBRACK  
       { (fun e lhsm dotm -> mkSynDotBrackGet lhsm dotm e $2) }
 
@@ -3209,31 +3228,36 @@ atomicExprQualification:
       { reportParseErrorAt (rhs parseState 1) (FSComp.SR.parsUnmatchedBracket()); 
         (fun e lhsm dotm -> exprFromParseError (mkSynDotBrackGet lhsm dotm e $2)) }
 
+  |   LBRACK optRange RBRACK   
+      { (fun e lhsm dotm -> mkSynDotBrackSliceGet lhsm dotm e $2) }
+  |   LBRACK optRange COMMA optRange RBRACK  %prec slice_comma
+      { (fun e lhsm dotm -> mkSynDotBrackSlice2Get lhsm dotm e $2 $4) }
+  |   LBRACK optRange COMMA optRange COMMA optRange RBRACK  %prec slice_comma
+      { (fun e lhsm dotm -> mkSynDotBrackSlice3Get lhsm dotm e $2 $4 $6) }
+  |   LBRACK optRange COMMA optRange COMMA optRange COMMA optRange RBRACK  %prec slice_comma
+      { (fun e lhsm dotm -> mkSynDotBrackSlice4Get lhsm dotm e $2 $4 $6 $8) }
+
   |   LBRACK  error RBRACK  
       { let mArg = rhs2 parseState 1 3
         (fun e lhsm dotm -> mkSynDotBrackGet lhsm dotm e (arbExpr("indexerExpr1",mArg))) }
+
   |   LBRACK  recover
       { reportParseErrorAt (rhs parseState 1) (FSComp.SR.parsUnmatchedBracket())
         let mArg = (rhs parseState 1).EndRange 
         (fun e lhsm dotm -> exprFromParseError (mkSynDotBrackGet lhsm dotm e (arbExpr("indexerExpr2",mArg)))) }
-  |   LBRACK  optRange RBRACK  
-      { (fun e lhsm dotm -> mkSynDotBrackSliceGet lhsm dotm e $2) }
-  |   LBRACK  optRange COMMA optRange RBRACK  %prec slice_comma
-      { (fun e lhsm dotm -> mkSynDotBrackSlice2Get lhsm dotm e $2 $4) }
-  |   LBRACK  optRange COMMA optRange COMMA optRange RBRACK  %prec slice_comma
-      { (fun e lhsm dotm -> mkSynDotBrackSlice3Get lhsm dotm e $2 $4 $6) }
-  |   LBRACK  optRange COMMA optRange COMMA optRange COMMA optRange RBRACK  %prec slice_comma
-      { (fun e lhsm dotm -> mkSynDotBrackSlice4Get lhsm dotm e $2 $4 $6 $8) }
+
 
 optRange:
   | declExpr DOT_DOT declExpr 
-      { mkSynOptionalExpr (rhs parseState 1) (Some $1), mkSynOptionalExpr (rhs parseState 3) (Some $3) }
+      { SynIndexerArg.Two(mkSynOptionalExpr (rhs parseState 1) (Some $1), mkSynOptionalExpr (rhs parseState 3) (Some $3)) }
   | declExpr DOT_DOT 
-      { mkSynOptionalExpr (rhs parseState 1) (Some $1), mkSynOptionalExpr (rhs parseState 2) None }
+      { SynIndexerArg.Two(mkSynOptionalExpr (rhs parseState 1) (Some $1), mkSynOptionalExpr (rhs parseState 2) None) }
   | DOT_DOT declExpr 
-      { mkSynOptionalExpr (rhs parseState 1) None, mkSynOptionalExpr (rhs parseState 2) (Some $2) }
+      { SynIndexerArg.Two(mkSynOptionalExpr (rhs parseState 1) None, mkSynOptionalExpr (rhs parseState 2) (Some $2)) }
   | STAR 
-      { mkSynOptionalExpr (rhs parseState 1) None, mkSynOptionalExpr (rhs parseState 1) None }
+      { SynIndexerArg.Two(mkSynOptionalExpr (rhs parseState 1) None, mkSynOptionalExpr (rhs parseState 1) None) }
+  | declExpr %prec slice_expr
+      { SynIndexerArg.One($1) }
   
 
 /* the start et of atomicExprAfterType must not overlap with the valid postfix tokens of the type syntax, e.g. new List<T>(...) */

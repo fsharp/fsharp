@@ -425,7 +425,7 @@ let rebuildTS g m ts vs =
       match vs,ts with
       | []   ,UnknownTS   -> internalError "rebuildTS: not enough fringe to build tuple"
       | v::vs,UnknownTS   -> vs,(exprForVal m v,v.Type)
-      | vs   ,TupleTS tss -> let vs,xtys = List.fmap rebuild vs tss
+      | vs   ,TupleTS tss -> let vs,xtys = List.foldMap rebuild vs tss
                              let xs,tys  = List.unzip xtys
                              let x  = mkTupled g m xs tys
                              let ty = mkTupledTy g tys

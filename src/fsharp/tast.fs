@@ -2975,7 +2975,7 @@ and
       TypeForwarders : CcuTypeForwarderTable }
 
 /// Represents a table of .NET CLI type forwarders for an assembly
-and CcuTypeForwarderTable = Lazy<Map<string[] * string, EntityRef>>
+and CcuTypeForwarderTable = Map<string[] * string, Lazy<EntityRef>>
 
 and CcuReference =  string // ILAssemblyRef
 
@@ -3054,7 +3054,7 @@ and CcuThunk =
     member ccu.Contents            = ccu.Deref.Contents
 
     /// The table of type forwarders for this assembly
-    member ccu.TypeForwarders : Map<string[] * string, EntityRef>  = ccu.Deref.TypeForwarders.Force()
+    member ccu.TypeForwarders : Map<string[] * string, Lazy<EntityRef>>  = ccu.Deref.TypeForwarders
 
     /// The table of modules and namespaces at the "root" of the assembly
     member ccu.RootModulesAndNamespaces = ccu.Contents.ModuleOrNamespaceType.ModuleAndNamespaceDefinitions
@@ -3094,7 +3094,9 @@ and CcuThunk =
     /// Try to resolve a path into the CCU by referencing the .NET/CLI type forwarder table of the CCU
     member ccu.TryForward(nlpath:string[],item:string) : EntityRef option  = 
         ccu.EnsureDerefable(nlpath)
-        ccu.TypeForwarders.TryFind(nlpath,item) 
+        match ccu.TypeForwarders.TryFind(nlpath,item) with
+        | Some entity -> Some(entity.Force())
+        | None -> None
         //printfn "trying to forward %A::%s from ccu '%s', res = '%A'" p n ccu.AssemblyName res.IsSome
 
     /// Used to make forward calls into the type/assembly loader when comparing member signatures during linking

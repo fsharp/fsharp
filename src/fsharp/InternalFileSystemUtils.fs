@@ -33,6 +33,11 @@ open System
 open System.IO
 open System.Diagnostics
 
+type internal File() =
+    static member SafeExists filename = FileSystem.SafeExists filename
+    //static member SafeNewFileStream(filename:string,mode:FileMode,access:FileAccess,share:FileShare) = 
+    //    FileSystem new FileStream(filename,mode,access,share) 
+
 type internal Path() =
 
     static member IsInvalidDirectory(path:string) = 

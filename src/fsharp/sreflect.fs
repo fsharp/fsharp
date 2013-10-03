@@ -191,6 +191,7 @@ let mkFieldSet ((d1,d2),tyargs,args) = CombExpr(FieldSetOp(d1,d2),tyargs,args)
 let mkCtorCall   (d,tyargs,args) = CombExpr(CtorCallOp(d),tyargs,args)
 let mkMethodCall (d,tyargs,args) = CombExpr(MethodCallOp(d),tyargs,args)
 let mkAttributedExpression(e,attr) = AttrExpr(e,[attr])
+let isAttributedExpression e = match e with AttrExpr(_, _) -> true | _ -> false
 
 //---------------------------------------------------------------------------
 // Pickle/unpickle expression and type specifications in a stable format

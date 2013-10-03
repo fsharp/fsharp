@@ -97,15 +97,15 @@ type internal UntypedParseResults =
     }
 
 [<Sealed>]
-type (* internal *) UntypedParseInfo internal (parsed:UntypedParseResults) = 
+type internal UntypedParseInfo(parsed:UntypedParseResults) = 
 
-    member internal scope.ParseTree =
+    member scope.ParseTree =
         match parsed with
         | { Input=x } -> x
 
-    member internal scope.Results = parsed
+    member scope.Results = parsed
 
-    member internal scope.FindNoteworthyParamInfoLocations(line,col) = 
+    member scope.FindNoteworthyParamInfoLocations(line,col) = 
         match parsed with
         | { Input=Some(input) } -> 
             // Why don't we traverse the AST under a syncop?  We don't need to, because the AST is an _immutable_ DU of DUs of ints and strings and whatnot.  And a SyncOp really does slow it down in practice.
@@ -151,7 +151,7 @@ type (* internal *) UntypedParseInfo internal (parsed:UntypedParseResults) =
                   let isFunction = 
                       isSome memFlagsOpt ||
                       match synPat with 
-                      | SynPat.LongIdent (_,_,_,args,_,_) when nonNil args -> true
+                      | SynPat.LongIdent (_,_,_, SynConstructorArgs.Pats args,_,_) when nonNil args -> true
                       | _ -> false
                   if not isFunction then 
                       yield! walkBindSeqPt spInfo
@@ -163,7 +163,7 @@ type (* internal *) UntypedParseInfo internal (parsed:UntypedParseResults) =
             and walkMatchClauses cl = 
                 [ for (Clause(_,whenExpr,e,_,_)) in cl do 
                     match whenExpr with Some e -> yield! walkExpr false e | _ -> ()
-                    yield! walkExpr true e; ]
+                    yield! walkExpr true e ]
 
             and walkExprOpt (spAlways:bool) eOpt = [ match eOpt with Some e -> yield! walkExpr spAlways e | _ -> () ]
             
@@ -218,8 +218,8 @@ type (* internal *) UntypedParseInfo internal (parsed:UntypedParseResults) =
                   | SynExpr.DotSet (e1,_,e2,_)
                   | SynExpr.LibraryOnlyUnionCaseFieldSet (e1,_,_,e2,_)
                   | SynExpr.App (_,_,e1,e2,_) -> 
-                      yield! walkExpr false e1; 
-                      yield! walkExpr false e2;
+                      yield! walkExpr false e1 
+                      yield! walkExpr false e2
 
                   | SynExpr.ArrayOrList (_,es,_)
                   | SynExpr.Tuple (es,_,_) -> 
@@ -230,40 +230,40 @@ type (* internal *) UntypedParseInfo internal (parsed:UntypedParseResults) =
                       yield! walkExprs (List.map (fun (_, v, _) -> v) fs |> List.choose id)
 
                   | SynExpr.ObjExpr (_,_,bs,is,_,_) -> 
-                      yield! walkBinds bs ; 
+                      yield! walkBinds bs  
                       for (InterfaceImpl(_,bs,_)) in is do yield! walkBinds bs
                   | SynExpr.While (spWhile,e1,e2,_) -> 
                       yield! walkWhileSeqPt spWhile
-                      yield! walkExpr false e1; 
-                      yield! walkExpr true e2;
+                      yield! walkExpr false e1 
+                      yield! walkExpr true e2
                   | SynExpr.JoinIn(e1, _range, e2, _range2) -> 
-                      yield! walkExpr false e1; 
-                      yield! walkExpr false e2;
+                      yield! walkExpr false e1 
+                      yield! walkExpr false e2
                   | SynExpr.For (spFor,_,e1,_,e2,e3,_) -> 
                       yield! walkForSeqPt spFor
-                      yield! walkExpr false e1; 
-                      yield! walkExpr true e2; 
-                      yield! walkExpr true e3;
+                      yield! walkExpr false e1 
+                      yield! walkExpr true e2 
+                      yield! walkExpr true e3
                   | SynExpr.ForEach (spFor,_,_,_,e1,e2,_) ->
                       yield! walkForSeqPt spFor
-                      yield! walkExpr false e1; 
-                      yield! walkExpr true e2; 
+                      yield! walkExpr false e1 
+                      yield! walkExpr true e2 
                   | SynExpr.MatchLambda(_isExnMatch,_argm,cl,spBind,_wholem) -> 
                       yield! walkBindSeqPt spBind
                       for (Clause(_,whenExpr,e,_,_)) in cl do 
                           yield! walkExprOpt false whenExpr
-                          yield! walkExpr true e; 
+                          yield! walkExpr true e 
                   | SynExpr.Lambda (_,_,_,e,_) -> 
-                      yield! walkExpr true e; 
+                      yield! walkExpr true e 
                   | SynExpr.Match (spBind,e,cl,_,_) ->
                       yield! walkBindSeqPt spBind
-                      yield! walkExpr false e; 
+                      yield! walkExpr false e 
                       for (Clause(_,whenExpr,e,_,_)) in cl do 
                           yield! walkExprOpt false whenExpr
-                          yield! walkExpr true e; 
+                          yield! walkExpr true e 
                   | SynExpr.LetOrUse (_,_,bs,e,_) -> 
-                      yield! walkBinds bs ; 
-                      yield! walkExpr true e;
+                      yield! walkBinds bs  
+                      yield! walkExpr true e
 
                   | SynExpr.TryWith (e,_,cl,_,_,spTry,spWith) -> 
                       yield! walkTrySeqPt spTry
@@ -285,17 +285,16 @@ type (* internal *) UntypedParseInfo internal (parsed:UntypedParseResults) =
                       yield! walkExpr true e2
                       yield! walkExprOpt true e3opt
                   | SynExpr.DotIndexedGet (e1,es,_,_) -> 
-                      yield! walkExpr false e1; 
-                      yield! walkExprs es;
-
+                      yield! walkExpr false e1 
+                      yield! walkExprs [ for e in es do yield! e.Exprs ]
                   | SynExpr.DotIndexedSet (e1,es,e2,_,_,_) ->
-                      yield! walkExpr false e1; 
-                      yield! walkExprs es;
-                      yield! walkExpr false e2; 
+                      yield! walkExpr false e1 
+                      yield! walkExprs [ for e in es do yield! e.Exprs ]
+                      yield! walkExpr false e2 
                   | SynExpr.DotNamedIndexedPropertySet (e1,_,e2,e3,_) ->
-                      yield! walkExpr false e1; 
-                      yield! walkExpr false e2; 
-                      yield! walkExpr false e3; 
+                      yield! walkExpr false e1 
+                      yield! walkExpr false e2 
+                      yield! walkExpr false e3 
 
                   | SynExpr.LetOrUseBang  (spBind,_,_,_,e1,e2,_) -> 
                       yield! walkBindSeqPt spBind

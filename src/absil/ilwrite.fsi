@@ -26,7 +26,7 @@ type ILStrongNameSigner =
     static member OpenKeyContainer: string -> ILStrongNameSigner
 
 type options =
- { mscorlib: ILScopeRef;
+ { ilg: ILGlobals
    pdbfile: string option;
    signer : ILStrongNameSigner option;
    fixupOverlappingSequencePoints : bool;

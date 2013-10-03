@@ -229,7 +229,7 @@ namespace Microsoft.FSharp.Collections
                   if !index = unstarted then notStarted()
                   if !index = completed then alreadyFinished()
                   match box !current with 
-                  | null -> current := Lazy.Create(fun () -> f !index); 
+                  | null -> current := Lazy<_>.Create(fun () -> f !index); 
                   | _ ->  ()
                   // forced or re-forced immediately.          
                   (!current).Force() 

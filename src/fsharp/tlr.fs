@@ -605,7 +605,7 @@ module Pass2_DetermineReqdItems =
        
         let rec fixpoint reqdItemsMap =
             let changed = false
-            let changed,reqdItemsMap = Zmap.fmap (closeStep reqdItemsMap) changed reqdItemsMap
+            let changed,reqdItemsMap = Zmap.foldMap (closeStep reqdItemsMap) changed reqdItemsMap
             if changed then
                 fixpoint reqdItemsMap
             else
@@ -799,7 +799,7 @@ let FlatEnvPacks g fclassM topValS declist (reqdItemsMap: Zmap<BindingGroupShari
               ep_unpack = FlatList.ofList unpack})
   
    let carriedMaps = Zmap.empty fclassOrder
-   let _carriedMaps,envPacks = List.fmap packEnv carriedMaps declist   (* List.fmap in dec order *)
+   let _carriedMaps,envPacks = List.foldMap packEnv carriedMaps declist   (* List.foldMap in dec order *)
    let envPacks = Zmap.ofList fclassOrder envPacks
    envPacks
 
@@ -1128,7 +1128,7 @@ module Pass4_RewriteAssembly =
         | Expr.App (f,fty,tys,args,m) ->
            // pass over f,args subexprs 
            let z,f      = TransExpr penv z f
-           let z,args = List.fmap (TransExpr penv) z args
+           let z,args = List.foldMap (TransExpr penv) z args
            // match app, and fixup if needed 
            let f,fty,tys,args,m = destApp (f,fty,tys,args,m)
            let expr = TransApp penv (f,fty,tys,args,m)
@@ -1147,8 +1147,8 @@ module Pass4_RewriteAssembly =
         // ilobj - has implicit lambda exprs and recursive/base references 
         | Expr.Obj (_,ty,basev,basecall,overrides,iimpls,m) ->
             let z,basecall  = TransExpr penv                            z basecall 
-            let z,overrides = List.fmap (TransMethod penv)                  z overrides
-            let z,iimpls    = List.fmap (fmap2Of2 (List.fmap (TransMethod penv))) z iimpls   
+            let z,overrides = List.foldMap (TransMethod penv)                  z overrides
+            let z,iimpls    = List.foldMap (fmap2Of2 (List.foldMap (TransMethod penv))) z iimpls   
             let expr = Expr.Obj(newUnique(),ty,basev,basecall,overrides,iimpls,m)
             let z,pds = ExtractPreDecs z
             z,WrapPreDecs m pds expr (* if TopLevel, lift preDecs over the ilobj expr *)
@@ -1173,7 +1173,7 @@ module Pass4_RewriteAssembly =
         | Expr.Match(spBind,exprm,dtree,targets,m,ty) ->
             let targets = Array.toList targets
             let z,dtree   = TransDecisionTree penv z dtree
-            let z,targets = List.fmap (TransDecisionTreeTarget penv) z targets
+            let z,targets = List.foldMap (TransDecisionTreeTarget penv) z targets
             // TransDecisionTreeTarget wraps EnterInner/exitInnter, so need to collect any top decs 
             let z,pds = ExtractPreDecs z
             z,WrapPreDecs m pds (mkAndSimplifyMatch spBind exprm m ty dtree targets)
@@ -1181,12 +1181,12 @@ module Pass4_RewriteAssembly =
         // all others - below - rewrite structurally - so boiler plate code after this point... 
         | Expr.Const _ -> z,expr (* constant wrt Val *)
         | Expr.Quote (a,{contents=Some(argTypes,argExprs,data)},isFromQueryExpression,m,ty) -> 
-            let z,argExprs = List.fmap (TransExpr penv) z argExprs
+            let z,argExprs = List.foldMap (TransExpr penv) z argExprs
             z,Expr.Quote(a,{contents=Some(argTypes,argExprs,data)},isFromQueryExpression,m,ty)
         | Expr.Quote (a,{contents=None},isFromQueryExpression,m,ty) -> 
             z,Expr.Quote(a,{contents=None},isFromQueryExpression,m,ty)
         | Expr.Op (c,tyargs,args,m) -> 
-            let z,args = List.fmap (TransExpr penv) z args
+            let z,args = List.foldMap (TransExpr penv) z args
             z,Expr.Op(c,tyargs,args,m)
         | Expr.StaticOptimization (constraints,e2,e3,m) ->
             let z,e2 = TransExpr penv z e2
@@ -1209,7 +1209,7 @@ module Pass4_RewriteAssembly =
              let z = EnterInner z
              // For letrec, preDecs from RHS must mutually recurse with those from the bindings 
              let z,pdsPrior    = PopPreDecs z
-             let z,binds       = FlatList.fmap (TransBindingRhs penv) z binds
+             let z,binds       = FlatList.foldMap (TransBindingRhs penv) z binds
              let z,pdsRhs      = PopPreDecs z
              let binds,rebinds = TransBindings   IsRec penv binds
              let z,binds       = LiftTopBinds IsRec penv z   binds (* factor Top* repr binds *)
@@ -1263,7 +1263,7 @@ module Pass4_RewriteAssembly =
     and TransDecisionTree penv z x =
        match x with 
        | TDSuccess (es,n) -> 
-           let z,es = FlatList.fmap (TransExpr penv) z es
+           let z,es = FlatList.foldMap (TransExpr penv) z es
            z,TDSuccess(es,n)
        | TDBind (bind,rest) -> 
            let z,bind       = TransBindingRhs penv z bind
@@ -1275,8 +1275,8 @@ module Pass4_RewriteAssembly =
                let z,dtree = TransDecisionTree penv z dtree
                z,TCase(discrim,dtree)
           
-           let z,cases = List.fmap (TransDecisionTreeCase penv) z cases
-           let z,dflt  = Option.fmap (TransDecisionTree penv)      z dflt
+           let z,cases = List.foldMap (TransDecisionTreeCase penv) z cases
+           let z,dflt  = Option.foldMap (TransDecisionTree penv)      z dflt
            z,TDSwitch (e,cases,dflt,m)
 
     and TransDecisionTreeTarget penv z (TTarget(vs,e,spTarget)) =
@@ -1286,14 +1286,14 @@ module Pass4_RewriteAssembly =
         z,TTarget(vs,e,spTarget)
 
     and TransValBinding penv z bind = TransBindingRhs penv z bind 
-    and TransValBindings penv z binds = FlatList.fmap (TransValBinding penv) z  binds
+    and TransValBindings penv z binds = FlatList.foldMap (TransValBinding penv) z  binds
     and TransModuleExpr penv z x = 
         match x with  
         | ModuleOrNamespaceExprWithSig(mty,def,m) ->  
             let z,def = TransModuleDef penv z def
             z,ModuleOrNamespaceExprWithSig(mty,def,m)
         
-    and TransModuleDefs penv z x = List.fmap (TransModuleDef penv) z x
+    and TransModuleDefs penv z x = List.foldMap (TransModuleDef penv) z x
     and TransModuleDef penv (z: RewriteState) x = 
         match x with 
         | TMDefRec(tycons,binds,mbinds,m) -> 
@@ -1312,7 +1312,7 @@ module Pass4_RewriteAssembly =
         | TMAbstract(mexpr) -> 
             let z,mexpr = TransModuleExpr penv z mexpr
             z,TMAbstract(mexpr)
-    and TransModuleBindings penv z binds = List.fmap (TransModuleBinding penv) z  binds
+    and TransModuleBindings penv z binds = List.foldMap (TransModuleBinding penv) z  binds
     and TransModuleBinding penv z (ModuleOrNamespaceBinding(nm, rhs)) =
         let z,rhs = TransModuleDef penv z rhs
         z,ModuleOrNamespaceBinding(nm,rhs)
@@ -1320,7 +1320,7 @@ module Pass4_RewriteAssembly =
     let TransImplFile penv z mv = fmapTImplFile (TransModuleExpr penv) z mv
 
     let TransAssembly penv z (TAssembly(mvs)) = 
-        let _z,mvs = List.fmap (TransImplFile penv) z mvs 
+        let _z,mvs = List.foldMap (TransImplFile penv) z mvs 
         TAssembly(mvs)
 
 //-------------------------------------------------------------------------

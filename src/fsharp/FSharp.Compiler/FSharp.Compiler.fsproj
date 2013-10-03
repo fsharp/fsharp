@@ -1,14 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-# Copyright (c) 2002-2011 Microsoft Corporation. 
-#
-# 
-# 
-# 
-#
-#
-# You must not remove this notice, or any other, from this software.
--->
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <FSharpSourcesRoot>..\..</FSharpSourcesRoot>
@@ -23,7 +13,7 @@
     <NoWarn>$(NoWarn);44;62;9</NoWarn>
     <ProjectGuid>{2E4D67B4-522D-4CF7-97E4-BA940F0B18F3}</ProjectGuid>
     <AllowCrossTargeting>true</AllowCrossTargeting>
-    <TargetFrameworkVersion Condition="'$(TargetFramework)'=='net20' or '$(TargetFramework)'=='mono20'">v2.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion Condition="'$(TargetFramework)'=='net20'">v2.0</TargetFrameworkVersion>
     <BaseAddress>0x06800000</BaseAddress>
     <OtherFlags>$(OtherFlags) /warnon:1182</OtherFlags>
   </PropertyGroup>
@@ -487,9 +477,11 @@
     <Compile Include="..\vs\service.fs">
       <Link>service.fs</Link>
     </Compile>
+<!--
     <Compile Include="..\vs\SimpleServices.fs">
       <Link>SimpleServices.fs</Link>
     </Compile>
+-->
   </ItemGroup>
   <ItemGroup>
     <Reference Include="mscorlib" />
@@ -500,13 +492,13 @@
     <Reference Include="System.Runtime.Remoting" />    
     <Reference Include="Microsoft.Build.Framework" />
     <Reference Include="Microsoft.Build.Engine" />
-    <Reference Include="Microsoft.Build.Utilities" Condition="'$(TargetFramework)'=='net20' or '$(TargetFramework)'=='mono20'" />
-    <Reference Include="Microsoft.Build.Tasks" Condition="'$(TargetFramework)'=='net20' or '$(TargetFramework)'=='mono20'" />
+    <Reference Include="Microsoft.Build.Utilities" Condition="'$(TargetFramework)'=='net20'" />
+    <Reference Include="Microsoft.Build.Tasks" Condition="'$(TargetFramework)'=='net20'" />
 
-    <Reference Include="ISymWrapper, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" Condition="'$(TargetFramework)'=='net40' or '$(TargetFramework)'=='mono40'" />
-    <Reference Include="Microsoft.Build" Condition="'$(TargetFramework)'=='net40' or '$(TargetFramework)'=='mono40'" />
-    <Reference Include="Microsoft.Build.Utilities.v4.0" Condition="'$(TargetFramework)'=='net40' or '$(TargetFramework)'=='mono40'" />
-    <Reference Include="Microsoft.Build.Tasks.v4.0" Condition="'$(TargetFramework)'=='net40' or '$(TargetFramework)'=='mono40'" />
+    <Reference Include="ISymWrapper, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" Condition="'$(TargetFramework)'=='net40'" />
+    <Reference Include="Microsoft.Build" Condition="'$(TargetFramework)'=='net40'" />
+    <Reference Include="Microsoft.Build.Utilities.v4.0" Condition="'$(TargetFramework)'=='net40'" />
+    <Reference Include="Microsoft.Build.Tasks.v4.0" Condition="'$(TargetFramework)'=='net40'" />
 
 
     <ProjectReference Include="$(FSharpSourcesRoot)\fsharp\FSharp.Core\FSharp.Core.fsproj" >

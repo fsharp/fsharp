@@ -1,7 +1,13 @@
 namespace Microsoft.FSharp.Core
 
 module internal SR =
+#if FX_RESHAPED_REFLECTION
+    open System.Reflection
+    type TypeInThisAssembly(_dummy : obj) = class end
+    let private resources = new System.Resources.ResourceManager("FSCore", TypeInThisAssembly(null).GetType().GetTypeInfo().Assembly)
+#else
     let private resources = new System.Resources.ResourceManager("FSCore", System.Reflection.Assembly.GetExecutingAssembly())
+#endif
 
     let matchCasesIncomplete = "matchCasesIncomplete"
     let resetNotSupported = "resetNotSupported"

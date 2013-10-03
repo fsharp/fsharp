@@ -75,7 +75,6 @@ namespace Microsoft.FSharp.Core
     open System.Globalization
     open System.Text
 
-
     //-------------------------------------------------------------------------
     // enumerations
 
@@ -112,8 +111,7 @@ namespace Microsoft.FSharp.Core
                clone
     
     open ICloneableExtensions
-#else
-#endif    
+#endif
 
     [<AttributeUsage(AttributeTargets.Class,AllowMultiple=false)>]
     type SealedAttribute(value:bool) =
@@ -392,6 +390,27 @@ namespace Microsoft.FSharp.Core
     [<MeasureAnnotatedAbbreviation>] type int16<[<Measure>] 'Measure> = int16
     [<MeasureAnnotatedAbbreviation>] type int64<[<Measure>] 'Measure> = int64
 
+#if FX_RESHAPED_REFLECTION
+    module PrimReflectionAdapters =
+        
+        open System.Reflection
+        open System.Linq
+        // copied from BasicInlinedOperations
+        let inline box     (x:'T) = (# "box !0" type ('T) x : obj #)
+        let inline unboxPrim<'T>(x:obj) = (# "unbox.any !0" type ('T) x : 'T #)
+        type System.Type with
+            member inline this.IsGenericType = this.GetTypeInfo().IsGenericType
+            member inline this.IsValueType = this.GetTypeInfo().IsValueType
+            member inline this.IsAssignableFrom(otherTy : Type) = this.GetTypeInfo().IsAssignableFrom(otherTy.GetTypeInfo())
+            member inline this.GetProperty(name) = this.GetRuntimeProperty(name)
+            member inline this.GetMethod(name, parameterTypes) = this.GetRuntimeMethod(name, parameterTypes)
+            member inline this.GetCustomAttributes(attrTy : Type, inherits : bool) : obj[] = 
+                unboxPrim<_> (box (CustomAttributeExtensions.GetCustomAttributes(this.GetTypeInfo(), attrTy, false).ToArray()))
+
+    open PrimReflectionAdapters
+
+#endif
+
 
     module BasicInlinedOperations =  
         let inline unboxPrim<'T>(x:obj) = (# "unbox.any !0" type ('T) x : 'T #)
@@ -443,10 +462,10 @@ namespace Microsoft.FSharp.Core
 
         let inline typeof<'T> =
             let tok = (# "ldtoken !0" type('T) : System.RuntimeTypeHandle #)
-            System.Type.GetTypeFromHandle(tok) 
+            System.Type.GetTypeFromHandle(tok)
 
         let inline typedefof<'T> = 
-            let ty = typeof<'T> 
+            let ty = typeof<'T>
             if ty.IsGenericType then ty.GetGenericTypeDefinition() else ty
         
         let inline sizeof<'T>  =
@@ -678,10 +697,12 @@ namespace Microsoft.FSharp.Core
           
         
         open IntrinsicOperators
+#if FX_RESHAPED_REFLECTION
+        open PrimReflectionAdapters
+#endif
         [<CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1034:NestedTypesShouldNotBeVisible")>]  // nested module OK
         module IntrinsicFunctions =        
             
-            //-------------------------------------------------------------------------
             // Unboxing, type casts, type tests
 
             type TypeNullnessSemantics = int
@@ -704,17 +725,17 @@ namespace Microsoft.FSharp.Core
                    let ty = typeof<'T>
                    if ty.IsValueType 
                    then TypeNullnessSemantics_NullNever else
-                   let mappingAttrs = ty.GetCustomAttributes(typeof<CompilationMappingAttribute>,false)
+                   let mappingAttrs = ty.GetCustomAttributes(typeof<CompilationMappingAttribute>, false)
                    if mappingAttrs.Length = 0 
                    then TypeNullnessSemantics_NullIsExtraValue
                    elif ty.Equals(typeof<unit>) then 
                        TypeNullnessSemantics_NullTrueValue
-                   elif typeof<System.Delegate>.IsAssignableFrom(ty) then 
+                   elif typeof<Delegate>.IsAssignableFrom(ty) then 
                        TypeNullnessSemantics_NullIsExtraValue
-                   elif ty.GetCustomAttributes(typeof<AllowNullLiteralAttribute>,false).Length > 0 then
+                   elif ty.GetCustomAttributes(typeof<AllowNullLiteralAttribute>, false).Length > 0 then
                        TypeNullnessSemantics_NullIsExtraValue
                    else
-                       let reprAttrs = ty.GetCustomAttributes(typeof<CompilationRepresentationAttribute>,false)
+                       let reprAttrs = ty.GetCustomAttributes(typeof<CompilationRepresentationAttribute>, false)
                        if reprAttrs.Length = 0 then 
                            TypeNullnessSemantics_NullNotLiked 
                        else
@@ -2288,7 +2309,11 @@ namespace Microsoft.FSharp.Core
             let sign = getSign32 s &p l 
             let specifier = get0OXB s &p l 
             if p >= l then formatError() else
-            match Char.ToLower(specifier,CultureInfo.InvariantCulture(*FxCop:1304*)) with 
+#if FX_NO_TO_LOWER_INVARIANT
+            match Char.ToLower(specifier, CultureInfo.InvariantCulture(*FxCop:1304*)) with 
+#else
+            match Char.ToLowerInvariant(specifier) with 
+#endif
             | 'x' -> sign * (int32OfUInt32 (Convert.ToUInt32(UInt64.Parse(s.Substring(p), NumberStyles.AllowHexSpecifier,CultureInfo.InvariantCulture))))
             | 'b' -> sign * (int32OfUInt32 (Convert.ToUInt32(parseBinaryUInt64 s p l)))
             | 'o' -> sign * (int32OfUInt32 (Convert.ToUInt32(parseOctalUInt64 s p l)))
@@ -2303,7 +2328,11 @@ namespace Microsoft.FSharp.Core
             let sign = getSign64 s &p l 
             let specifier = get0OXB s &p l 
             if p >= l then formatError() else
-            match Char.ToLower(specifier,CultureInfo.InvariantCulture(*FxCop:1304*)) with 
+#if FX_NO_TO_LOWER_INVARIANT
+            match Char.ToLower(specifier, CultureInfo.InvariantCulture(*FxCop:1304*)) with 
+#else
+            match Char.ToLowerInvariant(specifier) with 
+#endif
             | 'x' -> sign *. Int64.Parse(s.Substring(p), NumberStyles.AllowHexSpecifier,CultureInfo.InvariantCulture)
             | 'b' -> sign *. (int64OfUInt64 (parseBinaryUInt64 s p l))
             | 'o' -> sign *. (int64OfUInt64 (parseOctalUInt64 s p l))
@@ -3135,6 +3164,7 @@ namespace Microsoft.FSharp.Core
     type FuncConvert = 
         static member  ToFSharpFunc( f : Action<_>) = (fun t -> f.Invoke(t))
 #if FX_NO_CONVERTER
+        static member  ToFSharpFunc( f : System.Func<_, _>) = (fun t -> f.Invoke(t))
 #else        
         static member  ToFSharpFunc( f : Converter<_,_>) = (fun t -> f.Invoke(t))
 #endif        
@@ -4628,6 +4658,9 @@ namespace Microsoft.FSharp.Core
 
             
             open System.Collections
+#if FX_RESHAPED_REFLECTION
+            open PrimReflectionAdapters
+#endif
             
             let notStarted() = raise (new System.InvalidOperationException(SR.GetString(SR.enumerationNotStarted)))
             let alreadyFinished() = raise (new System.InvalidOperationException(SR.GetString(SR.enumerationAlreadyFinished)))
@@ -4908,82 +4941,114 @@ namespace Microsoft.FSharp.Core
             
 
             let inline GetArraySlice (arr: _[]) start finish = 
-                   let start  = (match start with None -> 0 | Some n -> n) 
-                   let finish = (match finish with None -> arr.Length - 1 | Some n -> n) 
-                   GetArraySub arr start (finish - start + 1)
+                let start  = (match start with None -> 0 | Some n -> n) 
+                let finish = (match finish with None -> arr.Length - 1 | Some n -> n) 
+                GetArraySub arr start (finish - start + 1)
 
             let inline SetArraySlice (dst: _[]) start finish (src:_[]) = 
-                   let start  = (match start with None -> 0 | Some n -> n) 
-                   let finish = (match finish with None -> dst.Length - 1 | Some n -> n) 
-                   SetArraySub dst start (finish - start + 1) src
+                let start  = (match start with None -> 0 | Some n -> n) 
+                let finish = (match finish with None -> dst.Length - 1 | Some n -> n) 
+                SetArraySub dst start (finish - start + 1) src
 
             let GetArraySlice2D (arr: _[,]) start1 finish1 start2 finish2 = 
-                   let start1  = (match start1 with None -> 0 | Some n -> n) 
-                   let start2  = (match start2 with None -> 0 | Some n -> n) 
-                   let finish1 = (match finish1 with None -> GetArray2DLength1 arr - 1 | Some n -> n) 
-                   let finish2 = (match finish2 with None -> GetArray2DLength2 arr - 1 | Some n -> n) 
-                   let len1 = (finish1 - start1 + 1)
-                   let len2 = (finish2 - start2 + 1)
-                   GetArray2DSub arr start1 start2 len1 len2
+                let start1  = (match start1 with None -> 0 | Some n -> n) 
+                let start2  = (match start2 with None -> 0 | Some n -> n) 
+                let finish1 = (match finish1 with None -> GetArray2DLength1 arr - 1 | Some n -> n) 
+                let finish2 = (match finish2 with None -> GetArray2DLength2 arr - 1 | Some n -> n) 
+                let len1 = (finish1 - start1 + 1)
+                let len2 = (finish2 - start2 + 1)
+                GetArray2DSub arr start1 start2 len1 len2
+
+            let inline GetArraySlice2DFixed1 (arr: _[,]) fixed1 start2 finish2 = 
+                let start2  = (match start2 with None -> 0 | Some n -> n) 
+                let finish2 = (match finish2 with None -> GetArray2DLength2 arr - 1 | Some n -> n) 
+                let len2 = (finish2 - start2 + 1)
+                let dst = zeroCreate len2
+                for j = 0 to len2 - 1 do 
+                    SetArray dst j (GetArray2D arr fixed1 (start2+j))
+                dst
+
+            let inline GetArraySlice2DFixed2 (arr: _[,]) start1 finish1 fixed2 = 
+                let start1  = (match start1 with None -> 0 | Some n -> n) 
+                let finish1 = (match finish1 with None -> GetArray2DLength1 arr - 1 | Some n -> n) 
+                let len1 = (finish1 - start1 + 1)
+                let dst = zeroCreate len1
+                for i = 0 to len1 - 1 do 
+                    SetArray dst i (GetArray2D arr (start1+i) fixed2)
+                dst
+
+            let inline SetArraySlice2DFixed1 (dst: _[,]) fixed1 start2 finish2 (src:_[]) = 
+                let start2  = (match start2 with None -> 0 | Some n -> n) 
+                let finish2 = (match finish2 with None -> GetArray2DLength2 dst - 1 | Some n -> n) 
+                let len2 = (finish2 - start2 + 1)
+                for j = 0 to len2 - 1 do
+                    SetArray2D dst fixed1 (start2+j) (GetArray src j)
+
+            let inline SetArraySlice2DFixed2 (dst: _[,]) start1 finish1 fixed2 (src:_[]) = 
+                let start1  = (match start1 with None -> 0 | Some n -> n) 
+                let finish1 = (match finish1 with None -> GetArray2DLength1 dst - 1 | Some n -> n) 
+                let len1 = (finish1 - start1 + 1)
+                for i = 0 to len1 - 1 do
+                    SetArray2D dst (start1+i) fixed2 (GetArray src i)
 
             let SetArraySlice2D (dst: _[,]) start1 finish1 start2 finish2 (src:_[,]) = 
-                   let start1  = (match start1 with None -> 0 | Some n -> n) 
-                   let start2  = (match start2 with None -> 0 | Some n -> n) 
-                   let finish1 = (match finish1 with None -> GetArray2DLength1 dst - 1 | Some n -> n) 
-                   let finish2 = (match finish2 with None -> GetArray2DLength2 dst - 1 | Some n -> n) 
-                   SetArray2DSub dst start1 start2 (finish1 - start1 + 1) (finish2 - start2 + 1) src
+                let start1  = (match start1 with None -> 0 | Some n -> n) 
+                let start2  = (match start2 with None -> 0 | Some n -> n) 
+                let finish1 = (match finish1 with None -> GetArray2DLength1 dst - 1 | Some n -> n) 
+                let finish2 = (match finish2 with None -> GetArray2DLength2 dst - 1 | Some n -> n) 
+                SetArray2DSub dst start1 start2 (finish1 - start1 + 1) (finish2 - start2 + 1) src
 
             let GetArraySlice3D (arr: _[,,]) start1 finish1 start2 finish2 start3 finish3 = 
-                   let start1  = (match start1 with None -> 0 | Some n -> n) 
-                   let start2  = (match start2 with None -> 0 | Some n -> n) 
-                   let start3  = (match start3 with None -> 0 | Some n -> n) 
-                   let finish1 = (match finish1 with None -> GetArray3DLength1 arr - 1 | Some n -> n) 
-                   let finish2 = (match finish2 with None -> GetArray3DLength2 arr - 1 | Some n -> n) 
-                   let finish3 = (match finish3 with None -> GetArray3DLength3 arr - 1 | Some n -> n) 
-                   let len1 = (finish1 - start1 + 1)
-                   let len2 = (finish2 - start2 + 1)
-                   let len3 = (finish3 - start3 + 1)
-                   GetArray3DSub arr start1 start2 start3 len1 len2 len3
+                let start1  = (match start1 with None -> 0 | Some n -> n) 
+                let start2  = (match start2 with None -> 0 | Some n -> n) 
+                let start3  = (match start3 with None -> 0 | Some n -> n) 
+                let finish1 = (match finish1 with None -> GetArray3DLength1 arr - 1 | Some n -> n) 
+                let finish2 = (match finish2 with None -> GetArray3DLength2 arr - 1 | Some n -> n) 
+                let finish3 = (match finish3 with None -> GetArray3DLength3 arr - 1 | Some n -> n) 
+                let len1 = (finish1 - start1 + 1)
+                let len2 = (finish2 - start2 + 1)
+                let len3 = (finish3 - start3 + 1)
+                GetArray3DSub arr start1 start2 start3 len1 len2 len3
 
             let SetArraySlice3D (dst: _[,,]) start1 finish1 start2 finish2 start3 finish3 (src:_[,,]) = 
-                   let start1  = (match start1 with None -> 0 | Some n -> n) 
-                   let start2  = (match start2 with None -> 0 | Some n -> n) 
-                   let start3  = (match start3 with None -> 0 | Some n -> n) 
-                   let finish1 = (match finish1 with None -> GetArray3DLength1 dst - 1 | Some n -> n) 
-                   let finish2 = (match finish2 with None -> GetArray3DLength2 dst - 1 | Some n -> n) 
-                   let finish3 = (match finish3 with None -> GetArray3DLength3 dst - 1 | Some n -> n) 
-                   SetArray3DSub dst start1 start2 start3 (finish1 - start1 + 1) (finish2 - start2 + 1) (finish3 - start3 + 1) src
+                let start1  = (match start1 with None -> 0 | Some n -> n) 
+                let start2  = (match start2 with None -> 0 | Some n -> n) 
+                let start3  = (match start3 with None -> 0 | Some n -> n) 
+                let finish1 = (match finish1 with None -> GetArray3DLength1 dst - 1 | Some n -> n) 
+                let finish2 = (match finish2 with None -> GetArray3DLength2 dst - 1 | Some n -> n) 
+                let finish3 = (match finish3 with None -> GetArray3DLength3 dst - 1 | Some n -> n) 
+                SetArray3DSub dst start1 start2 start3 (finish1 - start1 + 1) (finish2 - start2 + 1) (finish3 - start3 + 1) src
 
             let GetArraySlice4D (arr: _[,,,]) start1 finish1 start2 finish2 start3 finish3 start4 finish4 = 
-                   let start1  = (match start1 with None -> 0 | Some n -> n) 
-                   let start2  = (match start2 with None -> 0 | Some n -> n) 
-                   let start3  = (match start3 with None -> 0 | Some n -> n) 
-                   let start4  = (match start4 with None -> 0 | Some n -> n) 
-                   let finish1 = (match finish1 with None -> Array4DLength1 arr - 1 | Some n -> n) 
-                   let finish2 = (match finish2 with None -> Array4DLength2 arr - 1 | Some n -> n) 
-                   let finish3 = (match finish3 with None -> Array4DLength3 arr - 1 | Some n -> n) 
-                   let finish4 = (match finish4 with None -> Array4DLength4 arr - 1 | Some n -> n) 
-                   let len1 = (finish1 - start1 + 1)
-                   let len2 = (finish2 - start2 + 1)
-                   let len3 = (finish3 - start3 + 1)
-                   let len4 = (finish4 - start4 + 1)
-                   GetArray4DSub arr start1 start2 start3 start4 len1 len2 len3 len4
+                let start1  = (match start1 with None -> 0 | Some n -> n) 
+                let start2  = (match start2 with None -> 0 | Some n -> n) 
+                let start3  = (match start3 with None -> 0 | Some n -> n) 
+                let start4  = (match start4 with None -> 0 | Some n -> n) 
+                let finish1 = (match finish1 with None -> Array4DLength1 arr - 1 | Some n -> n) 
+                let finish2 = (match finish2 with None -> Array4DLength2 arr - 1 | Some n -> n) 
+                let finish3 = (match finish3 with None -> Array4DLength3 arr - 1 | Some n -> n) 
+                let finish4 = (match finish4 with None -> Array4DLength4 arr - 1 | Some n -> n) 
+                let len1 = (finish1 - start1 + 1)
+                let len2 = (finish2 - start2 + 1)
+                let len3 = (finish3 - start3 + 1)
+                let len4 = (finish4 - start4 + 1)
+                GetArray4DSub arr start1 start2 start3 start4 len1 len2 len3 len4
 
             let SetArraySlice4D (dst: _[,,,]) start1 finish1 start2 finish2 start3 finish3 start4 finish4 (src:_[,,,]) = 
-                   let start1  = (match start1 with None -> 0 | Some n -> n) 
-                   let start2  = (match start2 with None -> 0 | Some n -> n) 
-                   let start3  = (match start3 with None -> 0 | Some n -> n) 
-                   let start4  = (match start4 with None -> 0 | Some n -> n) 
-                   let finish1 = (match finish1 with None -> Array4DLength1 dst - 1 | Some n -> n) 
-                   let finish2 = (match finish2 with None -> Array4DLength2 dst - 1 | Some n -> n) 
-                   let finish3 = (match finish3 with None -> Array4DLength3 dst - 1 | Some n -> n) 
-                   let finish4 = (match finish4 with None -> Array4DLength4 dst - 1 | Some n -> n) 
-                   SetArray4DSub dst start1 start2 start3 start4 (finish1 - start1 + 1) (finish2 - start2 + 1) (finish3 - start3 + 1) (finish4 - start4 + 1) src
+                let start1  = (match start1 with None -> 0 | Some n -> n) 
+                let start2  = (match start2 with None -> 0 | Some n -> n) 
+                let start3  = (match start3 with None -> 0 | Some n -> n) 
+                let start4  = (match start4 with None -> 0 | Some n -> n) 
+                let finish1 = (match finish1 with None -> Array4DLength1 dst - 1 | Some n -> n) 
+                let finish2 = (match finish2 with None -> Array4DLength2 dst - 1 | Some n -> n) 
+                let finish3 = (match finish3 with None -> Array4DLength3 dst - 1 | Some n -> n) 
+                let finish4 = (match finish4 with None -> Array4DLength4 dst - 1 | Some n -> n) 
+                SetArray4DSub dst start1 start2 start3 start4 (finish1 - start1 + 1) (finish2 - start2 + 1) (finish3 - start3 + 1) (finish4 - start4 + 1) src
 
             let inline GetStringSlice (str:string) start finish = 
-                   let start  = (match start with None -> 0 | Some n -> n) 
-                   let finish = (match finish with None -> str.Length - 1 | Some n -> n) 
-                   str.Substring(start, finish-start+1)
+                let start  = (match start with None -> 0 | Some n -> n) 
+                let finish = (match finish with None -> str.Length - 1 | Some n -> n) 
+                str.Substring(start, finish-start+1)
 
 
             [<NoDynamicInvocation>]
@@ -5405,6 +5470,13 @@ namespace Microsoft.FSharp.Core
            when ^T : sbyte       = RangeSByte   (retype n) (retype step) (retype m)
            when ^T : byte        = RangeByte    (retype n) (retype step) (retype m)
         
+
+        type ``[,]``<'T> with 
+            member arr.GetSlice(x : int, y1 : int option, y2 : int option) = GetArraySlice2DFixed1 arr x y1 y2 
+            member arr.GetSlice(x1 : int option, x2 : int option, y : int) = GetArraySlice2DFixed2 arr x1 x2 y
+
+            member arr.SetSlice(x : int, y1 : int option, y2 : int option, source:'T[]) = SetArraySlice2DFixed1 arr x y1 y2 source
+            member arr.SetSlice(x1 : int option, x2 : int option, y : int, source:'T[]) = SetArraySlice2DFixed2 arr x1 x2 y source
 
         [<CompiledName("Abs")>]
         let inline abs (x: ^T) : ^T = 

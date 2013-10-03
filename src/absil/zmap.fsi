@@ -1,4 +1,13 @@
-(* (c) Microsoft Corporation. Apache 2.0 License  *)
+//----------------------------------------------------------------------------
+// Copyright (c) 2002-2012 Microsoft Corporation. 
+//
+// This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
+// copy of the license can be found in the License.html file at the root of this distribution. 
+// By using this source code in any fashion, you are agreeing to be bound 
+// by the terms of the Apache License, Version 2.0.
+//
+// You must not remove this notice, or any other, from this software.
+//----------------------------------------------------------------------------
 
 namespace Microsoft.FSharp.Compiler.AbstractIL.Internal
 
@@ -26,7 +35,7 @@ module internal Zmap =
     val map      : mapping:('T -> 'U) -> Zmap<'Key,'T> -> Zmap<'Key,'U>
     val mapi     : ('Key -> 'T -> 'U) -> Zmap<'Key,'T> -> Zmap<'Key,'U>
     val fold     : ('Key -> 'T -> 'U -> 'U) -> Zmap<'Key,'T> -> 'U -> 'U
-    val fmap     : ('State -> 'Key -> 'T -> 'State * 'U) -> 'State -> Zmap<'Key,'T> -> 'State * Zmap<'Key,'U>
+    val foldMap     : ('State -> 'Key -> 'T -> 'State * 'U) -> 'State -> Zmap<'Key,'T> -> 'State * Zmap<'Key,'U>
     val iter     : action:('T -> 'U -> unit) -> Zmap<'T, 'U>  -> unit
 
     val foldSection: 'Key -> 'Key -> ('Key -> 'T -> 'U -> 'U) -> Zmap<'Key,'T> -> 'U -> 'U  

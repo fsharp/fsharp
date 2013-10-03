@@ -269,6 +269,42 @@ type ParameterInfoTests()  =
             let foo(x) = 1
             foo((*Mark*)"""
         this.VerifyParameterInfoAtStartOfMarker(fileContent,"(*Mark*)",[["'a"]])
+        
+    [<Test>]
+    member public this.``Single.DiscriminatedUnion.Construction``() =
+        let fileContent = """
+            type MyDU = 
+              | Case1 of int * string
+              | Case2 of V1 : int * string * V3 : bool
+              | Case3 of ``Long Name`` : int * Item2 : string
+              | Case4 of int
+              
+            let x1 = Case1((*Mark1*)
+            let x2 = Case2((*Mark2*)
+            let x3 = Case3((*Mark3*)
+            let x4 = Case4((*Mark4*)
+            """
+
+        this.VerifyParameterInfoAtStartOfMarker(fileContent,"(*Mark1*)",[["int"; "string"]])
+        this.VerifyParameterInfoAtStartOfMarker(fileContent,"(*Mark2*)",[["V1: int"; "string"; "V3: bool"]])
+        this.VerifyParameterInfoAtStartOfMarker(fileContent,"(*Mark3*)",[["Long Name: int"; "string"]])
+        this.VerifyParameterInfoAtStartOfMarker(fileContent,"(*Mark4*)",[["int"]])
+        
+    [<Test>]
+    member public this.``Single.Exception.Construction``() =
+        let fileContent = """
+            exception E1 of int * string
+            exception E2 of V1 : int * string * V3 : bool
+            exception E3 of ``Long Name`` : int * Data1 : string
+              
+            let x1 = E1((*Mark1*)
+            let x2 = E2((*Mark2*)
+            let x3 = E3((*Mark3*)
+            """
+
+        this.VerifyParameterInfoAtStartOfMarker(fileContent,"(*Mark1*)",[["int"; "string"]])
+        this.VerifyParameterInfoAtStartOfMarker(fileContent,"(*Mark2*)",[["V1: int"; "string"; "V3: bool" ]])
+        this.VerifyParameterInfoAtStartOfMarker(fileContent,"(*Mark3*)",[["Long Name: int"; "string" ]])
     
     [<Test>]
     [<Category("TypeProvider")>]
@@ -1874,7 +1910,40 @@ We really need to rewrite some code paths here to use the real parse tree rather
             let foo = new Foo()
             foo.A1(1,1,(*Mark*)"""
         this.VerifyParameterInfoAtStartOfMarker(fileContents,"(*Mark*)",[["int";"int";"string";"bool"];["int";"string";"int";"bool"]])
-    
+        
+    [<Test>]
+    member public this.``ExtensionMethod.Overloads``() = 
+        let fileContents = """
+            module MyCode =
+                type A() = 
+                    member this.Method(a:string) = ""
+            module MyExtension = 
+                type MyCode.A with
+                    member this.Method(a:int) = ""
+            
+            open MyCode
+            open MyExtension
+            let foo = A()
+            foo.Method((*Mark*)"""
+        this.VerifyParameterInfoAtStartOfMarker(fileContents,"(*Mark*)",[["string"];["int"]])
+ 
+    [<Test>]
+    [<Ignore("Parameterinfo not retrieved properly for indexed properties by test infra")>]
+    member public this.``ExtensionProperty.Overloads``() = 
+        let fileContents = """
+            module MyCode =
+                type A() = 
+                    member this.Prop with get(a:string) = ""
+            module MyExtension = 
+                type MyCode.A with
+                    member this.Prop with get(a:int) = ""
+            
+            open MyCode
+            open MyExtension
+            let foo = A()
+            foo.Prop((*Mark*)"""
+        this.VerifyParameterInfoAtStartOfMarker(fileContents,"(*Mark*)",[["string"];["int"]])
+        
     (* Generic functions for multi-parameterinfo tests ------------------------------------------------ *)
 
     [<Test>]

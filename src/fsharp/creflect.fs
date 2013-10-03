@@ -51,7 +51,8 @@ type cenv =
       typeSplices: ResizeArray<Tast.Typar> ;
       // Accumulate the expression splices into here
       exprSplices: ResizeArray<Expr> 
-      isReflectedDefinition : IsReflectedDefinition }
+      isReflectedDefinition : IsReflectedDefinition
+      mutable emitDebugInfoInQuotations : bool }
 
 
 
@@ -61,8 +62,8 @@ let mk_cenv (g,amap,scope,isReflectedDefinition) =
       amap=amap
       typeSplices = new ResizeArray<_>() 
       exprSplices = new ResizeArray<_>() 
-      isReflectedDefinition = isReflectedDefinition } 
-    
+      isReflectedDefinition = isReflectedDefinition      
+      emitDebugInfoInQuotations = g.emitDebugInfoInQuotations } 
 
 type QuotationTranslationEnv = 
     { //Map from Val to binding index
@@ -126,11 +127,70 @@ let (|ModuleValueOrMemberUse|_|) cenv expr =
         | _ -> 
             None
     loop expr []
-             
+
+let (|SimpleArrayLoopUpperBound|_|) expr =
+    match expr with
+    | Expr.Op(TOp.ILAsm([AI_sub], _), _, [Expr.Op(TOp.ILAsm([I_ldlen; AI_conv ILBasicType.DT_I4], _), _, _, _); Expr.Const(Const.Int32 1, _, _) ], _) -> Some ()
+    | _ -> None
+
+let (|SimpleArrayLoopBody|_|) g expr = 
+    match expr with
+    | Expr.Lambda(_, a, b, ([_] as args), Expr.Let(TBind(forVarLoop, Expr.Op(TOp.ILAsm([I_ldelem_any(ILArrayShape [(Some 0, None)], _)], _), [elemTy], [arr; idx], m1), seqPoint), body, m2, freeVars), m, ty) -> 
+        let body = Expr.Let(TBind(forVarLoop, mkCallArrayGet g m1 elemTy arr idx, seqPoint), body, m2, freeVars)
+        let expr = Expr.Lambda(newUnique(), a, b, args, body, m, ty)
+        Some (arr, elemTy, expr)
+    | _ -> None
+
+let (|ObjectInitializationCheck|_|) g expr = 
+    // recognize "if this.init@ < 1 then failinit"
+    match expr with
+    | Expr.Match
+        (
+           _, _, 
+           TDSwitch 
+            (
+                Expr.Op(TOp.ILAsm([AI_clt], _), _, [Expr.Op(TOp.ValFieldGet((RFRef(_, name))), _, [Expr.Val(selfRef, NormalValUse, _)], _); Expr.Const(Const.Int32 1, _, _)], _),  _, _, _
+            ), 
+           [| TTarget([], Expr.App(Expr.Val(failInitRef, _, _), _, _, _, _), _); _ |], _, resultTy
+        ) when 
+            IsCompilerGeneratedName name &&
+            name.StartsWith "init" &&
+            selfRef.BaseOrThisInfo = MemberThisVal &&
+            valRefEq g failInitRef (ValRefForIntrinsic g.fail_init_info) &&
+            isUnitTy g resultTy -> Some()
+    | _ -> None
 
 let isSplice g vref = valRefEq g vref g.splice_expr_vref || valRefEq g vref g.splice_raw_expr_vref
 
-let rec ConvExpr cenv (env : QuotationTranslationEnv) (expr: Expr) : QP.ExprData = 
+let rec EmitDebugInfoIfNecessary cenv env m astExpr : QP.ExprData =
+    // do not emit debug info if emitDebugInfoInQuotations = false or it was already written for the given expression
+    if cenv.emitDebugInfoInQuotations && not (QP.isAttributedExpression astExpr) then
+        cenv.emitDebugInfoInQuotations <- false
+        try
+            let mk_tuple g m es = mkTupled g m es (List.map (tyOfExpr g) es)
+
+            let rangeExpr = 
+                    mk_tuple cenv.g m 
+                        [ mkString cenv.g m m.FileName; 
+                            mkInt cenv.g m m.StartLine; 
+                            mkInt cenv.g m m.StartColumn; 
+                            mkInt cenv.g m m.EndLine; 
+                            mkInt cenv.g m m.EndColumn;  ] 
+            let attrExpr = 
+                mk_tuple cenv.g m 
+                    [ mkString cenv.g m "DebugRange"; rangeExpr ]
+            let attrExprR = ConvExprCore cenv env attrExpr
+
+            QP.mkAttributedExpression(astExpr, attrExprR)
+        finally
+            cenv.emitDebugInfoInQuotations <- true
+    else 
+        astExpr
+
+and ConvExpr cenv env (expr : Expr) =
+    EmitDebugInfoIfNecessary cenv env expr.Range (ConvExprCore cenv env expr)
+
+and private ConvExprCore cenv (env : QuotationTranslationEnv) (expr: Expr) : QP.ExprData = 
 
     // Eliminate integer 'for' loops 
     let expr = DetectFastIntegerForLoops cenv.g expr
@@ -316,7 +376,9 @@ let rec ConvExpr cenv (env : QuotationTranslationEnv) (expr: Expr) : QP.ExprData
     | Expr.Match (_spBind,m,dtree,tgs,_,retTy) ->
         let typR = ConvType cenv env m retTy 
         ConvDecisionTree cenv env tgs typR dtree 
-           
+    
+    // initialization check
+    | Expr.Sequential(ObjectInitializationCheck cenv.g, x1, NormalSeq, _, _) -> ConvExpr cenv env x1
     | Expr.Sequential (x0,x1,NormalSeq,_,_)  -> QP.mkSequential(ConvExpr cenv env x0, ConvExpr cenv env x1)
     | Expr.Obj (_,typ,_,_,[TObjExprMethod(TSlotSig(_,ctyp, _,_,_,_),_,tps,[tmvs],e,_) as tmethod],_,m) when isDelegateTy cenv.g typ -> 
          let f = mkLambdas m tps tmvs (e,GetFSharpViewOfReturnType cenv.g (returnTyOfMethod cenv.g tmethod))
@@ -382,7 +444,7 @@ let rec ConvExpr cenv (env : QuotationTranslationEnv) (expr: Expr) : QP.ExprData
 
         | TOp.ILAsm([ I_throw ],_),_,[arg1]  -> 
             let raiseExpr = mkCallRaise cenv.g m (tyOfExpr cenv.g expr) arg1 
-            ConvExpr cenv env raiseExpr
+            ConvExpr cenv env raiseExpr        
 
         | TOp.ILAsm(_il,_),_,_                         -> 
             wfail(Error(FSComp.SR.crefQuotationsCantContainInlineIL(), m))
@@ -463,6 +525,12 @@ let rec ConvExpr cenv (env : QuotationTranslationEnv) (expr: Expr) : QP.ExprData
 
         | TOp.While _,[],[Expr.Lambda(_,_,_,[_],test,_,_);Expr.Lambda(_,_,_,[_],body,_,_)]  -> 
               QP.mkWhileLoop(ConvExpr cenv env test, ConvExpr cenv env body)
+        
+        | TOp.For(_, FSharpForLoopUp), [], [Expr.Lambda(_,_,_,[_], lim0,_,_); Expr.Lambda(_,_,_,[_], SimpleArrayLoopUpperBound, lm,_); SimpleArrayLoopBody cenv.g (arr, elemTy, body)] ->
+            let lim1 = 
+                let len = mkCallArrayLength cenv.g lm elemTy arr // Array.length arr
+                mkCallSubtractionOperator cenv.g lm cenv.g.int32_ty len (Expr.Const(Const.Int32 1, m, cenv.g.int32_ty)) // len - 1
+            QP.mkForLoop(ConvExpr cenv env lim0, ConvExpr cenv env lim1, ConvExpr cenv env body)
 
         | TOp.For(_,dir),[],[Expr.Lambda(_,_,_,[_],lim0,_,_);Expr.Lambda(_,_,_,[_],lim1,_,_);body]  -> 
             match dir with 
@@ -512,7 +580,10 @@ and ConvLdfld  cenv env m (fspec: ILFieldSpec) enclTypeArgs args =
     let argsR = ConvLValueArgs cenv env args
     QP.mkFieldGet( (parentTyconR, fspec.Name),tyargsR, argsR)
 
-and ConvRFieldGet cenv env m rfref tyargs args = 
+and ConvRFieldGet cenv env m rfref tyargs args =
+    EmitDebugInfoIfNecessary cenv env m (ConvRFieldGetCore cenv env m rfref tyargs args)
+
+and private ConvRFieldGetCore cenv env m rfref tyargs args = 
     let tyargsR = ConvTypes cenv env m tyargs
     let argsR = ConvLValueArgs cenv env args 
     let ((parentTyconR,fldOrPropName) as projR) = ConvRecdFieldRef cenv rfref m
@@ -557,8 +628,10 @@ and ConvLValueArgs cenv env args =
     | obj::rest -> ConvLValueExpr cenv env obj :: ConvExprs cenv env rest
     | [] -> []
 
-// This function has to undo the work of mkExprAddrOfExpr 
 and ConvLValueExpr cenv env expr = 
+    EmitDebugInfoIfNecessary cenv env expr.Range (ConvLValueExprCore cenv env expr)
+// This function has to undo the work of mkExprAddrOfExpr 
+and ConvLValueExprCore cenv env expr = 
     match expr with 
     | Expr.Op(op,tyargs,args,m) -> 
         match op, args, tyargs  with
@@ -576,8 +649,10 @@ and ConvLValueExpr cenv env expr =
         | _ -> ConvExpr cenv env expr
     | _ -> ConvExpr cenv env expr
     
+and ConvObjectModelCall cenv env m callInfo =
+    EmitDebugInfoIfNecessary cenv env m (ConvObjectModelCallCore cenv env m callInfo)
 
-and ConvObjectModelCall cenv env m (isPropGet,isPropSet,isNewObj,parentTyconR,methArgTypesR,methRetTypeR,methName,tyargs,numGenericArgs,callArgs) =
+and ConvObjectModelCallCore cenv env m (isPropGet,isPropSet,isNewObj,parentTyconR,methArgTypesR,methRetTypeR,methName,tyargs,numGenericArgs,callArgs) =
 
     let tyargsR = ConvTypes cenv env m tyargs
     let callArgsR = ConvLValueArgs cenv env callArgs
@@ -604,6 +679,8 @@ and ConvObjectModelCall cenv env m (isPropGet,isPropSet,isNewObj,parentTyconR,me
                       tyargsR, callArgsR)
 
 and ConvModuleValueApp cenv env m (vref:ValRef) tyargs (args: Expr list list) =
+    EmitDebugInfoIfNecessary cenv env m (ConvModuleValueAppCore cenv env m vref tyargs args)
+and ConvModuleValueAppCore cenv env m (vref:ValRef) tyargs (args: Expr list list) =
     match vref.ActualParent with 
     | ParentNone -> failwith "ConvModuleValueApp"
     | Parent(tcref) -> 
@@ -618,6 +695,9 @@ and ConvExprs cenv env args =
     List.map (ConvExpr cenv env) args 
 
 and ConvValRef holeOk cenv env m (vref:ValRef) tyargs =
+    EmitDebugInfoIfNecessary cenv env m (ConvValRefCore holeOk cenv env m vref tyargs)
+
+and private ConvValRefCore holeOk cenv env m (vref:ValRef) tyargs =
     let v = vref.Deref
     if env.isinstVals.ContainsVal v then 
         let (ty,e) = env.isinstVals.[v]
@@ -735,46 +815,47 @@ and ConvDecisionTree cenv env tgs typR x =
             match dfltOpt with 
             | Some d -> ConvDecisionTree cenv env tgs typR d 
             | None -> wfail(Error(FSComp.SR.crefQuotationsCantContainThisPatternMatch(), m))
-
-        (csl,acc) ||> List.foldBack (fun (TCase(discrim,dtree)) acc -> 
-              match discrim with 
-              | Test.UnionCase (ucref, tyargs) -> 
-                  let e1R = ConvExpr cenv env e1
-                  let ucR = ConvUnionCaseRef cenv ucref m
-                  let tyargsR = ConvTypes cenv env m tyargs
-                  QP.mkCond (QP.mkSumTagTest (ucR, tyargsR, e1R), ConvDecisionTree cenv env tgs typR dtree, acc)
-              | Test.Const (Const.Bool true) -> 
-                  let e1R = ConvExpr cenv env e1
-                  QP.mkCond (e1R, ConvDecisionTree cenv env tgs typR dtree, acc)
-              | Test.Const (Const.Bool false) -> 
-                  let e1R = ConvExpr cenv env e1
-                  // Note, reverse the branches
-                  QP.mkCond (e1R, acc, ConvDecisionTree cenv env tgs typR dtree)
-              | Test.Const c -> 
-                  let ty = tyOfExpr cenv.g e1
-                  let eq = mkCallEqualsOperator cenv.g m ty e1 (Expr.Const (c, m, ty))
-                  let eqR = ConvExpr cenv env eq 
-                  QP.mkCond (eqR, ConvDecisionTree cenv env tgs typR dtree, acc)
-              | Test.IsNull -> 
-                  // Decompile cached isinst tests
-                  match e1 with 
-                  | Expr.Val(vref,_,_) when env.isinstVals.ContainsVal vref.Deref  ->
-                      let (ty,e) =  env.isinstVals.[vref.Deref]
-                      let tyR = ConvType cenv env m ty
-                      let eR = ConvExpr cenv env e
-                      // note: reverse the branches - a null test is a failure of an isinst test
-                      QP.mkCond (QP.mkTypeTest (tyR,eR), acc, ConvDecisionTree cenv env tgs typR dtree)
-                  | _ -> 
+        let converted = 
+            (csl,acc) ||> List.foldBack (fun (TCase(discrim,dtree)) acc -> 
+                  match discrim with 
+                  | Test.UnionCase (ucref, tyargs) -> 
+                      let e1R = ConvExpr cenv env e1
+                      let ucR = ConvUnionCaseRef cenv ucref m
+                      let tyargsR = ConvTypes cenv env m tyargs
+                      QP.mkCond (QP.mkSumTagTest (ucR, tyargsR, e1R), ConvDecisionTree cenv env tgs typR dtree, acc)
+                  | Test.Const (Const.Bool true) -> 
+                      let e1R = ConvExpr cenv env e1
+                      QP.mkCond (e1R, ConvDecisionTree cenv env tgs typR dtree, acc)
+                  | Test.Const (Const.Bool false) -> 
+                      let e1R = ConvExpr cenv env e1
+                      // Note, reverse the branches
+                      QP.mkCond (e1R, acc, ConvDecisionTree cenv env tgs typR dtree)
+                  | Test.Const c -> 
                       let ty = tyOfExpr cenv.g e1
-                      let eq = mkCallEqualsOperator cenv.g m ty e1 (Expr.Const (Const.Zero, m, ty))
+                      let eq = mkCallEqualsOperator cenv.g m ty e1 (Expr.Const (c, m, ty))
                       let eqR = ConvExpr cenv env eq 
                       QP.mkCond (eqR, ConvDecisionTree cenv env tgs typR dtree, acc)
-              | Test.IsInst (_srcty, tgty) -> 
-                  let e1R = ConvExpr cenv env e1
-                  QP.mkCond (QP.mkTypeTest (ConvType cenv env m tgty, e1R), ConvDecisionTree cenv env tgs typR dtree, acc)
-              | Test.ActivePatternCase _ -> wfail(InternalError( "Test.ActivePatternCase test in quoted expression",m))
-              | Test.ArrayLength _ -> wfail(Error(FSComp.SR.crefQuotationsCantContainArrayPatternMatching(), m))
-             )
+                  | Test.IsNull -> 
+                      // Decompile cached isinst tests
+                      match e1 with 
+                      | Expr.Val(vref,_,_) when env.isinstVals.ContainsVal vref.Deref  ->
+                          let (ty,e) =  env.isinstVals.[vref.Deref]
+                          let tyR = ConvType cenv env m ty
+                          let eR = ConvExpr cenv env e
+                          // note: reverse the branches - a null test is a failure of an isinst test
+                          QP.mkCond (QP.mkTypeTest (tyR,eR), acc, ConvDecisionTree cenv env tgs typR dtree)
+                      | _ -> 
+                          let ty = tyOfExpr cenv.g e1
+                          let eq = mkCallEqualsOperator cenv.g m ty e1 (Expr.Const (Const.Zero, m, ty))
+                          let eqR = ConvExpr cenv env eq 
+                          QP.mkCond (eqR, ConvDecisionTree cenv env tgs typR dtree, acc)
+                  | Test.IsInst (_srcty, tgty) -> 
+                      let e1R = ConvExpr cenv env e1
+                      QP.mkCond (QP.mkTypeTest (ConvType cenv env m tgty, e1R), ConvDecisionTree cenv env tgs typR dtree, acc)
+                  | Test.ActivePatternCase _ -> wfail(InternalError( "Test.ActivePatternCase test in quoted expression",m))
+                  | Test.ArrayLength _ -> wfail(Error(FSComp.SR.crefQuotationsCantContainArrayPatternMatching(), m))
+                 )
+        EmitDebugInfoIfNecessary cenv env m converted
       | TDSuccess (args,n) -> 
           let (TTarget(vars,rhs,_)) = tgs.[n] 
           // TAST stores pattern bindings in reverse order for some reason
@@ -880,27 +961,15 @@ and ConvReturnType cenv envinner m retTy =
     | None -> mkVoidTy 
     | Some ty -> ConvType cenv envinner m ty
 
-let ConvExprPublic (g,amap,scope,isReflectedDefintion) env e = 
-    let cenv = mk_cenv (g,amap,scope,isReflectedDefintion) 
-    let astExpr = ConvExpr cenv env e 
-    // Add the outer debug range attribute
+let ConvExprPublic (g,amap,scope,isReflectedDefintion) env (e) = 
+    let cenv = mk_cenv (g,amap,scope,isReflectedDefintion)  
     let astExpr = 
-       let m = e.Range
-       let mk_tuple g m es = mkTupled g m es (List.map (tyOfExpr g) es)
+        let astExpr = ConvExpr cenv env e
+        // always emit debug info for the top level expression
+        cenv.emitDebugInfoInQuotations <- true
+        // EmitDebugInfoIfNecessary will check if astExpr is already augmented with debug info and won't wrap it twice
+        EmitDebugInfoIfNecessary cenv env e.Range astExpr
 
-       let rangeExpr = 
-                mk_tuple cenv.g m 
-                    [ mkString cenv.g m m.FileName; 
-                      mkInt cenv.g m m.StartLine; 
-                      mkInt cenv.g m m.StartColumn; 
-                      mkInt cenv.g m m.EndLine; 
-                      mkInt cenv.g m m.EndColumn;  ] 
-       let attrExpr = 
-           mk_tuple cenv.g m 
-              [ mkString cenv.g m "DebugRange"; rangeExpr ]
-       let attrExprR = ConvExpr cenv env attrExpr
-
-       QP.mkAttributedExpression(astExpr,attrExprR)
     cenv.typeSplices |> ResizeArray.toList |> List.map mkTyparTy, 
     cenv.exprSplices |> ResizeArray.toList, 
     astExpr

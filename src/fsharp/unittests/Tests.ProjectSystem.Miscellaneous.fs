@@ -525,9 +525,9 @@ type Miscellaneous() =
             let project = TheTests.CreateProject(file, "false", cnn, sp)            
             use project = project
             let values = project.BuildActionConverter.GetStandardValues()
-            let list = values |> Seq.cast |> Seq.map (fun (ba : BuildAction)-> ba.Name) |> Seq.toList |> List.sort
-            let expected = ["Compile"; "Content"; "EmbeddedResource"; "None"; "MyBuildAction"; "MyBuildAction3"] |> List.sort
-            if list <> expected then                
+            let list = values |> Seq.cast |> Seq.map (fun (ba : BuildAction)-> ba.Name) |> Seq.toList
+            let expected = ["Compile"; "Content"; "EmbeddedResource"; "None"; "MyBuildAction"; "MyBuildAction3"]
+            if expected |> List.forall (fun i -> List.exists ((=)i) list) |> not then                
                 let s0 = sprintf "%A" expected
                 let s1 = sprintf "%A" list
                 Assert.Fail(s0 + "<>" + s1)

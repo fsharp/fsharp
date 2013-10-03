@@ -8,7 +8,10 @@ type SurfaceAreaTest() =
     member this.VerifyArea() =
         let file = typeof<int list>.Assembly.Location 
         let asm = System.Reflection.Assembly.ReflectionOnlyLoadFrom(file)
-        if asm.ImageRuntimeVersion.[1] = '2' then // v2.0.50727 - we only want this test to run as 2.0 (nu20), not FSharp.Core 2.0 on CLR 4.0 (nu20on40)
+        let frameworkAsm = typeof<System.String>.Assembly
+        printfn "FSharp.Core image runtime version: %s" asm.ImageRuntimeVersion
+        printfn "Framework image runtime version: %s" frameworkAsm.ImageRuntimeVersion
+        if (frameworkAsm.ImageRuntimeVersion.[1] = '2') then // v2.0.50727 - we only want this test to run as 2.0 (nu20), not FSharp.Core 2.0 on CLR 4.0 (nu20on40)
             let referenced = asm.GetReferencedAssemblies()
 
             for ref in referenced do

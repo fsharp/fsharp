@@ -669,8 +669,8 @@ module private PrintTypes =
         if denv.showAttributes then
             // Don't display DllImport attributes in generated signatures  
             let attrs = attrs |> List.filter (IsMatchingFSharpAttribute denv.g denv.g.attrib_DllImportAttribute >> not)
-            let attrs = attrs |> List.filter (IsMatchingFSharpAttribute denv.g denv.g.attrib_ContextStaticAttribute >> not)
-            let attrs = attrs |> List.filter (IsMatchingFSharpAttribute denv.g denv.g.attrib_ThreadStaticAttribute >> not)
+            let attrs = attrs |> List.filter (IsMatchingFSharpAttributeOpt denv.g denv.g.attrib_ContextStaticAttribute >> not)
+            let attrs = attrs |> List.filter (IsMatchingFSharpAttributeOpt denv.g denv.g.attrib_ThreadStaticAttribute >> not)
             let attrs = attrs |> List.filter (IsMatchingFSharpAttribute denv.g denv.g.attrib_EntryPointAttribute >> not)
             let attrs = attrs |> List.filter (IsMatchingFSharpAttribute denv.g denv.g.attrib_MarshalAsAttribute >> not)
             let attrs = attrs |> List.filter (IsMatchingFSharpAttribute denv.g denv.g.attrib_ReflectedDefinitionAttribute >> not)
@@ -1190,12 +1190,17 @@ module InfoMemberPrinting =
     //          Container.Method(argName1:argType1, ..., argNameN:argTypeN) : retType
     let private formatMethInfoToBufferCSharpStyle amap m denv os (minfo:MethInfo) minst =
         let retTy = minfo.GetFSharpReturnTy(amap, m, minst)
-        outputTyconRef denv os (tcrefOfAppTy amap.g minfo.EnclosingType);
+        if minfo.IsExtensionMember then  
+          bprintf os "(%s) " (FSComp.SR.typeInfoExtension())
+        if isAppTy amap.g minfo.EnclosingType then 
+            outputTyconRef denv os (tcrefOfAppTy amap.g minfo.EnclosingType)
+        else
+            outputTy denv os minfo.EnclosingType
         if minfo.IsConstructor then  
           bprintf os "("
         else
           bprintf os "." 
-          outputTypars denv minfo.LogicalName os minfo.FormalMethodTypars;
+          outputTypars denv minfo.LogicalName os minfo.FormalMethodTypars
           bprintf os "(" 
         let paramDatas = minfo.GetParamDatas (amap, m, minst)
         paramDatas |> List.iter (List.iteri (fun i arg -> 
@@ -1205,15 +1210,19 @@ module InfoMemberPrinting =
         outputTy denv os retTy
 
 
-           // Prettify this baby
-    let prettifyILMethInfo (amap:Import.ImportMap) m (minfo:MethInfo) = function
-        | ILMethInfo(ILTypeInfo(tcref,tref,tinst,tdef),extInfo,mdef,_) ->  
-            let _,tys,_ = PrettyTypes.PrettifyTypesN amap.g (tinst @ minfo.FormalMethodInst)
-            let tinst,minst = List.chop tinst.Length tys
-            let minfo = ILMethInfo.Create (amap, m, ILTypeInfo(tcref,tref,tinst,tdef), extInfo, None, mdef)
-            minfo,minst
-        | ILFSMethInfo _ as ilminfo ->
-            ILMeth(amap.g,ilminfo,None),[]
+    // Prettify this baby
+    let prettifyILMethInfo (amap:Import.ImportMap) m (minfo:MethInfo) ilMethInfo = 
+        match ilMethInfo with 
+        | ILMethInfo(_, apparentTy,None, mdef,_) ->  
+            let _,tys,_ = PrettyTypes.PrettifyTypesN amap.g (apparentTy :: minfo.FormalMethodInst)
+            let apparentTyR,minst = List.headAndTail tys
+            let minfo = MethInfo.CreateILMeth (amap, m, apparentTyR, mdef)
+            minfo, minst
+        | ILMethInfo (_, apparentTy,Some declaringTyconRef,mdef,_) -> 
+            let _,tys,_ = PrettyTypes.PrettifyTypesN amap.g (apparentTy :: minfo.FormalMethodInst)
+            let apparentTyR,minst = List.headAndTail tys
+            let minfo = MethInfo.CreateILExtensionMeth(amap, m, apparentTyR, declaringTyconRef, minfo.ExtensionMemberPriorityOption, mdef)
+            minfo, minst
 
 
     /// Format a method to a buffer using "standalone" display style. 
@@ -1222,16 +1231,21 @@ module InfoMemberPrinting =
     /// The formats differ between .NET/provided methods and F# methods. Surprisingly people don't really seem 
     /// to notice this, or they find it helpful. It feels that moving from this position should not be done lightly.
     //
-    // For F# members, we use layoutValOrMemberm which gives:
+    // For F# members:
     //          new : unit -> retType
     //          new : argName1:argType1 * ... * argNameN:argTypeN -> retType
     //          Container.Method : unit -> retType
     //          Container.Method : argName1:argType1 * ... * argNameN:argTypeN -> retType
     //
+    // For F# extension members:
+    //          ApparentContainer.Method : argName1:argType1 * ... * argNameN:argTypeN -> retType
+    //
     // For C# and provided members:
     //          Container(argName1:argType1, ..., argNameN:argTypeN) : retType
     //          Container.Method(argName1:argType1, ..., argNameN:argTypeN) : retType
     //
+    // For C# extension members:
+    //          ApparentContainer.Method(argName1:argType1, ..., argNameN:argTypeN) : retType
     let formatMethInfoToBufferFreeStyle amap m denv os minfo =
         match minfo with 
         | DefaultStructCtor(g,_typ) -> 
@@ -1240,7 +1254,6 @@ module InfoMemberPrinting =
         | FSMeth(_,_,vref,_) -> 
             vref.Deref |> PrintTastMemberOrVals.layoutValOrMember { denv with showMemberContainers=true; } |> bufferL os
         | ILMeth(_,ilminfo,_) -> 
-            // Prettify first
             let minfo,minst = prettifyILMethInfo amap m minfo ilminfo
             formatMethInfoToBufferCSharpStyle amap m denv os minfo minst
     #if EXTENSIONTYPING
@@ -1264,34 +1277,49 @@ module private TastDefinitionPrinting =
         let nameL = wordL tycon.DisplayName
         let nameL = layoutAccessibility denv tycon.Accessibility nameL // "type-accessibility"
         let tps =
-            match PartitionValTypars denv.g v with
+            match PartitionValTyparsForApparentEnclosingType denv.g v with
               | Some(_,memberParentTypars,_,_,_) -> memberParentTypars
-              | None -> []          
+              | None -> []
         let lhsL = wordL "type" ^^ layoutTyparDecls denv nameL tycon.IsPrefixDisplay tps
         (lhsL ^^ wordL "with") @@-- (PrintTastMemberOrVals.layoutValOrMember denv v)
 
     let layoutExtensionMembers denv vs =
-        aboveListL (List.map (layoutExtensionMember denv) vs)
+        aboveListL (List.map (layoutExtensionMember denv) vs)    
 
-    let layoutUnionCaseArgTypes denv argtys = 
-        sepListL (wordL "*") (List.map (layoutTypeWithInfoAndPrec denv SimplifyTypes.typeSimplificationInfo0 2) argtys)
-
-    let layoutUnionCase denv  prefixL ucase =
-        let nmL = wordL (DemangleOperatorName ucase.Id.idText) 
-        //let nmL = layoutAccessibility denv ucase.Accessibility nmL
-        match ucase.RecdFields |> List.map (fun rfld -> rfld.FormalType) with
-        | []     -> (prefixL ^^ nmL)
-        | argtys -> (prefixL ^^ nmL ^^ wordL "of") --- layoutUnionCaseArgTypes denv argtys
-
-    let layoutUnionCases denv  ucases =
-        let prefixL = wordL "|" // See bug://2964 - always prefix in case preceeded by accessibility modifier
-        List.map (layoutUnionCase denv prefixL) ucases
-        
     let layoutRecdField addAccess denv  (fld:RecdField) =
         let lhs = wordL fld.Name 
         let lhs = (if addAccess then layoutAccessibility denv fld.Accessibility lhs else lhs)
         let lhs = if fld.IsMutable then wordL "mutable" --- lhs else lhs
         (lhs ^^ rightL ":") --- layoutType denv fld.FormalType
+
+    let layoutUnionOrExceptionField denv isGenerated i (fld : RecdField) =
+        if isGenerated i fld then layoutTypeWithInfoAndPrec denv SimplifyTypes.typeSimplificationInfo0 2 fld.FormalType
+        else layoutRecdField false denv fld
+    
+    let isGeneratedUnionCaseField pos (f : RecdField) = 
+        if pos < 0 then f.Name = "Item"
+        else f.Name = "Item" + string (pos + 1)
+
+    let isGeneratedExceptionField pos (f : RecdField) = 
+        f.Name = "Data" + (string pos)
+
+    let layoutUnionCaseFields denv isUnionCase fields = 
+        match fields with
+        | [f] when isUnionCase -> layoutUnionOrExceptionField denv isGeneratedUnionCaseField -1 f
+        | _ -> 
+            let isGenerated = if isUnionCase then isGeneratedUnionCaseField else isGeneratedExceptionField
+            sepListL (wordL "*") (List.mapi (layoutUnionOrExceptionField denv isGenerated) fields)
+
+    let layoutUnionCase denv  prefixL ucase =
+        let nmL = wordL (DemangleOperatorName ucase.Id.idText) 
+        //let nmL = layoutAccessibility denv ucase.Accessibility nmL
+        match ucase.RecdFields with
+        | []     -> (prefixL ^^ nmL)
+        | fields -> (prefixL ^^ nmL ^^ wordL "of") --- layoutUnionCaseFields denv true fields
+
+    let layoutUnionCases denv  ucases =
+        let prefixL = wordL "|" // See bug://2964 - always prefix in case preceeded by accessibility modifier
+        List.map (layoutUnionCase denv prefixL) ucases
 
     /// When to force a break? "type tyname = <HERE> repn"
     /// When repn is class or datatype constructors (not single one).
@@ -1615,7 +1643,7 @@ module private TastDefinitionPrinting =
             | TExnFresh r          -> 
                 match r.TrueFieldsAsList with
                 | []  -> emptyL
-                | r -> wordL "of" --- layoutUnionCaseArgTypes denv (r |> List.map (fun rfld -> rfld.FormalType))
+                | r -> wordL "of" --- layoutUnionCaseFields denv false r
 
         exnL ^^ reprL
 
@@ -1770,11 +1798,14 @@ let stringOfMethInfo amap m denv d = bufs (fun buf -> InfoMemberPrinting.formatM
 
 /// Convert a ParamData to a string
 let stringOfParamData denv paramData = bufs (fun buf -> InfoMemberPrinting.formatParamDataToBuffer denv buf paramData)
-
 let outputILTypeRef         denv os x = x |> PrintIL.layoutILTypeRef denv |> bufferL os
 let outputExnDef            denv os x = x |> TastDefinitionPrinting.layoutExnDefn denv |> bufferL os
 let stringOfTyparConstraints denv x   = x |> PrintTypes.layoutConstraintsWithInfo denv SimplifyTypes.typeSimplificationInfo0  |> showL
 let outputTycon             denv infoReader ad m (* width *) os x = TastDefinitionPrinting.layoutTycon denv infoReader ad m true (wordL "type") x (* |> Layout.squashTo width *) |>  bufferL os
+let outputUnionCases        denv os x    = x |> TastDefinitionPrinting.layoutUnionCaseFields denv true |> bufferL os
+/// Pass negative number as pos in case of single cased discriminated unions
+let isGeneratedUnionCaseField pos f     = TastDefinitionPrinting.isGeneratedUnionCaseField pos f
+let isGeneratedExceptionField pos f     = TastDefinitionPrinting.isGeneratedExceptionField pos f
 let stringOfTyparConstraint denv tpc  = stringOfTyparConstraints denv [tpc]
 let stringOfTy              denv x    = x |> PrintTypes.layoutType denv |> showL
 let prettyStringOfTy        denv x    = x |> PrintTypes.layoutPrettyType denv |> showL

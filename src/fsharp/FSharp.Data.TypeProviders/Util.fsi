@@ -13,9 +13,6 @@ module internal Util =
     val dataSvcUtilExe : unit -> string
     val edmGenExe : unit -> string
     val svcUtilExe : unit -> string
-    val xsdExe : unit -> string
-
-    val sdkPath : unit -> string
 
     val sdkUtil : string -> string
 

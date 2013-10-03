@@ -405,7 +405,7 @@ let discrimsEq g d1 d2 =
   | Test.IsInst (srcty1,tgty1), Test.IsInst (srcty2,tgty2) -> typeEquiv g srcty1 srcty2 && typeEquiv g tgty1 tgty2
   | Test.ActivePatternCase (_,_,vrefOpt1,n1,_),        Test.ActivePatternCase (_,_,vrefOpt2,n2,_) -> 
       match vrefOpt1, vrefOpt2 with 
-      | Some (vref1, tinst1), Some (vref2, tinst2) -> valRefEq g vref1 vref2 && n1 = n2  && List.lengthsEqAndForall2 (typeEquiv g) tinst1 tinst2
+      | Some (vref1, tinst1), Some (vref2, tinst2) -> valRefEq g vref1 vref2 && n1 = n2  && not (doesActivePatternHaveFreeTypars g vref1) && List.lengthsEqAndForall2 (typeEquiv g) tinst1 tinst2
       | _ -> false (* for equality purposes these are considered unequal! This is because adhoc computed patterns have no identity. *)
 
   | _ -> false
@@ -451,7 +451,7 @@ let discrimsHaveSameSimultaneousClass g d1 d2 =
     | Test.IsInst _, Test.IsInst _ -> false
     | Test.ActivePatternCase (_,_,apatVrefOpt1,_,_),        Test.ActivePatternCase (_,_,apatVrefOpt2,_,_) -> 
         match apatVrefOpt1, apatVrefOpt2 with 
-        | Some (vref1, tinst1), Some (vref2, tinst2) -> valRefEq g vref1 vref2  && List.lengthsEqAndForall2 (typeEquiv g) tinst1 tinst2
+        | Some (vref1, tinst1), Some (vref2, tinst2) -> valRefEq g vref1 vref2  && not (doesActivePatternHaveFreeTypars g vref1) && List.lengthsEqAndForall2 (typeEquiv g) tinst1 tinst2
         | _ -> false (* for equality purposes these are considered different classes of discriminators! This is because adhoc computed patterns have no identity! *)
 
     | _ -> false
@@ -1058,8 +1058,8 @@ let CompilePatternBasic
             | TPat_query ((_,resTys,apatVrefOpt,idx,apinfo),p,m) -> 
             
                 if apinfo.IsTotal then
-            
-                    if (isNone apatVrefOpt && i = i') || (discrimsEq g discrim (Option.get (getDiscrimOfPattern pat))) then
+                    let hasParam = (match apatVrefOpt with None -> true | Some (vref,_) -> doesActivePatternHaveFreeTypars g vref)
+                    if (hasParam && i = i') || (discrimsEq g discrim (Option.get (getDiscrimOfPattern pat))) then
                         let aparity = apinfo.Names.Length
                         let accessf' j tpinst _e' = 
                             if aparity <= 1 then 
@@ -1069,7 +1069,7 @@ let CompilePatternBasic
                                 mkUnionCaseFieldGetUnproven(Option.get resPreBindOpt,ucref,instTypes tpinst resTys,j,exprm)
                         mkSubFrontiers path accessf' active' [p] (fun path j -> PathQuery(path,int64 j))
 
-                    elif isNone apatVrefOpt then
+                    elif hasParam then
 
                         // Successful active patterns  don't refute other patterns
                         [frontier] 
@@ -1206,7 +1206,10 @@ let CompilePatternBasic
             !res
         // Assign an identifier to each TPat_query based on our knowledge of the 'identity' of the active pattern, if any 
         | TPat_query ((_,_,apatVrefOpt,_,_),_,_) -> 
-            let uniqId = match apatVrefOpt with None -> genUniquePathId() | Some (vref,_) -> vref.Stamp
+            let uniqId = 
+                match apatVrefOpt with 
+                | Some (vref,_) when not (doesActivePatternHaveFreeTypars g vref) -> vref.Stamp 
+                | _ -> genUniquePathId() 
             let inp = Active(PathQuery(path,uniqId),subExpr,p) 
             [(inp::accActive, accValMap)] 
         | _ -> 

@@ -1,14 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-# Copyright (c) 2002-2011 Microsoft Corporation. 
-#
-# 
-# 
-# 
-#
-#
-# You must not remove this notice, or any other, from this software.
--->
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <FSharpSourcesRoot>..\..</FSharpSourcesRoot>
@@ -27,7 +17,7 @@
     <AssemblyName>fsi</AssemblyName>
     <BaseAddress>0x0A000000</BaseAddress>
     <DefineConstants>EXTENSIONTYPING;COMPILER;$(DefineConstants)</DefineConstants>
-    <TargetFrameworkVersion Condition="'$(TargetFramework)'=='net20' or '$(TargetFramework)'=='mono20'">v3.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion Condition="'$(TargetFramework)'=='net20'">v3.5</TargetFrameworkVersion>
     <AllowCrossTargeting>true</AllowCrossTargeting>
     <OtherFlags>$(OtherFlags) --warnon:1182</OtherFlags>
   </PropertyGroup>

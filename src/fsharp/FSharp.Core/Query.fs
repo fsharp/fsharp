@@ -12,25 +12,13 @@ open System
 open System.Linq
 open System.Collections
 open System.Collections.Generic
-open System.Linq.Expressions
-open System.Reflection
-#if FX_NO_REFLECTION_EMIT
-#else
-open System.Reflection.Emit
-#endif
+
 open Microsoft.FSharp
 open Microsoft.FSharp.Core
 open Microsoft.FSharp.Core.Operators
-open Microsoft.FSharp.Core.LanguagePrimitives.IntrinsicOperators
 open Microsoft.FSharp.Collections
-open Microsoft.FSharp.Reflection
-open Microsoft.FSharp.Linq
-open Microsoft.FSharp.Linq.RuntimeHelpers.Adapters
-open Microsoft.FSharp.Linq.RuntimeHelpers
-open Microsoft.FSharp.Linq.RuntimeHelpers.LeafExpressionConverter
 open Microsoft.FSharp.Quotations
-open Microsoft.FSharp.Quotations.Patterns
-open Microsoft.FSharp.Quotations.DerivedPatterns
+open Microsoft.FSharp.Linq.RuntimeHelpers
 
 #nowarn "64"
 
@@ -40,7 +28,6 @@ type QuerySource<'T, 'Q> (source: seq<'T>) =
 
 [<AutoOpen>]
 module Helpers =
-
        
     // This helps the somewhat complicated type inference for AverageByNullable and SumByNullable, by making both type in a '+' the same
     let inline plus (x:'T) (y:'T) = Checked.(+) x y
@@ -54,9 +41,21 @@ module Helpers =
         match source with 
         | :? System.Linq.IOrderedEnumerable<'T> as source -> source
         | _ -> invalidArg "source" (SR.GetString(SR.thenByError))
+
+
+// used so we can define the implementation of QueryBuilder before the Query module (so in Query we can safely use methodhandleof)
+module ForwardDeclarations = 
+    type IQueryMethods = 
+        abstract Execute : Expr<'T> -> 'U
+        abstract EliminateNestedQueries : Expr -> Expr
+    let mutable Query = 
+        {
+            new IQueryMethods with
+                member this.Execute(_) = failwith "IQueryMethods.Execute should never be called"
+                member this.EliminateNestedQueries(_) = failwith "IQueryMethods.EliminateNestedQueries should never be called"
+        }
       
 type QueryBuilder() =
-
     member __.For       (source:QuerySource<'T,'Q>, body: 'T -> QuerySource<'Result,'Q2>) : QuerySource<'Result,'Q> = QuerySource (Seq.collect (fun x -> (body x).Source) source.Source)
     member __.Zero      () = QuerySource Seq.empty
     member __.Yield     x = QuerySource (Seq.singleton x)
@@ -207,6 +206,64 @@ type QueryBuilder() =
     member __.LeftOuterJoin (outerSource:QuerySource<_,'Q>, innerSource: QuerySource<_,'Q>, outerKeySelector, innerKeySelector, elementSelector: _ ->  seq<_> -> _) : QuerySource<_,'Q> = 
         QuerySource (System.Linq.Enumerable.GroupJoin(outerSource.Source, innerSource.Source, Func<_,_>(outerKeySelector), Func<_,_>(innerKeySelector), Func<_,_,_>(fun x g -> elementSelector x (g.DefaultIfEmpty()))))
 
+    member __.RunQueryAsValue  (q:Quotations.Expr<'T>) : 'T = ForwardDeclarations.Query.Execute q
+
+    member __.RunQueryAsEnumerable  (q:Quotations.Expr<QuerySource<'T,IEnumerable>>) : IEnumerable<'T> = 
+        let queryAfterEliminatingNestedQueries = ForwardDeclarations.Query.EliminateNestedQueries q 
+        let queryAfterCleanup = Microsoft.FSharp.Linq.RuntimeHelpers.Adapters.CleanupLeaf queryAfterEliminatingNestedQueries
+        (LeafExpressionConverter.EvaluateQuotation queryAfterCleanup :?> QuerySource<'T,IEnumerable>).Source
+
+    member __.RunQueryAsQueryable  (q:Quotations.Expr<QuerySource<'T,IQueryable>>) : IQueryable<'T> = ForwardDeclarations.Query.Execute q 
+    member this.Run q = this.RunQueryAsQueryable q
+
+namespace Microsoft.FSharp.Linq.QueryRunExtensions 
+
+    open Microsoft.FSharp.Core
+
+    [<AutoOpen>]
+    module LowPriority = 
+        type Microsoft.FSharp.Linq.QueryBuilder with
+            [<CompiledName("RunQueryAsValue")>]
+            member this.Run (q: Microsoft.FSharp.Quotations.Expr<'T>) = this.RunQueryAsValue q
+
+    [<AutoOpen>]
+    module HighPriority = 
+        type Microsoft.FSharp.Linq.QueryBuilder with
+            [<CompiledName("RunQueryAsEnumerable")>]
+            member this.Run (q: Microsoft.FSharp.Quotations.Expr<Microsoft.FSharp.Linq.QuerySource<'T,System.Collections.IEnumerable>>) = this.RunQueryAsEnumerable q
+
+namespace Microsoft.FSharp.Linq
+
+open System
+open System.Linq
+open System.Collections
+open System.Collections.Generic
+open System.Linq.Expressions
+open System.Reflection
+#if FX_NO_REFLECTION_EMIT
+#else
+open System.Reflection.Emit
+#endif
+open Microsoft.FSharp
+open Microsoft.FSharp.Core
+open Microsoft.FSharp.Core.Operators
+open Microsoft.FSharp.Core.LanguagePrimitives.IntrinsicOperators
+open Microsoft.FSharp.Collections
+open Microsoft.FSharp.Reflection
+open Microsoft.FSharp.Linq
+open Microsoft.FSharp.Linq.RuntimeHelpers.Adapters
+open Microsoft.FSharp.Linq.RuntimeHelpers
+open Microsoft.FSharp.Linq.RuntimeHelpers.LeafExpressionConverter
+open Microsoft.FSharp.Quotations
+open Microsoft.FSharp.Quotations.Patterns
+open Microsoft.FSharp.Quotations.DerivedPatterns
+
+open Microsoft.FSharp.Linq.QueryRunExtensions
+
+#if FX_RESHAPED_REFLECTION
+open PrimReflectionAdapters
+open ReflectionAdapters
+#endif
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Query =
@@ -940,10 +997,11 @@ module Query =
             | MacroReduction reduced -> Some (walk reduced)
             | _ -> None)
 
-
-    let (|CallQueryBuilderRunQueryable|_|)   : Quotations.Expr -> _ = (|SpecificCallToMethod|_|) (typeof<QueryBuilder>.GetMethod("Run").MethodHandle)
-    let (|CallQueryBuilderRunValue|_|)       : Quotations.Expr -> _ = (|SpecificCallToMethod|_|) (typeof<QueryBuilder>.Assembly.GetType("Microsoft.FSharp.Linq.QueryRunExtensions.LowPriority").GetMethod("RunQueryAsValue").MethodHandle)
-    let (|CallQueryBuilderRunEnumerable|_|)  : Quotations.Expr -> _ = (|SpecificCallToMethod|_|) (typeof<QueryBuilder>.Assembly.GetType("Microsoft.FSharp.Linq.QueryRunExtensions.HighPriority").GetMethod("RunQueryAsEnumerable").MethodHandle)
+    let (|CallQueryBuilderRunQueryable|_|)   : Quotations.Expr -> _ = (|SpecificCallToMethod|_|) (methodhandleof (fun (b :QueryBuilder, v) -> b.Run(v)))
+    //  (typeof<QueryBuilder>.Assembly.GetType("Microsoft.FSharp.Linq.QueryRunExtensions.LowPriority").GetMethod("RunQueryAsValue").MethodHandle)
+    let (|CallQueryBuilderRunValue|_|)       : Quotations.Expr -> _ = (|SpecificCallToMethod|_|) (methodhandleof (fun (b : QueryBuilder, v : Expr<'a>) -> b.Run(v)) : 'a) // type annotations here help overload resolution
+    //  (typeof<QueryBuilder>.Assembly.GetType("Microsoft.FSharp.Linq.QueryRunExtensions.HighPriority").GetMethod("RunQueryAsEnumerable").MethodHandle)
+    let (|CallQueryBuilderRunEnumerable|_|)  : Quotations.Expr -> _ = (|SpecificCallToMethod|_|) (methodhandleof (fun (b : QueryBuilder, v : Expr<QuerySource<_, IEnumerable>> ) -> b.Run(v))) // type annotations here help overload resolution
     let (|CallQueryBuilderFor|_|)            : Quotations.Expr -> _ = (|SpecificCallToMethod|_|) (methodhandleof (fun (b:QueryBuilder,source:QuerySource<int,_>,body) -> b.For(source,body)))
     let (|CallQueryBuilderYield|_|)          : Quotations.Expr -> _ = (|SpecificCall1|_|) (methodhandleof (fun (b:QueryBuilder,value) -> b.Yield value))
     let (|CallQueryBuilderYieldFrom|_|)      : Quotations.Expr -> _ = (|SpecificCallToMethod|_|) (methodhandleof (fun (b:QueryBuilder,values) -> b.YieldFrom values))
@@ -1493,7 +1551,7 @@ module Query =
             let mutVar, mutToImmutSelector = ConvertImmutableConsumerToMutableConsumer sourceConv (immutVar, Expr.Var immutVar) 
             let immutExprEnumerable = MakeSelect(CanEliminate.Yes, false, mutSource, mutVar, mutToImmutSelector)
             let mustReturnIQueryable = 
-                IsQuerySourceTy immutSourceTy && qTyIsIQueryable (immutSourceTy.GetGenericArguments().[0]) || 
+                IsQuerySourceTy immutSourceTy && qTyIsIQueryable (immutSourceTy.GetGenericArguments().[1]) || 
                 IsIQueryableTy immutSourceTy
             let immutExprFinal = 
                 if mustReturnIQueryable then MakeAsQueryable(immutSourceElemTy,immutExprEnumerable) 
@@ -1679,37 +1737,12 @@ module Query =
         // We use Unchecked.unbox to allow headOrDefault, lastOrDefault and exactlyOneOrDefault to return Uncehcked.defaultof<_> values for F# types
         Unchecked.unbox (EvalNonNestedOuter CanEliminate.No p)
 
-   
-type QueryBuilder with
-    member __.RunQueryAsValue  (q:Quotations.Expr<'T>) : 'T = Query.QueryExecute q 
-
-    member __.RunQueryAsEnumerable  (q:Quotations.Expr<QuerySource<'T,IEnumerable>>) : IEnumerable<'T> = 
-        let queryAfterEliminatingNestedQueries = Query.EliminateNestedQueries q 
-        let queryAfterCleanup = Microsoft.FSharp.Linq.RuntimeHelpers.Adapters.CleanupLeaf queryAfterEliminatingNestedQueries
-        (LeafExpressionConverter.EvaluateQuotation queryAfterCleanup :?> QuerySource<'T,IEnumerable>).Source
-
-    member __.RunQueryAsQueryable  (q:Quotations.Expr<QuerySource<'T,IQueryable>>) : IQueryable<'T> = Query.QueryExecute q 
-    member this.Run q = this.RunQueryAsQueryable q
-
-
-
-namespace Microsoft.FSharp.Linq.QueryRunExtensions 
-
-    open Microsoft.FSharp.Core
-
-    [<AutoOpen>]
-    module LowPriority = 
-        type Microsoft.FSharp.Linq.QueryBuilder with
-            [<CompiledName("RunQueryAsValue")>]
-            member this.Run (q: Microsoft.FSharp.Quotations.Expr<'T>) = this.RunQueryAsValue q
-
-    [<AutoOpen>]
-    module HighPriority = 
-        type Microsoft.FSharp.Linq.QueryBuilder with
-            [<CompiledName("RunQueryAsEnumerable")>]
-            member this.Run (q: Microsoft.FSharp.Quotations.Expr<Microsoft.FSharp.Linq.QuerySource<'T,System.Collections.IEnumerable>>) = this.RunQueryAsEnumerable q
-
-
+    do ForwardDeclarations.Query <-
+        {
+            new ForwardDeclarations.IQueryMethods with
+                member this.Execute(q) = QueryExecute q
+                member this.EliminateNestedQueries(e) = EliminateNestedQueries e
+        }
     
 #endif
 

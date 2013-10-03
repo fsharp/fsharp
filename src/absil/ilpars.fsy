@@ -61,13 +61,14 @@ let resolveCurrentMethodSpecScope obj =
     resolveMethodSpecScope obj mkILEmptyGenericParams
 
 
-let findMscorlibAssemblyRef() = 
-  match (!parseILGlobals).mscorlibScopeRef with
+let findSystemRuntimeAssemblyRef() = 
+  match (!parseILGlobals).traits.ScopeRef with
   | ILScopeRef.Assembly aref -> aref
-  | _ -> pfailwith "mscorlibScopeRef not set to valid assembly reference in parseILGlobals"
+  | _ -> pfailwith "systemRuntimeScopeRef not set to valid assembly reference in parseILGlobals"
 
 let findAssemblyRef nm = 
-  if nm = "mscorlib" then findMscorlibAssemblyRef() else
+  if nm = "mscorlib" then findSystemRuntimeAssemblyRef() 
+  else
   pfailwith ("Undefined assembly ref '" + nm + "'") 
 
 %} 

@@ -134,6 +134,36 @@ type QuickInfoTests() =
             )
     
     [<Test>]
+    member public this.``Operators.TopLevel``() =
+        let source = """
+            /// tooltip for operator
+            let (===) a b = a + b
+            let _ = "" === ""
+            """
+        this.CheckTooltip(
+            code = source,
+            marker = "== \"\"",
+            atStart = true,
+            f = (fun ((text, _), _) -> printfn "actual %s" text; Assert.IsTrue(text.Contains "tooltip for operator"))
+            )
+            
+    [<Test>]
+    member public this.``Operators.Member``() =
+        let source = """
+            type U = U
+                with
+                /// tooltip for operator
+                static member (+++) (U, U) = U
+            let _ = U +++ U
+            """
+        this.CheckTooltip(
+            code = source,
+            marker = "++ U",
+            atStart = true,
+            f = (fun ((text, _), _) -> printfn "actual %s" text; Assert.IsTrue(text.Contains "tooltip for operator"))
+            )
+    
+    [<Test>]
     member public this.``QuickInfo.OverriddenMethods``() =
         let source = """
             type A() =
@@ -700,6 +730,30 @@ type QuickInfoTests() =
         this.InfoInDeclarationTestQuickInfoImplWithTrim fileContents "PriorityQueue(*MarkerModule*)" expectedquickinfoPriorityQueueinModule
         this.InfoInDeclarationTestQuickInfoImplWithTrim fileContents "pq(*MarkerVal*)" expectedquickinfoVal
         this.InfoInDeclarationTestQuickInfoImplWithTrim fileContents "singleton(*MarkerLastLine*)" expectedquickinfoLastLine
+        
+    [<Test>]
+    member public this.NamedDUFieldQuickInfo() = 
+      
+        let fileContents = """
+                            type NamedFieldDU(*MarkerType*) =
+                              | Case1(*MarkerCase1*) of V1 : int * bool * V3 : float
+                              | Case2(*MarkerCase2*) of ``Big Name`` : int * Item2 : bool
+                              | Case3(*MarkerCase3*) of Item : int
+                              
+                            exception NamedExn(*MarkerException*) of int * V2 : string * bool * Data9 : float
+                            """
+        //Verify the quick info as expected
+        let expectedquickinfoType = "type NamedFieldDU =  | Case1 of V1: int * bool * V3: float  | Case2 of Big Name: int * bool  | Case3 of int"
+        let expectedquickinfoCase1 = "union case NamedFieldDU.Case1: V1: int * bool * V3: float -> NamedFieldDU"
+        let expectedquickinfoCase2 = "union case NamedFieldDU.Case2: Big Name: int * bool -> NamedFieldDU"
+        let expectedquickinfoCase3 = "union case NamedFieldDU.Case3: int -> NamedFieldDU"
+        let expectedquickinfoException = "exception NamedExn of int * V2: string * bool * Data9: float"
+
+        this.InfoInDeclarationTestQuickInfoImplWithTrim fileContents "NamedFieldDU(*MarkerType*)" expectedquickinfoType
+        this.InfoInDeclarationTestQuickInfoImplWithTrim fileContents "Case1(*MarkerCase1*)" expectedquickinfoCase1
+        this.InfoInDeclarationTestQuickInfoImplWithTrim fileContents "Case2(*MarkerCase2*)" expectedquickinfoCase2
+        this.InfoInDeclarationTestQuickInfoImplWithTrim fileContents "Case3(*MarkerCase3*)" expectedquickinfoCase3
+        this.InfoInDeclarationTestQuickInfoImplWithTrim fileContents "NamedExn(*MarkerException*)" expectedquickinfoException
 
     [<Test>]
     member public this.``EnsureNoAssertFromBadParserRangeOnAttribute``() = 
@@ -2269,8 +2323,12 @@ query."
                                 type System.Random with
                                     /// BCL class Extension method
                                     member this.NextDice()  = this.Next() + 1
+                                    /// new BCL class Extension method with overload
+                                    member this.NextDice(a : bool)  = this.Next() + 1
+                                    /// existing BCL class Extension method with overload
+                                    member this.Next(a : bool)  = this.Next() + 1
                                     /// BCL class Extension property
-                                    member this.DiceValue with get() = this.NextDice
+                                    member this.DiceValue with get() = 6
         
                                 type System.ConsoleKeyInfo with
                                     /// BCL struct extension method
@@ -2278,24 +2336,36 @@ query."
                                     /// BCL struct extension property
                                     member this.ExtentionProperty with get() = "Foo"        
 
-                            module OwnCodeExtensions =
+                            module OwnCode =
                                 /// fs class
                                 type FSClass() =
                                     class
+                                        /// fs class method original
+                                        member this.Method(a:string) = ""
+                                        /// fs class property original
+                                        member this.Prop with get(a:string) = ""
                                     end
     
                                 /// fs struct
                                 type FSStruct(x:int) =
                                     struct
-                                    end    
-                                type FSClass with
+                                    end
+                                    
+                            module OwnCodeExtensions =
+                                type OwnCode.FSClass with
                                     /// fs class extension method
                                     member this.ExtentionMethod()  =  100
         
                                     /// fs class extension property
-                                    member this.ExtentionProperty with get() = "Foo"    
+                                    member this.ExtentionProperty with get() = "Foo"
+                                    
+                                    /// fs class method extension overload
+                                    member this.Method(a:int)  =  ""
+                                    
+                                    /// fs class property extension overload
+                                    member this.Prop with get(a:int)  =  ""
         
-                                type FSStruct with
+                                type OwnCode.FSStruct with
                                     /// fs struct extension method
                                     member this.ExtentionMethod()  =  100
         
@@ -2307,6 +2377,9 @@ query."
                                 let rnd = new System.Random()
                                 rnd.DiceValue(*Marker11*) |>ignore
                                 rnd.NextDice(*Marker12*)() |>ignore
+                                rnd.NextDice(*Marker13*)(true) |>ignore
+                                rnd.Next(*Marker14*)(true) |>ignore
+                                
     
                             module BCLStruct = 
                                 open BCLExtensions
@@ -2315,20 +2388,31 @@ query."
                                 cki.ExtentionProperty(*Marker22*) |>ignore
     
                             module OwnClass = 
+                                open OwnCode
                                 open OwnCodeExtensions
                                 let rnd = new FSClass()
                                 rnd.ExtentionMethod(*Marker31*) |>ignore
                                 rnd.ExtentionProperty(*Marker32*) |>ignore
+                                rnd.Method(*Marker33*)("") |>ignore
+                                rnd.Method(*Marker34*)(6) |>ignore
+                                rnd.Prop(*Marker35*)("") |>ignore
+                                rnd.Prop(*Marker36*)(6) |>ignore
     
                             module OwnStruct = 
+                                open OwnCode
                                 open OwnCodeExtensions
                                 let cki = new FSStruct(100)
                                 cki.ExtentionMethod(*Marker41*) |>ignore
                                 cki.ExtentionProperty(*Marker42*) |>ignore"""
-        this.AssertQuickInfoContainsAtStartOfMarker (fileContent, "(*Marker11*)", "System.Random.DiceValue: unit -> int")
+                                
+        this.AssertQuickInfoContainsAtStartOfMarker (fileContent, "(*Marker11*)", "property System.Random.DiceValue: int")
         this.AssertQuickInfoContainsAtStartOfMarker (fileContent, "(*Marker11*)", "BCL class Extension property")
         this.AssertQuickInfoContainsAtStartOfMarker (fileContent, "(*Marker12*)", "member System.Random.NextDice : unit -> int")
         this.AssertQuickInfoContainsAtStartOfMarker (fileContent, "(*Marker12*)", "BCL class Extension method")
+        this.AssertQuickInfoContainsAtStartOfMarker (fileContent, "(*Marker13*)", "member System.Random.NextDice : a:bool -> int")
+        this.AssertQuickInfoContainsAtStartOfMarker (fileContent, "(*Marker13*)", "new BCL class Extension method with overload")
+        this.AssertQuickInfoContainsAtStartOfMarker (fileContent, "(*Marker14*)", "member System.Random.Next : a:bool -> int")
+        this.AssertQuickInfoContainsAtStartOfMarker (fileContent, "(*Marker14*)", "existing BCL class Extension method with overload")        
         this.AssertQuickInfoContainsAtStartOfMarker (fileContent, "(*Marker21*)", "member System.ConsoleKeyInfo.ExtentionMethod : unit -> int")
         this.AssertQuickInfoContainsAtStartOfMarker (fileContent, "(*Marker21*)", "BCL struct extension method")
         this.AssertQuickInfoContainsAtStartOfMarker (fileContent, "(*Marker22*)", "System.ConsoleKeyInfo.ExtentionProperty: string")
@@ -2337,6 +2421,14 @@ query."
         this.AssertQuickInfoContainsAtStartOfMarker (fileContent, "(*Marker31*)", "fs class extension method")
         this.AssertQuickInfoContainsAtStartOfMarker (fileContent, "(*Marker32*)", "FSClass.ExtentionProperty: string")
         this.AssertQuickInfoContainsAtStartOfMarker (fileContent, "(*Marker32*)", "fs class extension property")
+        this.AssertQuickInfoContainsAtStartOfMarker (fileContent, "(*Marker33*)", "member FSClass.Method : a:string -> string")
+        this.AssertQuickInfoContainsAtStartOfMarker (fileContent, "(*Marker33*)", "fs class method original")
+        this.AssertQuickInfoContainsAtStartOfMarker (fileContent, "(*Marker34*)", "member FSClass.Method : a:int -> string")
+        this.AssertQuickInfoContainsAtStartOfMarker (fileContent, "(*Marker34*)", "fs class method extension overload")
+        this.AssertQuickInfoContainsAtStartOfMarker (fileContent, "(*Marker35*)", "property FSClass.Prop: string -> string")
+        this.AssertQuickInfoContainsAtStartOfMarker (fileContent, "(*Marker35*)", "fs class property original")
+        this.AssertQuickInfoContainsAtStartOfMarker (fileContent, "(*Marker36*)", "property FSClass.Prop: int -> string")
+        this.AssertQuickInfoContainsAtStartOfMarker (fileContent, "(*Marker36*)", "fs class property extension overload")
         this.AssertQuickInfoContainsAtStartOfMarker (fileContent, "(*Marker41*)", "member FSStruct.ExtentionMethod : unit -> int")
         this.AssertQuickInfoContainsAtStartOfMarker (fileContent, "(*Marker41*)", "fs struct extension method")
         this.AssertQuickInfoContainsAtStartOfMarker (fileContent, "(*Marker42*)", "FSStruct.ExtentionProperty: string")

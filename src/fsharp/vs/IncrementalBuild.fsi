@@ -8,11 +8,11 @@ open Microsoft.FSharp.Compiler.Build
 
 
 [<RequireQualifiedAccess>]
-type (* internal *) Severity = 
+type internal Severity = 
     | Warning 
     | Error
 
-type (* internal *) ErrorInfo = 
+type internal ErrorInfo = 
     { FileName:string
       StartLine:int
       EndLine:int
@@ -21,12 +21,12 @@ type (* internal *) ErrorInfo =
       Severity:Severity
       Message:string
       Subcategory:string }
-    static member internal CreateFromExceptionAndAdjustEof : PhasedError * bool * bool * range * (int*int) -> ErrorInfo
-    static member internal CreateFromException : PhasedError * bool * bool * range -> ErrorInfo
+    static member CreateFromExceptionAndAdjustEof : PhasedError * bool * bool * range * (int*int) -> ErrorInfo
+    static member CreateFromException : PhasedError * bool * bool * range -> ErrorInfo
 
 // implementation details used by other code in the compiler    
 [<Sealed>]
-type (* internal *) ErrorScope = 
+type internal ErrorScope = 
     interface System.IDisposable
     new : unit -> ErrorScope
     member ErrorsAndWarnings : ErrorInfo list

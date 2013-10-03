@@ -32,7 +32,7 @@ module internal ExtensionTyping =
     module internal ApprovalIO =
         val partiallyCanonicalizeFileName : string -> string
 
-        /// location of approvals data file, e.g. C:\Users\username\AppData\Local\Microsoft\VisualStudio\11.0\type-providers.txt
+        /// location of approvals data file, e.g. C:\Users\username\AppData\Local\Microsoft\VisualStudio\12.0\type-providers.txt
         val ApprovalsAbsoluteFileName  : string
 
         [<RequireQualifiedAccess>]
@@ -230,6 +230,7 @@ module internal ExtensionTyping =
         member IsOut : bool
         member IsOptional : bool
         member RawDefaultValue : obj
+        member HasDefaultValue : bool
         interface IProvidedCustomAttributeProvider 
 
     and [<AllowNullLiteral; Class; Sealed>] 

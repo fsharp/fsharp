@@ -414,7 +414,8 @@ type emEnv =
       emLocals   : LocalBuilder[];
       emLabels   : Zmap<IL.ILCodeLabel,Label>;
       emTyvars   : Type[] list; // stack
-      emEntryPts : (TypeBuilder * string) list }
+      emEntryPts : (TypeBuilder * string) list
+      delayedFieldInits :  (unit -> unit) list}
   
 let orderILTypeRef      = ComparisonIdentity.Structural<ILTypeRef>
 let orderILMethodRef    = ComparisonIdentity.Structural<ILMethodRef>
@@ -430,7 +431,8 @@ let emEnv0 =
       emLocals   = [| |];
       emLabels   = Zmap.empty codeLabelOrder;
       emTyvars   = [];
-      emEntryPts = []; }
+      emEntryPts = []
+      delayedFieldInits = [] }
 
 let envBindTypeRef emEnv (tref:ILTypeRef) (typT,typB,typeDef)= 
     match typT with 
@@ -581,8 +583,10 @@ and convTypeAux cenv emEnv preferCreated typ =
                                    baseT.MakeByRefType()                               |> nonNull "convType: byref" 
     | ILType.TypeVar tv         -> envGetTyvar emEnv tv                                |> nonNull "convType: tyvar" 
   // XXX: REVIEW: complete the following cases.                                                        
+    | ILType.Modified (false, _, modifiedTy)  -> convTypeAux cenv emEnv preferCreated modifiedTy
+    | ILType.Modified (true, _, _) -> failwith "convType: modreq"
     | ILType.FunctionPointer _callsig -> failwith "convType: fptr"
-    | ILType.Modified _   -> failwith "convType: modified"
+
 
 // [Bug 4063].
 // The convType functions convert AbsIL types into concrete Type values.
@@ -919,6 +923,8 @@ let emitInstrCall cenv emEnv (ilG:ILGenerator) opCall tail (mspec:ILMethodSpec) 
         else
             let minfo = convMethodSpec cenv emEnv mspec
 #if SILVERLIGHT
+            // When generating code for silverlight, we intercept direct 
+            // calls to System.Console.WriteLine.
             let fullName = minfo.DeclaringType.FullName + "." + minfo.Name
             let minfo =
               if fullName = "System.Console.WriteLine" || fullName = "System.Console.Write" then
@@ -1653,7 +1659,23 @@ let buildFieldPass2 cenv tref (typB:TypeBuilder) emEnv (fdef : ILFieldDef) =
         typB.DefineFieldAndLog(fdef.Name,fieldT,attrs)
      
     // set default value
-    fdef.LiteralValue   |> Option.iter (fun initial -> fieldB.SetConstant(convFieldInit initial));
+    let emEnv = 
+        match fdef.LiteralValue with
+        | None -> emEnv
+        | Some initial -> 
+            if not fieldT.IsEnum 
+#if FX_ATLEAST_45
+                || not fieldT.Assembly.IsDynamic // it is ok to init fields with type = enum  that are defined in other assemblies 
+#endif
+            then 
+                fieldB.SetConstant(convFieldInit initial)
+                emEnv
+            else
+                // if field type (enum) is defined in FSI dynamic assembly it is created as nested type 
+                // => its underlying type cannot be explicitly specified and will be inferred at the very moment of first field definition
+                // => here we cannot detect if underlying type is already set so as a conservative solution we delay initialization of fields
+                // to the end of pass2 (types and members are already created but method bodies are yet not emitted)
+                { emEnv with delayedFieldInits = (fun() -> fieldB.SetConstant(convFieldInit initial))::emEnv.delayedFieldInits }
 #if FX_ATLEAST_SILVERLIGHT_50
 #else
     fdef.Offset |> Option.iter (fun offset ->  fieldB.SetOffset(offset));
@@ -1761,8 +1783,8 @@ let typeAttributesOfTypeLayout cenv emEnv x =
       else 
         Some(convCustomAttr cenv emEnv  
                (IL.mkILCustomAttribute cenv.ilg
-                  (mkILTyRef (cenv.ilg.mscorlibScopeRef,"System.Runtime.InteropServices.StructLayoutAttribute"), 
-                   [mkILNonGenericValueTy (mkILTyRef (cenv.ilg.mscorlibScopeRef,"System.Runtime.InteropServices.LayoutKind")) ],
+                  (mkILTyRef (cenv.ilg.traits.ScopeRef,"System.Runtime.InteropServices.StructLayoutAttribute"), 
+                   [mkILNonGenericValueTy (mkILTyRef (cenv.ilg.traits.ScopeRef,"System.Runtime.InteropServices.LayoutKind")) ],
                    [ ILAttribElem.Int32 0x02 ],
                    (p.Pack |> Option.toList |> List.map (fun x -> ("Pack", cenv.ilg.typ_int32, false, ILAttribElem.Int32 (int32 x))))  @
                    (p.Size |> Option.toList |> List.map (fun x -> ("Size", cenv.ilg.typ_int32, false, ILAttribElem.Int32 x)))))) in
@@ -2024,6 +2046,12 @@ let buildModuleFragment cenv emEnv (asmB : AssemblyBuilder) (modB : ModuleBuilde
     let emEnv = List.fold (buildModuleTypePass1 cenv modB) emEnv tdefs
     tdefs |> List.iter (buildModuleTypePass1b cenv emEnv) 
     let emEnv = List.fold (buildModuleTypePass2 cenv) emEnv  tdefs
+    
+    for delayedFieldInit in emEnv.delayedFieldInits do
+        delayedFieldInit()
+
+    let emEnv = { emEnv with delayedFieldInits = [] }
+
     let emEnv = List.fold (buildModuleTypePass3 cenv modB) emEnv  tdefs
     let visited = new Dictionary<_,_>(10) 
     let created = new Dictionary<_,_>(10) 
@@ -2053,7 +2081,7 @@ let mkDynamicAssemblyAndModule (assemblyName, optimize, debugInfo) =
     let filename = assemblyName ^ ".dll"
     let currentDom  = System.AppDomain.CurrentDomain
 #if SILVERLIGHT
-    let _asmDir  = if optimize then "." else "." // TODO: factor out optimize
+    ignore optimize
     let asmName = new AssemblyName()
     asmName.Name <- assemblyName;
     let asmB = currentDom.DefineDynamicAssembly(asmName,AssemblyBuilderAccess.Run)
@@ -2128,5 +2156,4 @@ let LookupType      cenv emEnv typ  = convCreatedType cenv emEnv typ
 // Lookups of ILFieldRef and MethodRef may require a similar non-Builder-fixup post Type-creation.
 let LookupFieldRef  emEnv fref = Zmap.tryFind fref emEnv.emFieldMap |> Option.map (fun fieldBuilder  -> fieldBuilder  :> FieldInfo)
 let LookupMethodRef emEnv mref = Zmap.tryFind mref emEnv.emMethMap  |> Option.map (fun methodBuilder -> methodBuilder :> MethodInfo)
-
 

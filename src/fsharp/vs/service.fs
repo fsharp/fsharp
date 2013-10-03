@@ -87,11 +87,19 @@ module internal Params =
         let denv = denv.SetOpenPaths([])
         // now printing will see a .NET-like canonical representation, that is good for sorting overloads into a reasonable order (see bug 94520)
         NicePrint.stringOfTy denv strippedType
+
     let ParamOfRecdField g denv f =
         { Name = f.rfield_id.idText
           CanonicalTypeTextForSorting = printCanonicalizedTypeName g denv f.rfield_type
           Display = NicePrint.prettyStringOfTy denv f.rfield_type
           Description = "" }
+    
+    let ParamOfUnionCaseField g denv isGenerated (i : int) f = 
+        let initial = ParamOfRecdField g denv f
+        if isGenerated i f then initial
+        else
+        { initial with Display = NicePrint.stringOfParamData denv (ParamData(false, false, NotOptional, (Some initial.Name), f.rfield_type)) }
+
     let ParamOfParamData g denv (ParamData(_isParamArrayArg,_isOutArg,_optArgInfo,nmOpt,pty) as paramData) =
         { Name = match nmOpt with None -> "" | Some pn -> pn
           CanonicalTypeTextForSorting = printCanonicalizedTypeName g denv pty
@@ -127,10 +135,6 @@ module internal Params =
               Description = "" })
 
     let ParamsOfTypes g denv args rtau = 
-        (*let arg,rtau = destFunTy rtau 
-        let args = tryDestTupleTy arg  *)
-        
-        // Review, use tpcsL here
         let ptausL, _ = NicePrint.layoutPrettifiedTypes denv (args@[rtau]) 
         let argsL,_ = List.frontAndBack ptausL 
         let mkParam (tau,tyL) =
@@ -186,17 +190,20 @@ module internal Params =
                     // This is good enough as we don't provide ways to display info for the second curried argument
                     let paramDatas = 
                         argInfo
-                        |> List.map ParamNameAndTypeOfArgInfo
+                        |> List.map ParamNameAndType.FromArgInfo
                         |> List.map (fun (ParamNameAndType(nm,pty)) -> ParamData(false, false, NotOptional, nm, pty))
                     ParamsOfParamDatas g denv paramDatas returnTy
-        | Item.UnionCase(ucr)   -> ucr.UnionCase.RecdFields |> List.map (ParamOfRecdField g denv) 
+        | Item.UnionCase(ucr)   -> 
+            match ucr.UnionCase.RecdFields with
+            | [f] -> [ParamOfUnionCaseField g denv NicePrint.isGeneratedUnionCaseField -1 f]
+            | fs -> fs |> List.mapi (ParamOfUnionCaseField g denv NicePrint.isGeneratedUnionCaseField)
         | Item.ActivePatternCase(apref)   -> 
             let v = apref.ActivePatternVal 
             let _,tau = v.TypeScheme
             let args, _ = stripFunTy denv.g tau 
             ParamsOfTypes g denv args tau
         | Item.ExnCase(ecref)     -> 
-            ecref |> recdFieldsOfExnDefRef |> List.map (ParamOfRecdField g denv) 
+            ecref |> recdFieldsOfExnDefRef |> List.mapi (ParamOfUnionCaseField g denv NicePrint.isGeneratedExceptionField) 
         | Item.Property(_,pinfo :: _) -> 
             let paramDatas = pinfo.GetParamDatas(amap,m)
             let rty = pinfo.GetPropertyType(amap,m) 
@@ -251,7 +258,7 @@ module internal Params =
 /// A single method for Intellisense completion
 [<NoEquality; NoComparison>]
 // Note: instances of this type do not hold any references to any compiler resources.
-type (* internal *) Method = 
+type internal Method = 
     { 
         Description: DataTipText
         Type: string
@@ -262,7 +269,7 @@ type (* internal *) Method =
 
 /// A table of methods for Intellisense completion
 //
-// Note: this type does not hold any references to any compiler resources, nor does evaluating any of the properties execute any
+// Note: this type does not hold any strong references to any compiler resources, nor does evaluating any of the properties execute any
 // code on the compiler thread.  
 [<Sealed>]
 type MethodOverloads( name: string, unsortedMethods: Method[] ) = 
@@ -279,11 +286,10 @@ type MethodOverloads( name: string, unsortedMethods: Method[] ) =
     member x.Name = name
     member x.Methods = methods
 
-    static member Create(infoReader:InfoReader,m,denv,items) = 
+    static member Create(infoReader:InfoReader,m,denv,items:Item list) = 
         let g = infoReader.g
-        if verbose then dprintf "mkMethods: %d items on input\n" (List.length items) 
         if isNil items then new MethodOverloads("", [| |]) else
-        let name = DisplayNameOfItem g items.Head 
+        let name = items.Head.DisplayName g 
         let getOverloadsForItem item =
             match methodOverloadsCache.TryGetValue item with
             | true, overloads -> overloads
@@ -316,9 +322,6 @@ type MethodOverloads( name: string, unsortedMethods: Method[] ) =
                     | Item.CustomBuilder _ -> []
                     | _ -> []
 
-                if verbose then 
-                    dprintf "mkMethods: %d items after filtering for methodness\n" (List.length items)
-
                 let methods = 
                     items |> Array.ofList |> Array.map (fun item -> 
                         { Description= DataTipText [FormatDescriptionOfItem true infoReader m denv item]
@@ -337,7 +340,7 @@ type MethodOverloads( name: string, unsortedMethods: Method[] ) =
 //--------------------------------------------------------------------------
 
 [<RequireQualifiedAccess>]
-type (* internal *) FindDeclFailureReason = 
+type internal FindDeclFailureReason = 
     // generic reason: no particular information about error
     | Unknown
     // source code file is not available
@@ -348,7 +351,7 @@ type (* internal *) FindDeclFailureReason =
     | ProvidedMember of string
 
 [<NoEquality; NoComparison>]
-type (* internal *) FindDeclResult = 
+type internal FindDeclResult = 
     /// declaration not found + reason
     | DeclNotFound of FindDeclFailureReason
     /// found declaration; return (position-in-file, name-of-file)
@@ -359,7 +362,7 @@ type (* internal *) FindDeclResult =
 /// (Depending on the kind of the items, we may stop processing or continue to find better items)
 [<RequireQualifiedAccess>]
 [<NoEquality; NoComparison>]
-type (* internal *) NameResResult = 
+type internal NameResResult = 
     | Members of (Item list * DisplayEnv * range)
     | Cancel of DisplayEnv * range
     | Empty
@@ -400,7 +403,7 @@ type CapturedNameResolution(p:pos, i:Item, io:ItemOccurence, de:DisplayEnv, nre:
 [<Sealed>]
 type TypeCheckInfo
           (/// Information corresponding to miscellaneous command-line options (--define, etc).
-           sTcConfig: Build.TcConfig,
+           _sTcConfig: Build.TcConfig,
            g: Env.TcGlobals,
            /// AssemblyName -> IL-Module 
            amap: Import.ImportMap,
@@ -738,9 +741,9 @@ type TypeCheckInfo
             let f denv item = try f denv item with _ -> false
                                                 
             // Return only items with the specified name
-            let filterDeclItemsByResidue residue items = 
+            let filterDeclItemsByResidue residue (items: Item list) = 
                 items |> List.filter (fun item -> 
-                    let n1 =  DisplayNameOfItem g item 
+                    let n1 =  item.DisplayName g 
                     Trace.PrintLine("CompilerServicesVerbose", fun () -> sprintf "\nn1 = <<<%s>>>\nn2 = <<<%s>>>\n" n1 residue)
                     if not (f denv item) then false
                     else
@@ -1120,18 +1123,23 @@ type TypeCheckInfo
           match GetDeclItemsForNamesAtPosition (None,Some(names), None, line, lineStr, idx, ResolveTypeNamesToCtors,ResolveOverloads.Yes, fun _ -> false) with
           | None
           | Some ([], _, _) -> FindDeclResult.DeclNotFound FindDeclFailureReason.Unknown
-          | Some (h :: _ , _, _) -> 
-              let h' =
-                  match h with
-                  | Item.MethodGroup (_, (ILMeth (_,ilinfo,_)) :: _) // rangeOfItem, ccuOfItem don't work on IL methods or fields; we'll be okay, though, looking up the method's *type* instead because they've the same CCU / source file
-                  | Item.CtorGroup (_, (ILMeth (_,ilinfo,_)) :: _) ->
-                      let ty = match ilinfo with ILMethInfo (typeInfo,_,_,_) -> typeInfo.ToType | ILFSMethInfo (t,_,_,_) -> TType_app(t,[])
-                      Item.Types ("", [ ty ])
-                  | Item.ILField (ILFieldInfo (typeInfo, _)) -> Item.Types ("", [ typeInfo.ToType ])
-                  | _                                         -> h
+          | Some (item :: _ , _, _) -> 
 
-              let fail defaultReason h = 
-                  match h with            
+              // For IL-based entities, switch to a different item. This is because
+              // rangeOfItem, ccuOfItem don't work on IL methods or fields.
+              //
+              // Later comment: to be honest, they aren't going to work on these new items either.
+              // This is probably old code from when we supported 'go to definition' generating IL metadata.
+              let item =
+                  match item with
+                  | Item.MethodGroup (_, (ILMeth (_,ilinfo,_)) :: _) 
+                  | Item.CtorGroup (_, (ILMeth (_,ilinfo,_)) :: _) -> Item.Types ("", [ ilinfo.ApparentEnclosingType ])
+                  | Item.ILField (ILFieldInfo (typeInfo, _)) -> Item.Types ("", [ typeInfo.ToType ])
+                  | Item.ImplicitOp(_, {contents = Some(TraitConstraintSln.FSMethSln(_, vref, _))}) -> Item.Value(vref)
+                  | _                                         -> item
+
+              let fail defaultReason = 
+                  match item with            
 #if EXTENSIONTYPING
                   | Params.ItemIsTypeWithStaticArguments g (tcref) -> FindDeclResult.DeclNotFound (FindDeclFailureReason.ProvidedType(tcref.DisplayName))
                   | Item.CtorGroup(name, ProvidedMeth(_)::_)
@@ -1142,16 +1150,16 @@ type TypeCheckInfo
 #endif
                   | _ -> FindDeclResult.DeclNotFound defaultReason
 
-              match rangeOfItem g isDecl h' with
-              | None   -> fail FindDeclFailureReason.Unknown h'
-              | Some m -> 
-                  if verbose then dprintf "tcConfig.fsharpBinariesDir = '%s'\n" sTcConfig.fsharpBinariesDir
+              match rangeOfItem g isDecl item with
+              | None   -> fail FindDeclFailureReason.Unknown 
+              | Some itemRange -> 
 
-                  let filename = fileNameOfItem g (Some sProjectDir) m h'
+                  let filename = fileNameOfItem g (Some sProjectDir) itemRange item
                   if FileSystem.SafeExists filename then 
-                      FindDeclResult.DeclFound ((m.StartLine - 1, m.StartColumn), filename)
+                      FindDeclResult.DeclFound ((itemRange.StartLine - 1, itemRange.StartColumn), filename)
                   else 
-                      fail FindDeclFailureReason.NoSourceCode h' // provided items may have TypeProviderDefinitionLocationAttribute that binds them to some location
+                      fail FindDeclFailureReason.NoSourceCode // provided items may have TypeProviderDefinitionLocationAttribute that binds them to some location
+
       | _ -> FindDeclResult.DeclNotFound FindDeclFailureReason.Unknown
 
 
@@ -1275,7 +1283,6 @@ module internal Parser =
           // Errors on while parsing project arguments 
 
           let parseResult = 
-              if verbose then dprintf "Parsing, text = \n<<<\n%s\n>>>\n" source 
 
               // If we're editing a script then we define INTERACTIVE otherwise COMPILED. Since this parsing for intellisense we always
               // define EDITING
@@ -1544,7 +1551,7 @@ module internal Parser =
         ReportUnexpectedException(e)
         reraise()
 
-type UnresolvedReferencesSet = 
+type internal UnresolvedReferencesSet = 
     val private set : System.Collections.Generic.HashSet<Build.UnresolvedAssemblyReference>
     new(unresolved) = {set = System.Collections.Generic.HashSet(unresolved, HashIdentity.Structural)}
 
@@ -1738,16 +1745,16 @@ module internal DebuggerEnvironment =
         
     
 [<NoComparison>]
-type (* internal *) TypeCheckAnswer =
+type internal TypeCheckAnswer =
     | NoAntecedant
     | Aborted
     | TypeCheckSucceeded of TypeCheckResults   
         
 /// This file has become eligible to be re-typechecked.
-type (* internal *) NotifyFileTypeCheckStateIsDirty = NotifyFileTypeCheckStateIsDirty of (string -> unit)
+type internal NotifyFileTypeCheckStateIsDirty = NotifyFileTypeCheckStateIsDirty of (string -> unit)
         
 // Identical to _VSFILECHANGEFLAGS in vsshell.idl
-type (* internal *) DependencyChangeCode =
+type internal DependencyChangeCode =
     | NoChange = 0x00000000
     | FileChanged = 0x00000001
     | TimeChanged = 0x00000002
@@ -1757,7 +1764,7 @@ type (* internal *) DependencyChangeCode =
 
 /// Callback that indicates whether a requested result has become obsolete.    
 [<NoComparison;NoEquality>]
-type (* internal *) IsResultObsolete = 
+type internal IsResultObsolete = 
     | IsResultObsolete of (unit->bool)
 
         
@@ -2161,7 +2168,7 @@ open Microsoft.FSharp.Compiler.Infos
 open Microsoft.FSharp.Compiler
 open System.Text
 
-type (* internal *) typDumper(dumpTarget:Microsoft.FSharp.Compiler.Tast.TType) =
+type internal typDumper(dumpTarget:Microsoft.FSharp.Compiler.Tast.TType) =
     override self.ToString() = 
         match !global_g with
         | Some g -> 

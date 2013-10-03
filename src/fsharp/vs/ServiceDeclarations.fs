@@ -43,7 +43,6 @@ open Microsoft.FSharp.Compiler.Infos
 open Microsoft.FSharp.Compiler.Nameres
 open ItemDescriptionIcons 
 
-
 module EnvMisc2 =
 #if SILVERLIGHT
     let GetEnvInteger e dflt = dflt
@@ -69,13 +68,13 @@ type IPartialEqualityComparer<'T> =
 type iDeclarationSet = int
 
 /// Describe a comment as either a block of text or a file+signature reference into an intellidoc file.
-type (* internal *) XmlComment =
+type internal XmlComment =
     | XmlCommentNone
     | XmlCommentText of string
     | XmlCommentSignature of (*File and Signature*) string * string
 
 /// A single data tip display element
-type (* internal *) DataTipElement = 
+type internal DataTipElement = 
     | DataTipElementNone
     /// A single type, method, etc with comment.
     | DataTipElement of (* text *) string * XmlComment
@@ -87,7 +86,7 @@ type (* internal *) DataTipElement =
 /// Information for building a data tip box.
 //
 // Note: this type does not hold any handles to compiler data structure.
-type (* internal *) DataTipText = 
+type internal DataTipText = 
     /// A list of data tip elements to display.
     | DataTipText of DataTipElement list  
 
@@ -152,7 +151,7 @@ module internal ItemDescriptionsImpl =
     let rangeOfPropInfo (pinfo:PropInfo) =
         match pinfo with
 #if EXTENSIONTYPING 
-        |   ProvidedProp(_,pi,_,_) -> definitionLocationOfProvidedItem pi
+        |   ProvidedProp(_,pi,_) -> definitionLocationOfProvidedItem pi
 #endif
         |   _ -> pinfo.ArbitraryValRef |> Option.map (fun v -> v.Range)
 
@@ -166,7 +165,7 @@ module internal ItemDescriptionsImpl =
     let rangeOfEventInfo (einfo:EventInfo) = 
         match einfo with
 #if EXTENSIONTYPING 
-        | ProvidedEvent (_,_,ei,_) -> definitionLocationOfProvidedItem ei
+        | ProvidedEvent (_,ei,_) -> definitionLocationOfProvidedItem ei
 #endif
         | _ -> einfo.ArbitraryValRef |> Option.map (fun v -> v.Range)
       
@@ -219,18 +218,13 @@ module internal ItemDescriptionsImpl =
         | Item.ArgName _ -> None
         | _ -> None
 
-    /// Work out the likely source file for an item
+    /// Work out the source file for an item and fix it up relative to the CCU if it is relative.
     let fileNameOfItem (g:TcGlobals) qualProjectDir (m:range) h =
         let file = m.FileName 
         dprintf "file stored in metadata is '%s'\n" file
         if not (FileSystem.IsPathRootedShim file) then 
-            match (ccuOfItem g h) with 
+            match ccuOfItem g h with 
             | Some ccu -> 
-                
-                // Note: For F# library DLLs, the code in build.ml fixes uo the SourceCodeDirectory (compileTimeWorkingDir)
-                // to be defaultFSharpBinariesDir\..\lib\<library-name>, i.e. the location of the source for the 
-                // file in the F# installation location
-                
                 Path.Combine(ccu.SourceCodeDirectory, file)
             | None -> 
                 match qualProjectDir with 
@@ -318,35 +312,25 @@ module internal ItemDescriptionsImpl =
     let GetXmlDocSigOfMethInfo (infoReader:InfoReader)  m (minfo:MethInfo) = 
         let amap = infoReader.amap
         match minfo with
-        | FSMeth (g,typ,vref,_) ->
-            let tcref = tcrefOfAppTy g typ
-            GetXmlDocSigOfValRef g tcref vref
+        | FSMeth (g,_,vref,_) ->
+            GetXmlDocSigOfValRef g minfo.DeclaringEntityRef vref
         | ILMeth (g,ilminfo,_) ->            
-            let tinfo,isExt,mdef,fmtps=
-                match ilminfo with
-                | ILMethInfo(tinfo,isExt,mdef,fmtps) -> Some tinfo,isExt,mdef,fmtps
-                | ILFSMethInfo(_,_,isExt,mdef) -> None,isExt,mdef,[]
-            
-            let actualTypeName,tcref = 
-                match tinfo,isExt with
-                | _,Some ext -> ext.FullName, Import.ImportILTypeRef amap m ext
-                | Some tinfo,None -> tinfo.ILTypeRef.FullName, tinfo.TyconRef 
-                | _ -> failwith "cannot happen"
-            
+            let actualTypeName = ilminfo.DeclaringTyconRef.CompiledRepresentationForNamedType.FullName
+            let fmtps = ilminfo.FormalMethodTypars            
             let genArity = if fmtps.Length=0 then "" else sprintf "``%d" fmtps.Length
 
-            match metaInfoOfEntityRef infoReader m tcref  with 
+            match metaInfoOfEntityRef infoReader m ilminfo.DeclaringTyconRef  with 
             | None -> XmlCommentNone
             | Some (ccuFileName,formalTypars,formalTypeInfo) ->
-                let filminfo = ILMethInfo(formalTypeInfo,isExt,mdef,fmtps) 
+                let filminfo = ILMethInfo(g,formalTypeInfo.ToType,None,ilminfo.RawMetadata,fmtps) 
                 let args = 
-                    match isExt with 
-                    | Some _ -> filminfo.GetRawArgTypes(amap,m,minfo.FormalMethodInst)
-                    | None -> filminfo.GetParamTypes(amap,m,minfo.FormalMethodInst)
+                    match ilminfo.IsILExtensionMethod with
+                    | true -> filminfo.GetRawArgTypes(amap,m,minfo.FormalMethodInst)
+                    | false -> filminfo.GetParamTypes(amap,m,minfo.FormalMethodInst)
 
                 // http://msdn.microsoft.com/en-us/library/fsbx0t7x.aspx
                 // If the name of the item itself has periods, they are replaced by the hash-sign ('#'). It is assumed that no item has a hash-sign directly in its name. For example, the fully qualified name of the String constructor would be "System.String.#ctor".
-                let normalizedName = mdef.Name.Replace(".","#")
+                let normalizedName = ilminfo.ILName.Replace(".","#")
 
                 XmlCommentSignature (ccuFileName,"M:"+actualTypeName+"."+normalizedName+genArity+XmlDocArgsEnc g (formalTypars,fmtps) args)
         | DefaultStructCtor _ -> XmlCommentNone
@@ -521,14 +505,14 @@ module internal ItemDescriptionsImpl =
               | Wrap(Item.ILField(ILFieldInfo(_, fld1))), Wrap(Item.ILField(ILFieldInfo(_, fld2))) -> 
                   fld1 === fld2 // reference equality on the object identity of the AbstractIL metadata blobs for the fields
               | Wrap(Item.CustomOperation (_,_,Some minfo1)), Wrap(Item.CustomOperation (_,_,Some minfo2)) -> 
-                    Infos.MethInfosUseIdenticalDefinitions () minfo1 minfo2
+                    MethInfo.MethInfosUseIdenticalDefinitions minfo1 minfo2
               | Wrap(Item.TypeVar nm1), Wrap(Item.TypeVar nm2) -> 
                     (nm1 = nm2)
               | Wrap(Item.ModuleOrNamespaces(modref1 :: _)), Wrap(Item.ModuleOrNamespaces(modref2 :: _)) -> fullDisplayTextOfModRef modref1 = fullDisplayTextOfModRef modref2
               | Wrap(Item.SetterArg(id1,_)), Wrap(Item.SetterArg(id2,_)) -> (id1.idRange, id1.idText) = (id2.idRange, id2.idText)
               | Wrap(Item.MethodGroup(_, meths1)), Wrap(Item.MethodGroup(_, meths2)) -> 
                   Seq.zip meths1 meths2 |> Seq.forall (fun (minfo1, minfo2) ->
-                    Infos.MethInfosUseIdenticalDefinitions () minfo1 minfo2)
+                    MethInfo.MethInfosUseIdenticalDefinitions minfo1 minfo2)
               | Wrap(Item.Value vref1 | Item.CustomBuilder (_,vref1)), Wrap(Item.Value vref2 | Item.CustomBuilder (_,vref2)) -> valRefEq g vref1 vref2
               | Wrap(Item.ActivePatternCase(APElemRef(_apinfo1, vref1, idx1))), Wrap(Item.ActivePatternCase(APElemRef(_apinfo2, vref2, idx2))) ->
                   idx1 = idx2 && valRefEq g vref1 vref2
@@ -536,11 +520,11 @@ module internal ItemDescriptionsImpl =
               | Wrap(Item.RecdField(RecdFieldInfo(_, RFRef(tcref1, n1)))), Wrap(Item.RecdField(RecdFieldInfo(_, RFRef(tcref2, n2)))) -> 
                   (tyconRefEq g tcref1 tcref2) && (n1 = n2) // there is no direct function as in the previous case
               | Wrap(Item.Property(_, pi1s)), Wrap(Item.Property(_, pi2s)) -> 
-                  List.zip pi1s pi2s |> List.forall(fun (pi1, pi2) -> Infos.PropInfosUseIdenticalDefinitions pi1 pi2)
-              | Wrap(Item.Event(evt1)), Wrap(Item.Event(evt2)) -> Infos.EventInfosUseIdenticalDefintions evt1 evt2
+                  List.zip pi1s pi2s |> List.forall(fun (pi1, pi2) -> PropInfo.PropInfosUseIdenticalDefinitions pi1 pi2)
+              | Wrap(Item.Event(evt1)), Wrap(Item.Event(evt2)) -> EventInfo.EventInfosUseIdenticalDefintions evt1 evt2
               | Wrap(Item.CtorGroup(_, meths1)), Wrap(Item.CtorGroup(_, meths2)) -> 
                   Seq.zip meths1 meths2 
-                  |> Seq.forall (fun (minfo1, minfo2) -> Infos.MethInfosUseIdenticalDefinitions () minfo1 minfo2)
+                  |> Seq.forall (fun (minfo1, minfo2) -> MethInfo.MethInfosUseIdenticalDefinitions minfo1 minfo2)
               | _ -> false)
               
           member x.GetHashCode item =
@@ -554,19 +538,19 @@ module internal ItemDescriptionsImpl =
               | Wrap(Item.ILField(ILFieldInfo(_, fld))) -> 
                   System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode fld // hash on the object identity of the AbstractIL metadata blob for the field
               | Wrap(Item.TypeVar nm) -> hash nm
-              | Wrap(Item.CustomOperation (_,_,Some minfo)) -> Infos.GetMethInfoHashCode minfo
+              | Wrap(Item.CustomOperation (_,_,Some minfo)) -> minfo.ComputeHashCode()
               | Wrap(Item.CustomOperation (_,_,None)) -> 1
               | Wrap(Item.ModuleOrNamespaces(modref :: _)) -> hash (fullDisplayTextOfModRef modref)          
               | Wrap(Item.SetterArg(id,_)) -> hash (id.idRange, id.idText)
-              | Wrap(Item.MethodGroup(_, meths)) -> meths |> List.fold (fun st a -> st + (Infos.GetMethInfoHashCode(a))) 0
-              | Wrap(Item.CtorGroup(name, meths)) -> name.GetHashCode() + (meths |> List.fold (fun st a -> st + (Infos.GetMethInfoHashCode(a))) 0)
+              | Wrap(Item.MethodGroup(_, meths)) -> meths |> List.fold (fun st a -> st + a.ComputeHashCode()) 0
+              | Wrap(Item.CtorGroup(name, meths)) -> name.GetHashCode() + (meths |> List.fold (fun st a -> st + a.ComputeHashCode()) 0)
               | Wrap(Item.Value vref | Item.CustomBuilder (_,vref)) -> hash vref.LogicalName
               | Wrap(Item.ActivePatternCase(APElemRef(_apinfo, vref, idx))) -> hash (vref.LogicalName, idx)
               | Wrap(Item.ExnCase(tcref)) -> hash tcref.Stamp
               | Wrap(Item.UnionCase(UnionCaseInfo(_, UCRef(tcref, n)))) -> hash(tcref.Stamp, n)
               | Wrap(Item.RecdField(RecdFieldInfo(_, RFRef(tcref, n)))) -> hash(tcref.Stamp, n)
-              | Wrap(Item.Event evt) -> Infos.GetEventInfoHashCode(evt)
-              | Wrap(Item.Property(_name, pis)) -> hash (pis |> List.map Infos.GetPropInfoHashCode)
+              | Wrap(Item.Event evt) -> evt.ComputeHashCode()
+              | Wrap(Item.Property(_name, pis)) -> hash (pis |> List.map (fun pi -> pi.ComputeHashCode()))
               | _ -> failwith "unreachable") }
     
     // Remove items containing the same module references
@@ -614,6 +598,9 @@ module internal ItemDescriptionsImpl =
         let amap = infoReader.amap
         let denv = SimplerDisplayEnv denv isDeclInfo 
         match d with
+        | Item.ImplicitOp(_, { contents = Some(TraitConstraintSln.FSMethSln(_, vref, _)) }) -> 
+            // operator with solution
+            FormatItemDescriptionToDataTipElement isDeclInfo infoReader m denv (Item.Value vref)
         | Item.Value vref | Item.CustomBuilder (_,vref) ->            
             let text = 
                 bufs (fun os -> 
@@ -633,14 +620,17 @@ module internal ItemDescriptionsImpl =
             let uc = ucinfo.UnionCase 
             let rty = generalizedTyconRef ucinfo.TyconRef
             let recd = uc.RecdFields 
-            let ty = if isNil recd then rty else (mkTupledTy g (recd |> List.map (fun rfld -> rfld.FormalType))) --> rty 
             let text = 
                 bufs (fun os -> 
                     bprintf os "%s "  (FSComp.SR.typeInfoUnionCase())
                     NicePrint.outputTyconRef denv os ucinfo.TyconRef
                     bprintf os ".%s: "  
                         (DecompileOpName uc.Id.idText) 
-                    NicePrint.outputTy denv os ty)
+                    if not (isNil recd) then
+                        NicePrint.outputUnionCases denv os recd
+                        os.Append (" -> ") |> ignore
+                    NicePrint.outputTy denv os rty )
+
 
             let xml = GetXmlComment (if (tyconRefUsesLocalXmlDoc g.compilingFslib ucinfo.TyconRef) then uc.XmlDoc else XmlDoc [||]) infoReader m d 
             DataTipElement(text, xml)
@@ -707,7 +697,7 @@ module internal ItemDescriptionsImpl =
             let dataTip = bufs (fun os -> 
                 bprintf os "%s " (FSComp.SR.typeInfoField()) 
                 NicePrint.outputILTypeRef denv os finfo.ILTypeRef
-                bprintf os "%s" finfo.FieldName;
+                bprintf os ".%s" finfo.FieldName;
                 match finfo.LiteralValue with 
                 | None -> ()
                 | Some v -> 
@@ -743,7 +733,6 @@ module internal ItemDescriptionsImpl =
             let _, rty, _ = PrettyTypes.PrettifyTypes1 g rty
             let text =
                 bufs (fun os -> 
-                    // REVIEW: use _cxs here
                     bprintf os "%s " (FSComp.SR.typeInfoProperty())
                     NicePrint.outputTyconRef denv os (tcrefOfAppTy g pinfo.EnclosingType)
                     bprintf os ".%s: " pinfo.PropertyName  
@@ -962,16 +951,11 @@ module internal ItemDescriptionsImpl =
                 | ParentNone -> None
                 
             | ILMeth (_,minfo,_) ->
-                let tcref,isExt,mdef = match minfo with ILMethInfo(tinfo,isExt,mdef,_) -> tinfo.TyconRef,isExt,mdef | ILFSMethInfo(tcref,_,isExt,mdef) -> tcref,isExt,mdef
-                let typeString =
-                    // Extension methods cannot appear in generic classes, so we do not need any ticks
-                    match isExt with
-                    | None -> tcref |> ticksAndArgCountTextOfTyconRef
-                    | Some iltyperef ->  iltyperef.Name                                
+                let typeString = minfo.DeclaringTyconRef |> ticksAndArgCountTextOfTyconRef
                 let paramString =
-                    let nGenericParams = mdef.GenericParams.Length 
+                    let nGenericParams = minfo.RawMetadata.GenericParams.Length 
                     if nGenericParams > 0 then "``"+(nGenericParams.ToString()) else ""
-                sprintf "%s.%s%s" typeString mdef.Name paramString |> Some
+                sprintf "%s.%s%s" typeString minfo.RawMetadata.Name paramString |> Some
 
             | DefaultStructCtor _  -> None
 #if EXTENSIONTYPING
@@ -1076,7 +1060,7 @@ module internal ItemDescriptionsImpl =
                         (tcref |> ticksAndArgCountTextOfTyconRef) + ".#ctor"|> Some
                    | ParentNone -> None
             | (ILMeth (_,minfo,_)) :: _ ->
-                let tcref = match minfo with ILMethInfo(tinfo,_,_,_) -> tinfo.TyconRef | ILFSMethInfo(tcref,_,_,_) -> tcref
+                let tcref = minfo.DeclaringTyconRef
                 (tcref |> ticksAndArgCountTextOfTyconRef)+".#ctor" |> Some
             | (DefaultStructCtor (g,typ) :: _) ->  
                 let tcref = tcrefOfAppTy g typ
@@ -1291,7 +1275,7 @@ type DeclarationSet(declarations: Declaration[]) =
                     // Put type ctors after types, sorted by #typars. RemoveDuplicateItems will remove DefaultStructCtors if a type is also reported with this name
                     | Item.CtorGroup (_, (cinfo :: _)) -> 1000 + 10 * (tcrefOfAppTy g cinfo.EnclosingType).TyparsNoRange.Length 
                     | _ -> 0
-                (DisplayNameOfItem g d,n))
+                (d.DisplayName g,n))
 
         // Remove all duplicates. We've put the types first, so this removes the DelegateCtor and DefaultStructCtor's.
         let items = items |> RemoveDuplicateItems g
@@ -1299,7 +1283,7 @@ type DeclarationSet(declarations: Declaration[]) =
         if verbose then dprintf "service.ml: mkDecls: %d found groups after filtering\n" (List.length items); 
 
         // Group by display name
-        let items = items |> List.groupBy (fun d -> DisplayNameOfItem g d) 
+        let items = items |> List.groupBy (fun d -> d.DisplayName g) 
 
         // Filter out operators (and list)
         let items = 

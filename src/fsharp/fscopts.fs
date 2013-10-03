@@ -395,6 +395,12 @@ let noFrameworkFlag isFsc tcConfigB =
                            Some (FSComp.SR.optsNoframework()))
 
 let advancedFlagsFsi tcConfigB = advancedFlagsBoth tcConfigB  @ [noFrameworkFlag false tcConfigB]
+let setTargetProfile tcConfigB v = 
+    tcConfigB.primaryAssembly <- 
+        match v with
+        | "mscorlib" -> PrimaryAssembly.Mscorlib
+        | "netcore"  -> PrimaryAssembly.DotNetCore
+        | _ -> error(Error(FSComp.SR.optsInvalidTargetProfile(v), rangeCmdArgs))
 
 let advancedFlagsFsc tcConfigB =
     advancedFlagsBoth tcConfigB @
@@ -422,6 +428,8 @@ let advancedFlagsFsc tcConfigB =
 
         yield CompilerOption("highentropyva", tagNone, OptionSwitch (useHighEntropyVASwitch tcConfigB), None, Some (FSComp.SR.optsUseHighEntropyVA()))
         yield CompilerOption("subsystemversion", tagString, OptionString (subSystemVersionSwitch tcConfigB), None, Some (FSComp.SR.optsSubSystemVersion()))
+        yield CompilerOption("targetprofile", tagString, OptionString (setTargetProfile tcConfigB), None, Some(FSComp.SR.optsTargetProfile()))
+        yield CompilerOption("quotations-debug", tagNone, OptionSwitch(fun switch -> tcConfigB.emitDebugInfoInQuotations <- switch = On), None, Some(FSComp.SR.optsEmitDebugInfoInQuotations()))
     ]
 
 // OptionBlock: Internal options (internal use only)
@@ -451,9 +459,10 @@ let vsSpecificFlags (tcConfigB: TcConfigBuilder) =
     CompilerOption("validate-type-providers", tagNone, OptionUnit (fun () -> tcConfigB.validateTypeProviders <- true), None, None);
     CompilerOption("LCID", tagInt, OptionInt (fun n -> tcConfigB.lcid <- Some(n)), None, None);
     CompilerOption("flaterrors", tagNone, OptionUnit (fun () -> tcConfigB.flatErrors <- true), None, None); 
+    CompilerOption("sqmsessionguid", tagNone, OptionString (fun s -> tcConfigB.sqmSessionGuid <- try System.Guid(s) |> Some  with e -> None), None, None);
     CompilerOption("maxerrors", tagInt, OptionInt (fun n -> tcConfigB.maxErrors <- n), None, None); ]
-      
-          
+
+
 let internalFlags (tcConfigB:TcConfigBuilder) =
   [
     CompilerOption("use-incremental-build", tagNone, OptionUnit (fun () -> tcConfigB.useIncrementalBuilder <- true), None, None)
@@ -480,7 +489,7 @@ let internalFlags (tcConfigB:TcConfigBuilder) =
     CompilerOption("simulateException", tagNone, OptionString (fun s -> tcConfigB.simulateException <- Some(s)), Some(InternalCommandLineOption("--simulateException", rangeCmdArgs)), Some "Simulate an exception from some part of the compiler");    
     CompilerOption("stackReserveSize", tagNone, OptionString (fun s -> tcConfigB.stackReserveSize <- Some(int32 s)), Some(InternalCommandLineOption("--stackReserveSize", rangeCmdArgs)), Some ("for an exe, set stack reserve size"));
     CompilerOption("tlr", tagInt, OptionInt (setFlag (fun v -> tcConfigB.doTLR <- v)), Some(InternalCommandLineOption("--tlr", rangeCmdArgs)), None);
-    CompilerOption("mscorlibAssemblyName", tagNone, OptionString (fun s -> tcConfigB.mscorlibAssemblyName <- s), None, None);
+    CompilerOption("mscorlibAssemblyName", tagNone, OptionString (fun s -> tcConfigB.primaryAssembly <- PrimaryAssembly.NamedMscorlib s ), None, None);
     CompilerOption("finalSimplify", tagInt, OptionInt (setFlag (fun v -> tcConfigB.doFinalSimplify <- v)), Some(InternalCommandLineOption("--finalSimplify", rangeCmdArgs)), None);
 #if TLR_LIFT
     CompilerOption("tlrlift", tagNone, OptionInt (setFlag  (fun v -> Tlr.liftTLR := v)), Some(InternalCommandLineOption("--tlrlift", rangeCmdArgs)), None);
@@ -913,7 +922,7 @@ let ApplyAllOptimizations (tcConfig:TcConfig, tcGlobals, tcVal, outfile, importM
                 if tcConfig.doFinalSimplify then 
                     //ReportTime tcConfig ("Final simplify pass");
                     let optEnvFinalSimplify,implFile, _ = Opt.OptimizeImplFile(optSettings,ccu,tcGlobals,tcVal, importMap,optEnvFinalSimplify,isIncrementalFragment,tcConfig.emitTailcalls,implFile)
-                        //PrintWholeAssemblyImplementation tcConfig outfile "post-rec-opt" implFile;
+                    //PrintWholeAssemblyImplementation tcConfig outfile "post-rec-opt" implFile;
                     implFile,optEnvFinalSimplify 
                 else 
                     implFile,optEnvFinalSimplify 
@@ -1008,6 +1017,7 @@ let DoWithErrorColor isWarn f =
               finally
                 ignoreFailureOnMono1_1_16 (fun () -> Console.ForegroundColor <- c)
 #endif
+
 
           
 

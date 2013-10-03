@@ -48,7 +48,7 @@ type ILReaderOptions =
      ilGlobals: ILGlobals;
      optimizeForMemory: bool  (* normally off, i.e. optimize for startup-path speed *) }
 
-val defaults : ILReaderOptions
+val mkDefault :  ILGlobals -> ILReaderOptions
 
 // The non-memory resources (i.e. the file handle) associated with 
 // the read can be recovered by calling CloseILModuleReader.  Any reamining 

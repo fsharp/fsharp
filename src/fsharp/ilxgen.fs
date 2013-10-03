@@ -111,7 +111,7 @@ let ChooseFreeVarNames takenNames ts =
           let names = Zset.add tn names
           names,tn
     let names    = Zset.empty String.order |> Zset.addList takenNames
-    let _names,ts = List.fmap chooseName names tns
+    let _names,ts = List.foldMap chooseName names tns
     ts
 
 let ilxgenGlobalNng = NiceNameGenerator ()
@@ -1504,7 +1504,7 @@ let GenConstArray cenv (cgbuf:CodeGenBuffer) eenv ilElementType (data:'a[]) (wri
         let ilFieldName = CompilerGeneratedName ("field" + string(newUnique()))
         let fty = ILType.Value vtspec
         let ilFieldDef = mkILStaticField (ilFieldName,fty, None, Some bytes, ILMemberAccess.Assembly)
-        let ilFieldDef = { ilFieldDef with CustomAttrs = mkILCustomAttrs [ mkDebuggerBrowsableNeverAttribute cenv.g.ilg ] }
+        let ilFieldDef = { ilFieldDef with CustomAttrs = mkILCustomAttrs [ cenv.g.ilg.mkDebuggerBrowsableNeverAttribute() ] }
         let fspec = mkILFieldSpecInTy (mkILTyForCompLoc eenv.cloc,ilFieldName, fty)
         CountStaticFieldDef();
         cgbuf.mgbuf.AddFieldDef(fspec.EnclosingTypeRef,ilFieldDef); 
@@ -1718,12 +1718,22 @@ let rec GenExpr cenv (cgbuf:CodeGenBuffer) eenv sp expr sequel =
         | NoSequencePointAtDoBinding -> SPAlways
         | NoSequencePointAtInvisibleBinding -> sp
         | NoSequencePointAtStickyBinding -> SPSuppress
-
+        
      // Generate the body
      GenExpr cenv cgbuf eenv spBody body (EndLocalScope(sequel,endScope)) 
 
   | Expr.Lambda _  | Expr.TyLambda _  -> 
       GenLambda cenv cgbuf eenv false None expr sequel
+  | Expr.App(Expr.Val(vref, _, m) as v, _, tyargs, [], _) when 
+        List.forall (isMeasureTy cenv.g) tyargs &&
+        (
+            // inline only values that are stored in local variables
+            match StorageForValRef m vref eenv with 
+            | ValStorage.Local _ -> true 
+            | _ -> false
+        )   ->
+      // application of local type functions with type parameters = measure types and body = local value - inine the body
+      GenExpr cenv cgbuf eenv sp v sequel
   | Expr.App(f,fty,tyargs,args,m) -> 
       GenApp cenv cgbuf eenv (f,fty,tyargs,args,m) sequel
   | Expr.Val(v,_,m) -> 
@@ -2528,17 +2538,17 @@ and GenApp cenv cgbuf eenv (f,fty,tyargs,args,m) sequel =
           if emitReflectionCode && fsiScoRefOpt.IsSome then 
                                      
               // System.Reflection.MethodInfo
-              let methodInfoTyRef = ILTypeRef.Create(cenv.g.ilg.mscorlibScopeRef,[],"System.Reflection.MethodInfo")
+              let methodInfoTyRef = ILTypeRef.Create(cenv.g.ilg.traits.SystemReflectionScopeRef.Value,[],"System.Reflection.MethodInfo")
               let methodInfoTySpec = ILTypeSpec.Create(methodInfoTyRef,emptyILGenericArgs)
               let methodInfoTy = mkILBoxedType methodInfoTySpec
               
               // System.Reflection.MethodBase
-              let methodBaseTyRef = ILTypeRef.Create(cenv.g.ilg.mscorlibScopeRef,[],"System.Reflection.MethodBase")
+              let methodBaseTyRef = ILTypeRef.Create(cenv.g.ilg.traits.SystemReflectionScopeRef.Value,[],"System.Reflection.MethodBase")
               let methodBaseTySpec = ILTypeSpec.Create(methodBaseTyRef,emptyILGenericArgs)
               let methodBaseTy = mkILBoxedType methodBaseTySpec
               
               // System.RuntimeMethodHandle
-              let runtimeMethodHandleTyRef = ILTypeRef.Create(cenv.g.ilg.mscorlibScopeRef,[],"System.RuntimeMethodHandle")
+              let runtimeMethodHandleTyRef = ILTypeRef.Create(cenv.g.ilg.traits.ScopeRef,[],"System.RuntimeMethodHandle")
               let runtimeMethodHandleTySpec = ILTypeSpec.Create(runtimeMethodHandleTyRef,emptyILGenericArgs)
               let runtimeMethodHandleTy = ILType.Value runtimeMethodHandleTySpec
               
@@ -2563,9 +2573,10 @@ and GenApp cenv cgbuf eenv (f,fty,tyargs,args,m) sequel =
               let findMethodSpec = ILMethodSpec.Create(methodFinderTy,findMethodRef,emptyILGenericArgs)
               
               // System.RuntimeMethodHandle::GetFunctionPointer
+              // Some framework profiles don't expose RuntimeMethodHandle::GetFunctionPointer. However this code seems to be used only from FSI and FSI always use desktop version of framework - should be OK
               let getFunctionPointerRef = mkILMethRef(runtimeMethodHandleTyRef,ILCallingConv.Instance,"GetFunctionPointer",0,[],cenv.g.ilg.typ_IntPtr)
-              let getFunctionPointerSpec = ILMethodSpec.Create(runtimeMethodHandleTy,getFunctionPointerRef,emptyILGenericArgs)
-              
+              let getFunctionPointerSpec = ILMethodSpec.Create(runtimeMethodHandleTy,getFunctionPointerRef,emptyILGenericArgs)              
+
               let typeofGenericArgs = ilTyArgs |> List.collect (fun ilt -> [mkTypeOfExpr cenv m ilt])              
               let getNameExprs = mspec.FormalArgTypes |> ILList.toList |> List.map (fun t -> mkGetNameExpr cenv t m)
               
@@ -4180,7 +4191,7 @@ and GenDelegateExpr cenv cgbuf eenvouter expr (TObjExprMethod((TSlotSig(_,delega
     
 and GenStaticOptimization cenv cgbuf eenv (constraints,e2,e3,_m) sequel = 
     let e = 
-      if DecideStaticOptimizations cenv.g constraints = 1 then e2 
+      if DecideStaticOptimizations cenv.g constraints = StaticOptimizationAnswer.Yes then e2 
       else e3
     GenExpr cenv cgbuf eenv SPSuppress e sequel
 
@@ -4763,15 +4774,9 @@ and GenBindAfterSequencePoint cenv cgbuf eenv sp (TBind(vspec,rhsExpr,_)) =
             CG.EmitInstr cgbuf (pop 0) (Push [ilTy])  (I_call (Normalcall, ilGetterMethSpec, None));
             GenSetStorage m cgbuf storage
 
-    | StaticField (fspec, _, hasLiteralAttr, ilTyForProperty, ilPropName, fty, ilGetterMethRef, ilSetterMethRef, optShadowLocal) ->  
+    | StaticField (fspec, vref, hasLiteralAttr, ilTyForProperty, ilPropName, fty, ilGetterMethRef, ilSetterMethRef, optShadowLocal) ->  
         let mut = vspec.IsMutable
         
-        match mut,hasLiteralAttr,rhsExpr with 
-        | _,false,_ -> ()
-        | true,true,_ -> errorR(Error(FSComp.SR.ilValuesWithLiteralAttributeCannotBeMutable(),m)) 
-        | _,true,Expr.Const _ -> ()
-        | _,true,_ -> errorR(Error(FSComp.SR.ilValuesWithLiteralAttributeMustBeSimple(),m)) 
-
         let canTarget(targets, goal : System.AttributeTargets) =
             match targets with
             | None -> true
@@ -4782,10 +4787,9 @@ and GenBindAfterSequencePoint cenv cgbuf eenv sp (TBind(vspec,rhsExpr,_)) =
             let access = ComputeMemberAccess (not hasLiteralAttr || IsHiddenVal eenv.sigToImplRemapInfo vspec)
             let ilFieldDef = mkILStaticField (fspec.Name, fty, None, None, access)
             let ilFieldDef =
-                match hasLiteralAttr,rhsExpr with 
-                | false,_ -> ilFieldDef
-                | true,Expr.Const(konst,m,_) -> { ilFieldDef with IsLiteral=true; LiteralValue= Some(GenFieldInit m konst) }
-                | true,_ -> ilFieldDef (* error given above *)
+                match vref.LiteralValue with 
+                | Some konst -> { ilFieldDef with IsLiteral=true; LiteralValue= Some(GenFieldInit m konst) }
+                | None  -> ilFieldDef 
               
             let ilFieldDef = 
                 let isClassInitializer = (cgbuf.MethodName = ".cctor")
@@ -4804,10 +4808,10 @@ and GenBindAfterSequencePoint cenv cgbuf eenv sp (TBind(vspec,rhsExpr,_)) =
 
             let ilFieldDef = 
                 { ilFieldDef with 
-                   CustomAttrs = mkILCustomAttrs (ilAttribs @ [ mkDebuggerBrowsableNeverAttribute cenv.g.ilg ]) }
+                   CustomAttrs = mkILCustomAttrs (ilAttribs @ [ cenv.g.ilg.mkDebuggerBrowsableNeverAttribute() ]) }
+
             [ (fspec.EnclosingTypeRef, ilFieldDef) ]
           
-
         let ilTypeRefForProperty = ilTyForProperty.TypeRef
 
         for (tref,ilFieldDef) in ilFieldDefs do
@@ -5230,7 +5234,7 @@ and GenMethodForBinding
     let secDecls = if securityAttributes.Length > 0 then (mkILSecurityDecls permissionSets) else (emptyILSecurityDecls)
     
     // Do not push the attributes to the method for events and properties    
-    let ilAttrsCompilerGenerated = if v.IsCompilerGenerated then [ mkCompilerGeneratedAttribute cenv.g.ilg ] else []
+    let ilAttrsCompilerGenerated = if v.IsCompilerGenerated then [  cenv.g.ilg.mkCompilerGeneratedAttribute() ] else []
 
     let ilAttrsThatGoOnPrimaryItem = 
         [ yield! GenAttrs cenv eenv attrs
@@ -5308,7 +5312,8 @@ and GenMethodForBinding
 
                    let flagFixups = ComputeFlagFixupsForMemberBinding cenv (v,memberInfo)
                    let mdef = mkILGenericVirtualMethod (v.CompiledName,ILMemberAccess.Public,ilMethTypars,ilParams,ilReturn,ilMethodBody)
-                   let mdef = List.fold (fun mdef f -> f mdef) mdef flagFixups 
+                   let mdef = List.fold (fun mdef f -> f mdef) mdef flagFixups
+
                    // fixup can potentially change name of reflected definition that was already recorded - patch it if necessary
                    cgbuf.mgbuf.ReplaceNameOfReflectedDefinition(v, mdef.Name)
                    mdef
@@ -5435,9 +5440,18 @@ and GenGetVal cenv cgbuf eenv (v:ValRef,m) sequel =
 and GenBindRhs cenv cgbuf eenv sp (vspec:Val) e =   
     match e with 
     | Expr.TyLambda _ | Expr.Lambda _ -> 
-        let isLocalTypeFunc = IsNamedLocalTypeFuncVal cenv.g vspec e
-        let selfv = if isLocalTypeFunc then None else Some (mkLocalValRef vspec)
-        GenLambda cenv cgbuf eenv isLocalTypeFunc selfv e Continue 
+        match e with
+        | Expr.TyLambda(_, tyargs, body, _, _) when 
+            (
+                tyargs |> List.forall (fun tp -> tp.IsErased) &&
+                (match StorageForVal vspec.Range vspec eenv with Local _ -> true | _ -> false)
+            ) ->
+            // type lambda with erased type arguments that is stored as local variable (not method or property)- inline body
+            GenExpr cenv cgbuf eenv sp body Continue
+        | _ ->
+            let isLocalTypeFunc = IsNamedLocalTypeFuncVal cenv.g vspec e
+            let selfv = if isLocalTypeFunc then None else Some (mkLocalValRef vspec)
+            GenLambda cenv cgbuf eenv isLocalTypeFunc selfv e Continue 
     | _ -> 
         GenExpr cenv cgbuf eenv sp e Continue;
 
@@ -5704,14 +5718,14 @@ and GenAttribArg amap g eenv x (ilArgTy:ILType) =
         let ilElemTy = GenType amap m g eenv.tyenv elemTy
         ILAttribElem.Array (ilElemTy, List.map (fun arg -> GenAttribArg amap g eenv arg ilElemTy) args)
 
-    // Detect 'typeof<ty>' calls 
+    // Detect 'typeof<ty>' calls  
     | TypeOfExpr g ty, _    ->
         ILAttribElem.Type (Some (GenType amap x.Range g eenv.tyenv ty))
 
     // Detect 'typedefof<ty>' calls 
     | TypeDefOfExpr g ty, _    ->
         ILAttribElem.TypeRef (Some (GenType amap x.Range g eenv.tyenv ty).TypeRef)    
-
+    
     // Ignore upcasts 
     | Expr.Op(TOp.Coerce,_,[arg2],_),_ ->
         GenAttribArg amap g eenv arg2 ilArgTy
@@ -6240,7 +6254,7 @@ and GenTypeDef cenv mgbuf lazyInitInfo eenv m (tycon:Tycon) =
                 | Some memberInfo -> 
                     match name, memberInfo.MemberFlags.MemberKind with 
                     | ("Item" | "op_IndexedLookup"), (MemberKind.PropertyGet  | MemberKind.PropertySet) when nonNil (ArgInfosOfPropertyVal cenv.g vref.Deref) ->
-                        Some( mkILCustomAttribute cenv.g.ilg (mkILTyRef (cenv.g.ilg.mscorlibScopeRef,"System.Reflection.DefaultMemberAttribute"),[cenv.g.ilg.typ_String],[ILAttribElem.String(Some(name))],[]) ) 
+                        Some( mkILCustomAttribute cenv.g.ilg (mkILTyRef (cenv.g.ilg.traits.ScopeRef,"System.Reflection.DefaultMemberAttribute"),[cenv.g.ilg.typ_String],[ILAttribElem.String(Some(name))],[]) ) 
                     | _ -> None)
             |> Option.toList
 
@@ -6259,7 +6273,7 @@ and GenTypeDef cenv mgbuf lazyInitInfo eenv m (tycon:Tycon) =
         let ilDebugDisplayAttributes = 
             [ yield! GenAttrs cenv eenv debugDisplayAttrs
               if generateDebugDisplayAttribute then 
-                  yield mkDebuggerDisplayAttribute cenv.g.ilg ("{" + debugDisplayMethodName + "(),nq}")  ]
+                  yield cenv.g.ilg.mkDebuggerDisplayAttribute ("{" + debugDisplayMethodName + "(),nq}")  ]
 
 
         let CustomAttrs = 
@@ -6336,14 +6350,14 @@ and GenTypeDef cenv mgbuf lazyInitInfo eenv m (tycon:Tycon) =
                         yield! fspec.FieldAttribs ]
 
                             
-                  let ilNotSerialized = HasFSharpAttribute cenv.g cenv.g.attrib_NonSerializedAttribute attribs
+                  let ilNotSerialized = HasFSharpAttributeOpt cenv.g cenv.g.attrib_NonSerializedAttribute attribs
                   
                   let fattribs = 
                       attribs
                       // Do not generate FieldOffset as a true CLI custom attribute, since it is implied by other corresponding CLI metadata 
                       |> List.filter (IsMatchingFSharpAttribute cenv.g cenv.g.attrib_FieldOffsetAttribute >> not) 
                       // Do not generate NonSerialized as a true CLI custom attribute, since it is implied by other corresponding CLI metadata 
-                      |> List.filter (IsMatchingFSharpAttribute cenv.g cenv.g.attrib_NonSerializedAttribute >> not) 
+                      |> List.filter (IsMatchingFSharpAttributeOpt cenv.g cenv.g.attrib_NonSerializedAttribute >> not) 
 
                   let ilFieldMarshal, fattribs = GenMarshal cenv fattribs
 
@@ -6353,7 +6367,7 @@ and GenTypeDef cenv mgbuf lazyInitInfo eenv m (tycon:Tycon) =
                   
                   let extraAttribs = 
                      match tyconRepr with 
-                     | TRecdRepr _ when not useGenuineField -> [  mkDebuggerBrowsableNeverAttribute cenv.g.ilg ] // hide fields in records in debug display
+                     | TRecdRepr _ when not useGenuineField -> [ cenv.g.ilg.mkDebuggerBrowsableNeverAttribute() ] // hide fields in records in debug display
                      | _ -> [] // don't hide fields in classes in debug display
 
                   yield
@@ -6744,43 +6758,52 @@ and GenExnDef cenv mgbuf eenv m (exnc:Tycon) =
             else
                 []
 
-
-        let ilCtorDefForSerialziation = 
-            mkILCtor(ILMemberAccess.Family,
-                    [mkILParamNamed("info",cenv.g.ilg.typ_SerializationInfo);mkILParamNamed("context",cenv.g.ilg.typ_StreamingContext)],
-                    mkMethodBody
-                      (false,emptyILLocals,8,
-                       nonBranchingInstrsToCode
-                          [ mkLdarg0; 
-                            mkLdarg 1us;
-                            mkLdarg 2us;
-                            mkNormalCall (mkILCtorMethSpecForTy (cenv.g.ilg.typ_Exception,[cenv.g.ilg.typ_SerializationInfo;cenv.g.ilg.typ_StreamingContext])) ]
-                       ,None))
+        
+        let serializationRelatedMembers =
+            // do not emit serialization related members if target framework lacks SerializableAttribute or SerializationInfo
+            if not (cenv.opts.netFxHasSerializableAttribute && cenv.g.ilg.typ_SerializationInfo.IsSome) then []
+            else
+            let serializationInfoType = cenv.g.ilg.typ_SerializationInfo.Value
+            let ilCtorDefForSerialziation = 
+                mkILCtor(ILMemberAccess.Family,
+                        [mkILParamNamed("info", serializationInfoType);mkILParamNamed("context",cenv.g.ilg.typ_StreamingContext)],
+                        mkMethodBody
+                          (false,emptyILLocals,8,
+                           nonBranchingInstrsToCode
+                              [ mkLdarg0; 
+                                mkLdarg 1us;
+                                mkLdarg 2us;
+                                mkNormalCall (mkILCtorMethSpecForTy (cenv.g.ilg.typ_Exception,[serializationInfoType; cenv.g.ilg.typ_StreamingContext])) ]
+                           ,None))
                 
-
-        let getObjectDataMethodForSerialization = 
+#if BE_SECURITY_TRANSPARENT
+            [ilCtorDefForSerialziation]
+#else
+            let getObjectDataMethodForSerialization = 
             
-            let ilMethodDef = 
-                mkILNonGenericVirtualMethod
-                    ("GetObjectData",ILMemberAccess.Public,
-                     [mkILParamNamed ("info",cenv.g.ilg.typ_SerializationInfo);mkILParamNamed("context",cenv.g.ilg.typ_StreamingContext)], 
-                     mkILReturn ILType.Void,
-                     (let code = 
-                        nonBranchingInstrsToCode
-                          [ mkLdarg0; 
-                            mkLdarg 1us;
-                            mkLdarg 2us;
-                            mkNormalCall (mkILNonGenericInstanceMethSpecInTy (cenv.g.ilg.typ_Exception, "GetObjectData", [cenv.g.ilg.typ_SerializationInfo;cenv.g.ilg.typ_StreamingContext], ILType.Void))
-                          ]
-                      mkMethodBody(true,emptyILLocals,8,code,None)))
-            // Here we must encode: [SecurityPermission(SecurityAction.Demand, SerializationFormatter = true)]
-            // In ILDASM this is: .permissionset demand = {[mscorlib]System.Security.Permissions.SecurityPermissionAttribute = {property bool 'SerializationFormatter' = bool(true)}}
-            { ilMethodDef with 
-                   SecurityDecls=mkILSecurityDecls [ IL.mkPermissionSet cenv.g.ilg (ILSecurityAction.Demand,[(cenv.g.ilg.tref_SecurityPermissionAttribute,[("SerializationFormatter",cenv.g.ilg.typ_Bool, ILAttribElem.Bool(true))])])];
-                   HasSecurity=true }
-                
-
-                
+                let ilMethodDef = 
+                    mkILNonGenericVirtualMethod
+                        ("GetObjectData",ILMemberAccess.Public,
+                         [mkILParamNamed ("info", serializationInfoType);mkILParamNamed("context",cenv.g.ilg.typ_StreamingContext)], 
+                         mkILReturn ILType.Void,
+                         (let code = 
+                            nonBranchingInstrsToCode
+                              [ mkLdarg0; 
+                                mkLdarg 1us;
+                                mkLdarg 2us;
+                                mkNormalCall (mkILNonGenericInstanceMethSpecInTy (cenv.g.ilg.typ_Exception, "GetObjectData", [serializationInfoType; cenv.g.ilg.typ_StreamingContext], ILType.Void))
+                              ]
+                          mkMethodBody(true,emptyILLocals,8,code,None)))
+                // Here we must encode: [SecurityPermission(SecurityAction.Demand, SerializationFormatter = true)]
+                // In ILDASM this is: .permissionset demand = {[mscorlib]System.Security.Permissions.SecurityPermissionAttribute = {property bool 'SerializationFormatter' = bool(true)}}
+                match cenv.g.ilg.tref_SecurityPermissionAttribute with
+                | None -> ilMethodDef
+                | Some securityPermissionAttributeType ->
+                    { ilMethodDef with 
+                           SecurityDecls=mkILSecurityDecls [ IL.mkPermissionSet cenv.g.ilg (ILSecurityAction.Demand,[(securityPermissionAttributeType, [("SerializationFormatter",cenv.g.ilg.typ_Bool, ILAttribElem.Bool(true))])])];
+                           HasSecurity=true }
+            [ilCtorDefForSerialziation; getObjectDataMethodForSerialization]
+#endif                
 
         let ilTypeName = tref.Name
         let ilMethodDefsForComparison = 
@@ -6791,20 +6814,10 @@ and GenExnDef cenv mgbuf eenv m (exnc:Tycon) =
         
         let interfaces =  exnc.ImmediateInterfaceTypesOfFSharpTycon |> List.map (GenType cenv.amap m cenv.g eenv.tyenv) 
         let tdef = 
-          let serCtors = 
-            if cenv.opts.netFxHasSerializableAttribute then
-#if BE_SECURITY_TRANSPARENT
-              ignore(getObjectDataMethodForSerialization)
-              [ ilCtorDefForSerialziation ]
-#else
-              [ getObjectDataMethodForSerialization; ilCtorDefForSerialziation ]
-#endif
-            else
-              []
           mkILGenericClass
             (ilTypeName,access,[],cenv.g.ilg.typ_Exception, 
              interfaces,  
-             mkILMethods ([ilCtorDef] @ ilMethodDefsForComparison @ ilCtorDefNoArgs @ serCtors @ ilMethodDefsForProperties),
+             mkILMethods ([ilCtorDef] @ ilMethodDefsForComparison @ ilCtorDefNoArgs @ serializationRelatedMembers @ ilMethodDefsForProperties),
              mkILFields ilFieldDefs,
              emptyILTypeDefs, 
              mkILProperties ilPropertyDefs,
@@ -6827,12 +6840,12 @@ let CodegenAssembly cenv eenv mgbuf fileImpls =
 // structures representing the contents of the module. 
 //------------------------------------------------------------------------- 
 
-let GetEmptyIlxGenEnv ccu = 
+let GetEmptyIlxGenEnv (ilg : ILGlobals) ccu = 
     let thisCompLoc = CompLocForCcu ccu
     { tyenv=TypeReprEnv.Empty;
       cloc = thisCompLoc;
       valsInScope=ValMap<_>.Empty; 
-      someTypeInThisAssembly=ecmaILGlobals.typ_Object; (* dummy value *)
+      someTypeInThisAssembly=ilg.typ_Object; (* dummy value *)
       isFinalFile = false;
       letBoundVars=[];
       liveLocals=IntMap.empty();
@@ -7027,7 +7040,7 @@ let LookupGeneratedInfo (ctxt: ExecutionContext) (g:TcGlobals) eenv (v:Val) =
 type IlxAssemblyGenerator(amap: Import.ImportMap, tcGlobals: Env.TcGlobals, tcVal : ConstraintSolver.TcValF, ccu: Tast.CcuThunk) = 
     
     // The incremental state held by the ILX code generator
-    let mutable ilxGenEnv = GetEmptyIlxGenEnv ccu
+    let mutable ilxGenEnv = GetEmptyIlxGenEnv tcGlobals.ilg ccu
     let intraAssemblyInfo = { StaticFieldInfo = new Dictionary<_,_>(HashIdentity.Structural) }
     let casApplied = new Dictionary<Stamp,bool>()
 

@@ -56,4 +56,4 @@ val internal ImportProvidedMethodBaseAsILMethodRef : ImportMap -> range -> Taint
 #endif
 val internal ImportILGenericParameters : (unit -> ImportMap) -> range -> ILScopeRef -> TType list -> ILGenericParameterDef list -> Typar list
 val internal ImportILAssembly : (unit -> ImportMap) * range * (ILScopeRef -> ILModuleDef) * ILScopeRef * sourceDir:string * filename: string option * ILModuleDef * IEvent<string> -> CcuThunk
-val internal ImportILAssemblyTypeForwarders : (unit -> ImportMap) * range * ILExportedTypesAndForwarders -> Lazy<Map<(string array * string), EntityRef>>
+val internal ImportILAssemblyTypeForwarders : (unit -> ImportMap) * range * ILExportedTypesAndForwarders -> Map<(string array * string), Lazy<EntityRef>>

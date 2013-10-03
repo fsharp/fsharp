@@ -51,9 +51,6 @@ type Item =
   | ActivePatternCase of ActivePatternElemRef 
   | ExnCase of TyconRef 
   | RecdField of RecdFieldInfo
-
-  // The following are never in the items table but are valid results of binding 
-  // an identitifer in different circumstances. 
   | NewDef of Ident
   | ILField of ILFieldInfo
   | Event of EventInfo
@@ -70,30 +67,35 @@ type Item =
   | CustomBuilder of string * ValRef
   | TypeVar of string 
   | ModuleOrNamespaces of Tast.ModuleOrNamespaceRef list
-  /// Represents the resolution of a source identifier to an implicit use of an infix operator
-  | ImplicitOp of Ident
+  /// Represents the resolution of a source identifier to an implicit use of an infix operator (+solution if such available)
+  | ImplicitOp of Ident * TraitConstraintSln option ref
   /// Represents the resolution of a source identifier to a named argument
   | ArgName of Ident * TType
   | SetterArg of Ident * Item 
   | UnqualifiedType of TyconRef list
+  member DisplayName : TcGlobals -> string
+
 
 [<Sealed>]
+/// Information about an extension member held in the name resolution environment
 type ExtensionMember 
 
 [<NoEquality; NoComparison>]
+/// The environment of information used to resolve names
 type NameResolutionEnv =
-    {eDisplayEnv: DisplayEnv;
-     eUnqualifiedItems: LayeredMap<string,Item>;
-     ePatItems: NameMap<Item>;
-     eModulesAndNamespaces: NameMultiMap<ModuleOrNamespaceRef>;
-     eFullyQualifiedModulesAndNamespaces: NameMultiMap<ModuleOrNamespaceRef>;
-     eFieldLabels: NameMultiMap<RecdFieldRef>;
-     eTyconsByAccessNames: LayeredMultiMap<string,TyconRef>;
-     eFullyQualifiedTyconsByAccessNames: LayeredMultiMap<string,TyconRef>;
-     eTyconsByDemangledNameAndArity: LayeredMap<NameArityPair,TyconRef>;
-     eFullyQualifiedTyconsByDemangledNameAndArity: LayeredMap<NameArityPair,TyconRef>;
-     eExtensionMembers: TyconRefMultiMap<ExtensionMember>;
-     eTypars: NameMap<Typar>;}
+    {eDisplayEnv: DisplayEnv
+     eUnqualifiedItems: LayeredMap<string,Item>
+     ePatItems: NameMap<Item>
+     eModulesAndNamespaces: NameMultiMap<ModuleOrNamespaceRef>
+     eFullyQualifiedModulesAndNamespaces: NameMultiMap<ModuleOrNamespaceRef>
+     eFieldLabels: NameMultiMap<RecdFieldRef>
+     eTyconsByAccessNames: LayeredMultiMap<string,TyconRef>
+     eFullyQualifiedTyconsByAccessNames: LayeredMultiMap<string,TyconRef>
+     eTyconsByDemangledNameAndArity: LayeredMap<NameArityPair,TyconRef>
+     eFullyQualifiedTyconsByDemangledNameAndArity: LayeredMap<NameArityPair,TyconRef>
+     eIndexedExtensionMembers: TyconRefMultiMap<ExtensionMember>
+     eUnindexedExtensionMembers: ExtensionMember list
+     eTypars: NameMap<Typar> }
     static member Empty : g:TcGlobals -> NameResolutionEnv
     member DisplayEnv : DisplayEnv
     member FindUnqualifiedItem : string -> Item
@@ -105,8 +107,6 @@ type FullyQualifiedFlag =
 [<RequireQualifiedAccess>]
 type BulkAdd = Yes | No
 
-val public DisplayNameOfItem : TcGlobals -> Item -> string
-
 val internal AddFakeNamedValRefToNameEnv : string -> NameResolutionEnv -> ValRef -> NameResolutionEnv
 val internal AddFakeNameToNameEnv : string -> NameResolutionEnv -> Item -> NameResolutionEnv
 
@@ -116,7 +116,7 @@ val internal AddTyconRefsToNameEnv                 : BulkAdd -> bool -> TcGlobal
 val internal AddExceptionDeclsToNameEnv            : BulkAdd -> NameResolutionEnv -> TyconRef -> NameResolutionEnv
 val internal AddModuleAbbrevToNameEnv              : Ident -> NameResolutionEnv -> ModuleOrNamespaceRef list -> NameResolutionEnv
 val internal AddModuleOrNamespaceRefsToNameEnv                   : TcGlobals -> ImportMap -> range -> bool -> AccessorDomain -> NameResolutionEnv -> ModuleOrNamespaceRef list -> NameResolutionEnv
-val internal AddModrefToNameEnv                    : TcGlobals -> ImportMap -> range -> bool -> AccessorDomain -> NameResolutionEnv -> ModuleOrNamespaceRef -> NameResolutionEnv
+val internal AddModuleOrNamespaceRefToNameEnv                    : TcGlobals -> ImportMap -> range -> bool -> AccessorDomain -> NameResolutionEnv -> ModuleOrNamespaceRef -> NameResolutionEnv
 val internal AddModulesAndNamespacesContentsToNameEnv : TcGlobals -> ImportMap -> AccessorDomain -> range -> NameResolutionEnv -> ModuleOrNamespaceRef list -> NameResolutionEnv
 
 type CheckForDuplicateTyparFlag =
@@ -136,7 +136,7 @@ type TypeNameResolutionStaticArgsInfo =
   /// Indicates definite knowledge of empty type arguments, i.e. the logical equivalent of name< >
   static member DefiniteEmpty : TypeNameResolutionStaticArgsInfo
   /// Deduce definite knowledge of type arguments
-  static member FromTyArgs : SynType list -> TypeNameResolutionStaticArgsInfo
+  static member FromTyArgs : numTyArgs:int -> TypeNameResolutionStaticArgsInfo
 
 [<NoEquality; NoComparison>]
 type TypeNameResolutionInfo = 
@@ -168,8 +168,8 @@ val internal CallEnvSink                : TcResultsSink -> range * NameResolutio
 val internal CallNameResolutionSink     : TcResultsSink -> range * NameResolutionEnv * Item * Item * ItemOccurence * DisplayEnv * AccessorDomain -> unit
 val internal CallExprHasTypeSink        : TcResultsSink -> range * NameResolutionEnv * TType * DisplayEnv * AccessorDomain -> unit
 
-val internal AllPropInfosOfTypeInScope : InfoReader -> TyconRefMultiMap<ExtensionMember> -> string option * AccessorDomain -> FindMemberFlag -> range -> TType -> PropInfo list
-val internal AllMethInfosOfTypeInScope : InfoReader -> TyconRefMultiMap<ExtensionMember> -> string option * AccessorDomain -> FindMemberFlag -> range -> TType -> MethInfo list
+val internal AllPropInfosOfTypeInScope : InfoReader -> NameResolutionEnv -> string option * AccessorDomain -> FindMemberFlag -> range -> TType -> PropInfo list
+val internal AllMethInfosOfTypeInScope : InfoReader -> NameResolutionEnv -> string option * AccessorDomain -> FindMemberFlag -> range -> TType -> MethInfo list
 
 exception internal IndeterminateType of range
 exception internal UpperCaseIdentifierInPattern of range
@@ -195,7 +195,7 @@ type PermitDirectReferenceToGeneratedType =
     | Yes 
     | No
 
-val internal ResolveLongIndentAsModuleOrNamespace   : FullyQualifiedFlag -> NameResolutionEnv -> AccessorDomain -> Ident list -> ResultOrException<(int * ModuleOrNamespaceRef * ModuleOrNamespaceType) list >
+val internal ResolveLongIndentAsModuleOrNamespace   : Import.ImportMap -> range -> FullyQualifiedFlag -> NameResolutionEnv -> AccessorDomain -> Ident list -> ResultOrException<(int * ModuleOrNamespaceRef * ModuleOrNamespaceType) list >
 val internal ResolveObjectConstructor               : NameResolver -> DisplayEnv -> range -> AccessorDomain -> TType -> ResultOrException<Item>
 val internal ResolveLongIdentInType                 : TcResultsSink -> NameResolver -> NameResolutionEnv -> LookupKind -> range -> AccessorDomain -> Ident list -> FindMemberFlag -> TypeNameResolutionInfo -> TType -> Item * Ident list
 val internal ResolvePatternLongIdent                : TcResultsSink -> NameResolver -> WarnOnUpperFlag -> bool -> range -> AccessorDomain -> NameResolutionEnv -> TypeNameResolutionInfo -> Ident list -> Item

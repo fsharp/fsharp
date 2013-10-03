@@ -177,21 +177,21 @@ and goutput_typ env os ty =
       
   | ILType.Byref typ -> goutput_typ env os typ; output_string os "&"
   | ILType.Ptr typ ->  goutput_typ env os typ; output_string   os "*"
-  | ILType.Value tspec when tspec.Name = ecmaILGlobals.tspec_SByte.Name ->  output_string os "int8" 
-  | ILType.Value tspec when tspec.Name = ecmaILGlobals.tspec_Int16.Name ->  output_string os "int16"
-  | ILType.Value tspec when tspec.Name = ecmaILGlobals.tspec_Int32.Name ->  output_string os "int32"
-  | ILType.Value tspec when tspec.Name = ecmaILGlobals.tspec_Int64.Name ->  output_string os "int64"
-  | ILType.Value tspec when tspec.Name = ecmaILGlobals.tspec_IntPtr.Name ->  output_string os "native int"
-  | ILType.Value tspec when tspec.Name = ecmaILGlobals.tspec_Byte.Name ->  output_string os "unsigned int8" 
-  | ILType.Value tspec when tspec.Name = ecmaILGlobals.tspec_UInt16.Name ->  output_string os "unsigned int16"
-  | ILType.Value tspec when tspec.Name = ecmaILGlobals.tspec_UInt32.Name ->  output_string os "unsigned int32"
-  | ILType.Value tspec when tspec.Name = ecmaILGlobals.tspec_UInt64.Name ->  output_string os "unsigned int64"
-  | ILType.Value tspec when tspec.Name = ecmaILGlobals.tspec_UIntPtr.Name ->  output_string os "native unsigned int"
-  | ILType.Value tspec when tspec.Name = ecmaILGlobals.tspec_Double.Name ->  output_string os "float64"
-  | ILType.Value tspec when tspec.Name = ecmaILGlobals.tspec_Single.Name ->  output_string os "float32"
-  | ILType.Value tspec when tspec.Name = ecmaILGlobals.tspec_Bool.Name ->  output_string os "bool"
-  | ILType.Value tspec when tspec.Name = ecmaILGlobals.tspec_Char.Name ->  output_string os "char"
-  | ILType.Value tspec when tspec.Name = ecmaILGlobals.tspec_TypedReference.Name ->  output_string os "refany"
+  | ILType.Value tspec when tspec.Name = EcmaILGlobals.tspec_SByte.Name ->  output_string os "int8" 
+  | ILType.Value tspec when tspec.Name = EcmaILGlobals.tspec_Int16.Name ->  output_string os "int16"
+  | ILType.Value tspec when tspec.Name = EcmaILGlobals.tspec_Int32.Name ->  output_string os "int32"
+  | ILType.Value tspec when tspec.Name = EcmaILGlobals.tspec_Int64.Name ->  output_string os "int64"
+  | ILType.Value tspec when tspec.Name = EcmaILGlobals.tspec_IntPtr.Name ->  output_string os "native int"
+  | ILType.Value tspec when tspec.Name = EcmaILGlobals.tspec_Byte.Name ->  output_string os "unsigned int8" 
+  | ILType.Value tspec when tspec.Name = EcmaILGlobals.tspec_UInt16.Name ->  output_string os "unsigned int16"
+  | ILType.Value tspec when tspec.Name = EcmaILGlobals.tspec_UInt32.Name ->  output_string os "unsigned int32"
+  | ILType.Value tspec when tspec.Name = EcmaILGlobals.tspec_UInt64.Name ->  output_string os "unsigned int64"
+  | ILType.Value tspec when tspec.Name = EcmaILGlobals.tspec_UIntPtr.Name ->  output_string os "native unsigned int"
+  | ILType.Value tspec when tspec.Name = EcmaILGlobals.tspec_Double.Name ->  output_string os "float64"
+  | ILType.Value tspec when tspec.Name = EcmaILGlobals.tspec_Single.Name ->  output_string os "float32"
+  | ILType.Value tspec when tspec.Name = EcmaILGlobals.tspec_Bool.Name ->  output_string os "bool"
+  | ILType.Value tspec when tspec.Name = EcmaILGlobals.tspec_Char.Name ->  output_string os "char"
+  | ILType.Value tspec when tspec.Name = EcmaILGlobals.tspec_TypedReference.Value.Name ->  output_string os "refany"
   | ILType.Value tspec ->
       output_string os "value class ";
       goutput_tref env os tspec.TypeRef;
@@ -715,7 +715,7 @@ let rec goutput_instr env os inst =
         goutput_dlocref env os (mkILArrTy(typ,shape));
         output_string os ".ctor";
         let rank = shape.Rank 
-        output_parens (output_seq "," (goutput_typ env)) os (Array.toList (Array.create ( rank) ecmaILGlobals.typ_int32))
+        output_parens (output_seq "," (goutput_typ env)) os (Array.toList (Array.create ( rank) EcmaILGlobals.typ_int32))
   | I_stelem_any (shape,dt)     -> 
       if shape = ILArrayShape.SingleDimensional then 
         output_string os "stelem.any "; goutput_typ env os dt 
@@ -724,7 +724,7 @@ let rec goutput_instr env os inst =
         goutput_dlocref env os (mkILArrTy(dt,shape));
         output_string os "Set";
         let rank = shape.Rank 
-        output_parens (output_seq "," (goutput_typ env)) os (Array.toList (Array.create ( rank) ecmaILGlobals.typ_int32) @ [dt])
+        output_parens (output_seq "," (goutput_typ env)) os (Array.toList (Array.create ( rank) EcmaILGlobals.typ_int32) @ [dt])
   | I_ldelem_any (shape,tok) -> 
       if shape = ILArrayShape.SingleDimensional then 
         output_string os "ldelem.any "; goutput_typ env os tok 
@@ -735,7 +735,7 @@ let rec goutput_instr env os inst =
         goutput_dlocref env os (mkILArrTy(tok,shape));
         output_string os "Get";
         let rank = shape.Rank 
-        output_parens (output_seq "," (goutput_typ env)) os (Array.toList (Array.create ( rank) ecmaILGlobals.typ_int32))
+        output_parens (output_seq "," (goutput_typ env)) os (Array.toList (Array.create ( rank) EcmaILGlobals.typ_int32))
   | I_ldelema   (ro,_,shape,tok)  -> 
       if ro = ReadonlyAddress then output_string os "readonly. ";
       if shape = ILArrayShape.SingleDimensional then 
@@ -747,7 +747,7 @@ let rec goutput_instr env os inst =
         goutput_dlocref env os (mkILArrTy(tok,shape));
         output_string os "Address";
         let rank = shape.Rank 
-        output_parens (output_seq "," (goutput_typ env)) os (Array.toList (Array.create ( rank) ecmaILGlobals.typ_int32))
+        output_parens (output_seq "," (goutput_typ env)) os (Array.toList (Array.create ( rank) EcmaILGlobals.typ_int32))
       
   | I_box       tok     -> output_string os "box "; goutput_typ env os tok
   | I_unbox     tok     -> output_string os "unbox "; goutput_typ env os tok
@@ -1216,7 +1216,6 @@ let output_module_fragment_aux _refs os  modul =
   with e ->  
     output_string os "*** Error during printing : "; output_string os (e.ToString()); os.Flush();
     reraise()
-    raise e
 
 let output_module_fragment os  modul = 
   let refs = computeILRefs modul 

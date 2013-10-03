@@ -83,7 +83,21 @@ open System.Runtime.CompilerServices
 [<Dependency("FSharp.Core",LoadHint.Always)>] do ()
 #endif
 
+
 module Utilities = 
+    type IAnyToLayoutCall = 
+        abstract AnyToLayout : FormatOptions * obj -> Internal.Utilities.StructuredFormat.Layout
+        abstract FsiAnyToLayout : FormatOptions * obj -> Internal.Utilities.StructuredFormat.Layout
+
+    type private AnyToLayoutSpecialization<'T>() = 
+        interface IAnyToLayoutCall with
+            member this.AnyToLayout(options, o : obj) = Internal.Utilities.StructuredFormat.Display.any_to_layout options (Unchecked.unbox o : 'T)
+            member this.FsiAnyToLayout(options, o : obj) = Internal.Utilities.StructuredFormat.Display.fsi_any_to_layout options (Unchecked.unbox o : 'T)
+    
+    let getAnyToLayoutCall ty = 
+        let specialized = typedefof<AnyToLayoutSpecialization<_>>.MakeGenericType [| ty |]
+        Activator.CreateInstance(specialized) :?> IAnyToLayoutCall
+
     let callStaticMethod (ty:Type) name args =
 #if SILVERLIGHT
         ty.InvokeMember(name, (BindingFlags.InvokeMethod ||| BindingFlags.Static ||| BindingFlags.Public ||| BindingFlags.NonPublic), null, null, Array.ofList args)
@@ -129,15 +143,12 @@ type FsiTimeReporter(outWriter: TextWriter) =
         let total = ptime.TotalProcessorTime - startTotal
         let spanGC = [ for i in 0 .. numGC-> System.GC.CollectionCount(i) - startGC.[i] ]
         let elapsed = stopwatch.Elapsed 
-        fprintfn outWriter "%s" (FSIstrings.SR.fsiTimeInfoMainString((sprintf "%02d:%02d:%02d.%03d" elapsed.Hours elapsed.Minutes elapsed.Seconds elapsed.Milliseconds),(sprintf "%02d:%02d:%02d.%03d" total.Hours total.Minutes total.Seconds total.Milliseconds),(String.concat ", " (List.mapi (sprintf "%s%d: %d" (FSIstrings.SR.fsiTimeInfoGCGenerationLabelSomeShorthandForTheWordGeneration())) spanGC))))
+        fprintfn outWriter "%s" (FSIstrings.SR.fsiTimeInfoMainString((sprintf "%02d:%02d:%02d.%03d" (int elapsed.TotalHours) elapsed.Minutes elapsed.Seconds elapsed.Milliseconds),(sprintf "%02d:%02d:%02d.%03d" (int total.TotalHours) total.Minutes total.Seconds total.Milliseconds),(String.concat ", " (List.mapi (sprintf "%s%d: %d" (FSIstrings.SR.fsiTimeInfoGCGenerationLabelSomeShorthandForTheWordGeneration())) spanGC))))
         res
 
     member tr.TimeOpIf flag f = if flag then tr.TimeOp f else f ()
 #endif
 
-//----------------------------------------------------------------------------
-// value printing
-//----------------------------------------------------------------------------
 
 type FsiValuePrinterMode = 
     | PrintExpr 
@@ -238,17 +249,14 @@ type FsiValuePrinter(ilGlobals, generateDebugInfo, resolvePath, outWriter) =
         // This will be more significant when we print values other then 'it'
         //
         try 
-            let ass = typeof<Internal.Utilities.StructuredFormat.Layout>.Assembly
-            let displayModule = ass.GetType("Internal.Utilities.StructuredFormat.Display")
+            let anyToLayoutCall = Utilities.getAnyToLayoutCall ty
             match printMode with
               | PrintDecl ->
                   // When printing rhs of fsi declarations, use "fsi_any_to_layout".
                   // This will suppress some less informative values, by returning an empty layout. [fix 4343].
-                  Internal.Utilities.StructuredFormat.Display.fsi_any_to_layout |> ignore; // if you adjust this then adjust the dynamic reference too            
-                  Utilities.callGenericStaticMethod displayModule "fsi_any_to_layout" [ty] [box opts; box x] |> unbox<Internal.Utilities.StructuredFormat.Layout>
+                  anyToLayoutCall.FsiAnyToLayout(opts, x)
               | PrintExpr -> 
-                  Internal.Utilities.StructuredFormat.Display.any_to_layout |> ignore; // if you adjust this then adjust the dynamic reference too            
-                  Utilities.callGenericStaticMethod displayModule "any_to_layout" [ty] [box opts; box x] |> unbox<Internal.Utilities.StructuredFormat.Layout>             
+                  anyToLayoutCall.AnyToLayout(opts, x)
         with 
         | :? ThreadAbortException -> Layout.wordL ""
         | e ->
@@ -547,6 +555,7 @@ type FsiCommandLineOptions(argv: string[], tcConfigB, fsiConsoleOutput: FsiConso
          (* Renamed --readline and --no-readline to --tabcompletion:+|- *)
          CompilerOption("readline",tagNone, OptionSwitch (function flag -> enableConsoleKeyProcessing <- (flag = On)),None,
                                  Some (FSIstrings.SR.fsiReadline()));
+         CompilerOption("quotations-debug", tagNone, OptionSwitch(fun switch -> tcConfigB.emitDebugInfoInQuotations <- switch = On), None, Some(FSIstrings.SR.fsiEmitDebugInfoInQuotations()))
         ]);
       ]
 
@@ -1172,7 +1181,7 @@ type FsiIntellisenseProvider(tcGlobals, tcImports: TcImports) =
         // Note: for the accessor domain we should use (AccessRightsOfEnv tcState.TcEnvFromImpls)
         let ad = Infos.AccessibleFromSomeFSharpCode
         let nItems = Nameres.ResolvePartialLongIdent ncenv tcState.TcEnvFromImpls.NameEnv (ConstraintSolver.IsApplicableMethApprox tcGlobals amap rangeStdin) rangeStdin ad lid false
-        let names  = nItems |> List.map (Nameres.DisplayNameOfItem tcGlobals) 
+        let names  = nItems |> List.map (fun d -> d.DisplayName tcGlobals) 
         let names  = names |> List.filter (fun (name:string) -> name.StartsWith(stem,StringComparison.Ordinal)) 
         names
 
@@ -1472,7 +1481,7 @@ module MagicAssemblyResolution =
                    | Some(assembly) -> OkResult([],Choice2Of2 assembly)
                    | None -> 
                    
-                   // Try to find the reference without an extension
+                   // As a last resort, try to find the reference without an extension
                    match tcImports.TryFindExistingFullyQualifiedPathFromAssemblyRef(ILAssemblyRef.Create(simpleAssemName,None,None,false,None,None)) with
                    | Some(resolvedPath) -> 
                        OkResult([],Choice1Of2 resolvedPath)
@@ -1681,7 +1690,10 @@ type FsiInteractionProcessor(tcConfigB,
 
             | IHash (ParsedHashDirective(("reference" | "r"),[path],m),_) -> 
                 let resolutions,istate = fsiDynamicCompiler.EvalRequireReference istate m path 
-                resolutions |> List.iter (fun ar -> fsiConsoleOutput.uprintnfnn "%s" (FSIstrings.SR.fsiDidAHashr(ar.resolvedPath)))
+                resolutions |> List.iter (fun ar -> 
+                    let format = if fsiOptions.IsInteractiveServer then FSIstrings.SR.fsiDidAHashrWithLockWarning(ar.resolvedPath) else FSIstrings.SR.fsiDidAHashr(ar.resolvedPath)
+                    fsiConsoleOutput.uprintnfnn "%s" format
+                    )
                 istate,Completed
 
             | IHash (ParsedHashDirective("I",[path],m),_) -> 
@@ -2400,12 +2412,66 @@ type internal FsiEvaluationSession (argv:string[], inReader:TextReader, outWrite
 
         use unwindBuildPhase = PushThreadBuildPhaseUntilUnwind (BuildPhase.Interactive)
 
-        let threadException exn = 
+        let threadException isFromThreadException exn = 
              fsi.EventLoop.Invoke (
                 fun () ->          
                     fprintfn fsiConsoleOutput.Error "%s" (exn.ToString())
                     errorLogger.SetError()
-                    errorLogger.AbortOnError()
+                    try 
+                        errorLogger.AbortOnError() 
+                    with StopProcessing -> 
+                        // BUG 664864: Watson Clr20r3 across buckets with: Application FSIAnyCPU.exe from Dev11 RTM; Exception AE251Y0L0P2WC0QSWDZ0E2IDRYQTDSVB; FSIANYCPU.NI.EXE!Microsoft.FSharp.Compiler.Interactive.Shell+threadException
+                        // reason: some window that use System.Windows.Forms.DataVisualization types (possible FSCharts) was created in FSI.
+                        // at some moment one chart has raised InvalidArgumentException from OnPaint, this exception was intercepted by the code in higher layer and 
+                        // passed to Application.OnThreadException. FSI has already attached its own ThreadException handler, inside it will log the original error
+                        // and then raise StopProcessing exception to unwind the stack (and possibly shut down current Application) and get to DriveFsiEventLoop.
+                        // DriveFsiEventLoop handles StopProcessing by suppressing it and restarting event loop from the beginning.
+                        // This schema works almost always except when FSI is started as 64 bit process (FsiAnyCpu) on Windows 7.
+
+                        // http://msdn.microsoft.com/en-us/library/windows/desktop/ms633573(v=vs.85).aspx
+                        // Remarks:
+                        // If your application runs on a 32-bit version of Windows operating system, uncaught exceptions from the callback 
+                        // will be passed onto higher-level exception handlers of your application when available. 
+                        // The system then calls the unhandled exception filter to handle the exception prior to terminating the process. 
+                        // If the PCA is enabled, it will offer to fix the problem the next time you run the application.
+                        // However, if your application runs on a 64-bit version of Windows operating system or WOW64, 
+                        // you should be aware that a 64-bit operating system handles uncaught exceptions differently based on its 64-bit processor architecture, 
+                        // exception architecture, and calling convention. 
+                        // The following table summarizes all possible ways that a 64-bit Windows operating system or WOW64 handles uncaught exceptions.
+                        // 1. The system suppresses any uncaught exceptions.
+                        // 2. The system first terminates the process, and then the Program Compatibility Assistant (PCA) offers to fix it the next time 
+                        // you run the application. You can disable the PCA mitigation by adding a Compatibility section to the application manifest.
+                        // 3. The system calls the exception filters but suppresses any uncaught exceptions when it leaves the callback scope, 
+                        // without invoking the associated handlers.
+                        // Behavior type 2 only applies to the 64-bit version of the Windows 7 operating system.
+                        
+                        // NOTE: tests on Win8 box showed that 64 bit version of the Windows 8 always apply type 2 behavior
+
+                        // Effectively this means that when StopProcessing exception is raised from ThreadException callback - it won't be intercepted in DriveFsiEventLoop.
+                        // Instead it will be interpreted as unhandled exception and crash the whole process.
+
+                        // FIX: detect if current process in 64 bit running on Windows 7 or Windows 8 and if yes - swallow the StopProcessing and ScheduleRestart instead.
+                        // Visible behavior should not be different, previosuly exception unwinds the stack and aborts currently running Application.
+                        // After that it will be intercepted and suppressed in DriveFsiEventLoop.
+                        // Now we explicitly shut down Application so after execution of callback will be completed the control flow 
+                        // will also go out of WinFormsEventLoop.Run and again get to DriveFsiEventLoop => restart the loop. I'd like the fix to be  as conservative as possible
+                        // so we use special case for problematic case instead of just always scheduling restart.
+
+                        // http://msdn.microsoft.com/en-us/library/windows/desktop/ms724832(v=vs.85).aspx
+                        let os = Environment.OSVersion
+                        // Win7 6.1
+                        let isWindows7 = os.Version.Major = 6 && os.Version.Minor = 1
+                        // Win8 6.2
+                        let isWindows8Plus = os.Version >= Version(6, 2, 0, 0)
+                        if isFromThreadException && ((isWindows7 && Environment.Is64BitProcess) || (Environment.Is64BitOperatingSystem && isWindows8Plus))
+#if DEBUG
+                            // for debug purposes
+                            && Environment.GetEnvironmentVariable("FSI_SCHEDULE_RESTART_WITH_ERRORS") = null
+#endif
+                        then
+                            fsi.EventLoop.ScheduleRestart()
+                        else
+                            reraise()
                 )
 
         if fsiOptions.Interact then 
@@ -2423,7 +2489,7 @@ type internal FsiEvaluationSession (argv:string[], inReader:TextReader, outWrite
             // Route background exceptions to the exception handlers
             AppDomain.CurrentDomain.UnhandledException.Add (fun args -> 
                 match args.ExceptionObject with 
-                | :? System.Exception as err -> threadException err 
+                | :? System.Exception as err -> threadException false err 
                 | _ -> ());
 
             if fsiOptions.Gui then 
@@ -2433,7 +2499,7 @@ type internal FsiEvaluationSession (argv:string[], inReader:TextReader, outWrite
                     ()
 
                 // Route GUI application exceptions to the exception handlers
-                Application.add_ThreadException(new ThreadExceptionEventHandler(fun _ args -> threadException args.Exception));
+                Application.add_ThreadException(new ThreadExceptionEventHandler(fun _ args -> threadException true args.Exception));
 
                 if not runningOnMono then 
                     try 
@@ -2458,9 +2524,35 @@ type internal FsiEvaluationSession (argv:string[], inReader:TextReader, outWrite
         // to be explicitly kept alive.
         GC.KeepAlive fsiInterruptController.EventHandlers
 
+   
+
+let MainMain (argv:string[]) = 
+    ignore argv
+    let argv = System.Environment.GetCommandLineArgs()
+
+    // When VFSI is running, set the input/output encoding to UTF8.
+    // Otherwise, unicode gets lost during redirection.
+    // It is required only under Net4.5 or above (with unicode console feature).
+    if FSharpEnvironment.IsRunningOnNetFx45OrAbove && 
+        argv |> Array.exists (fun x -> x.Contains "fsi-server") then
+        Console.InputEncoding <- System.Text.Encoding.UTF8 
+        Console.OutputEncoding <- System.Text.Encoding.UTF8
+
+#if DEBUG  
+    if argv |> Array.exists  (fun x -> x = "/pause" || x = "--pause") then 
+        Console.WriteLine("Press any key to continue...")
+        Console.ReadKey() |> ignore
+
+    try
+      let fsi = FsiEvaluationSession (argv, Console.In, Console.Out, Console.Error)
+      fsi.Run() 
+    with e -> printf "Exception by fsi.exe:\n%+A\n" e
+#else
+    let fsi = FsiEvaluationSession (argv, Console.In, Console.Out, Console.Error)
+    fsi.Run() 
+#endif
+
+    0
+
+
 #endif // SILVERLIGHT
-
-
-
-
-

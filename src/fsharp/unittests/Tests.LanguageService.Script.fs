@@ -291,6 +291,40 @@ type ScriptTests() as this =
                           ]
         TakeCoffeeBreak(this.VS)
         VerifyErrorListContainedExpetedStr("MyNamespace",project)
+    
+    [<Test>]
+    member public this.``Fsx.HashLoad.Conditionals``() =
+        use _guard = this.UsingNewVS()
+        let solution = this.CreateSolution()
+        let project = CreateProject(solution,"testproject")
+        let fs = AddFileFromText(project,"File1.fs",
+                                    ["module InDifferentFS"
+                                     "#if INTERACTIVE"
+                                     "let x = 1"
+                                     "#else"
+                                     "let y = 2"
+                                     "#endif"
+                                     "#if DEBUG"
+                                     "let A = 3"
+                                     "#else"
+                                     "let B = 4"
+                                     "#endif"
+                                     ])            
+        
+        let fsx = AddFileFromText(project,"File2.fsx",
+                                    [
+                                     "#load \"File1.fs\"" 
+                                     "InDifferentFS."
+                                     ])    
+        let fsx = OpenFile(project,"File2.fsx")
+
+        MoveCursorToEndOfMarker(fsx, "InDifferentFS.")
+        let completion = AutoCompleteAtCursor fsx
+        let completion = completion |> Array.map (fun (name, _, _, _) -> name) |> set
+        Assert.AreEqual(Set.count completion, 2, "Expected 2 elements in the completion list")
+        Assert.IsTrue(completion.Contains "x", "Completion list should contain x because INTERACTIVE is defined")
+        Assert.IsTrue(completion.Contains "B", "Completion list should contain B because DEBUG is not defined")
+        
 
     /// FEATURE: Removing a #r into a file will cause it to no longer be seen by intellisense.
     [<Test>]
@@ -315,6 +349,8 @@ type ScriptTests() as this =
         TakeCoffeeBreak(this.VS)
         VerifyErrorListContainedExpetedStr("Transactions",project)
         gpatcc.AssertExactly(notAA[file], notAA[file], true (* expectNuke, because dependent DLL set changed *))
+    
+
 
     // Corecursive load to existing property.
     [<Test>]
@@ -1264,10 +1300,10 @@ type ScriptTests() as this =
             (project, @"
                 <ItemGroup>
                     <!-- Subtle: You need this reference to compile but not to get language service -->
-                    <Reference Include=""FSharp.Compiler.Interactive.Settings, Version=4.3.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a"">
+                    <Reference Include=""FSharp.Compiler.Interactive.Settings, Version=4.3.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a"">
                         <SpecificVersion>True</SpecificVersion>
                     </Reference>
-                    <Reference Include=""FSharp.Compiler, Version=4.3.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a"">
+                    <Reference Include=""FSharp.Compiler, Version=4.3.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a"">
                         <SpecificVersion>True</SpecificVersion>
                     </Reference>
                 </ItemGroup>")

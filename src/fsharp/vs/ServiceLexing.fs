@@ -539,11 +539,12 @@ type SingleLineTokenState =
 
 /// Split a line into tokens and attach information about the tokens. This information is used by Visual Studio.
 [<Sealed>]
-type (* internal *) LineTokenizer(lexbuf: UnicodeLexing.Lexbuf, 
-                                  maxLength: int option,
-                                  filename : string, 
-                                  lexArgsLightOn : lexargs,
-                                  lexArgsLightOff : lexargs) = 
+type internal LineTokenizer(lexbuf: UnicodeLexing.Lexbuf, 
+                            maxLength: int option,
+                            filename : string, 
+                            lexArgsLightOn : lexargs,
+                            lexArgsLightOff : lexargs
+                            ) = 
 
     let skip = false   // don't skip whitespace in the lexer 
     

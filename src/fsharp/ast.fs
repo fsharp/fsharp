@@ -603,12 +603,12 @@ and
     | DotSet of SynExpr * LongIdentWithDots * SynExpr * range
 
     /// F# syntax: expr.[expr,...,expr] 
-    | DotIndexedGet of SynExpr * SynExpr list * range * range
+    | DotIndexedGet of SynExpr * SynIndexerArg list * range * range
 
     /// DotIndexedSet (objectExpr, indexExprs, valueExpr, rangeOfLeftOfSet, rangeOfDot, rangeOfWholeExpr)
     ///
     /// F# syntax: expr.[expr,...,expr] <- expr
-    | DotIndexedSet of SynExpr * SynExpr list * SynExpr * range * range * range
+    | DotIndexedSet of SynExpr * SynIndexerArg list * SynExpr * range * range * range
 
     /// F# syntax: Type.Items(e1) <- e2 , rarely used named-property-setter notation, e.g. Foo.Bar.Chars(3) <- 'a'
     | NamedIndexedPropertySet of LongIdentWithDots * SynExpr * SynExpr * range
@@ -876,6 +876,14 @@ and
             mkRange m.FileName start e
         | SynExpr.Ident id -> id.idRange
 
+
+and 
+    [<NoEquality; NoComparison; RequireQualifiedAccess>]
+    SynIndexerArg = 
+    | Two of SynExpr * SynExpr 
+    | One of SynExpr
+    member x.Range = match x with Two (e1,e2) -> unionRanges e1.Range e2.Range | One e -> e.Range
+    member x.Exprs = match x with Two (e1,e2) -> [e1;e2] | One e -> [e]
 and  
     [<NoEquality; NoComparison; RequireQualifiedAccess>]
     SynSimplePat =
@@ -921,6 +929,9 @@ and
     | SimplePats of SynSimplePat list * range
     | Typed of  SynSimplePats * SynType * range
 
+and SynConstructorArgs =
+    | Pats of SynPat list
+    | NamePatPairs of (Ident * SynPat) list * range
 and  
     [<NoEquality; NoComparison;RequireQualifiedAccess>]
     SynPat =
@@ -931,7 +942,7 @@ and
     | Attrib of  SynPat * SynAttributes * range
     | Or of  SynPat * SynPat * range
     | Ands of  SynPat list * range
-    | LongIdent of LongIdentWithDots * (* holds additional ident for tooling *) Ident option * SynValTyparDecls option (* usually None: temporary used to parse "f<'a> x = x"*) * SynPat list  * SynAccess option * range
+    | LongIdent of LongIdentWithDots * (* holds additional ident for tooling *) Ident option * SynValTyparDecls option (* usually None: temporary used to parse "f<'a> x = x"*) * SynConstructorArgs  * SynAccess option * range
     | Tuple of  SynPat list * range
     | Paren of  SynPat * range
     | ArrayOrList of  bool * SynPat list * range
@@ -1529,15 +1540,16 @@ let rec IsControlFlowExpression e =
     | _ -> false
 
 let mkAnonField (ty: SynType) = Field([],false,None,ty,false,PreXmlDoc.Empty,None,ty.Range)
+let mkNamedField (ident, ty: SynType) = Field([],false,Some ident,ty,false,PreXmlDoc.Empty,None,ty.Range)
 
 let mkSynPatVar vis (id:Ident) = SynPat.Named (SynPat.Wild id.idRange,id,false,vis,id.idRange)
 let mkSynThisPatVar (id:Ident) = SynPat.Named (SynPat.Wild id.idRange,id,true,None,id.idRange)
-let mkSynPatMaybeVar lidwd vis m =  SynPat.LongIdent (lidwd,None,None,[],vis,m) 
+let mkSynPatMaybeVar lidwd vis m =  SynPat.LongIdent (lidwd,None,None,SynConstructorArgs.Pats [],vis,m) 
 
 /// Extract the argument for patterns corresponding to the declaration of 'new ... = ...'
 let (|SynPatForConstructorDecl|_|) x = 
     match x with 
-    | SynPat.LongIdent (LongIdentWithDots([_],_),_,_,[arg],_,_) -> Some arg
+    | SynPat.LongIdent (LongIdentWithDots([_],_),_,_, SynConstructorArgs.Pats [arg],_,_) -> Some arg
     | _ -> None
 
 /// Recognize the '()' in 'new()'
@@ -1585,7 +1597,7 @@ let rec SimplePatOfPat (synArgNameGenerator: SynArgNameGenerator) p =
         let m = p.Range
         let isCompGen,altNameRefCell,id,item = 
             match p with 
-            | SynPat.LongIdent(LongIdentWithDots([id],_),_,None,[],None,_) -> 
+            | SynPat.LongIdent(LongIdentWithDots([id],_),_,None, SynConstructorArgs.Pats [],None,_) -> 
                 // The pattern is 'V' or some other capitalized identifier.
                 // It may be a real variable, in which case we want to maintain its name.
                 // But it may also be a nullary union case or some other identifier.
@@ -1672,7 +1684,8 @@ let PushCurriedPatternsToExpr synArgNameGenerator wholem isMember pats rhs =
 /// Helper for parsing the inline IL fragments. 
 #if NO_INLINE_IL_PARSER
 let ParseAssemblyCodeInstructions _s m = 
-    errorR(Error((193,"Inline IL not valid in a hosted environment"),m)) ; [| |]
+    errorR(Error((193,"Inline IL not valid in a hosted environment"),m))
+    [| |]
 #else
 let ParseAssemblyCodeInstructions s m = 
     try Microsoft.FSharp.Compiler.AbstractIL.Internal.AsciiParser.ilInstrs 
@@ -1682,11 +1695,12 @@ let ParseAssemblyCodeInstructions s m =
       errorR(Error(FSComp.SR.astParseEmbeddedILError(), m)); [| |]
 #endif
 
+
 /// Helper for parsing the inline IL fragments. 
 #if NO_INLINE_IL_PARSER
 let ParseAssemblyCodeType _s m = 
-    // REVIEW: break out into a resource
-    errorR(Error((193,"Inline IL not valid in a hosted environment"),m)) ; IL.ecmaILGlobals.typ_Object
+    errorR(Error((193,"Inline IL not valid in a hosted environment"),m))
+    IL.EcmaILGlobals.typ_Object
 #else
 let ParseAssemblyCodeType s m = 
     try Microsoft.FSharp.Compiler.AbstractIL.Internal.AsciiParser.ilType 
@@ -1694,8 +1708,9 @@ let ParseAssemblyCodeType s m =
            (UnicodeLexing.StringAsLexbuf s)
     with RecoverableParseError -> 
       errorR(Error(FSComp.SR.astParseEmbeddedILTypeError(),m)); 
-      IL.ecmaILGlobals.typ_Object
+      IL.EcmaILGlobals.typ_Object
 #endif
+
 
 //------------------------------------------------------------------------
 // AST constructors
@@ -1722,20 +1737,33 @@ let mkSynApp3 f x1 x2 x3 m = mkSynApp1 (mkSynApp2 f x1 x2 m) x3 m
 let mkSynApp4 f x1 x2 x3 x4 m = mkSynApp1 (mkSynApp3 f x1 x2 x3 m) x4 m
 let mkSynApp5 f x1 x2 x3 x4 x5 m = mkSynApp1 (mkSynApp4 f x1 x2 x3 x4 m) x5 m
 let mkSynDotParenSet  m a b c = mkSynTrifix m parenSet a b c
-let mkSynDotBrackGet  m mDot a b   = SynExpr.DotIndexedGet(a,[b],mDot,m)
+let mkSynDotBrackGet  m mDot a b   = SynExpr.DotIndexedGet(a,[SynIndexerArg.One b],mDot,m)
 let mkSynQMarkSet m a b c = mkSynTrifix m qmarkSet a b c
 
-let mkSynDotBrackSliceGet  m mDot arr (x,y) = 
-    SynExpr.DotIndexedGet(arr,[x;y],mDot,m)
+let mkSynDotBrackSliceGet  m mDot arr sliceArg = SynExpr.DotIndexedGet(arr,[sliceArg],mDot,m)
 
-let mkSynDotBrackSlice2Get  m mDot arr (x1,y1) (x2,y2) = 
-    SynExpr.DotIndexedGet(arr,[x1;y1;x2;y2],mDot,m)
+let mkSlice m mDot arr sliceArgs = 
+    //let args = [ for arg in sliceArgs do
+    //                match arg with 
+    //                | SynIndexerArg.Range (x1,x2) -> yield x1; yield x2
+    //                | SynIndexerArg.One x -> yield x ]
+    SynExpr.DotIndexedGet(arr,sliceArgs,mDot,m)
 
-let mkSynDotBrackSlice3Get  m mDot arr (x1,y1) (x2,y2) (x3,y3) = 
-    SynExpr.DotIndexedGet(arr,[x1;y1;x2;y2;x3;y3],mDot,m)
+let mkSynDotBrackSlice2Get  m mDot arr sliceArg1 sliceArg2 = 
+    match sliceArg1, sliceArg2 with 
+    | SynIndexerArg.One x1, SynIndexerArg.One x2 -> mkSynDotBrackGet m mDot arr (SynExpr.Tuple([x1;x2],[],unionRanges x1.Range x2.Range))
+    | _ -> mkSlice m mDot arr [ sliceArg1; sliceArg2 ] 
 
-let mkSynDotBrackSlice4Get  m mDot arr (x1,y1) (x2,y2) (x3,y3) (x4,y4) = 
-    SynExpr.DotIndexedGet(arr,[x1;y1;x2;y2;x3;y3;x4;y4],mDot,m)
+let mkSynDotBrackSlice3Get  m mDot arr sliceArg1 sliceArg2 sliceArg3 = 
+    match sliceArg1, sliceArg2, sliceArg3 with 
+    | SynIndexerArg.One x1, SynIndexerArg.One x2, SynIndexerArg.One x3 -> mkSynDotBrackGet m mDot arr (SynExpr.Tuple([x1;x2;x3],[],unionRanges x1.Range x3.Range))
+    | _ -> mkSlice m mDot arr [ sliceArg1; sliceArg2; sliceArg3 ] 
+
+let mkSynDotBrackSlice4Get  m mDot arr sliceArg1 sliceArg2 sliceArg3 sliceArg4 =
+    match sliceArg1, sliceArg2, sliceArg3, sliceArg4 with 
+    | SynIndexerArg.One x1, SynIndexerArg.One x2, SynIndexerArg.One x3, SynIndexerArg.One x4 -> mkSynDotBrackGet m mDot arr (SynExpr.Tuple([x1;x2;x3;x4],[],unionRanges x1.Range x4.Range))
+    | _ -> mkSlice m mDot arr [ sliceArg1; sliceArg2; sliceArg3; sliceArg4 ] 
+    
 
 let mkSynDotParenGet lhsm dotm a b   = 
     match b with
@@ -1937,12 +1965,12 @@ module SynInfo =
 
         let infosForExplicitArgs = 
             match pat with 
-            | Some(SynPat.LongIdent(_,_,_,curriedArgs,_,_)) -> List.map InferSynArgInfoFromPat curriedArgs
+            | Some(SynPat.LongIdent(_,_,_, SynConstructorArgs.Pats curriedArgs,_,_)) -> List.map InferSynArgInfoFromPat curriedArgs
             | _ -> []
 
         let explicitArgsAreSimple = 
             match pat with 
-            | Some(SynPat.LongIdent(_,_,_,curriedArgs,_,_)) -> List.forall isSimplePattern curriedArgs
+            | Some(SynPat.LongIdent(_,_,_, SynConstructorArgs.Pats curriedArgs,_,_)) -> List.forall isSimplePattern curriedArgs
             | _ -> true
 
         let retInfo = InferSynReturnData retInfo
@@ -2247,10 +2275,10 @@ let rec synExprContainsError inpExpr =
           | SynExpr.IfThenElse (e1,e2,e3opt,_,_,_,_) ->
               walkExpr e1 || walkExpr e2 || walkExprOpt e3opt
           | SynExpr.DotIndexedGet (e1,es,_,_) -> 
-              walkExpr e1 || walkExprs es
+              walkExpr e1 || walkExprs [ for e in es do yield! e.Exprs ]
 
           | SynExpr.DotIndexedSet (e1,es,e2,_,_,_) ->
-              walkExpr e1 || walkExprs es || walkExpr e2
+              walkExpr e1 || walkExprs [ for e in es do yield! e.Exprs ] || walkExpr e2
           | SynExpr.DotNamedIndexedPropertySet (e1,_,e2,e3,_) ->
               walkExpr e1 || walkExpr e2 || walkExpr e3
 

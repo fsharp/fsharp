@@ -10,8 +10,6 @@
 // You must not remove this notice, or any other, from this software.
 //----------------------------------------------------------------------------
 
-// Helper functions for the F# lexer lex.mll
-
 
 module internal Microsoft.FSharp.Compiler.Lexhelp
 
@@ -328,7 +326,7 @@ module Keywords =
             | "__SOURCE_DIRECTORY__" ->
                 let filename = fileOfFileIndex lexbuf.StartPos.FileIndex
                 let dirname  = if filename = stdinMockFilename then
-                                   System.IO.Directory.GetCurrentDirectory() // TODO: is this right for Silverlight?
+                                   System.IO.Directory.GetCurrentDirectory()
                                else
                                    filename |> FileSystem.SafeGetFullPath (* asserts that path is already absolute *)
                                             |> System.IO.Path.GetDirectoryName

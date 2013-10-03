@@ -373,11 +373,15 @@ module internal AstTraversal =
                     |> pick expr
                 | SynExpr.DotIndexedGet(synExpr, synExprList, _range, _range2) -> 
                     [yield dive synExpr synExpr.Range traverseSynExpr
-                     yield! synExprList |> List.map (fun x -> dive x x.Range traverseSynExpr)]
+                     for synExpr in synExprList do 
+                         for x in synExpr.Exprs do 
+                             yield dive x x.Range traverseSynExpr]
                     |> pick expr
                 | SynExpr.DotIndexedSet(synExpr, synExprList, synExpr2, _, _range, _range2) -> 
                     [yield dive synExpr synExpr.Range traverseSynExpr
-                     yield! synExprList |> List.map (fun x -> dive x x.Range traverseSynExpr) 
+                     for synExpr in synExprList do 
+                         for x in synExpr.Exprs do 
+                             yield dive x x.Range traverseSynExpr
                      yield dive synExpr2 synExpr2.Range traverseSynExpr]
                     |> pick expr
                 | SynExpr.JoinIn(synExpr1, _range, synExpr2, _range2) -> 

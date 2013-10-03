@@ -36,6 +36,7 @@ type internal UnitTestingFSharpProjectNode(package:FSharpProjectPackage) as this
        this.InteropSafeIVsUIHierarchy <- this
        this.InteropSafeIVsProject <- this
        this.InteropSafeIVsSccProject2 <- this
+       this.InteropSafeIVsProjectFlavorCfgProvider <- this
 
 type AddReferenceDialogTab =
     | DotNetTab = 0
@@ -138,7 +139,7 @@ type TheTests() =
             project.Load(filename, null, null, 2u, &guid, &cancelled)
             printfn "loaded"
             let slfpe = new SolutionListenerForProjectEvents(project.Site)
-            (project :> IProjectEventsProvider).ProjectEventsProvider <- (slfpe :> IProjectEvents)
+            project.ProjectEventsProvider <- (slfpe :> IProjectEvents)
             slfpe.OnAfterOpenProject((project :> IVsHierarchy), 0) |> ignore
             MSBuildProject.SetGlobalProperty(project.BuildProject, "UTF8Output", forceUTF8)
             project
@@ -174,8 +175,8 @@ type TheTests() =
         | :? FSharpFileNode 
         | :? FSharpFolderNode -> 
             TheTests.EnsureMoveDownEnabled(node)
-            node.ExecCommandOnNode(FSharpProjectFileConstants.guidFSharpProjectCmdSet, 
-                                   uint32 FSharpProjectFileConstants.MoveDownCmd.ID,
+            node.ExecCommandOnNode(VSProjectConstants.guidFSharpProjectCmdSet, 
+                                   uint32 VSProjectConstants.MoveDownCmd.ID,
                                    uint32 0, new IntPtr(0), new IntPtr(0)) |> ignore
         | _ -> failwith "unexpected node type"
         ()
@@ -185,8 +186,8 @@ type TheTests() =
         | :? FSharpFileNode 
         | :? FSharpFolderNode ->
             TheTests.EnsureMoveUpEnabled(node)
-            node.ExecCommandOnNode(FSharpProjectFileConstants.guidFSharpProjectCmdSet, 
-                                   uint32 FSharpProjectFileConstants.MoveUpCmd.ID,
+            node.ExecCommandOnNode(VSProjectConstants.guidFSharpProjectCmdSet, 
+                                   uint32 VSProjectConstants.MoveUpCmd.ID,
                                    uint32 0, new IntPtr(0), new IntPtr(0)) |> ignore
         | _ -> failwith "unexpected node type"
         ()
@@ -194,28 +195,28 @@ type TheTests() =
     static member EnsureMoveDownDisabled(node : HierarchyNode) =
         // Move Down appears on menu, but is greyed out
         let mutable qsr = new QueryStatusResult()
-        ValidateOK(node.QueryStatusOnNode(FSharpProjectFileConstants.guidFSharpProjectCmdSet, uint32 FSharpProjectFileConstants.MoveDownCmd.ID, 0n, &qsr))
+        ValidateOK(node.QueryStatusOnNode(VSProjectConstants.guidFSharpProjectCmdSet, uint32 VSProjectConstants.MoveDownCmd.ID, 0n, &qsr))
         let expected = QueryStatusResult.SUPPORTED
         AssertEqual expected qsr
         
     static member EnsureMoveDownEnabled(node : HierarchyNode) =
         // Move Down appears on menu, and can be clicked
         let mutable qsr = new QueryStatusResult()
-        ValidateOK(node.QueryStatusOnNode(FSharpProjectFileConstants.guidFSharpProjectCmdSet, uint32 FSharpProjectFileConstants.MoveDownCmd.ID, 0n, &qsr))
+        ValidateOK(node.QueryStatusOnNode(VSProjectConstants.guidFSharpProjectCmdSet, uint32 VSProjectConstants.MoveDownCmd.ID, 0n, &qsr))
         let expected = QueryStatusResult.SUPPORTED ||| QueryStatusResult.ENABLED
         AssertEqual expected qsr
              
     static member EnsureMoveUpDisabled(node : HierarchyNode) =
         // Move Up appears on menu, but is greyed out
         let mutable qsr = new QueryStatusResult()
-        ValidateOK(node.QueryStatusOnNode(FSharpProjectFileConstants.guidFSharpProjectCmdSet, uint32 FSharpProjectFileConstants.MoveUpCmd.ID, 0n, &qsr))
+        ValidateOK(node.QueryStatusOnNode(VSProjectConstants.guidFSharpProjectCmdSet, uint32 VSProjectConstants.MoveUpCmd.ID, 0n, &qsr))
         let expected = QueryStatusResult.SUPPORTED
         AssertEqual expected qsr
         
     static member EnsureMoveUpEnabled(node : HierarchyNode) =
         // Move Up appears on menu, and can be clicked
         let mutable qsr = new QueryStatusResult()
-        ValidateOK(node.QueryStatusOnNode(FSharpProjectFileConstants.guidFSharpProjectCmdSet, uint32 FSharpProjectFileConstants.MoveUpCmd.ID, 0n, &qsr))
+        ValidateOK(node.QueryStatusOnNode(VSProjectConstants.guidFSharpProjectCmdSet, uint32 VSProjectConstants.MoveUpCmd.ID, 0n, &qsr))
         let expected = QueryStatusResult.SUPPORTED ||| QueryStatusResult.ENABLED
         AssertEqual expected qsr
              
@@ -309,6 +310,7 @@ type TheTests() =
             File.AppendAllText(file, TheTests.FsprojTextWithProjectReferencesAndOtherFlags(compileItems, references, [], null, other, targetFramework))
             let sp, cnn = 
                 match targetFramework with
+                | "v4.5" -> VsMocks.MakeMockServiceProviderAndConfigChangeNotifier45()
                 | "v4.0" -> VsMocks.MakeMockServiceProviderAndConfigChangeNotifier40()
                 | "v3.5" -> VsMocks.MakeMockServiceProviderAndConfigChangeNotifier35()
                 | "v3.0" -> VsMocks.MakeMockServiceProviderAndConfigChangeNotifier30()

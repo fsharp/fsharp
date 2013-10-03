@@ -12,7 +12,221 @@
 // Reflection on F# values. Analyze an object to see if it the representation
 // of an F# value.
 
+#if FX_RESHAPED_REFLECTION
+
+namespace Microsoft.FSharp.Core
+
+open System
+open System.Reflection
+
+open Microsoft.FSharp.Core
+open Microsoft.FSharp.Core.Operators
+open Microsoft.FSharp.Core.LanguagePrimitives.IntrinsicOperators
+open Microsoft.FSharp.Collections
+open Microsoft.FSharp.Primitives.Basics
+
+module ReflectionAdapters = 
+
+    [<Flags>]
+    type BindingFlags =
+        | DeclaredOnly = 2
+        | Instance = 4 
+        | Static = 8
+        | Public = 16
+        | NonPublic = 32
+    let inline hasFlag (flag : BindingFlags) f  = (f &&& flag) = flag
+    let isDeclaredFlag  f    = hasFlag BindingFlags.DeclaredOnly f
+    let isPublicFlag    f    = hasFlag BindingFlags.Public f
+    let isStaticFlag    f    = hasFlag BindingFlags.Static f
+    let isInstanceFlag  f    = hasFlag BindingFlags.Instance f
+    let isNonPublicFlag f    = hasFlag BindingFlags.NonPublic f
+
+    [<System.Flags>]
+    type TypeCode = 
+        | Int32     = 0
+        | Int64     = 1
+        | Byte      = 2
+        | SByte     = 3
+        | Int16     = 4
+        | UInt16    = 5
+        | UInt32    = 6
+        | UInt64    = 7
+        | Single    = 8
+        | Double    = 9
+        | Decimal   = 10
+        | Other     = 11
+        
+    let isAcceptable bindingFlags isStatic isPublic =
+        // 1. check if member kind (static\instance) was specified in flags
+        ((isStaticFlag bindingFlags && isStatic) || (isInstanceFlag bindingFlags && not isStatic)) && 
+        // 2. check if member accessibility was specified in flags
+        ((isPublicFlag bindingFlags && isPublic) || (isNonPublicFlag bindingFlags && not isPublic))
+    
+    let publicFlags = BindingFlags.Public ||| BindingFlags.Instance ||| BindingFlags.Static
+
+    let commit (results : _[]) = 
+        match results with
+        | [||] -> null
+        | [| m |] -> m
+        | _ -> raise (AmbiguousMatchException())
+
+    let canUseAccessor (accessor : MethodInfo) nonPublic = 
+        box accessor <> null && (accessor.IsPublic || nonPublic)
+    
+    open PrimReflectionAdapters
+
+    type System.Type with        
+        member this.GetNestedType (name, bindingFlags) = 
+            // MSDN: http://msdn.microsoft.com/en-us/library/0dcb3ad5.aspx
+            // The following BindingFlags filter flags can be used to define which nested types to include in the search:
+            // You must specify either BindingFlags.Public or BindingFlags.NonPublic to get a return.
+            // Specify BindingFlags.Public to include public nested types in the search.
+            // Specify BindingFlags.NonPublic to include non-public nested types (that is, private, internal, and protected nested types) in the search.
+            // This method returns only the nested types of the current type. It does not search the base classes of the current type. 
+            // To find types that are nested in base classes, you must walk the inheritance hierarchy, calling GetNestedType at each level.
+            let nestedTyOpt =                
+                this.GetTypeInfo().DeclaredNestedTypes
+                |> Seq.tryFind (fun nestedTy -> 
+                    nestedTy.Name = name && (
+                        (isPublicFlag bindingFlags && nestedTy.IsNestedPublic) || 
+                        (isNonPublicFlag bindingFlags && (nestedTy.IsNestedPrivate || nestedTy.IsNestedFamily || nestedTy.IsNestedAssembly || nestedTy.IsNestedFamORAssem || nestedTy.IsNestedFamANDAssem))
+                        )
+                    )
+                |> Option.map (fun ti -> ti.AsType())
+            defaultArg nestedTyOpt null
+        // use different sources based on Declared flag
+        member this.GetMethods(bindingFlags) = 
+            (if isDeclaredFlag bindingFlags then this.GetTypeInfo().DeclaredMethods else this.GetRuntimeMethods())
+            |> Seq.filter (fun m -> isAcceptable bindingFlags m.IsStatic m.IsPublic)
+            |> Seq.toArray
+        // use different sources based on Declared flag
+        member this.GetFields(bindingFlags) = 
+            (if isDeclaredFlag bindingFlags then this.GetTypeInfo().DeclaredFields else this.GetRuntimeFields())
+            |> Seq.filter (fun f -> isAcceptable bindingFlags f.IsStatic f.IsPublic)
+            |> Seq.toArray
+        // use different sources based on Declared flag
+        member this.GetProperties(?bindingFlags) = 
+            let bindingFlags = defaultArg bindingFlags publicFlags
+            (if isDeclaredFlag bindingFlags then this.GetTypeInfo().DeclaredProperties else this.GetRuntimeProperties())
+            |> Seq.filter (fun pi-> 
+                let mi = if pi.GetMethod <> null then pi.GetMethod else pi.SetMethod
+                assert (mi <> null)
+                isAcceptable bindingFlags mi.IsStatic mi.IsPublic
+                )
+            |> Seq.toArray
+        // use different sources based on Declared flag
+        member this.GetMethod(name, ?bindingFlags) =
+            let bindingFlags = defaultArg bindingFlags publicFlags
+            this.GetMethods(bindingFlags)
+            |> Array.filter(fun m -> m.Name = name)
+            |> commit
+        // use different sources based on Declared flag
+        member this.GetProperty(name, bindingFlags) = 
+            this.GetProperties(bindingFlags)
+            |> Array.filter (fun pi -> pi.Name = name)
+            |> commit
+        member this.IsGenericTypeDefinition = this.GetTypeInfo().IsGenericTypeDefinition
+        member this.GetGenericArguments() = 
+            if this.IsGenericTypeDefinition then this.GetTypeInfo().GenericTypeParameters
+            elif this.IsGenericType then this.GenericTypeArguments
+            else [||]
+        member this.BaseType = this.GetTypeInfo().BaseType
+        member this.GetConstructor(parameterTypes : Type[]) = 
+            this.GetTypeInfo().DeclaredConstructors
+            |> Seq.filter (fun ci ->
+                let parameters = ci.GetParameters()
+                (parameters.Length = parameterTypes.Length) &&
+                (parameterTypes, parameters) ||> Array.forall2 (fun ty pi -> pi.ParameterType.Equals ty) 
+            )
+            |> Seq.toArray
+            |> commit
+        // MSDN: returns an array of Type objects representing all the interfaces implemented or inherited by the current Type.
+        member this.GetInterfaces() = this.GetTypeInfo().ImplementedInterfaces |> Seq.toArray
+        member this.GetConstructors(?bindingFlags) = 
+            let bindingFlags = defaultArg bindingFlags publicFlags
+            // type initializer will also be included in resultset
+            this.GetTypeInfo().DeclaredConstructors 
+            |> Seq.filter (fun ci -> isAcceptable bindingFlags ci.IsStatic ci.IsPublic)
+            |> Seq.toArray
+        member this.GetMethods() = this.GetMethods(publicFlags)
+        member this.Assembly = this.GetTypeInfo().Assembly
+        member this.IsSubclassOf(otherTy : Type) = this.GetTypeInfo().IsSubclassOf(otherTy)
+        member this.IsEnum = this.GetTypeInfo().IsEnum;
+        member this.GetField(name, bindingFlags) = 
+            this.GetFields(bindingFlags)
+            |> Array.filter (fun fi -> fi.Name = name)
+            |> commit
+        member this.GetProperty(name, propertyType, parameterTypes : Type[]) = 
+            this.GetProperties()
+            |> Array.filter (fun pi ->
+                pi.Name = name &&
+                pi.PropertyType = propertyType &&
+                (
+                    let parameters = pi.GetIndexParameters()
+                    (parameters.Length = parameterTypes.Length) &&
+                    (parameterTypes, parameters) ||> Array.forall2 (fun ty pi -> pi.ParameterType.Equals ty)
+                )
+            )
+            |> commit
+        static member GetTypeCode(ty : Type) = 
+            if   typeof<System.Int32>.Equals ty  then TypeCode.Int32
+            elif typeof<System.Int64>.Equals ty  then TypeCode.Int64
+            elif typeof<System.Byte>.Equals ty   then TypeCode.Byte
+            elif ty = typeof<System.SByte>  then TypeCode.SByte
+            elif ty = typeof<System.Int16>  then TypeCode.Int16
+            elif ty = typeof<System.UInt16> then TypeCode.UInt16
+            elif ty = typeof<System.UInt32> then TypeCode.UInt32
+            elif ty = typeof<System.UInt64> then TypeCode.UInt64
+            elif ty = typeof<System.Single> then TypeCode.Single
+            elif ty = typeof<System.Double> then TypeCode.Double
+            elif ty = typeof<System.Decimal> then TypeCode.Decimal
+            else TypeCode.Other
+
+    type System.Reflection.MemberInfo with
+        member this.GetCustomAttributes(attrTy, inherits) : obj[] = downcast box(CustomAttributeExtensions.GetCustomAttributes(this, attrTy, inherits) |> Seq.toArray)
+
+    type System.Reflection.MethodInfo with
+        member this.GetCustomAttributes(inherits : bool) : obj[] = downcast box(CustomAttributeExtensions.GetCustomAttributes(this, inherits) |> Seq.toArray)
+
+    type System.Reflection.PropertyInfo with
+        member this.GetGetMethod(nonPublic) = 
+            let mi = this.GetMethod
+            if canUseAccessor mi nonPublic then mi 
+            else null
+        member this.GetSetMethod(nonPublic) = 
+            let mi = this.SetMethod
+            if canUseAccessor mi nonPublic then mi
+            else null
+    
+    type System.Reflection.Assembly with
+        member this.GetTypes() = 
+            this.DefinedTypes 
+            |> Seq.map (fun ti -> ti.AsType())
+            |> Seq.toArray
+
+    type System.Delegate with
+        static member CreateDelegate(delegateType, methodInfo : MethodInfo) = methodInfo.CreateDelegate(delegateType)
+        static member CreateDelegate(delegateType, obj : obj, methodInfo : MethodInfo) = methodInfo.CreateDelegate(delegateType, obj)            
+
+#endif
+
 namespace Microsoft.FSharp.Reflection 
+
+module internal ReflectionUtils = 
+
+    open Microsoft.FSharp.Core.Operators
+
+#if FX_RESHAPED_REFLECTION
+    type BindingFlags = Microsoft.FSharp.Core.ReflectionAdapters.BindingFlags
+#else
+    type BindingFlags = System.Reflection.BindingFlags
+#endif
+
+    let toBindingFlags allowAccessToNonPublicMembers =
+        if allowAccessToNonPublicMembers then
+            BindingFlags.NonPublic ||| BindingFlags.Public
+        else
+            BindingFlags.Public
 
 open System
 open System.Globalization
@@ -27,10 +241,20 @@ module internal Impl =
 
     let debug = false
 
+#if FX_RESHAPED_REFLECTION
+    
+    open PrimReflectionAdapters
+    open ReflectionAdapters    
+
+#endif
+
+    let getBindingFlags allowAccess = ReflectionUtils.toBindingFlags (defaultArg allowAccess false)
+
     let inline checkNonNull argName (v: 'T) = 
         match box v with 
         | null -> nullArg argName 
         | _ -> ()
+     
         
     let emptyArray arr = (Array.length arr = 0)
     let nonEmptyArray arr = Array.length arr > 0
@@ -53,7 +277,6 @@ module internal Impl =
 
     //-----------------------------------------------------------------
     // GENERAL UTILITIES
-
 #if FX_ATLEAST_PORTABLE
     let instancePropertyFlags = BindingFlags.Instance 
     let staticPropertyFlags = BindingFlags.Static
@@ -80,7 +303,6 @@ module internal Impl =
     //-----------------------------------------------------------------
     // ATTRIBUTE DECOMPILATION
 
-
     let tryFindCompilationMappingAttribute (attrs:obj[]) =
       match attrs with
       | null | [| |] -> None
@@ -93,9 +315,9 @@ module internal Impl =
       | Some a -> a
 
 #if FX_NO_CUSTOMATTRIBUTEDATA
-    let tryFindCompilationMappingAttributeFromType       (typ:Type)        = tryFindCompilationMappingAttribute ( typ.GetCustomAttributes (typeof<CompilationMappingAttribute>,false))
-    let tryFindCompilationMappingAttributeFromMemberInfo (info:MemberInfo) = tryFindCompilationMappingAttribute (info.GetCustomAttributes (typeof<CompilationMappingAttribute>,false))
-    let    findCompilationMappingAttributeFromMemberInfo (info:MemberInfo) =    findCompilationMappingAttribute (info.GetCustomAttributes (typeof<CompilationMappingAttribute>,false))
+    let tryFindCompilationMappingAttributeFromType       (typ:Type)        = tryFindCompilationMappingAttribute ( typ.GetCustomAttributes(typeof<CompilationMappingAttribute>, false))
+    let tryFindCompilationMappingAttributeFromMemberInfo (info:MemberInfo) = tryFindCompilationMappingAttribute (info.GetCustomAttributes(typeof<CompilationMappingAttribute>, false))
+    let    findCompilationMappingAttributeFromMemberInfo (info:MemberInfo) =    findCompilationMappingAttribute (info.GetCustomAttributes(typeof<CompilationMappingAttribute>, false))
 #else
     let cmaName = typeof<CompilationMappingAttribute>.FullName
     let assemblyName = typeof<CompilationMappingAttribute>.Assembly.GetName().Name 
@@ -165,8 +387,7 @@ module internal Impl =
       | Some (flags,_n,_vn) -> Some flags
 
     //-----------------------------------------------------------------
-    // UNION DECOMPILATION
-    
+    // UNION DECOMPILATION   
 
     // Get the type where the type definitions are stored
     let getUnionCasesTyp (typ: Type, _bindingFlags) = 
@@ -211,7 +432,20 @@ module internal Impl =
         let tagField = tagFields |> Array.pick (fun (i,f) -> if i = tag then Some f else None)
         if tagFields.Length = 1 then 
             typ
-        else 
+        else
+            // special case: two-cased DU annotated with CompilationRepresentation(UseNullAsTrueValue)
+            // in this case it will be compiled as one class: return self type for non-nullary case and null for nullary
+            let isTwoCasedDU =
+                if tagFields.Length = 2 then
+                    match typ.GetCustomAttributes(typeof<CompilationRepresentationAttribute>, false) with
+                    | [|:? CompilationRepresentationAttribute as attr|] -> 
+                        (attr.Flags &&& CompilationRepresentationFlags.UseNullAsTrueValue) = CompilationRepresentationFlags.UseNullAsTrueValue
+                    | _ -> false
+                else
+                    false
+            if isTwoCasedDU then
+                typ
+            else
             let casesTyp = getUnionCasesTyp (typ, bindingFlags)
             let caseTyp = casesTyp.GetNestedType(tagField, bindingFlags) // if this is null then the union is nullary
             match caseTyp with 
@@ -617,12 +851,17 @@ module internal Impl =
     let checkTupleType(argName,tupleType) =
         checkNonNull argName tupleType;
         if not (isTupleType tupleType) then invalidArg argName (SR.GetString1(SR.notATupleType, tupleType.FullName))
+
+#if FX_RESHAPED_REFLECTION
+open ReflectionAdapters
+type BindingFlags = ReflectionAdapters.BindingFlags
+#endif
         
 [<Sealed>]
 type UnionCaseInfo(typ: System.Type, tag:int) =
     // Cache the tag -> name map
     let mutable names = None
-    let getMethInfo() = Impl.getUnionCaseConstructorMethod (typ,tag,BindingFlags.Public ||| BindingFlags.NonPublic) 
+    let getMethInfo() = Impl.getUnionCaseConstructorMethod (typ, tag, BindingFlags.Public ||| BindingFlags.NonPublic) 
     member x.Name = 
         match names with 
         | None -> (let conv = Impl.getUnionTagConverter (typ,BindingFlags.Public ||| BindingFlags.NonPublic) in names <- Some conv; conv tag)
@@ -660,13 +899,14 @@ type FSharpType =
 
     static member IsRecord(typ:Type,?bindingFlags) =  
         let bindingFlags = defaultArg bindingFlags BindingFlags.Public 
+
         Impl.checkNonNull "typ" typ;
         Impl.isRecordType (typ,bindingFlags)
 
     static member IsUnion(typ:Type,?bindingFlags) =  
+        let bindingFlags = defaultArg bindingFlags BindingFlags.Public 
         Impl.checkNonNull "typ" typ;
         let typ = Impl.getTypeOfReprType (typ ,BindingFlags.Public ||| BindingFlags.NonPublic)
-        let bindingFlags = defaultArg bindingFlags BindingFlags.Public 
         Impl.isUnionType (typ,bindingFlags)
 
     static member IsFunction(typ:Type) =  
@@ -701,7 +941,7 @@ type FSharpType =
     static member GetRecordFields(recordType:Type,?bindingFlags) =
         let bindingFlags = defaultArg bindingFlags BindingFlags.Public 
         Impl.checkRecordType("recordType",recordType,bindingFlags);
-        Impl.fieldPropsOfRecordType(recordType,bindingFlags) 
+        Impl.fieldPropsOfRecordType(recordType,bindingFlags)
 
     static member GetUnionCases (unionType:Type,?bindingFlags) = 
         let bindingFlags = defaultArg bindingFlags BindingFlags.Public 
@@ -711,7 +951,7 @@ type FSharpType =
         Impl.getUnionTypeTagNameMap(unionType,bindingFlags) |> Array.mapi (fun i _ -> UnionCaseInfo(unionType,i))
 
     static member IsExceptionRepresentation(exceptionType:Type, ?bindingFlags) = 
-        let bindingFlags = defaultArg bindingFlags BindingFlags.Public 
+        let bindingFlags = defaultArg bindingFlags BindingFlags.Public
         Impl.checkNonNull "exceptionType" exceptionType;
         Impl.isExceptionRepr(exceptionType,bindingFlags)
 
@@ -742,8 +982,8 @@ type FSharpValue =
         info.GetValue(record,null)
 
     static member GetRecordFields(record:obj,?bindingFlags) =
-        Impl.checkNonNull "record" record;
         let bindingFlags = defaultArg bindingFlags BindingFlags.Public 
+        Impl.checkNonNull "record" record;
         let typ = record.GetType() 
         if not (Impl.isRecordType(typ,bindingFlags)) then invalidArg "record" (SR.GetString(SR.objIsNotARecord));
         Impl.getRecordReader (typ,bindingFlags) record
@@ -814,21 +1054,22 @@ type FSharpValue =
         Impl.getTupleConstructorInfo (tupleType) 
 
     static member MakeUnion(unionCase:UnionCaseInfo,args: obj [],?bindingFlags) = 
+        let bindingFlags = defaultArg bindingFlags BindingFlags.Public
         Impl.checkNonNull "unionCase" unionCase;
-        let bindingFlags = defaultArg bindingFlags BindingFlags.Public 
         Impl.getUnionCaseConstructor (unionCase.DeclaringType,unionCase.Tag,bindingFlags) args
 
     static member PreComputeUnionConstructor (unionCase:UnionCaseInfo,?bindingFlags) = 
-        Impl.checkNonNull "unionCase" unionCase;
         let bindingFlags = defaultArg bindingFlags BindingFlags.Public 
+        Impl.checkNonNull "unionCase" unionCase;
         Impl.getUnionCaseConstructor (unionCase.DeclaringType,unionCase.Tag,bindingFlags)
 
     static member PreComputeUnionConstructorInfo(unionCase:UnionCaseInfo, ?bindingFlags) =
-        Impl.checkNonNull "unionCase" unionCase;
         let bindingFlags = defaultArg bindingFlags BindingFlags.Public 
-        Impl.getUnionCaseConstructorMethod (unionCase.DeclaringType,unionCase.Tag,bindingFlags) 
+        Impl.checkNonNull "unionCase" unionCase;
+        Impl.getUnionCaseConstructorMethod (unionCase.DeclaringType,unionCase.Tag,bindingFlags)
 
     static member GetUnionFields(obj:obj,unionType:Type,?bindingFlags) = 
+        let bindingFlags = defaultArg bindingFlags BindingFlags.Public 
         let ensureType (typ:Type,obj:obj) = 
                 match typ with 
                 | null -> 
@@ -837,7 +1078,6 @@ type FSharpValue =
                     | _ -> obj.GetType()
                 | _ -> typ 
         //System.Console.WriteLine("typ1 = {0}",box unionType)
-        let bindingFlags = defaultArg bindingFlags BindingFlags.Public 
         let unionType = ensureType(unionType,obj) 
         //System.Console.WriteLine("typ2 = {0}",box unionType)
         Impl.checkNonNull "unionType" unionType;
@@ -847,13 +1087,14 @@ type FSharpValue =
         let tag = Impl.getUnionTagReader (unionType,bindingFlags) obj
         let flds = Impl.getUnionCaseRecordReader (unionType,tag,bindingFlags) obj 
         UnionCaseInfo(unionType,tag), flds
-
+        
     static member PreComputeUnionTagReader(unionType: Type,?bindingFlags) : (obj -> int) = 
         let bindingFlags = defaultArg bindingFlags BindingFlags.Public 
         Impl.checkNonNull "unionType" unionType;
         let unionType = Impl.getTypeOfReprType (unionType ,bindingFlags)
         Impl.checkUnionType(unionType,bindingFlags);
         Impl.getUnionTagReader (unionType ,bindingFlags)
+
 
     static member PreComputeUnionTagMemberInfo(unionType: Type,?bindingFlags) = 
         let bindingFlags = defaultArg bindingFlags BindingFlags.Public 
@@ -863,17 +1104,96 @@ type FSharpValue =
         Impl.getUnionTagMemberInfo(unionType ,bindingFlags)
 
     static member PreComputeUnionReader(unionCase: UnionCaseInfo,?bindingFlags) : (obj -> obj[])  = 
-        Impl.checkNonNull "unionCase" unionCase;
         let bindingFlags = defaultArg bindingFlags BindingFlags.Public 
+        Impl.checkNonNull "unionCase" unionCase;
         let typ = unionCase.DeclaringType 
-        Impl.getUnionCaseRecordReader (typ,unionCase.Tag,bindingFlags) 
-    
+        Impl.getUnionCaseRecordReader (typ,unionCase.Tag,bindingFlags)
 
     static member GetExceptionFields(exn:obj, ?bindingFlags) = 
-        Impl.checkNonNull "exn" exn;
         let bindingFlags = defaultArg bindingFlags BindingFlags.Public 
+        Impl.checkNonNull "exn" exn;
         let typ = exn.GetType() 
         Impl.checkExnType(typ,bindingFlags);
         Impl.getRecordReader (typ,bindingFlags) exn
 
+module FSharpReflectionExtensions =
+
+    type FSharpType with
+
+        static member GetExceptionFields(exceptionType:Type, ?allowAccessToPrivateRepresentation) = 
+            let bindingFlags = Impl.getBindingFlags allowAccessToPrivateRepresentation
+            FSharpType.GetExceptionFields(exceptionType, bindingFlags)
+
+        static member IsExceptionRepresentation(exceptionType:Type, ?allowAccessToPrivateRepresentation) = 
+            let bindingFlags = Impl.getBindingFlags allowAccessToPrivateRepresentation
+            FSharpType.IsExceptionRepresentation(exceptionType, bindingFlags)
+
+        static member GetUnionCases (unionType:Type,?allowAccessToPrivateRepresentation) = 
+            let bindingFlags = Impl.getBindingFlags allowAccessToPrivateRepresentation
+            FSharpType.GetUnionCases(unionType, bindingFlags)
+
+        static member GetRecordFields(recordType:Type,?allowAccessToPrivateRepresentation) =
+            let bindingFlags = Impl.getBindingFlags allowAccessToPrivateRepresentation
+            FSharpType.GetRecordFields(recordType, bindingFlags)
+
+        static member IsUnion(typ:Type,?allowAccessToPrivateRepresentation) =  
+            let bindingFlags = Impl.getBindingFlags allowAccessToPrivateRepresentation
+            FSharpType.IsUnion(typ, bindingFlags)
+
+        static member IsRecord(typ:Type,?allowAccessToPrivateRepresentation) =  
+            let bindingFlags = Impl.getBindingFlags allowAccessToPrivateRepresentation
+            FSharpType.IsRecord(typ, bindingFlags)
+
+    type FSharpValue with
+        static member MakeRecord(recordType:Type,args,?allowAccessToPrivateRepresentation) = 
+            let bindingFlags = Impl.getBindingFlags allowAccessToPrivateRepresentation
+            FSharpValue.MakeRecord(recordType, args, bindingFlags)
+
+        static member GetRecordFields(record:obj,?allowAccessToPrivateRepresentation) =
+            let bindingFlags = Impl.getBindingFlags allowAccessToPrivateRepresentation
+            FSharpValue.GetRecordFields(record, bindingFlags)
+
+        static member PreComputeRecordReader(recordType:Type,?allowAccessToPrivateRepresentation) : (obj -> obj[]) =  
+            let bindingFlags = Impl.getBindingFlags allowAccessToPrivateRepresentation
+            FSharpValue.PreComputeRecordReader(recordType, bindingFlags)
+
+        static member PreComputeRecordConstructor(recordType:Type,?allowAccessToPrivateRepresentation) = 
+            let bindingFlags = Impl.getBindingFlags allowAccessToPrivateRepresentation 
+            FSharpValue.PreComputeRecordConstructor(recordType, bindingFlags)
+
+        static member PreComputeRecordConstructorInfo(recordType:Type, ?allowAccessToPrivateRepresentation) =
+            let bindingFlags = Impl.getBindingFlags allowAccessToPrivateRepresentation 
+            FSharpValue.PreComputeRecordConstructorInfo(recordType, bindingFlags)
+
+        static member MakeUnion(unionCase:UnionCaseInfo,args: obj [],?allowAccessToPrivateRepresentation) = 
+            let bindingFlags = Impl.getBindingFlags allowAccessToPrivateRepresentation 
+            FSharpValue.MakeUnion(unionCase, args, bindingFlags)
+
+        static member PreComputeUnionConstructor (unionCase:UnionCaseInfo,?allowAccessToPrivateRepresentation) = 
+            let bindingFlags = Impl.getBindingFlags allowAccessToPrivateRepresentation 
+            FSharpValue.PreComputeUnionConstructor(unionCase, bindingFlags)
+
+        static member PreComputeUnionConstructorInfo(unionCase:UnionCaseInfo, ?allowAccessToPrivateRepresentation) =
+            let bindingFlags = Impl.getBindingFlags allowAccessToPrivateRepresentation 
+            FSharpValue.PreComputeUnionConstructorInfo(unionCase, bindingFlags)
+
+        static member PreComputeUnionTagMemberInfo(unionType: Type,?allowAccessToPrivateRepresentation) = 
+            let bindingFlags = Impl.getBindingFlags allowAccessToPrivateRepresentation
+            FSharpValue.PreComputeUnionTagMemberInfo(unionType, bindingFlags)
+
+        static member GetUnionFields(obj:obj,unionType:Type,?allowAccessToPrivateRepresentation) = 
+            let bindingFlags = Impl.getBindingFlags allowAccessToPrivateRepresentation 
+            FSharpValue.GetUnionFields(obj, unionType, bindingFlags)
+
+        static member PreComputeUnionTagReader(unionType: Type,?allowAccessToPrivateRepresentation) : (obj -> int) = 
+            let bindingFlags = Impl.getBindingFlags allowAccessToPrivateRepresentation
+            FSharpValue.PreComputeUnionTagReader(unionType, bindingFlags)
+
+        static member PreComputeUnionReader(unionCase: UnionCaseInfo,?allowAccessToPrivateRepresentation) : (obj -> obj[])  = 
+            let bindingFlags = Impl.getBindingFlags allowAccessToPrivateRepresentation
+            FSharpValue.PreComputeUnionReader(unionCase, bindingFlags)
+
+        static member GetExceptionFields(exn:obj, ?allowAccessToPrivateRepresentation) = 
+            let bindingFlags = Impl.getBindingFlags allowAccessToPrivateRepresentation
+            FSharpValue.GetExceptionFields(exn, bindingFlags)
 

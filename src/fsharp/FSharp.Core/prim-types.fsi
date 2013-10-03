@@ -676,7 +676,7 @@ namespace Microsoft.FSharp.Core
     /// <summary>This attribute is used for two purposes. When applied to an assembly, it must be given a string
     /// argument, and this argument must indicate a valid module or namespace in that assembly. Source
     /// code files compiled with a reference to this assembly are processed in an environment
-    /// where the given path is automatically oepned.</summary>
+    /// where the given path is automatically opened.</summary>
     ///
     /// <remarks>When applied to a module within an assembly, then the attribute must not be given any arguments.
     /// When the enclosing namespace is opened in user source code, the module is also implicitly opened.</remarks>
@@ -1346,6 +1346,20 @@ namespace Microsoft.FSharp.Core
     open System
     open Microsoft.FSharp.Core
 
+#if FX_RESHAPED_REFLECTION
+    module internal PrimReflectionAdapters =
+
+        open System.Reflection
+
+        type System.Type with
+            member inline IsGenericType : bool
+            member inline IsValueType : bool
+            member inline GetMethod : string * parameterTypes : Type[] -> MethodInfo
+            member inline GetProperty : string -> PropertyInfo
+            member inline IsAssignableFrom : otherType : Type -> bool
+            member inline GetCustomAttributes : attributeType : Type * inherits: bool -> obj[]
+#endif
+
     //-------------------------------------------------------------------------
     // F# Choice Types
 
@@ -1903,12 +1917,12 @@ namespace Microsoft.FSharp.Core
         /// <returns>The result of the operation.</returns>
         val inline (>>>) : value:^T -> shift:int32 -> ^T when ^T : (static member (>>>) : ^T * int32 -> ^T) and default ^T : int
         
-        /// <summary>Overloaded logical-NOT operator</summary>
+        /// <summary>Overloaded bitwise-NOT operator</summary>
         /// <param name="value">The input value.</param>
         /// <returns>The result of the operation.</returns>
         val inline (~~~)  : value:^T -> ^T         when ^T : (static member (~~~) : ^T         -> ^T) and default ^T : int
         
-        /// <summary>Overloaded prefix=plus operator</summary>
+        /// <summary>Overloaded prefix-plus operator</summary>
         /// <param name="value">The input value.</param>
         /// <returns>The result of the operation.</returns>
         val inline (~+) : value:^T -> ^T           when ^T : (static member (~+)  : ^T         -> ^T) and default ^T : int
@@ -2671,7 +2685,7 @@ namespace Microsoft.FSharp.Core
             /// <param name="source">The source array.</param>
             val inline SetArraySlice : target:'T[] -> start:int option -> finish:int option -> source:'T[] -> unit
 
-            /// <summary>Gets a slice of an array</summary>
+            /// <summary>Gets a region slice of an array</summary>
             /// <param name="source">The source array.</param>
             /// <param name="start1">The start index of the first dimension.</param>
             /// <param name="finish1">The end index of the first dimension.</param>
@@ -2680,7 +2694,23 @@ namespace Microsoft.FSharp.Core
             /// <returns>The two dimensional sub array from the input indices.</returns>
             val GetArraySlice2D : source:'T[,] -> start1:int option -> finish1:int option -> start2:int option -> finish2:int option -> 'T[,]
 
-            /// <summary>Sets a slice of an array</summary>
+            /// <summary>Gets a vector slice of a 2D array. The index of the first dimension is fixed.</summary>
+            /// <param name="source">The source array.</param>
+            /// <param name="index1">The index of the first dimension.</param>
+            /// <param name="start2">The start index of the second dimension.</param>
+            /// <param name="finish2">The end index of the second dimension.</param>
+            /// <returns>The sub array from the input indices.</returns>
+            val inline GetArraySlice2DFixed1 : source:'T[,] -> index1:int -> start2:int option -> finish2:int option -> 'T[]
+
+            /// <summary>Gets a vector slice of a 2D array. The index of the second dimension is fixed.</summary>
+            /// <param name="source">The source array.</param>
+            /// <param name="start1">The start index of the first dimension.</param>
+            /// <param name="finish1">The end index of the first dimension.</param>
+            /// <param name="index2">The fixed index of the second dimension.</param>
+            /// <returns>The sub array from the input indices.</returns>
+            val inline GetArraySlice2DFixed2 : source:'T[,] -> start1:int option -> finish1:int option -> index2: int -> 'T[]
+
+            /// <summary>Sets a region slice of an array</summary>
             /// <param name="target">The target array.</param>
             /// <param name="start1">The start index of the first dimension.</param>
             /// <param name="finish1">The end index of the first dimension.</param>
@@ -2688,6 +2718,22 @@ namespace Microsoft.FSharp.Core
             /// <param name="finish2">The end index of the second dimension.</param>
             /// <param name="source">The source array.</param>
             val SetArraySlice2D : target:'T[,] -> start1:int option -> finish1:int option -> start2:int option -> finish2:int option -> source:'T[,] -> unit
+
+            /// <summary>Sets a vector slice of a 2D array. The index of the first dimension is fixed.</summary>
+            /// <param name="target">The target array.</param>
+            /// <param name="index1">The index of the first dimension.</param>
+            /// <param name="start2">The start index of the second dimension.</param>
+            /// <param name="finish2">The end index of the second dimension.</param>
+            /// <param name="source">The source array.</param>
+            val inline SetArraySlice2DFixed1 : target:'T[,] -> index1:int -> start2:int option -> finish2:int option -> source:'T[] -> unit
+
+            /// <summary>Sets a vector slice of a 2D array. The index of the second dimension is fixed.</summary>
+            /// <param name="target">The target array.</param>
+            /// <param name="start1">The start index of the first dimension.</param>
+            /// <param name="finish1">The end index of the first dimension.</param>
+            /// <param name="index2">The index of the second dimension.</param>
+            /// <param name="source">The source array.</param>
+            val inline SetArraySlice2DFixed2 : target:'T[,] -> start1:int option -> finish1:int option -> index2:int -> source:'T[] -> unit
 
             /// <summary>Gets a slice of an array</summary>
             /// <param name="source">The source array.</param>

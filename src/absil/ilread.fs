@@ -26,7 +26,10 @@ open System.Collections.Generic
 open Internal.Utilities
 open Microsoft.FSharp.Compiler.AbstractIL 
 open Microsoft.FSharp.Compiler.AbstractIL.Internal 
+#if NO_PDB_READER
+#else
 open Microsoft.FSharp.Compiler.AbstractIL.Internal.Support 
+#endif
 open Microsoft.FSharp.Compiler.AbstractIL.Diagnostics 
 open Microsoft.FSharp.Compiler.AbstractIL.Internal.BinaryConstants 
 open Microsoft.FSharp.Compiler.AbstractIL.IL  
@@ -2175,7 +2178,10 @@ and sigptrGetTy ctxt numtypars bytes sigptr =
         mkILArrTy (typ, shape), sigptr
         
     elif b0 = et_VOID then ILType.Void, sigptr
-    elif b0 = et_TYPEDBYREF then ctxt.ilg.typ_TypedReference, sigptr
+    elif b0 = et_TYPEDBYREF then 
+        match ctxt.ilg.typ_TypedReference with
+        | Some t -> t, sigptr
+        | _ -> failwith "system runtime doesn't contain System.TypedReference"
     elif b0 = et_CMOD_REQD || b0 = et_CMOD_OPT  then 
         let tdorIdx, sigptr = sigptrGetTypeDefOrRefOrSpecIdx bytes sigptr
         let typ, sigptr = sigptrGetTy ctxt numtypars bytes sigptr
@@ -4076,10 +4082,10 @@ let rec genOpenBinaryReader infile is opts =
   
 let CloseILModuleReader x = x.dispose()
 
-let defaults = 
+let mkDefault ilg = 
     { optimizeForMemory=false; 
       pdbPath= None; 
-      ilGlobals=ecmaILGlobals } 
+      ilGlobals = ilg } 
 
 #if NO_PDB_READER
 let ClosePdbReader _x =  ()

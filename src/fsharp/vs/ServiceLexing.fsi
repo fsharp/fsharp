@@ -20,7 +20,7 @@ open Microsoft.FSharp.Compiler.Range
 open System.Collections.Generic
 
 /// Represents encoded information for the end-of-line continutation of lexing
-type (* internal *) LexState = int64
+type internal LexState = int64
 
 type ColorState =
     | Token = 1
@@ -42,12 +42,12 @@ type ColorState =
 
 
 /// A line/column pair
-type (* internal *) Position = int * int
+type internal Position = int * int
 
 /// A start-position/end-position pair
-type (* internal *) Range = Position * Position
+type internal Range = Position * Position
 
-type (* internal *) TokenColorKind =
+type internal TokenColorKind =
     | Default = 0
     | Text = 0
     | Keyword = 1
@@ -63,7 +63,7 @@ type (* internal *) TokenColorKind =
     | TypeName = 11
 #endif
     
-type (* internal *) TriggerClass =
+type internal TriggerClass =
     | None         = 0x00000000
     | MemberSelect = 0x00000001
     | MatchBraces  = 0x00000002
@@ -73,7 +73,7 @@ type (* internal *) TriggerClass =
     | ParamNext    = 0x00000020
     | ParamEnd     = 0x00000040    
     
-type (* internal *) TokenCharKind = 
+type internal TokenCharKind = 
     | Default     = 0x00000000
     | Text        = 0x00000000
     | Keyword     = 0x00000001
@@ -87,7 +87,7 @@ type (* internal *) TokenCharKind =
     | Comment     = 0x0000000A    
     
 /// Information about a particular token from the tokenizer
-type (* internal *) TokenInformation = 
+type internal TokenInformation = 
     { /// Left column of the token.
       LeftColumn:int
       /// Right column of the token.
@@ -111,7 +111,7 @@ type (* internal *) TokenInformation =
 /// A new lexState is also returned.  An IDE-plugin should in general cache the lexState 
 /// values for each line of the edited code.
 [<Sealed>] 
-type (* internal *) LineTokenizer =
+type internal LineTokenizer =
     /// Scan one token from the line
     member ScanToken : lexState:LexState -> TokenInformation option * LexState
     static member ColorStateOfLexState : LexState -> ColorState
@@ -120,7 +120,7 @@ type (* internal *) LineTokenizer =
 
 /// Tokenizer for a source file. Holds some expensive-to-compute resources at the scope of the file.
 [<Sealed>]
-type (* internal *) SourceTokenizer =
+type internal SourceTokenizer =
     new : conditionalDefines:string list * fileName:string -> SourceTokenizer
     member CreateLineTokenizer : lineText:string -> LineTokenizer
     member CreateBufferTokenizer : bufferFiller:(char[] * int * int -> int) -> LineTokenizer

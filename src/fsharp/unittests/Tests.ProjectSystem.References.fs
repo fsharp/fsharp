@@ -282,8 +282,47 @@ type References() =
                                            [])
         finally
             File.Delete(copy)
+    
+    [<Test>]
+    member public this.``ReferenceResolution.NonFxAssembly.SeveralCandidates``() =
+        let fsharp4300, fsharp4310 = 
+            let root = Path.Combine(FSharpSDKHelper.FSharpReferenceAssembliesLocation, FSharpSDKHelper.NETFramework, FSharpSDKHelper.v40)
+            Path.Combine(root, "4.3.0.0", "FSharp.Core.dll"),Path.Combine(root, "4.3.1.0", "FSharp.Core.dll")
+        
+        this.ReferenceResolutionHelper
+            (
+                AddReferenceDialogTab.DotNetTab, 
+                fsharp4300,  
+                @"<Reference Include=""FSharp.Core, Version=4\.3\.0\.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a"" />",
+                "v4.5",
+                []
+            )
+        this.ReferenceResolutionHelper
+            (
+                AddReferenceDialogTab.DotNetTab, 
+                fsharp4310,  
+                @"<Reference Include=""FSharp.Core, Version=4\.3\.1\.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a"" />",
+                "v4.5",
+                []
+            )
+        this.ReferenceResolutionHelper
+            (
+                AddReferenceDialogTab.BrowseTab, 
+                fsharp4300,  
+                @"4\.3\.0\.0\\FSharp\.Core\.dll</HintPath>", 
+                "v4.5",
+                []
+            )
+        this.ReferenceResolutionHelper
+            (
+                AddReferenceDialogTab.BrowseTab, 
+                fsharp4310,  
+                @"4\.3\.1\.0\\FSharp\.Core\.dll</HintPath>", 
+                "v4.5",
+                []
+            )
 
-
+        
     [<Test>]
     member public this.``ReferenceResolution.Bug4423.NonFxAssembly.NetTab``() =
         this.ReferenceResolutionHelper(AddReferenceDialogTab.DotNetTab, 
@@ -324,6 +363,70 @@ type References() =
         finally
             File.Delete(copy)
 
+    [<Test>]
+    member public this.``ReferenceResolution.Bug650591.AutomationReference.Add.FullPath``() = 
+        let invoker = 
+            {
+                new Microsoft.Internal.VisualStudio.Shell.Interop.IVsInvokerPrivate with
+                    member this.Invoke(invokable) = invokable.Invoke()
+            }
+        let log = 
+            {
+                new Microsoft.VisualStudio.Shell.Interop.IVsActivityLog with
+                    member this.LogEntry(_, _, _) = VSConstants.S_OK
+                    member this.LogEntryGuid(_, _, _, _) = VSConstants.S_OK
+                    member this.LogEntryGuidHr(_, _, _, _, _) = VSConstants.S_OK
+                    member this.LogEntryGuidHrPath(_, _, _, _, _, _) = VSConstants.S_OK
+                    member this.LogEntryGuidPath(_, _, _, _, _) = VSConstants.S_OK
+                    member this.LogEntryHr(_, _, _, _) = VSConstants.S_OK
+                    member this.LogEntryHrPath(_, _, _, _, _) = VSConstants.S_OK
+                    member this.LogEntryPath(_, _, _, _) = VSConstants.S_OK
+            }
+        let mocks = 
+            [
+                typeof<Microsoft.Internal.VisualStudio.Shell.Interop.SVsUIThreadInvokerPrivate>.GUID, box invoker
+                typeof<Microsoft.VisualStudio.Shell.Interop.SVsActivityLog>.GUID, box log
+            ] |> dict
+        let mockProvider = 
+            {
+                new Microsoft.VisualStudio.OLE.Interop.IServiceProvider with
+                    member this.QueryService(guidService, riid, punk) =
+                        match mocks.TryGetValue guidService with
+                        | true, v -> 
+                            punk <- System.Runtime.InteropServices.Marshal.GetIUnknownForObject(v)
+                            VSConstants.S_OK
+                        | _ ->
+                            punk <- IntPtr.Zero
+                            VSConstants.E_NOINTERFACE
+            }
+
+        let _ = Microsoft.VisualStudio.Shell.ServiceProvider.CreateFromSetSite(mockProvider)
+        let envDte80RefAssemPath = Path.Combine(Net20AssemExPathOnThisMachine(), "EnvDTE80.dll")
+        let dirName = Path.GetTempPath()
+        let copy = Path.Combine(dirName, "EnvDTE80.dll")
+        try
+            File.Copy(envDte80RefAssemPath, copy, true)
+            this.MakeProjectAndDo
+                (
+                    ["DoesNotMatter.fs"], 
+                    [], 
+                    "",
+                    fun proj -> 
+                        let refContainer = GetReferenceContainerNode(proj)
+                        let automationRefs = refContainer.Object :?> Automation.OAReferences
+                        automationRefs.Add(copy) |> ignore
+                        SaveProject(proj)
+                        let fsprojFileText = File.ReadAllText(proj.FileName)
+                        printfn "%s" fsprojFileText
+                        let expectedFsProj = 
+                            @"<Reference Include=""EnvDTE80"">"
+                            + @"\s*<HintPath>\.\.\\EnvDTE80.dll</HintPath>"
+                            + @"\s*</Reference>"
+                        TheTests.HelpfulAssertMatches '<' expectedFsProj fsprojFileText
+                )
+        finally
+            File.Delete(copy)
+
     /// Create a dummy project named 'Test', build it, and then call k with the full path to the resulting exe
     member public this.CreateDummyTestProjectBuildItAndDo(k : string -> unit) =
         this.MakeProjectAndDo(["foo.fs"], [], "", (fun project ->
@@ -344,9 +447,9 @@ type References() =
             let expectedFsprojRegex = @"<Reference Include=""Test"">"
                                          + @"\s*<HintPath>Test.exe</HintPath>"  // in this directory
                                          + @"\s*</Reference>"
-            this.MakeProjectAndDo(["bar.fs"], [], "", "v3.5", (fun project ->
+            this.MakeProjectAndDo(["bar.fs"], [], "", null, (fun project ->
                 let exeCopy = Path.Combine(project.ProjectFolder, "Test.exe")
-                File.Copy(exe, exeCopy, true)
+                File.Copy(exe, exeCopy, true)                
                 Assert.IsTrue(File.Exists exeCopy, "failed to build exe")
                 let selectorData = new VSCOMPONENTSELECTORDATA(``type`` = VSCOMPONENTTYPE.VSCOMPONENTTYPE_File, bstrFile = exeCopy)
                 let refContainer = GetReferenceContainerNode(project)
@@ -381,7 +484,7 @@ type References() =
             let expectedFsprojRegex = @"<Reference Include=""Test"">"
                                          + @"\s*<HintPath>\.\.\\.*?</HintPath>"  // the point is, some path start with "..\", since both projects are rooted somewhere in the temp directory (where unit tests create them)
                                          + @"\s*</Reference>"
-            this.MakeProjectAndDo(["bar.fs"], [], "", "v3.5", (fun project ->
+            this.MakeProjectAndDo(["bar.fs"], [], "", null, (fun project ->
                 let selectorData = new VSCOMPONENTSELECTORDATA(``type`` = VSCOMPONENTTYPE.VSCOMPONENTTYPE_File, bstrFile = exe)
                 let refContainer = GetReferenceContainerNode(project)
                 refContainer.AddReferenceFromSelectorData(selectorData) |> Assert.IsNotNull

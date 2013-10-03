@@ -228,7 +228,11 @@ namespace Microsoft.FSharp.Text.StructuredFormat
 #endif
 #endif
           FormatProvider: System.IFormatProvider
+#if FX_RESHAPED_REFLECTION
+          ShowNonPublic : bool
+#else
           BindingFlags: System.Reflection.BindingFlags
+#endif
           PrintWidth : int 
           PrintDepth : int 
           PrintLength : int
@@ -267,7 +271,12 @@ namespace Microsoft.FSharp.Text.StructuredFormat
         val output_any: writer:TextWriter -> value:'T -> unit
 
 #if RUNTIME   // FSharp.Core.dll: Most functions aren't needed in FSharp.Core.dll, but we add one entry for printf
+
+#if FX_RESHAPED_REFLECTION
+        val anyToStringForPrintf: options:FormatOptions -> showNonPublicMembers : bool -> value:'T -> string
+#else
         val anyToStringForPrintf: options:FormatOptions -> bindingFlags:System.Reflection.BindingFlags -> value:'T -> string
+#endif
 #else
         val any_to_layout   : options:FormatOptions -> value:'T -> Layout
         val squash_layout   : options:FormatOptions -> layout:Layout -> Layout

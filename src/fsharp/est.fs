@@ -37,7 +37,7 @@ module internal ExtensionTyping =
         let mutable theMostRecentFileNameWeChecked = None : string option
 
     module internal ApprovalIO =
-        let ApprovalsAbsoluteFileName = Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.LocalApplicationData), @"Microsoft\FSharp\3.0\type-providers.txt")
+        let ApprovalsAbsoluteFileName = Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.LocalApplicationData), @"Microsoft\VisualStudio\12.0\type-providers.txt")
 
         let partiallyCanonicalizeFileName fn = 
             (new FileInfo(fn)).FullName // avoid some trivialities like double backslashes or spaces before slashes (but preserves others like casing distinctions), see also bug 206595
@@ -255,19 +255,17 @@ module internal ExtensionTyping =
                     Some (FileSystem.AssemblyLoadFrom designTimeAssemblyPath)
                 with e ->
                     raiseError e
-            let loadFromGac () =
+            let loadFromGac() =
                 try
                     let asmName = System.Reflection.AssemblyName designTimeAssemblyNameString
                     Some (FileSystem.AssemblyLoad (asmName))
                 with e ->
                     raiseError e
 
-
             if designTimeAssemblyNameString.EndsWith(".dll", StringComparison.OrdinalIgnoreCase) then
                 loadFromDir designTimeAssemblyNameString
             else
                 let name = AssemblyName designTimeAssemblyNameString
-                
                 if name.Name.Equals(name.FullName, StringComparison.OrdinalIgnoreCase) then
                     let fileName = designTimeAssemblyNameString+".dll"
                     loadFromDir fileName
@@ -669,6 +667,7 @@ module internal ExtensionTyping =
 #endif
         member __.IsOptional = x.IsOptional
         member __.RawDefaultValue = x.RawDefaultValue
+        member __.HasDefaultValue = x.Attributes.HasFlag(ParameterAttributes.HasDefault)
         /// ParameterInfo.ParameterType cannot be null
         member __.ParameterType = ProvidedType.CreateWithNullCheck ctxt "ParameterType" x.ParameterType 
         static member Create ctxt x = match x with null -> null | t -> ProvidedParameterInfo (t,ctxt)

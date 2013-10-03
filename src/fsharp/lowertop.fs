@@ -82,13 +82,13 @@ let mkUnitDelayLambda g m e =
 
 let callNonOverloadedMethod g amap m methName ty args =
     match TryFindIntrinsicMethInfo (InfoReader(g,amap)) m AccessibleFromSomeFSharpCode methName ty  with 
-    | [] -> error(InternalError("No method called '"^methName^"' was found",m));
+    | [] -> error(InternalError("No method called '"+methName+"' was found",m));
     | ILMeth(g,ilMethInfo,_) :: _  -> 
         // REVIEW: consider if this should ever be a constrained call. At the moment typecheck limitations in the F# typechecker
         // ensure the enumerator type used within computation expressions is not a struct type
         BuildILMethInfoCall g amap m false ilMethInfo NormalValUse  [] false args |> fst
     | _  -> 
-        error(InternalError("The method called '"^methName^"' resolved to a non-IL type",m))
+        error(InternalError("The method called '"+methName+"' resolved to a non-IL type",m))
                 
 
 type LoweredSeqFirstPhaseResult = 

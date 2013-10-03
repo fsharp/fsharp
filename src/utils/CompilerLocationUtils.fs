@@ -41,6 +41,18 @@ module internal FSharpEnvironment =
             | s  -> Some(s)
         with _ -> None
 
+    // The F# team version number. This version number is used for
+    //     - the F# version number reported by the fsc.exe and fsi.exe banners in the CTP release
+    //     - the F# version number printed in the HTML documentation generator
+    //     - the .NET DLL version number for all VS2008 DLLs
+    //     - the VS2008 registry key, written by the VS2008 installer
+    //         HKEY_LOCAL_MACHINE\Software\Microsoft\.NETFramework\AssemblyFolders\Microsoft.FSharp-" + FSharpTeamVersionNumber
+    // Also
+    //     - for Beta2, the language revision number indicated on the F# language spec
+    //
+    // It is NOT the version number listed on FSharp.Core.dll
+    let FSharpTeamVersionNumber = "2.0.0.0"
+
     [<DllImport("Advapi32.dll", CharSet = CharSet.Unicode, BestFitMapping = false)>]
     extern uint32 RegOpenKeyExW(UIntPtr _hKey, string _lpSubKey, uint32 _ulOptions, int _samDesired, UIntPtr & _phkResult);
 
@@ -203,11 +215,10 @@ module internal FSharpEnvironment =
                 // Note: If the keys below change, be sure to update code in:
                 // Property pages (ApplicationPropPage.vb)
 
+                let key20 = @"Software\Microsoft\.NETFramework\AssemblyFolders\Microsoft.FSharp-" + FSharpTeamVersionNumber 
 #if FX_ATLEAST_45
-                let key20 = @"Software\Microsoft\FSharp\3.0\Runtime\v2.0"
-                let key40 = @"Software\Microsoft\FSharp\3.0\Runtime\v4.0"
+                let key40 = @"Software\Microsoft\FSharp\3.1\Runtime\v4.0"
 #else
-                let key20 = @"Software\Microsoft\FSharp\2.0\Runtime\v2.0"
                 let key40 = @"Software\Microsoft\FSharp\2.0\Runtime\v4.0"
 #endif
                 let key1,key2 = 

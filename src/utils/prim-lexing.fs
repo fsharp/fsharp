@@ -21,7 +21,7 @@ namespace Internal.Utilities.Text.Lexing
 
     // REVIEW: This type showed up on a parsing-intensive performance measurement. 
     // REVIEW: Consider whether it can be smaller or can be a struct. 
-    type (* internal *) Position = 
+    type internal Position = 
         { /// The file name index for the position, use fileOfFileIndex in range.fs to decode
           posFileIndex: int;
           /// The line number for the position
@@ -70,7 +70,7 @@ namespace Internal.Utilities.Text.Lexing
     type internal LexBufferFiller<'Char> = (LexBuffer<'Char> -> unit) 
         
     and [<Sealed>]
-        (* internal *) LexBuffer<'Char>(filler: LexBufferFiller<'Char>) = 
+        internal LexBuffer<'Char>(filler: LexBufferFiller<'Char>) = 
         let context = new Dictionary<string,obj>(1) 
         let mutable buffer=[||];
         /// number of valid charactes beyond bufferScanStart 

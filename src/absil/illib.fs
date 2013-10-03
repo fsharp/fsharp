@@ -11,7 +11,9 @@
 //----------------------------------------------------------------------------
 
 
-module (* internal *) Microsoft.FSharp.Compiler.AbstractIL.Internal.Library 
+
+
+module internal Microsoft.FSharp.Compiler.AbstractIL.Internal.Library 
 #nowarn "1178" // The struct, record or union type 'internal_instr_extension' is not structurally comparable because the type
 
 
@@ -59,6 +61,8 @@ module Order =
 
 module Array = 
 
+    let take n xs = xs |> Seq.take n |> Array.ofSeq
+
     let mapq f inp =
         match inp with
         | [| |] -> inp
@@ -94,9 +98,9 @@ module Array =
         res, acc
 
 
-    // REVIEW: systematically eliminate fmap/mapFold duplication. 
+    // REVIEW: systematically eliminate foldMap/mapFold duplication. 
     // They only differ by the tuple returned by the function.
-    let fmap f s l = 
+    let foldMap f s l = 
         let mutable acc = s
         let n = Array.length l
         let mutable res = Array.zeroCreate n
@@ -160,8 +164,8 @@ module Option =
         | None -> dflt 
         | Some x -> x
 
-    // REVIEW: systematically eliminate fmap/mapFold duplication
-    let fmap f z l = 
+    // REVIEW: systematically eliminate foldMap/mapFold duplication
+    let foldMap f z l = 
         match l with 
         | None   -> z,None
         | Some x -> let z,x = f z x
@@ -350,11 +354,11 @@ module List =
         List.rev r, s
 
     // note: not tail recursive 
-    let rec mapfoldBack f l s = 
+    let rec mapFoldBack f l s = 
         match l with 
         | [] -> ([],s)
         | h::t -> 
-           let t',s = mapfoldBack f t s
+           let t',s = mapFoldBack f t s
            let h',s = f h s
            (h'::t', s)
 
@@ -369,10 +373,10 @@ module List =
 
     let count pred xs = List.fold (fun n x -> if pred x then n+1 else n) 0 xs
 
-    let rec private repeatA n x acc = if n <= 0 then acc else repeatA (n-1) x (x::acc)
-    let repeat n x = repeatA n x []
+    let rec private repeatAux n x acc = if n <= 0 then acc else repeatAux (n-1) x (x::acc)
+    let repeat n x = repeatAux n x []
 
-    (* WARNING: not tail-recursive *)
+    // WARNING: not tail-recursive 
     let mapHeadTail fhead ftail = function
       | []    -> []
       | [x]   -> [fhead x]
@@ -385,25 +389,27 @@ module List =
     let singleton x = [x]
 
     // note: must be tail-recursive 
-    let rec private fmapA f z l acc =
+    let rec private foldMapAux f z l acc =
       match l with
       | []    -> z,List.rev acc
       | x::xs -> let z,x = f z x
-                 fmapA f z xs (x::acc)
+                 foldMapAux f z xs (x::acc)
                  
     // note: must be tail-recursive 
-    // REVIEW: systematically eliminate fmap/mapFold duplication
-    let fmap f z l = fmapA f z l []
+    // REVIEW: systematically eliminate foldMap/mapFold duplication
+    let foldMap f z l = foldMapAux f z l []
 
     let collect2 f xs ys = List.concat (List.map2 f xs ys)
 
+    let toArraySquared xss = xss |> List.map List.toArray |> List.toArray
     let iterSquared f xss = xss |> List.iter (List.iter f)
     let collectSquared f xss = xss |> List.collect (List.collect f)
     let mapSquared f xss = xss |> List.map (List.map f)
-    let mapfoldSquared f xss = xss |> mapFold (mapFold f)
+    let mapFoldSquared f z xss = mapFold (mapFold f) z xss
     let forallSquared f xss = xss |> List.forall (List.forall f)
     let mapiSquared f xss = xss |> List.mapi (fun i xs -> xs |> List.mapi (fun j x -> f i j x))
     let existsSquared f xss = xss |> List.exists (fun xs -> xs |> List.exists (fun x -> f x))
+    let mapiFoldSquared f z xss =  mapFoldSquared f z (xss |> mapiSquared (fun i j x -> (i,j,x)))
 
 module String = 
     let indexNotFound() = raise (new System.Collections.Generic.KeyNotFoundException("An index for the character was not found in the string"))
@@ -539,13 +545,13 @@ module FlatList =
             let  arr,acc = Array.mapFold f acc x.array
             FlatList(arr),acc
 
-    // REVIEW: systematically eliminate fmap/mapFold duplication
-    let fmap f acc (x:FlatList<_>) = 
+    // REVIEW: systematically eliminate foldMap/mapFold duplication
+    let foldMap f acc (x:FlatList<_>) = 
         match x.array with
         | null -> 
             acc,FlatList.Empty
         | arr -> 
-            let  acc,arr = Array.fmap f acc x.array
+            let  acc,arr = Array.foldMap f acc x.array
             acc,FlatList(arr)
 #endif
 #if FLAT_LIST_AS_LIST
@@ -558,7 +564,7 @@ module FlatList =
     let order eltOrder = List.order eltOrder 
     let mapq f (x:FlatList<_>) = List.mapq f x
     let mapFold f acc (x:FlatList<_>) =  List.mapFold f acc x
-    let fmap f acc (x:FlatList<_>) =  List.fmap f acc x
+    let foldMap f acc (x:FlatList<_>) =  List.foldMap f acc x
 
 #endif
 
@@ -568,7 +574,7 @@ module FlatList =
     let order eltOrder = Array.order eltOrder 
     let mapq f x = Array.mapq f x
     let mapFold f acc x =  Array.mapFold f acc x
-    let fmap f acc x =  Array.fmap f acc x
+    let foldMap f acc x =  Array.foldMap f acc x
 #endif
 
 
@@ -674,7 +680,7 @@ module Eventually =
                              | Exception e -> raise e)
 
     let tryWith e handler =    
-        catch e
+        catch e 
         |> bind (function Result v -> Done v | Exception e -> handler e)
     
 type EventuallyBuilder() = 
@@ -837,18 +843,18 @@ module NameMap =
     let toList (l: NameMap<'T>) = Map.toList l
     let layer (m1 : NameMap<'T>) m2 = Map.foldBack Map.add m1 m2
 
-    (* not a very useful function - only called in one place - should be changed *)
+    /// Not a very useful function - only called in one place - should be changed 
     let layerAdditive addf m1 m2 = 
       Map.foldBack (fun x y sofar -> Map.add x (addf (Map.tryFindMulti x sofar) y) sofar) m1 m2
 
-    // Union entries by identical key, using the provided function to union sets of values
+    /// Union entries by identical key, using the provided function to union sets of values
     let union unionf (ms: NameMap<_> seq) = 
         seq { for m in ms do yield! m } 
            |> Seq.groupBy (fun (KeyValue(k,_v)) -> k) 
            |> Seq.map (fun (k,es) -> (k,unionf (Seq.map (fun (KeyValue(_k,v)) -> v) es))) 
            |> Map.ofSeq
 
-    (* For every entry in m2 find an entry in m1 and fold *)
+    /// For every entry in m2 find an entry in m1 and fold 
     let subfold2 errf f m1 m2 acc =
         Map.foldBack (fun n x2 acc -> try f n (Map.find n m1) x2 acc with :? KeyNotFoundException -> errf n x2) m2 acc
 
@@ -915,435 +921,6 @@ module MultiMap =
     let empty : MultiMap<_,_> = Map.empty
     let initBy f xs : MultiMap<_,_> = xs |> Seq.groupBy f |> Seq.map (fun (k,v) -> (k,List.ofSeq v)) |> Map.ofSeq 
 
-#if LAYERED_MAPS
-/// State of immutable map collection, converted to a dictionary on first lookup.
-[<RequireQualifiedAccess>]
-type LayeredMapState<'Key,'Value when 'Key : equality and 'Key : comparison> = 
-   /// Collapsible(entries, size)
-   | Collapsible of list<seq<KeyValuePair<'Key,'Value>>> * int
-   /// Collapsed(frontMap, backingDict)
-   | Collapsed of (Map<'Key,'Value> * Dictionary<'Key,'Value>)   
-
-/// Immutable map collection, with explicit flattening to a backing dictionary 
-///
-/// A layered map is still an immutable map containing a "front" 
-/// F# Map, but the layered map collapses its entries to a "backing"
-/// dictionary at specific "add-and-collapse" points. 
-///
-/// For maps built from multiple "add-and-collapse" operations,
-/// the process of building the collapsed maps is coalesced.
-[<Sealed>]
-type LayeredMap<'Key,'Value when 'Key : equality and 'Key : comparison>(state:LayeredMapState<'Key,'Value>) =
-    let mutable state = state
-    static let empty = LayeredMap<'Key,'Value>(LayeredMapState.Collapsible ([],0))
-
-    let entries() = 
-        match state with 
-        | LayeredMapState.Collapsible (el,n) -> (el,n)
-        | LayeredMapState.Collapsed (m,d) ->  [(m :> seq<_>); (d :> seq<_>)], m.Count + d.Count
-
-    let markAsCollapsible() = 
-        match state with 
-        | LayeredMapState.Collapsible _ -> ()
-        | LayeredMapState.Collapsed _ -> state <- LayeredMapState.Collapsible (entries())
-
-    let collapse() = 
-        match state with 
-        | LayeredMapState.Collapsible (el, n) -> 
-            let d = Dictionary<_,_>(n)
-            for e in List.rev el do
-               for (KeyValue(k,v)) in e do
-                  d.[k] <- v
-            let p = (Map.empty, d)
-            state <- LayeredMapState.Collapsed p
-            p
-        | LayeredMapState.Collapsed p  -> p
-
-    let dict() = 
-        markAsCollapsible()
-        let (_,dict) = collapse() 
-        dict
-    
-    static member Empty : LayeredMap<'Key,'Value> = empty
-
-    member x.TryGetValue (key,res:byref<'Value>) = 
-        let (m,d) = collapse() 
-        match m.TryFind key with 
-        | None -> d.TryGetValue (key,&res)
-        | Some r -> res <- r; true
-
-    member x.ContainsKey k = 
-        let (map,dict) = collapse() 
-        map.ContainsKey k || dict.ContainsKey k
-
-    member x.Item 
-     with get key = 
-        // collapse on first lookup
-        let (map,dict) = collapse() 
-        match map.TryFind key with 
-        | None -> 
-            let mutable res = Unchecked.defaultof<_>
-            if dict.TryGetValue (key, &res) then res 
-            else raise <| KeyNotFoundException("the key was not found in the LayerdNameMap")
-        | Some v -> v
-
-    member x.TryFind key =
-        let (map,dict) = collapse() 
-        match map.TryFind key with 
-        | None -> 
-            let mutable res = Unchecked.defaultof<_>
-            if dict.TryGetValue (key, &res) then Some res else None
-        | res -> res
-        
-    member x.Values = dict().Values
-
-    member x.Elements = dict() |> Seq.readonly
-
-    member x.Add (key, value) = 
-        match state with 
-        | LayeredMapState.Collapsible (el,n) -> LayeredMap<_,_>(LayeredMapState.Collapsible ((([| KeyValuePair(key,value) |] :> seq<_>) :: el), n + 1))
-        | LayeredMapState.Collapsed (map,dict) -> LayeredMap (LayeredMapState.Collapsed (map.Add (key,value), dict))
-
-    member x.AddAndMarkAsCollapsible (kvs: _[])   =
-        let el,n = entries()
-        LayeredMap<_,_>(LayeredMapState.Collapsible (((kvs :> seq<_>) :: el), n + kvs.Length))
-        
-    member x.MarkAsCollapsible ()  =
-        markAsCollapsible() 
-        x
-#endif
-
-#if LAYERED_MULTI_MAP
-/// State of immutable map collection, converted to a dictionary on first lookup.
-[<RequireQualifiedAccess>]
-type LayeredMultiMapState<'Key,'Value when 'Key : equality and 'Key : comparison> = 
-   /// Collapsible(entries, size)
-   | Collapsible of list<seq<KeyValuePair<'Key,'Value list>>> * int
-   /// Collapsed(frontMap, backingDict)
-   | Collapsed of (MultiMap<'Key,'Value> * Dictionary<'Key,'Value list>)   
-
-/// Immutable map collection, with explicit flattening to a backing dictionary 
-[<Sealed>]
-type LayeredMultiMap<'Key,'Value when 'Key : equality and 'Key : comparison>(state:LayeredMultiMapState<'Key,'Value>) = 
-
-    let mutable state = state
-    static let empty = LayeredMultiMap<'Key,'Value>(LayeredMultiMapState.Collapsible ([],0))
-
-    let entries() = 
-        match state with 
-        | LayeredMultiMapState.Collapsible (el,n) -> (el,n)
-        | LayeredMultiMapState.Collapsed (m,d) ->  [(m :> seq<_>); (d :> seq<_>)], m.Count + d.Count
-
-    let markAsCollapsible() = 
-        match state with 
-        | LayeredMultiMapState.Collapsible _ -> ()
-        | LayeredMultiMapState.Collapsed _ -> state <- LayeredMultiMapState.Collapsible (entries())
-
-    let collapse() = 
-        match state with 
-        | LayeredMultiMapState.Collapsible (el, n) -> 
-            let d = Dictionary<_,_>(n)
-            for e in List.rev el do
-               for (KeyValue(k,vs)) in e do
-                  for v in List.rev vs do 
-                      let prev = 
-                         let mutable res = Unchecked.defaultof<'Value list>
-                         let ok = d.TryGetValue(k,&res)
-                         if ok then res else []
-                      d.[k] <- v::prev
-            let p = (MultiMap.empty, d)
-            state <- LayeredMultiMapState.Collapsed p
-            p
-        | LayeredMultiMapState.Collapsed p  -> p
-
-    let dict() = 
-        markAsCollapsible()
-        let (_,dict) = collapse() 
-        dict
-    
-    static member Empty : LayeredMultiMap<'Key,'Value> = empty
-
-    member x.TryGetValue (key,res:byref<'Value list>) = 
-        let (m,d) = collapse() 
-        match m.TryFind key with 
-        | None -> d.TryGetValue (key,&res)
-        | Some res1 -> 
-            let mutable res2 = Unchecked.defaultof<'Value list>
-            let ok = d.TryGetValue (key,&res2) 
-            if ok then res <- (res1@res2); true
-            else res <- res1; true
-
-    member x.ContainsKey k = 
-        let (map,dict) = collapse() 
-        map.ContainsKey k || dict.ContainsKey k
-
-    member x.Item 
-     with get key = 
-        let mutable res = Unchecked.defaultof<_>
-        if x.TryGetValue (key, &res) then res 
-        else [] 
-
-    member x.TryFind key =
-        let mutable res = Unchecked.defaultof<_>
-        if x.TryGetValue (key, &res) then Some res 
-        else None
-        
-    member x.Values = dict().Values |> Seq.concat
-
-    member x.Add (key, value) = 
-        match state with 
-        | LayeredMultiMapState.Collapsible (el,n) -> LayeredMultiMap<_,_>(LayeredMultiMapState.Collapsible ((([| KeyValuePair(key,[value]) |] :> seq<_>) :: el), n + 1))
-        | LayeredMultiMapState.Collapsed (map,dict) -> LayeredMultiMap (LayeredMultiMapState.Collapsed (MultiMap.add key value map, dict))
-
-    member x.AddAndMarkAsCollapsible (kvs: _[])   =
-        let el,n = entries()
-        LayeredMultiMap<_,_>(LayeredMultiMapState.Collapsible ((([| for KeyValue(k,v) in kvs -> KeyValuePair(k,[v]) |] :> seq<_>) :: el), n + kvs.Length))
-        
-    member x.MarkAsCollapsible ()  =
-        markAsCollapsible() 
-        x
-
-#endif
-//#if NEW_LAYERED_MAP
-
-/// Immutable map collection, with explicit flattening to a backing dictionary 
-///
-/// A layered map is still an immutable map containing a "front" 
-/// F# Map, but the layered map collapses its treeMap to a "backing"
-/// dictionary at specific "add-and-tryCollapseToDictAndNothingElse" points. 
-///
-/// For maps built from multiple "add-and-tryCollapseToDictAndNothingElse" operations,
-/// the process of building the collapsed maps is coalesced.
-type LayeredMap<'Key,'Value when 'Key : equality and 'Key : comparison>
-                (// The queue of operations to build the full map, empty except during bulk-add operations
-                 xqueue: list<Choice<KeyValuePair<'Key,'Value>[], 
-                                     ('Key * ('Value option -> 'Value))>>, 
-                 // The existing backing tree map (which is looked up in preference to the dictionary)
-                 xentries: Map<'Key,'Value>, 
-                 // The existing backing dictionary (which may be null)
-                 xdict: Dictionary<'Key,'Value>) =
-    static let empty = LayeredMap<'Key,'Value>([], Map.empty, null)
-    let mutable state = (xqueue,xentries,xdict)
-
-    let tryCollapseToDictAndNothingElse force = 
-        let (bulkQueue,treeMap,fastDict) = state 
-        if not bulkQueue.IsEmpty || force then
-            // bulkQueue.Length + 
-            let d = Dictionary<_,_>(treeMap.Count + (match fastDict with null -> 0 | _ -> fastDict.Count))
-            begin
-                match fastDict with 
-                | null -> ()
-                | _ -> 
-                    for (KeyValue(k,v)) in fastDict do
-                      d.[k] <- v
-            end
-            treeMap |> Map.iter (fun k v -> d.[k] <- v)
-            for kvsOrModify in List.rev bulkQueue do 
-              match kvsOrModify with 
-              | Choice1Of2 kvs -> 
-                  for (KeyValue(k,v)) in kvs do
-                    d.[k] <- v
-              | Choice2Of2 (k,updatef) -> 
-                  let mutable prev = Unchecked.defaultof<_>
-                  let n = updatef (if d.TryGetValue(k,&prev) then Some prev else None)
-                  d.[k] <- n
-
-            state <- ([], Map.empty, d)
-            d
-        elif treeMap.IsEmpty then fastDict 
-        else null
-
-    static member Empty : LayeredMap<'Key,'Value> = empty
-
-    member x.TryGetValue (key,res:byref<'Value>) = 
-        match tryCollapseToDictAndNothingElse false with
-        | null ->
-            let (_,treeMap,fastDict) = state 
-            match treeMap.TryFind key with 
-            | None -> 
-                match fastDict with 
-                | null -> false
-                | _ -> fastDict.TryGetValue (key,&res)
-            | Some r -> res <- r; true
-        | fastDict -> 
-            //printfn "collapsed"
-            match fastDict with 
-            | null -> false
-            | _ -> fastDict.TryGetValue (key, &res)
-
-    member x.ContainsKey key = 
-        let mutable res = Unchecked.defaultof<_>
-        x.TryGetValue(key, &res)
-
-    member x.Item 
-      with get key = 
-        let mutable res = Unchecked.defaultof<_>
-        let ok = x.TryGetValue(key, &res)
-        if ok then res 
-        else raise <| KeyNotFoundException("the key was not found in the LayerdNameMap")
-
-    member x.TryFind key =
-        let mutable res = Unchecked.defaultof<_>
-        let ok = x.TryGetValue(key, &res)
-        if ok then Some res  else None
-        
-    member x.Values = (tryCollapseToDictAndNothingElse true).Values
-
-    member x.Elements = (tryCollapseToDictAndNothingElse true) |> Seq.readonly
-
-
-    member x.Add (key, value) = 
-        let (bulkQueue,treeMap,fastDict) = state 
-        if bulkQueue.IsEmpty then 
-            let treeMap = treeMap.Add (key, value)
-            LayeredMap(bulkQueue, treeMap, fastDict)
-        else 
-            // There are elements in the bulk queue, squash them down (mutating map "x"),
-            // then use a one-element treemap
-            let newFastDict = tryCollapseToDictAndNothingElse false
-            match newFastDict with
-            | null -> failwith "unreachable, bulkQueue was non empty, newFastDict should not be null"
-            | _ -> LayeredMap([], Map.empty.Add(key,value), newFastDict)
-
-    member x.AddAndMarkAsCollapsible (kvs: _[])   =
-        if kvs.Length = 0 then x else
-        let (bulkQueue,treeMap,fastDict) = state 
-        let state = (Choice1Of2 kvs::bulkQueue,treeMap,fastDict)
-        LayeredMap state
-        
-    /// Push an item that transforms a possible existing entry. This is used for the bulk updates
-    /// in nameres.fs, where, for each type we push during an "open", we must combine the
-    /// type with any existing entries for types in the eUnqualifiedItems table. 
-    member x.LinearTryModifyThenLaterFlatten (key, f: 'Value option -> 'Value) =
-        let (bulkQueue,treeMap,fastDict) = state 
-        let state = (Choice2Of2 (key,f)::bulkQueue,treeMap,fastDict)
-        LayeredMap state
-        
-
-    member x.MarkAsCollapsible ()  = //x.AddAndMarkAsCollapsible [| |] 
-        let (bulkQueue,treeMap,fastDict) = state 
-        let state = (Choice1Of2 [| |]::bulkQueue,treeMap,fastDict)
-        LayeredMap state
-
-
-//#endif
-
-//#if NEW_LAYERED_MULTI_MAP
-type LayeredMultiMap<'Key,'Value when 'Key : equality and 'Key : comparison>
-                (xqueue: list<KeyValuePair<'Key,'Value>[]>, 
-                  xentries: Map<'Key,'Value list>, 
-                  xdict: Dictionary<'Key,'Value list>) =
-    static let empty = LayeredMultiMap<'Key,'Value>([], Map.empty, null)
-    let mutable state = (xqueue,xentries,xdict)
-
-    let tryCollapseToDictAndNothingElse force = 
-        let (bulkQueue,treeMap,fastDict) = state 
-        if not bulkQueue.IsEmpty || force then
-            // bulkQueue.Length + 
-            let d = Dictionary<_,_>(treeMap.Count + (match fastDict with null -> 0 | _ -> fastDict.Count))
-            begin
-                match fastDict with 
-                | null -> ()
-                | _ -> 
-                    for (KeyValue(k,vs)) in fastDict do
-                      d.[k] <- vs
-            end
-            treeMap |> Map.iter (fun k vs -> 
-              let mutable prev = Unchecked.defaultof<_>
-              if d.TryGetValue(k,&prev) then 
-                    d.[k] <- vs@prev
-              else
-                    d.[k] <- vs)
-            //printfn "collapsing, bulkQueue = %A" bulkQueue
-            for kvs in List.rev bulkQueue do 
-              //printfn "collapsing, bulkQueue.i] = %A" bulkQueue.[i]
-              for (KeyValue(k,v)) in kvs do
-                  let mutable prev = Unchecked.defaultof<_>
-                  if d.TryGetValue(k,&prev) then 
-                        d.[k] <- (v::prev)
-                  else
-                        d.[k] <- [v]
-            state <- ([], Map.empty, d)
-            d
-        elif treeMap.IsEmpty then fastDict 
-        else null
-
-    static member Empty : LayeredMultiMap<'Key,'Value> = empty
-
-    member x.TryGetValue (key,res:byref<'Value list>) = 
-        match tryCollapseToDictAndNothingElse false with
-        | null ->
-            let (_,treeMap,fastDict) = state 
-            match treeMap.TryFind key with 
-            | None -> 
-                match fastDict with 
-                | null -> false
-                | _ -> fastDict.TryGetValue (key,&res)
-            | Some r -> 
-                match fastDict with 
-                | null -> 
-                    res <- r
-                    true
-                | _ -> 
-                    let mutable res2 = Unchecked.defaultof<_>
-                    if fastDict.TryGetValue (key,&res2) then 
-                        res <- r@res2
-                    else
-                        res <- r
-                    true
-        | fastDict -> 
-            //printfn "collapsed"
-            match fastDict with 
-            | null -> false
-            | _ -> fastDict.TryGetValue (key, &res)
-
-    member x.ContainsKey key = 
-        let mutable res = Unchecked.defaultof<_>
-        x.TryGetValue(key, &res)
-
-    member x.Item 
-      with get key = 
-        let mutable res = Unchecked.defaultof<_>
-        let ok = x.TryGetValue(key, &res)
-        if ok then res else []
-
-    member x.TryFind key =
-        let mutable res = Unchecked.defaultof<_>
-        let ok = x.TryGetValue(key, &res)
-        if ok then Some res  else None
-
-    member x.Values = (tryCollapseToDictAndNothingElse true).Values |> Seq.concat
-
-    member x.Elements = (tryCollapseToDictAndNothingElse true) |> Seq.readonly
-
-    member x.Add (key, value) = 
-        let (bulkQueue,treeMap,fastDict) = state 
-        if bulkQueue.IsEmpty then 
-            let prev = match treeMap.TryFind key with None -> [] | Some vs -> vs
-            let treeMap = treeMap.Add (key, value::prev)
-            LayeredMultiMap(bulkQueue, treeMap, fastDict)
-        else 
-            // There are elements in the bulk queue, squash them down (mutating map "x"),
-            // then use a one-element treemap
-            let newFastDict = tryCollapseToDictAndNothingElse false
-            match newFastDict with
-            | null -> failwith "unreachable, bulkQueue was non empty, newFastDict should not be null"
-            | _ -> LayeredMultiMap([], Map.empty.Add(key,[value]), newFastDict)
-
-    member x.AddAndMarkAsCollapsible (kvs: _[])   =
-        if kvs.Length = 0 then x else
-        let (bulkQueue,treeMap,fastDict) = state 
-        let state = (kvs::bulkQueue,treeMap,fastDict)
-        LayeredMultiMap state
-        
-    member x.MarkAsCollapsible ()  = //x.AddAndMarkAsCollapsible [| |] 
-        let (bulkQueue,treeMap,fastDict) = state 
-        let state = ([| |]::bulkQueue,treeMap,fastDict)
-        LayeredMultiMap state
-
-//#endif
-
-#if NO_LAYERED_MAP
 type LayeredMap<'Key,'Value  when 'Key : comparison> = Map<'Key,'Value>
 
 type Map<'Key,'Value when 'Key : comparison> with
@@ -1358,28 +935,20 @@ type Map<'Key,'Value when 'Key : comparison> with
     member x.Elements = [ for kvp in x -> kvp ]
     member x.AddAndMarkAsCollapsible (kvs: _[])   = (x,kvs) ||> Array.fold (fun x (KeyValue(k,v)) -> x.Add(k,v))
     member x.LinearTryModifyThenLaterFlatten (key, f: 'Value option -> 'Value) = x.Add (key, f (x.TryFind key))
-
     member x.MarkAsCollapsible ()  = x
 
-//#endif
-
-
-//#if NO_LAYERED_MULTI_MAP
 /// Immutable map collection, with explicit flattening to a backing dictionary 
 [<Sealed>]
-type LayeredMultiMap<'Key,'Value when 'Key : equality and 'Key : comparison>(contents : Map<'Key,'Value list>) = 
-    static let empty : LayeredMultiMap<'Key,'Value> = LayeredMultiMap Map.empty
+type LayeredMultiMap<'Key,'Value when 'Key : equality and 'Key : comparison>(contents : LayeredMap<'Key,'Value list>) = 
     member x.Add (k,v) = LayeredMultiMap(contents.Add(k,v :: x.[k]))
     member x.Item with get k = match contents.TryFind k with None -> [] | Some l -> l
     member x.AddAndMarkAsCollapsible (kvs: _[])  = 
         let x = (x,kvs) ||> Array.fold (fun x (KeyValue(k,v)) -> x.Add(k,v))
         x.MarkAsCollapsible()
-    member x.MarkAsCollapsible() = x //LayeredMultiMap(contents)
+    member x.MarkAsCollapsible() = LayeredMultiMap(contents.MarkAsCollapsible())
     member x.TryFind k = contents.TryFind k
-    member x.Values = [ for (KeyValue(_,v)) in contents -> v ] |> Seq.concat
-    static member Empty : LayeredMultiMap<'Key,'Value> = empty
-    
-#endif
+    member x.Values = contents.Values |> Seq.concat
+    static member Empty : LayeredMultiMap<'Key,'Value> = LayeredMultiMap LayeredMap.Empty
 
 [<AutoOpen>]
 module Shim =
@@ -1431,7 +1000,12 @@ module Shim =
             with e -> 
                 this.AssemblyLoadFrom(assemblyName.Name + ".dll")
 #else
-        default this.AssemblyLoadFrom(fileName:string) = System.Reflection.Assembly.LoadFrom fileName
+        default this.AssemblyLoadFrom(fileName:string) = 
+#if FX_ATLEAST_40_COMPILER_LOCATION
+            System.Reflection.Assembly.UnsafeLoadFrom fileName
+#else
+            System.Reflection.Assembly.LoadFrom fileName
+#endif
         default this.AssemblyLoad(assemblyName:System.Reflection.AssemblyName) = System.Reflection.Assembly.Load assemblyName
 #endif
 

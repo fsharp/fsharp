@@ -472,9 +472,11 @@
     <Compile Include="..\fsi\fsi.fs">
       <Link>fsi.fs</Link>
     </Compile>
+<!--
     <Compile Include="..\vs\SimpleServices.fs">
       <Link>SimpleServices.fs</Link>
     </Compile>
+-->
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="$(FSharpSourcesRoot)\fsharp\FSharp.Core\FSharp.Core.fsproj">

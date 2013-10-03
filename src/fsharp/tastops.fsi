@@ -211,6 +211,7 @@ val mkExnCaseFieldSet              : Expr * TyconRef               * int  * Expr
  
 val maxTuple : int
 val goodTupleFields : int
+val isCompiledTupleTyconRef : TcGlobals -> TyconRef -> bool
 val mkCompiledTupleTyconRef : TcGlobals -> 'a list -> TyconRef
 val mkCompiledTupleTy : TcGlobals -> TTypes -> TType
 val mkCompiledTuple : TcGlobals -> TTypes * Exprs * range -> TyconRef * TTypes * Exprs * range
@@ -558,7 +559,11 @@ val GetTypeOfMemberInMemberForm : TcGlobals -> ValRef -> Typars * CurriedArgInfo
 val GetTypeOfIntrinsicMemberInCompiledForm : TcGlobals -> ValRef -> Typars * CurriedArgInfos * TType option * ArgReprInfo
 val GetMemberTypeInMemberForm : TcGlobals -> MemberFlags -> ValReprInfo -> TType -> range -> Typars * CurriedArgInfos * TType option * ArgReprInfo
 
+/// Returns (parentTypars,memberParentTypars,memberMethodTypars,memberToParentInst,tinst)
+val PartitionValTyparsForApparentEnclosingType : TcGlobals -> Val -> (Typars * Typars * Typars * TyparInst * TType list) option
+/// Returns (parentTypars,memberParentTypars,memberMethodTypars,memberToParentInst,tinst)
 val PartitionValTypars : TcGlobals -> Val -> (Typars * Typars * Typars * TyparInst * TType list) option
+/// Returns (parentTypars,memberParentTypars,memberMethodTypars,memberToParentInst,tinst)
 val PartitionValRefTypars : TcGlobals -> ValRef -> (Typars * Typars * Typars * TyparInst * TType list) option
 
 val ReturnTypeOfPropertyVal : TcGlobals -> Val -> TType
@@ -943,7 +948,7 @@ type TypeDefMetadata =
      | ILTypeMetadata of ILScopeRef * ILTypeDef
      | FSharpOrArrayOrByrefOrTupleOrExnTypeMetadata 
 #if EXTENSIONTYPING
-     | ExtensionTypeMetadata of  TProvidedTypeInfo
+     | ProvidedTypeMetadata of  TProvidedTypeInfo
 #endif
 
 val metadataOfTycon : Tycon -> TypeDefMetadata
@@ -1130,6 +1135,7 @@ val mkCallTypeDefOf   : TcGlobals -> range -> TType -> Expr
 
 val mkCallCreateInstance     : TcGlobals -> range -> TType -> Expr
 val mkCallCreateEvent        : TcGlobals -> range -> TType -> TType -> Expr -> Expr -> Expr -> Expr
+val mkCallArrayLength        : TcGlobals -> range -> TType -> Expr -> Expr
 val mkCallArrayGet           : TcGlobals -> range -> TType -> Expr -> Expr -> Expr
 val mkCallArray2DGet         : TcGlobals -> range -> TType -> Expr -> Expr -> Expr -> Expr 
 val mkCallArray3DGet         : TcGlobals -> range -> TType -> Expr -> Expr -> Expr -> Expr -> Expr
@@ -1139,6 +1145,7 @@ val mkCallRaise              : TcGlobals -> range -> TType -> Expr -> Expr
 val mkCallGenericComparisonWithComparerOuter : TcGlobals -> range -> TType -> Expr -> Expr -> Expr -> Expr
 val mkCallGenericEqualityEROuter             : TcGlobals -> range -> TType -> Expr -> Expr -> Expr
 val mkCallEqualsOperator                     : TcGlobals -> range -> TType -> Expr -> Expr -> Expr
+val mkCallSubtractionOperator                : TcGlobals -> range -> TType -> Expr -> Expr -> Expr
 val mkCallGenericEqualityWithComparerOuter   : TcGlobals -> range -> TType -> Expr -> Expr -> Expr -> Expr
 val mkCallGenericHashWithComparerOuter       : TcGlobals -> range -> TType -> Expr -> Expr -> Expr
 
@@ -1185,12 +1192,14 @@ val mkLdelem : TcGlobals -> range -> TType -> Expr -> Expr -> Expr
 // Analyze attribute sets 
 //------------------------------------------------------------------------- 
 
-val HasILAttribute : ILTypeRef -> ILAttributes -> bool
 val TryDecodeILAttribute   : TcGlobals -> ILTypeRef -> ILScopeRef option -> ILAttributes -> (ILAttribElem list * ILAttributeNamedArg list) option
 val TryFindILAttribute : Env.BuiltinAttribInfo -> ILAttributes -> bool
+val TryFindILAttributeOpt : Env.BuiltinAttribInfo option -> ILAttributes -> bool
 
 val IsMatchingFSharpAttribute      : TcGlobals -> Env.BuiltinAttribInfo -> Attrib -> bool
+val IsMatchingFSharpAttributeOpt   : TcGlobals -> Env.BuiltinAttribInfo option -> Attrib -> bool
 val HasFSharpAttribute             : TcGlobals -> Env.BuiltinAttribInfo -> Attribs -> bool
+val HasFSharpAttributeOpt          : TcGlobals -> Env.BuiltinAttribInfo option -> Attribs -> bool
 val TryFindFSharpAttribute         : TcGlobals -> Env.BuiltinAttribInfo -> Attribs -> Attrib option
 val TryFindFSharpBoolAttribute     : TcGlobals -> Env.BuiltinAttribInfo -> Attribs -> bool option
 val TryFindFSharpStringAttribute   : TcGlobals -> Env.BuiltinAttribInfo -> Attribs -> string option
@@ -1198,13 +1207,13 @@ val TryFindFSharpInt32Attribute    : TcGlobals -> Env.BuiltinAttribInfo -> Attri
 
 #if EXTENSIONTYPING
 /// returns Some(assemblyName) for success
-val TryDecodeTypeProviderAssemblyAttr : ILAttribute -> string option
+val TryDecodeTypeProviderAssemblyAttr : ILGlobals -> ILAttribute -> string option
 #endif
 val IsSignatureDataVersionAttr  : ILAttribute -> bool
 val ILThingHasExtensionAttribute : ILAttributes -> bool
-val TryFindAutoOpenAttr           : ILAttribute -> string option 
-val TryFindInternalsVisibleToAttr : ILAttribute -> string option 
-val IsMatchingSignatureDataVersionAttr : ILVersionInfo -> ILAttribute -> bool
+val TryFindAutoOpenAttr           : IL.ILGlobals -> ILAttribute -> string option 
+val TryFindInternalsVisibleToAttr : IL.ILGlobals -> ILAttribute -> string option 
+val IsMatchingSignatureDataVersionAttr : IL.ILGlobals -> ILVersionInfo -> ILAttribute -> bool
 
 
 val mkCompilationMappingAttr                         : TcGlobals -> int -> ILAttribute
@@ -1266,8 +1275,11 @@ val XmlDocSigOfEntity : EntityRef -> string
 //---------------------------------------------------------------------------
 // Resolve static optimizations
 //------------------------------------------------------------------------- 
-
-val DecideStaticOptimizations : Env.TcGlobals -> StaticOptimization list -> int
+type StaticOptimizationAnswer = 
+    | Yes = 1y
+    | No = -1y
+    | Unknown = 0y
+val DecideStaticOptimizations : Env.TcGlobals -> StaticOptimization list -> StaticOptimizationAnswer
 val mkStaticOptimizationExpr     : Env.TcGlobals -> StaticOptimization list * Expr * Expr * range -> Expr
 
 //---------------------------------------------------------------------------
@@ -1292,6 +1304,8 @@ type PrettyNaming.ActivePatternInfo with
 
     member ResultType : Env.TcGlobals -> range -> TType list -> TType
     member OverallType : Env.TcGlobals -> range -> TType -> TType list -> TType
+
+val doesActivePatternHaveFreeTypars : Env.TcGlobals -> ValRef -> bool
 
 //---------------------------------------------------------------------------
 // Structural rewrites
@@ -1321,7 +1335,7 @@ val (|EnumExpr|_|) : TcGlobals -> Expr -> Expr option
 val (|TypeOfExpr|_|) : TcGlobals -> Expr -> TType option
 val (|TypeDefOfExpr|_|) : TcGlobals -> Expr -> TType option
 
-val EvalAttribArg: TcGlobals -> Expr -> Expr
+val EvalLiteralExprOrAttribArg: TcGlobals -> Expr -> Expr
 val EvaledAttribExprEquality : TcGlobals -> Expr -> Expr -> bool
 val IsSimpleSyntacticConstantExpr: TcGlobals -> Expr -> bool
 

@@ -25,7 +25,17 @@ type GotoDefinitionTests()  =
             (GotoDefnSuccess identifier definitionCode) 
             file
             result 
-                
+    
+    member private this.VerifyGotoDefnSuccessForNonIdentifierAtStartOfMarker(fileContents : string, marker: string, pos : int * int, ?extraRefs) =
+        let (_, _, file) = this.CreateSingleFileProject(fileContents, ?references = extraRefs)
+        MoveCursorToStartOfMarker (file, marker)
+        let result = GotoDefinitionAtCursor file
+        Assert.IsTrue(result.Success)
+        let actualPos = (result.Span.iStartLine, result.Span.iStartIndex)
+        let line = GetLineNumber file (result.Span.iStartLine + 1)
+        printfn "Actual line:%s, actual pos:%A" line actualPos
+        Assert.AreEqual(pos, actualPos)
+                    
     //GoToDefinitionFail Helper Function
     member private this.VerifyGoToDefnFailAtStartOfMarker(fileContents : string,  marker :string,?addtlRefAssy : list<string>) =
         
@@ -66,7 +76,31 @@ type GotoDefinitionTests()  =
                 (GotoDefnSuccess identifier definitionCode) 
                 file 
                 result 
-                                  
+    
+    [<Test>]                                  
+    member this.``Operators.TopLevel``() = 
+        this.VerifyGotoDefnSuccessForNonIdentifierAtStartOfMarker(
+            fileContents = """
+                let (===) a b = a = b
+                let _ = 1 === 2
+                """,
+            marker = "=== 2",
+            pos=(1,21)
+            )
+
+    [<Test>]                                  
+    member this.``Operators.Member``() = 
+        this.VerifyGotoDefnSuccessForNonIdentifierAtStartOfMarker(
+            fileContents = """
+                type U = U
+                    with
+                    static member (+++) (U, U) = U
+                let _ = U +++ U
+                """,
+            marker = "++ U",
+            pos=(3,35)
+            )
+
     [<Test>]
     member public this.``Value``() = 
         this.VerifyGoToDefnSuccessAtStartOfMarker(

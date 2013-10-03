@@ -871,7 +871,7 @@ and CheckAttribArgExpr cenv env expr =
         | Const.String _  -> ()
         | _ -> 
             if cenv.reportErrors then 
-                errorR (Error (FSComp.SR.tastConstantCannotBeCustomAttribute(), m))
+                errorR (Error (FSComp.SR.tastNotAConstantExpression(), m))
                 
     | Expr.Op(TOp.Array,[_elemTy],args,_m) -> 
         List.iter (CheckAttribArgExpr cenv env) args
@@ -941,17 +941,9 @@ and AdjustAccess isHidden (cpath: unit -> CompilationPath) access =
 and CheckBinding cenv env alwaysCheckNoReraise (TBind(v,e,_) as bind) =
     //printfn "visiting %s..." v.DisplayName
     match TryGetActivePatternInfo (mkLocalValRef v) with 
-    | Some _ -> 
-        let vty  = v.TauType
-        let vtps = v.Typars |> Zset.ofList typarOrder
-        if not (isFunTy cenv.g v.TauType) then
-            errorR(Error(FSComp.SR.activePatternIdentIsNotFunctionTyped(v.LogicalName),v.Range))
-        let argtys,resty  = stripFunTy cenv.g vty
-        let argtps,restps= (freeInTypes CollectTypars argtys).FreeTypars,(freeInType CollectTypars resty).FreeTypars        
-        // Error if an active pattern is generic in type variables that only occur in the result Choice<_,...>.
-        // Note: The test restricts to v.Typars since typars from the closure are considered fixed.
-        if not (Zset.isEmpty (Zset.inter (Zset.diff restps argtps) vtps)) then
-            errorR(Error(FSComp.SR.activePatternChoiceHasFreeTypars(v.LogicalName),v.Range))
+    | Some _apinfo when _apinfo.ActiveTags.Length > 1 -> 
+        if doesActivePatternHaveFreeTypars cenv.g (mkLocalValRef v) then
+           errorR(Error(FSComp.SR.activePatternChoiceHasFreeTypars(v.LogicalName),v.Range))
     | _ -> ()
     
     match cenv.potentialUnboundUsesOfVals.TryFind v.Stamp with
@@ -1058,8 +1050,8 @@ let CheckTopBinding cenv env (TBind(v,e,_) as bind) =
        not v.IsMutable && 
        // Literals always have fields
        not (HasFSharpAttribute cenv.g cenv.g.attrib_LiteralAttribute v.Attribs) && 
-       not (HasFSharpAttribute cenv.g cenv.g.attrib_ThreadStaticAttribute v.Attribs) && 
-       not (HasFSharpAttribute cenv.g cenv.g.attrib_ContextStaticAttribute v.Attribs) && 
+       not (HasFSharpAttributeOpt cenv.g cenv.g.attrib_ThreadStaticAttribute v.Attribs) && 
+       not (HasFSharpAttributeOpt cenv.g cenv.g.attrib_ContextStaticAttribute v.Attribs) && 
        // Having a field makes the binding a static initialization trigger
        IsSimpleSyntacticConstantExpr cenv.g e && 
        // Check the thing is actually compiled as a property
@@ -1114,14 +1106,11 @@ let CheckTopBinding cenv env (TBind(v,e,_) as bind) =
                                 | None -> false 
                                 | Some arity -> List.sum arity.AritiesOfArgs - v.NumObjArgs <= 0 && arity.NumTypars = 0
 
-                            // Unions with one alternative use "Item", "Item1", "Item2" etc. But only if these
-                            // are properties without arguments.
+                            //  In unions user cannot define properties that clash with generated ones 
                             if tcref.UnionCasesArray.Length = 1 && hasNoArgs then 
                                let ucase1 = tcref.UnionCasesArray.[0]
-                               let nFields = ucase1.RecdFieldsArray.Length
-                               for i in 0 .. nFields - 1 do
-                                   let propName = if nFields <= 1 then "Item" else "Item"+string (i+1)
-                                   if nm = propName then error(NameClash(nm,kind,v.DisplayName,v.Range, FSComp.SR.typeInfoGeneratedProperty(),propName,ucase1.Range));
+                               for f in ucase1.RecdFieldsArray do
+                                   if f.Name = nm then error(NameClash(nm,kind,v.DisplayName,v.Range, FSComp.SR.typeInfoGeneratedProperty(),f.Name,ucase1.Range));
 
                 // Default augmentation contains the nasty 'Case<UnionCase>' etc.
                 let prefix = "New"
@@ -1471,9 +1460,11 @@ let CheckTopImpl (g,amap,reportErrors,infoReader,internalsVisibleToPaths,viewCcu
     // See primEntityRefEq.
     cenv.g.system_Void_tcref.TryDeref                  |> ignore
     cenv.g.byref_tcr.TryDeref                          |> ignore
-    cenv.g.system_TypedReference_tcref.TryDeref        |> ignore
-    cenv.g.system_ArgIterator_tcref.TryDeref           |> ignore 
-    cenv.g.system_RuntimeArgumentHandle_tcref.TryDeref |> ignore
+
+    let resolve = function Some(t : TyconRef) -> ignore(t.TryDeref) | _ -> ()
+    resolve cenv.g.system_TypedReference_tcref
+    resolve cenv.g.system_ArgIterator_tcref
+    resolve cenv.g.system_RuntimeArgumentHandle_tcref
 
     let env = 
         { sigToImplRemapInfo=[]

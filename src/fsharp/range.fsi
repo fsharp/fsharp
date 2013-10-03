@@ -9,7 +9,7 @@
 // You must not remove this notice, or any other, from this software.
 //----------------------------------------------------------------------------
 
-module (* internal *) Microsoft.FSharp.Compiler.Range
+module internal Microsoft.FSharp.Compiler.Range
 
 open System.Text
 open System.Collections.Generic

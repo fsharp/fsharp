@@ -2,15 +2,15 @@
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <FSharpSourcesRoot>..\..</FSharpSourcesRoot>
+    <ProjectGuid>{88e2d422-6852-46e3-a740-83e391dc7973}</ProjectGuid>
   </PropertyGroup>
-  <Import Project="$(FSharpSourcesRoot)\FSharpSource.Settings.targets"  />
+  <Import Project="$(FSharpSourcesRoot)\FSharpSource.Settings.targets" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <SchemaVersion>2.0</SchemaVersion>
     <AllowCrossTargeting>true</AllowCrossTargeting>
     <ReferenceVsAssemblies>true</ReferenceVsAssemblies>
-    <ProjectGuid>{88E2D422-6852-46E3-A740-83E391DC7973}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AssemblyName>FSharp.Core.Unittests</AssemblyName>
     <TargetFrameworkVersion Condition=" '$(TargetFramework)' == 'net20' ">v3.5</TargetFrameworkVersion>
@@ -22,7 +22,6 @@
   <PropertyGroup>
     <DefineConstants Condition=" '$(TargetFramework)' == 'sl5' OR '$(TargetFramework)' == 'sl5-compiler' ">$(DefineConstants);SILVERLIGHT</DefineConstants>
   </PropertyGroup>
-
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
@@ -43,7 +42,7 @@
   <ItemGroup>
     <Reference Include="nunit.framework" Condition="'$(TargetFramework)' != 'sl5' AND '$(TargetFramework)' != 'sl5-compiler' AND '$(TargetFramework)' != 'sl3-wp'" />
     <Reference Include="NUnitFramework" Condition="'$(TargetFramework)' == 'sl5' OR '$(TargetFramework)' == 'sl3-wp' OR '$(TargetFramework)' == 'sl5-compiler'" />
-    <ProjectReference Include="$(FSharpSourcesRoot)\fsharp\FSharp.Core\FSharp.Core.fsproj" >
+    <ProjectReference Include="$(FSharpSourcesRoot)\fsharp\FSharp.Core\FSharp.Core.fsproj">
       <Project>{DED3BBD7-53F4-428A-8C9F-27968E768605}</Project>
       <Name>FSharp.Core</Name>
     </ProjectReference>
@@ -51,14 +50,12 @@
     <Reference Include="System" />
     <Reference Include="System.Numerics" Condition="'$(TargetFramework)' == 'net40'" />
     <Reference Include="System.Core" />
-      <Reference Include="System.Net" Condition="'$(TargetFramework)' == 'sl5' OR '$(TargetFramework)' == 'sl5-compiler' "/>
-      <Reference Include="System.Observable" Condition="'$(TargetFramework)' == 'sl3-wp' "/>
+    <Reference Include="System.Net" Condition="'$(TargetFramework)' == 'sl5' OR '$(TargetFramework)' == 'sl5-compiler' " />
+    <Reference Include="System.Observable" Condition="'$(TargetFramework)' == 'sl3-wp' " />
   </ItemGroup>
   <ItemGroup>
-
-    <Compile Include="NUnitFrameworkShims.fs" Condition="'$(TargetFramework)' == 'sl3-wp'"/>
+    <Compile Include="NUnitFrameworkShims.fs" Condition="'$(TargetFramework)' == 'sl3-wp'" />
     <Compile Include="LibraryTestFx.fs" />
-
     <Compile Include="FSharp.Core\Microsoft.FSharp.Collections\ArrayModule.fs" />
     <Compile Include="FSharp.Core\Microsoft.FSharp.Collections\ArrayModule2.fs" />
     <Compile Include="FSharp.Core\Microsoft.FSharp.Collections\Array2Module.fs" />
@@ -76,23 +73,18 @@
     <Compile Include="FSharp.Core\Microsoft.FSharp.Collections\SeqModule.fs" />
     <Compile Include="FSharp.Core\Microsoft.FSharp.Collections\SeqModule2.fs" />
     <Compile Include="FSharp.Core\Microsoft.FSharp.Collections\StringModule.fs" />
-
     <Compile Include="FSharp.Core\Microsoft.FSharp.Core\BigIntType.fs" />
     <Compile Include="FSharp.Core\Microsoft.FSharp.Core\IntConversions.fs" />
     <Compile Include="FSharp.Core\Microsoft.FSharp.Core\IntConversionsGenerated.fs" />
-    <None    Include="FSharp.Core\Microsoft.FSharp.Core\IntConversionsTestGenerator.fsx" />
+    <None Include="FSharp.Core\Microsoft.FSharp.Core\IntConversionsTestGenerator.fsx" />
     <Compile Include="FSharp.Core\Microsoft.FSharp.Core\PrintfTests.fs" />
-
     <Compile Include="FSharp.Core\Microsoft.FSharp.Control\Cancellation.fs" />
     <Compile Include="FSharp.Core\Microsoft.FSharp.Control\AsyncType.fs" />
     <Compile Include="FSharp.Core\Microsoft.FSharp.Control\LazyType.fs" />
     <Compile Include="FSharp.Core\Microsoft.FSharp.Control\ObservableModule.fs" />
-    
     <Compile Include="FSharp.Core\Microsoft.FSharp.Quotations\FSharpQuotations.fs" />
-    
     <Compile Include="FSharp.Core\Microsoft.FSharp.Reflection\FSharpReflection.fs" />
     <Compile Include="FSharp.Core\PrimTypes.fs" />
-
   </ItemGroup>
   <Import Project="$(FSharpSourcesRoot)\FSharpSource.targets" />
 </Project>

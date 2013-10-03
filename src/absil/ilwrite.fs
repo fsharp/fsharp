@@ -346,6 +346,10 @@ let WritePdbInfo fixupOverlappingSequencePoints showTimes f fpdb info =
           end);
     reportTime showTimes "PDB: Wrote methods";
     let res = pdbGetDebugInfo !pdbw
+    
+    for pdbDoc in docs do
+        pdbCloseDocument pdbDoc
+
     pdbClose !pdbw;
     reportTime showTimes "PDB: Closed";
     res
@@ -910,7 +914,7 @@ type TypeDefTableKey = TdKey of string list (* enclosing *) * string (* type nam
 
 [<NoEquality; NoComparison>]
 type cenv = 
-    { mscorlib: ILScopeRef;
+    { primaryAssembly: ILScopeRef;
       ilg: ILGlobals;
       emitTailcalls: bool;
       showTimes: bool;
@@ -1583,8 +1587,6 @@ and GenTypeDefPass2 pidx enc cenv (td:ILTypeDef) =
       td.NestedTypes.AsList |> GenTypeDefsPass2 tidx (enc@[td.Name]) cenv
    with e ->
      failwith ("Error in pass2 for type "+td.Name+", error: "+e.Message);
-     reraise()
-     raise e
 
 and GenTypeDefsPass2 pidx enc cenv tds =
     List.iter (GenTypeDefPass2 pidx enc cenv) tds
@@ -1642,17 +1644,15 @@ and GetFieldDefAsFieldDefIdx cenv tidx fd =
 // -------------------------------------------------------------------- 
 
 let GetMethodRefAsMethodDefIdx cenv (mref:ILMethodRef) =
+    let tref = mref.EnclosingTypeRef
     try 
-        let tref = mref.EnclosingTypeRef
         if not (isTypeRefLocal tref) then
              failwithf "method referred to by method impl, event or property is not in a type defined in this module, method ref is %A" mref;
         let tidx = GetIdxForTypeDef cenv (TdKey(tref.Enclosing,tref.Name))
         let mdkey = MethodDefKey (tidx,mref.GenericArity, mref.Name, mref.ReturnType, mref.ArgTypes, mref.CallingConv.IsStatic)
         FindMethodDefIdx cenv mdkey
     with e ->
-        failwithf "Error in GetMethodRefAsMethodDefIdx for mref = %A, error: %s" mref.Name  e.Message;
-        reraise()
-        raise e
+        failwithf "Error in GetMethodRefAsMethodDefIdx for mref = %A, error: %s" (mref.Name, tref.Name)  e.Message;
 
 let rec MethodRefInfoAsMemberRefRow cenv env fenv (nm,typ,callconv,args,ret,varargs,genarity) =
     MemberRefRow(GetTypeAsMemberRefParent cenv env typ,
@@ -1794,11 +1794,11 @@ and GetCustomAttrRow cenv hca attr =
            CustomAttributeType (fst cat, snd cat); 
            Blob (GetCustomAttrDataAsBlobIdx cenv attr.Data); |]  
 
-and GenCustomAttrPass3 cenv hca attr = 
+and GenCustomAttrPass3Or4 cenv hca attr = 
     AddUnsharedRow cenv TableNames.CustomAttribute (GetCustomAttrRow cenv hca attr) |> ignore
 
-and GenCustomAttrsPass3 cenv hca (attrs: ILAttributes) = 
-    attrs.AsList |> List.iter (GenCustomAttrPass3 cenv hca) 
+and GenCustomAttrsPass3Or4 cenv hca (attrs: ILAttributes) = 
+    attrs.AsList |> List.iter (GenCustomAttrPass3Or4 cenv hca) 
 
 // -------------------------------------------------------------------- 
 // ILPermissionSet --> DeclSecurity rows
@@ -2763,7 +2763,7 @@ and GetFieldDefSigAsBlobIdx cenv env fd = GetFieldDefTypeAsBlobIdx cenv env fd.T
 
 and GenFieldDefPass3 cenv env fd = 
     let fidx = AddUnsharedRow cenv TableNames.Field (GetFieldDefAsFieldDefRow cenv env fd)
-    GenCustomAttrsPass3 cenv (hca_FieldDef,fidx) fd.CustomAttrs;
+    GenCustomAttrsPass3Or4 cenv (hca_FieldDef,fidx) fd.CustomAttrs;
     // Write FieldRVA table - fixups into data section done later 
     match fd.Data with 
     | None -> () 
@@ -2836,12 +2836,15 @@ and GenGenericParamConstraintPass4 cenv env gpidx ty =
     AddUnsharedRow cenv TableNames.GenericParamConstraint (GenTypeAsGenericParamConstraintRow cenv env gpidx ty) |> ignore
 
 and GenGenericParamPass3 cenv env idx owner gp = 
+    // here we just collect generic params, its constraints\custom attributes will be processed on pass4
     // shared since we look it up again below in GenGenericParamPass4
-    let gpidx = AddSharedRow cenv TableNames.GenericParam (GetGenericParamAsGenericParamRow cenv env idx owner gp) 
-    GenCustomAttrsPass3 cenv (hca_GenericParam,gpidx) gp.CustomAttrs;
+    AddSharedRow cenv TableNames.GenericParam (GetGenericParamAsGenericParamRow cenv env idx owner gp) 
+    |> ignore
+
 
 and GenGenericParamPass4 cenv env idx owner gp = 
     let gpidx = FindOrAddRow cenv TableNames.GenericParam (GetGenericParamAsGenericParamRow cenv env idx owner gp)
+    GenCustomAttrsPass3Or4 cenv (hca_GenericParam, gpidx) gp.CustomAttrs
     gp.Constraints |> ILList.iter (GenGenericParamConstraintPass4 cenv env gpidx) 
 
 // -------------------------------------------------------------------- 
@@ -2866,7 +2869,7 @@ and GenParamPass3 cenv env seq param =
     then ()
     else    
       let pidx = AddUnsharedRow cenv TableNames.Param (GetParamAsParamRow cenv env seq param)
-      GenCustomAttrsPass3 cenv (hca_ParamDef,pidx) param.CustomAttrs;
+      GenCustomAttrsPass3Or4 cenv (hca_ParamDef,pidx) param.CustomAttrs;
       // Write FieldRVA table - fixups into data section done later 
       match param.Marshal with 
       | None -> ()
@@ -2885,7 +2888,7 @@ let GenReturnAsParamRow (returnv : ILReturn) =
 let GenReturnPass3 cenv (returnv: ILReturn) = 
     if isSome returnv.Marshal || nonNil  returnv.CustomAttrs.AsList then
         let pidx = AddUnsharedRow cenv TableNames.Param (GenReturnAsParamRow returnv)
-        GenCustomAttrsPass3 cenv (hca_ParamDef,pidx) returnv.CustomAttrs;
+        GenCustomAttrsPass3Or4 cenv (hca_ParamDef,pidx) returnv.CustomAttrs;
         match returnv.Marshal with 
         | None -> ()
         | Some ntyp -> 
@@ -3003,7 +3006,7 @@ let GenMethodDefPass3 cenv env (md:ILMethodDef) =
     if midx <> idx2 then failwith "index of method def on pass 3 does not match index on pass 2";
     GenReturnPass3 cenv md.Return;  
     md.Parameters |> ILList.iteri (fun n param -> GenParamPass3 cenv env (n+1) param) ;
-    md.CustomAttrs |> GenCustomAttrsPass3 cenv (hca_MethodDef,midx) ;
+    md.CustomAttrs |> GenCustomAttrsPass3Or4 cenv (hca_MethodDef,midx) ;
     md.SecurityDecls.AsList |> GenSecurityDeclsPass3 cenv (hds_MethodDef,midx);
     md.GenericParams |> List.iteri (fun n gp -> GenGenericParamPass3 cenv env n (tomd_MethodDef, midx) gp) ;
     match md.mdBody.Contents with 
@@ -3091,7 +3094,7 @@ and GenPropertyPass3 cenv env prop =
                 [| GetFieldInitFlags i;
                    HasConstant (hc_Property, pidx);
                    Blob (GetFieldInitAsBlobIdx cenv i) |]) |> ignore
-    GenCustomAttrsPass3 cenv (hca_Property,pidx) prop.CustomAttrs
+    GenCustomAttrsPass3Or4 cenv (hca_Property,pidx) prop.CustomAttrs
 
 let rec GenEventMethodSemanticsPass3 cenv eidx kind mref =
     let addIdx = try GetMethodRefAsMethodDefIdx cenv mref with MethodDefNotFound -> 1
@@ -3118,7 +3121,7 @@ and GenEventPass3 cenv env (md: ILEventDef) =
     md.RemoveMethod |> GenEventMethodSemanticsPass3 cenv eidx 0x0010 
     Option.iter (GenEventMethodSemanticsPass3 cenv eidx 0x0020) md.FireMethod  
     List.iter (GenEventMethodSemanticsPass3 cenv eidx 0x0004) md.OtherMethods;
-    GenCustomAttrsPass3 cenv (hca_Event,eidx) md.CustomAttrs
+    GenCustomAttrsPass3Or4 cenv (hca_Event,eidx) md.CustomAttrs
 
 
 // -------------------------------------------------------------------- 
@@ -3150,7 +3153,7 @@ let rec GetResourceAsManifestResourceRow cenv r =
 
 and GenResourcePass3 cenv r = 
   let idx = AddUnsharedRow cenv TableNames.ManifestResource (GetResourceAsManifestResourceRow cenv r)
-  GenCustomAttrsPass3 cenv (hca_ManifestResource,idx) r.CustomAttrs
+  GenCustomAttrsPass3Or4 cenv (hca_ManifestResource,idx) r.CustomAttrs
 
 // -------------------------------------------------------------------- 
 // ILTypeDef --> generate ILFieldDef, ILMethodDef, ILPropertyDef etc. rows
@@ -3177,7 +3180,7 @@ let rec GenTypeDefPass3 enc cenv (td:ILTypeDef) =
                        SimpleIndex (TableNames.TypeDef, tidx) |]) |> ignore
                        
       td.SecurityDecls.AsList |> GenSecurityDeclsPass3 cenv (hds_TypeDef,tidx);
-      td.CustomAttrs |> GenCustomAttrsPass3 cenv (hca_TypeDef,tidx);
+      td.CustomAttrs |> GenCustomAttrsPass3Or4 cenv (hca_TypeDef,tidx);
       td.GenericParams |> List.iteri (fun n gp -> GenGenericParamPass3 cenv env n (tomd_TypeDef,tidx) gp) ; 
       td.NestedTypes.AsList |> GenTypeDefsPass3 (enc@[td.Name]) cenv;
    with e ->
@@ -3220,7 +3223,7 @@ let rec GenNestedExportedTypePass3 cenv cidx (ce: ILNestedExportedType) =
                StringE (GetStringHeapIdx cenv ce.Name); 
                StringE 0; 
                Implementation (i_ExportedType, cidx) |])
-    GenCustomAttrsPass3 cenv (hca_ExportedType,nidx) ce.CustomAttrs;
+    GenCustomAttrsPass3Or4 cenv (hca_ExportedType,nidx) ce.CustomAttrs;
     GenNestedExportedTypesPass3 cenv nidx ce.Nested
 
 and GenNestedExportedTypesPass3 cenv nidx (nce: ILNestedExportedTypes) =
@@ -3239,7 +3242,7 @@ and GenExportedTypePass3 cenv (ce: ILExportedTypeOrForwarder) =
                nelem; 
                nselem; 
                Implementation (fst impl, snd impl); |])
-    GenCustomAttrsPass3 cenv (hca_ExportedType,cidx) ce.CustomAttrs;
+    GenCustomAttrsPass3Or4 cenv (hca_ExportedType,cidx) ce.CustomAttrs;
     GenNestedExportedTypesPass3 cenv cidx ce.Nested
 
 and GenExportedTypesPass3 cenv (ce: ILExportedTypesAndForwarders) = 
@@ -3278,7 +3281,7 @@ and GetManifsetAsAssemblyRow cenv m =
 and GenManifestPass3 cenv m = 
     let aidx = AddUnsharedRow cenv TableNames.Assembly (GetManifsetAsAssemblyRow cenv m)
     GenSecurityDeclsPass3 cenv (hds_Assembly,aidx) m.SecurityDecls.AsList;
-    GenCustomAttrsPass3 cenv (hca_Assembly,aidx) m.CustomAttrs;
+    GenCustomAttrsPass3Or4 cenv (hca_Assembly,aidx) m.CustomAttrs;
     GenExportedTypesPass3 cenv m.ExportedTypes;
     // Record the entrypoint decl if needed. 
     match m.EntrypointElsewhere with
@@ -3335,23 +3338,23 @@ let GenModule (cenv : cenv) (modul: ILModuleDef) =
     (match modul.Manifest with None -> () | Some m -> GenManifestPass3 cenv m);
     GenTypeDefsPass3 [] cenv tds;
     reportTime cenv.showTimes "Module Generation Pass 3";
-    GenCustomAttrsPass3 cenv (hca_Module,midx) modul.CustomAttrs;
-    // GenericParam is the only sorted table indexed by Columns in other tables (GenericParamConstraint). 
-    // Hence we need to sort it before we emit any entries in GenericParamConstraint. 
+    GenCustomAttrsPass3Or4 cenv (hca_Module,midx) modul.CustomAttrs;
+    // GenericParam is the only sorted table indexed by Columns in other tables (GenericParamConstraint\CustomAttributes). 
+    // Hence we need to sort it before we emit any entries in GenericParamConstraint\CustomAttributes that are attached to generic params. 
     // Note this mutates the rows in a table.  'SetRowsOfTable' clears 
     // the key --> index map since it is no longer valid 
     cenv.GetTable(TableNames.GenericParam).SetRowsOfTable (SortTableRows TableNames.GenericParam (cenv.GetTable(TableNames.GenericParam).EntriesAsArray));
     GenTypeDefsPass4 [] cenv tds;
     reportTime cenv.showTimes "Module Generation Pass 4"
 
-let generateIL requiredDataFixups (desiredMetadataVersion,generatePdb,mscorlib,emitTailcalls,showTimes)  (m : ILModuleDef) noDebugData cilStartAddress =
+let generateIL requiredDataFixups (desiredMetadataVersion,generatePdb, ilg : ILGlobals, emitTailcalls,showTimes)  (m : ILModuleDef) noDebugData cilStartAddress =
     let isDll = m.IsDLL
 
     let cenv = 
-        { mscorlib=mscorlib;
+        { primaryAssembly=ilg.traits.ScopeRef;
           emitTailcalls=emitTailcalls;
           showTimes=showTimes;
-          ilg = mkILGlobals mscorlib None noDebugData; // assumes mscorlib is Scope_assembly _ ILScopeRef 
+          ilg = mkILGlobals ilg.traits None noDebugData; // assumes mscorlib is Scope_assembly _ ILScopeRef 
           desiredMetadataVersion=desiredMetadataVersion;
           requiredDataFixups= requiredDataFixups;
           requiredStringFixups = [];
@@ -3468,7 +3471,7 @@ module FileSystemUtilites =
             // Fail silently
 #endif
         
-let writeILMetadataAndCode (generatePdb,desiredMetadataVersion,mscorlib,emitTailcalls,showTimes) modul noDebugData cilStartAddress = 
+let writeILMetadataAndCode (generatePdb,desiredMetadataVersion,ilg,emitTailcalls,showTimes) modul noDebugData cilStartAddress = 
 
     // When we know the real RVAs of the data section we fixup the references for the FieldRVA table. 
     // These references are stored as offsets into the metadata we return from this function 
@@ -3477,7 +3480,7 @@ let writeILMetadataAndCode (generatePdb,desiredMetadataVersion,mscorlib,emitTail
     let next = cilStartAddress
 
     let strings,userStrings,blobs,guids,tables,entryPointToken,code,requiredStringFixups,data,resources,pdbData,mappings = 
-      generateIL requiredDataFixups (desiredMetadataVersion,generatePdb,mscorlib,emitTailcalls,showTimes) modul noDebugData cilStartAddress
+      generateIL requiredDataFixups (desiredMetadataVersion,generatePdb,ilg,emitTailcalls,showTimes) modul noDebugData cilStartAddress
 
     reportTime showTimes "Generated Tables and Code";
     let tableSize (tab: TableName) = tables.[tab.Index].Length
@@ -3917,7 +3920,7 @@ let writeDirectory os dict =
 
 let writeBytes (os: BinaryWriter) (chunk:byte[]) = os.Write(chunk,0,chunk.Length)  
 
-let writeBinaryAndReportMappings (outfile, mscorlib, pdbfile: string option, signer: ILStrongNameSigner option, fixupOverlappingSequencePoints, emitTailcalls, showTimes, dumpDebugInfo) modul noDebugData =
+let writeBinaryAndReportMappings (outfile, ilg, pdbfile: string option, signer: ILStrongNameSigner option, fixupOverlappingSequencePoints, emitTailcalls, showTimes, dumpDebugInfo) modul noDebugData =
     // Store the public key from the signer into the manifest.  This means it will be written 
     // to the binary and also acts as an indicator to leave space for delay sign 
 
@@ -4024,7 +4027,7 @@ let writeBinaryAndReportMappings (outfile, mscorlib, pdbfile: string option, sig
             if modul.MetadataVersion <> "" then
                 parseILVersion modul.MetadataVersion
             else
-                match mscorlib with 
+                match ilg.traits.ScopeRef with 
                 | ILScopeRef.Local -> failwith "Expected mscorlib to be ILScopeRef.Assembly was ILScopeRef.Local" 
                 | ILScopeRef.Module(_) -> failwith "Expected mscorlib to be ILScopeRef.Assembly was ILScopeRef.Module"
                 | ILScopeRef.Assembly(aref) ->
@@ -4034,7 +4037,7 @@ let writeBinaryAndReportMappings (outfile, mscorlib, pdbfile: string option, sig
                     | None -> failwith "Expected msorlib to have a version number"
 
           let entryPointToken,code,codePadding,metadata,data,resources,requiredDataFixups,pdbData,mappings = 
-            writeILMetadataAndCode ((pdbfile <> None), desiredMetadataVersion,mscorlib,emitTailcalls,showTimes) modul noDebugData next
+            writeILMetadataAndCode ((pdbfile <> None), desiredMetadataVersion, ilg,emitTailcalls,showTimes) modul noDebugData next
 
           reportTime showTimes "Generated IL and metadata";
           let _codeChunk,next = chunk code.Length next
@@ -4523,7 +4526,6 @@ let writeBinaryAndReportMappings (outfile, mscorlib, pdbfile: string option, sig
                 FileSystem.FileDelete outfile 
              with _ -> ()); 
             reraise()
-            raise e // is this really needed?
    
 
     reportTime showTimes "Writing Image";
@@ -4602,7 +4604,7 @@ let writeBinaryAndReportMappings (outfile, mscorlib, pdbfile: string option, sig
 
 
 type options =
-   { mscorlib: ILScopeRef;
+   { ilg: ILGlobals;
      pdbfile: string option;
      signer: ILStrongNameSigner option;
      fixupOverlappingSequencePoints: bool;
@@ -4612,7 +4614,7 @@ type options =
 
 
 let WriteILBinary outfile (args: options) modul noDebugData =
-    ignore (writeBinaryAndReportMappings (outfile, args.mscorlib, args.pdbfile, args.signer, args.fixupOverlappingSequencePoints, args.emitTailcalls, args.showTimes, args.dumpDebugInfo) modul noDebugData)
+    ignore (writeBinaryAndReportMappings (outfile, args.ilg, args.pdbfile, args.signer, args.fixupOverlappingSequencePoints, args.emitTailcalls, args.showTimes, args.dumpDebugInfo) modul noDebugData)
 
 
 

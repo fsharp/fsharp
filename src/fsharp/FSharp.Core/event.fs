@@ -20,6 +20,11 @@ namespace Microsoft.FSharp.Control
     open System.Reflection
     open System.Diagnostics
 
+#if FX_RESHAPED_REFLECTION
+    open ReflectionAdapters
+    type BindingFlags = ReflectionAdapters.BindingFlags
+#endif
+
 #if FX_NO_DELEGATE_DYNAMIC_METHOD 
 #else
 
@@ -145,7 +150,7 @@ namespace Microsoft.FSharp.Control
                     multicast <- System.Delegate.Remove(multicast, d)  :?> 'Delegate 
               interface System.IObservable<'Args> with 
                 member e.Subscribe(observer) = 
-                   let obj = new EventDelegee<'Args>(observer)   
+                   let obj = new EventDelegee<'Args>(observer)
                    let h = System.Delegate.CreateDelegate(typeof<'Delegate>, obj, invokeInfo) :?> 'Delegate
                    (e :?> IDelegateEvent<'Delegate>).AddHandler(h)
                    { new System.IDisposable with 

@@ -447,7 +447,7 @@ let rec convInstr cenv (tmps: ILLocalsAllocator) inplab outlab instr =
                                         [ AI_dup;
                                           I_brcmp (BI_brfalse,outlab, internal1) ]);
                          mkBasicBlock2 (internal1,
-                                        [ mkMscorlibExnNewobj cenv.ilg "System.InvalidCastException";
+                                        [ mkPrimaryAssemblyExnNewobj cenv.ilg "System.InvalidCastException";
                                           I_throw ]);
                        ] ))
               else 
@@ -846,7 +846,7 @@ let convAlternativeDef cenv num (td:ILTypeDef) cud info cuspec (baseTy:ILType) (
                                           emptyILCustomAttrs,
                                           ILTypeInit.BeforeField)
                     [ { debugProxyTypeDef with IsSpecialName=true } ],
-                    ( [mkDebuggerTypeProxyAttribute cenv.ilg debugProxyTy] @ cud.cudDebugDisplayAttributes)
+                    ( [cenv.ilg.mkDebuggerTypeProxyAttribute debugProxyTy] @ cud.cudDebugDisplayAttributes)
                                     
               let altTypeDef = 
                   let basicFields = 

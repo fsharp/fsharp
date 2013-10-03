@@ -227,6 +227,52 @@ type AutoCompletionListTests() as this  =
         TakeCoffeeBreak(this.VS)                                      
         let completions = time1 AutoCompleteAtCursor file "Time of first autocomplete."
         AssertCompListIsEmpty(completions)      
+
+    [<Test>]
+    member this.``AutoCompletion.ObjectMethods``() = 
+        let code =
+            [
+                "type DU1 = DU_1"
+                
+                "[<NoEquality>]"
+                "type DU2 = DU_2"
+
+                "[<NoEquality>]"
+                "type DU3 ="
+                "   | DU_3"
+                "   with member this.Equals(b : string) = 1"
+
+                "[<NoEquality>]"
+                "type DU4 ="
+                "   | DU_4"
+                "   with member this.GetHashCode(b : string) = 1"
+
+
+                "module Extensions ="
+                "    type System.Object with"
+                "       member this.ExtensionPropObj = 42"
+                "       member this.ExtensionMethodObj () = 42"
+ 
+                "open Extensions"
+            ]
+        let (_, _, file) = this.CreateSingleFileProject(code)
+        let test tail marker expected notExpected =
+            let code = code @ [tail]
+            ReplaceFileInMemory file code
+            MoveCursorToEndOfMarker(file,marker)
+
+            let completions = AutoCompleteAtCursor file
+            AssertCompListContainsAll(completions, expected)
+            AssertCompListDoesNotContainAny(completions, notExpected)
+
+        test "obj()." ")." ["Equals"; "ExtensionPropObj"; "ExtensionMethodObj"] []
+        test  "System.Object." "Object." ["Equals"; "ReferenceEquals"] []
+        test "System.String." "String." ["Equals"] []
+        test "DU_1." "DU_1." ["Equals"; "GetHashCode"; "ExtensionMethodObj"; "ExtensionPropObj"] []
+        test "DU_2." "DU_2." ["ExtensionPropObj"; "ExtensionMethodObj"] ["Equals"; "GetHashCode"] // no equals\gethashcode
+        test "DU_3." "DU_3." ["ExtensionPropObj"; "ExtensionMethodObj"; "Equals"] ["GetHashCode"] // no gethashcode, has equals defined in DU3 type
+        test "DU_4." "DU_4." ["ExtensionPropObj"; "ExtensionMethodObj"; "GetHashCode"] ["Equals"] // no equals, has gethashcode defined in DU4 type
+
     
     [<Test>]
     member this.``AutoCompletion.BeforeThis``() = 
@@ -338,16 +384,29 @@ type AutoCompletionListTests() as this  =
     [<Test>] member public this.``AdjacentToDot_21_Negative``() = testAutoCompleteAdjacentToDotNegative ".+."
 
     [<Test>]
-    member public this.``Query.CompletionInGroupJoinOn``() = 
-        let code = 
+    member public this.``LambdaOverloads.Completion``() = 
+        let prologue = "open System.Linq"
+        let cases = 
             [
-                "query {"
-                "   for a in [1] do"
-                "   groupJoin b in [2] on (a.) into c"
-                "   select c"
-                "}"
+                "[\"\"].Sum(fun x -> (*$*)x.Len )"
+                "[\"\"].Select(fun x -> (*$*)x.Len )"
+                "[\"\"].Select(fun x i -> (*$*)x.Len )"
+                "[\"\"].GroupBy(fun x -> (*$*)x.Len )"
+                "[\"\"].Join([\"\"], (fun x -> (*$*)x.Len), (fun x -> x.Len), (fun x y -> x.Len+ y.Len))"
+                "[\"\"].Join([\"\"], (fun x -> x.Len), (fun x -> (*$*)x.Len), (fun x y -> x.Len+ y.Len))"
+                "[\"\"].Join([\"\"], (fun x -> x.Len), (fun x -> x.Len), (fun x y -> (*$*)x.Len + y.Len))"
+                "[\"\"].Join([\"\"], (fun x -> x.Len), (fun x -> x.Len), (fun y x -> y.Len + (*$*)x.Len))"
+                "[\"\"].Where(fun x -> (*$*)x.Len )"
+                "[\"\"].Where(fun x -> (*$*)x.Len % 3 )"
+                "[\"\"].Where(fun x -> (*$*)x.Len % 3 = 0)"
+                "[\"\"].AsQueryable().Select(fun x -> (*$*)x.Len )"
+                "[\"\"].AsQueryable().Select(fun x i -> (*$*)x.Len )"
+                "[\"\"].AsQueryable().Where(fun x -> (*$*)x.Len )"
             ]
-        AssertCtrlSpaceCompleteContains code "(a." ["GetHashCode"; "CompareTo"] []
+            
+        for case in cases do
+            let code = [prologue; case]
+            AssertCtrlSpaceCompleteContains code "(*$*)x.Len" ["Length"] []
 
     [<Test>]
     member public this.``Query.CompletionInJoinOn``() = 
@@ -1000,7 +1059,28 @@ derived.derivedField"]
           [ "baseFieldPrivate"; "derivedFieldPrivate" ] // should not contain
 
     [<Test>]
-    member public this.``Visibility.InheritedClass.MethodsWitfDiffAccessibility``() =
+    member public this.``ObjInstance.InheritedClass.MethodsWithDiffAccessbilityWithSameNameMethod``() =
+        AssertAutoCompleteContainsNoCoffeeBreak 
+          [ "type Base =
+   val mutable baseField : int
+   val mutable private baseFieldPrivate : int
+   new () = { baseField = 0; baseFieldPrivate=1 }
+
+type Derived =
+    val mutable baseField : int
+    val mutable derivedField : int
+    val mutable private derivedFieldPrivate : int
+    inherit Base
+    new () = { baseField = 0; derivedField = 0; derivedFieldPrivate = 0 }
+
+let derived = Derived()
+derived.derivedField"]
+          "derived."
+          [ "baseField"; "derivedField" ] // should contain
+          [ "baseFieldPrivate"; "derivedFieldPrivate" ] // should not contain
+
+    [<Test>]
+    member public this.``Visibility.InheritedClass.MethodsWithDiffAccessibility``() =
         AssertAutoCompleteContainsNoCoffeeBreak 
           [ "type Base =
    val mutable baseField : int
@@ -1017,6 +1097,47 @@ type Derived =
           "(*marker*)this."
           [ "baseField"; "derivedField"; "derivedFieldPrivate" ] // should contain
           [ "baseFieldPrivate" ] // should not contain
+
+    [<Test>]
+    member public this.``Visibility.InheritedClass.MethodsWithDiffAccessibilityWithSameNameMethod``() =
+        AssertAutoCompleteContainsNoCoffeeBreak 
+          [ "type Base =
+   val mutable baseField : int
+   val mutable private baseFieldPrivate : int
+   new () = { baseField = 0; baseFieldPrivate=1 }
+
+type Derived =
+    val mutable baseField : int
+    val mutable derivedField : int
+    val mutable private derivedFieldPrivate : int
+    inherit Base
+    new () = { baseField = 0; derivedField = 0; derivedFieldPrivate = 0 }
+    member this.Method() =
+        (*marker*)this.baseField"]
+          "(*marker*)this."
+          [ "baseField"; "derivedField"; "derivedFieldPrivate" ] // should contain
+          [ "baseFieldPrivate" ] // should not contain
+
+    [<Test>]
+    member public this.``Visibility.InheritedClass.MethodsWithSameNameMethod``() =
+        AssertAutoCompleteContainsNoCoffeeBreak 
+          [ "type MyClass =
+    val foo : int
+    new (foo) = { foo = foo }
+ 
+type MyClass2 =
+    inherit MyClass
+    val foo : int
+    new (foo) = {
+        inherit MyClass(foo)
+        foo = foo
+        }
+
+let x = new MyClass2(0)
+(*marker*)x.foo"]
+          "(*marker*)x."
+          [ "foo" ] // should contain
+          [ ] // should not contain
 
     [<Test>]
     member public this.``Identifier.Array.AfterassertKeyword``() =
@@ -4440,7 +4561,38 @@ let x = query { for bbbb in abbbbc(*D0*) do
         // isUnique=true means it will be selected on ctrl-space invocation
         // isPrefix=true means it will be selected, instead of just outlined
         AssertEqual(Some ("OSVersion", true, true),  Match "o")
-          
+    
+    [<Test>]
+    member public this.``COMPILED.DefineNotPropagatedToIncrementalBuilder``() =
+        use _guard = this.UsingNewVS()
+ 
+        let solution = this.CreateSolution()
+        let projName = "testproject"
+        let project = CreateProject(solution,projName)
+        let dir = ProjectDirectory(project)
+        let file1 = AddFileFromText(project,"File1.fs", 
+                                    [ 
+                                     "module File1"
+                                     "#if COMPILED"
+                                     "let x = 0"
+                                     "#else"
+                                     "let y = 1"
+                                     "#endif"
+                                    ]) 
+        let file2 = AddFileFromText(project,"File2.fs", 
+                                    [ 
+                                     "module File2"
+                                     "File1."
+                                    ]) 
+
+        let file = OpenFile(project, "File2.fs")
+        MoveCursorToEndOfMarker(file, "File1.")
+        let completionItems = 
+            AutoCompleteAtCursor(file)
+            |> Array.map (fun (name, _, _, _) -> name)
+        Assert.AreEqual(1, completionItems.Length, "Expected 1 item in the list")
+        Assert.AreEqual("x", completionItems.[0], "Expected 'x' in the list")
+ 
     [<Test>]
     member public this.``VisualStudio.CloseAndReopenSolution``() = 
         use _guard = this.UsingNewVS()

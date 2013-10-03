@@ -11,619 +11,1278 @@
 
 namespace Microsoft.FSharp.Core
 
-open Microsoft.FSharp.Core
-open Microsoft.FSharp.Core.Operators
-open Microsoft.FSharp.Collections
-open Microsoft.FSharp.Reflection
-open Microsoft.FSharp.Text.StructuredPrintfImpl
-open System.Globalization
-open System.IO
-open System.Text
-
-type PrintfFormat<'printer,'state,'residue,'result>(value:string) =
+type PrintfFormat<'Printer,'State,'Residue,'Result>(value:string) =
         member x.Value = value
     
-type PrintfFormat<'printer,'state,'residue,'result,'tuple>(value:string) = 
-    inherit PrintfFormat<'printer,'state,'residue,'result>(value)
+type PrintfFormat<'Printer,'State,'Residue,'Result,'Tuple>(value:string) = 
+    inherit PrintfFormat<'Printer,'State,'Residue,'Result>(value)
 
-type Format<'printer,'state,'residue,'result> = PrintfFormat<'printer,'state,'residue,'result>
-type Format<'printer,'state,'residue,'result,'tuple> = PrintfFormat<'printer,'state,'residue,'result,'tuple>
+type Format<'Printer,'State,'Residue,'Result> = PrintfFormat<'Printer,'State,'Residue,'Result>
+type Format<'Printer,'State,'Residue,'Result,'Tuple> = PrintfFormat<'Printer,'State,'Residue,'Result,'Tuple>
 
-module PrintfImpl = 
+#if FX_RESHAPED_REFLECTION
 
-    open Microsoft.FSharp.Core.LanguagePrimitives.IntrinsicOperators
-    open Microsoft.FSharp.Reflection
+open Microsoft.FSharp.Core.PrimReflectionAdapters
+open Microsoft.FSharp.Core.ReflectionAdapters
+
+#endif
+
+module internal PrintfImpl =
+
+    /// Basic idea of implementation:
+    /// Every Printf.* family should returns curried function that collects arguments and then somehow prints them.
+    /// Idea - instead of building functions on fly argument by argument we instead introduce some predefined parts and then construct functions from these parts
+    /// Parts include:
+    /// Plain ones:
+    /// 1. Final pieces (1..5) - set of functions with arguments number 1..5. 
+    /// Primary characteristic - these functions produce final result of the *printf* operation
+    /// 2. Chained pieces (1..5) - set of functions with arguments number 1..5. 
+    /// Primary characteristic - these functions doesn not produce final result by itself, instead they tailed with some another piece (chained or final).
+    /// Plain parts correspond to simple format specifiers (that are projected to just one parameter of the function, say %d or %s). However we also have 
+    /// format specifiers that can be projected to more than one argument (i.e %a, %t or any simple format specified with * width or precision). 
+    /// For them we add special cases (both chained and final to denote that they can either return value themselves or continue with some other piece)
+    /// These primitives allow us to construct curried functions with arbitrary signatures.
+    /// For example: 
+    /// - function that corresponds to %s%s%s%s%s (string -> string -> string -> string -> string -> T) will be represented by one piece final 5.
+    /// - function that has more that 5 arguments will include chained parts: %s%s%s%s%s%d%s  => chained2 -> final 5
+    /// Primary benefits: 
+    /// 1. creating specialized version of any part requires only one reflection call. This means that we can handle up to 5 simple format specifiers
+    /// with just one reflection call
+    /// 2. we can make combinable parts independent from particular printf implementation. Thus final result can be cached and shared. 
+    /// i.e when first calll to printf "%s %s" will trigger creation of the specialization. Subsequent calls will pick existing specialization
+    open System
+    open System.IO
+    open System.Collections.Generic
     open System.Reflection
+    open Microsoft.FSharp.Core
+    open Microsoft.FSharp.Core.Operators
+    open Microsoft.FSharp.Collections
+    open LanguagePrimitives.IntrinsicOperators
+    
+    [<Flags>]
+    type FormatFlags = 
+        | None = 0
+        | LeftJustify = 1
+        | PadWithZeros = 2
+        | PlusForPositives = 4
+        | SpaceForPositives = 8
 
-    type buf = System.Text.StringBuilder
+    let inline hasFlag flags (expected : FormatFlags) = (flags &&& expected) = expected
+    let inline isLeftJustify flags = hasFlag flags FormatFlags.LeftJustify
+    let inline isPadWithZeros flags = hasFlag flags FormatFlags.PadWithZeros
+    let inline isPlusForPositives flags = hasFlag flags FormatFlags.PlusForPositives
+    let inline isSpaceForPositives flags = hasFlag flags FormatFlags.SpaceForPositives
 
-    let stringOfChar (c:char) = System.Char.ToString(c)
-    let stringOfInt (i:int) = i.ToString()
+    /// Used for width and precision to denote that user has specified '*' flag
+    [<Literal>]
+    let StarValue = -1
+    /// Used for width and precision to denote that corresponding value was omitted in format string
+    [<Literal>]
+    let NotSpecifiedValue = -2
 
-    [<NoEquality; NoComparison>]
-    type PrintfInfo = 
-       { mutable leftJustify    : bool; 
-         mutable numPrefixIfPos : char option;
-         mutable addZeros       : bool; }
+    [<System.Diagnostics.DebuggerDisplayAttribute("{ToString()}")>]
+    [<NoComparison; NoEquality>]
+    type FormatSpecifier =
+        {
+            TypeChar : char
+            Precision : int
+            Width : int
+            Flags : FormatFlags
+        }
+        member this.IsStarPrecision = this.Precision = StarValue
+        member this.IsPrecisionSpecified = this.Precision <> NotSpecifiedValue
+        member this.IsStarWidth = this.Width = StarValue
+        member this.IsWidthSpecified = this.Width <> NotSpecifiedValue
 
-    let outputSignAndLeftSpace(outputChar,info,pos,width,numDigits) = 
-        let used = 
-            if pos then 
-                match info.numPrefixIfPos with 
-                | None -> 0
-                | Some _ -> 1 
-            else 1 
-        let len = numDigits + used 
-        if not info.leftJustify && not info.addZeros then 
-            match width with 
-            | None -> () 
-            | Some w -> 
-                for i = 1 to (w - len) do 
-                   outputChar ' '; 
-        begin 
-          if pos then 
-              match info.numPrefixIfPos with 
-              | None -> ()
-              | Some c -> outputChar c
-          else outputChar '-';
-        end;
-        if not info.leftJustify && info.addZeros then 
-            match width with 
-            | None -> () 
-            | Some w -> 
-                for i = 1 to (w - len) do 
-                  outputChar (if info.addZeros then '0' else ' '); 
-        used
+        override this.ToString() = 
+            let valueOf n = match n with StarValue -> "*" | NotSpecifiedValue -> "-" | n -> n.ToString()
+            System.String.Format
+                (
+                    "'{0}', Precision={1}, Width={2}, Flags={3}", 
+                    this.TypeChar, 
+                    (valueOf this.Precision),
+                    (valueOf this.Width), 
+                    this.Flags
+                )
+    
+    /// Set of helpers to parse format string
+    module private FormatString =
+        let inline isDigit c = c >= '0' && c <= '9'
+        let intFromString (s : string) pos = 
+            let rec go acc i =
+                if isDigit s.[i] then 
+                    let n = int s.[i] - int '0'
+                    go (acc * 10 + n) (i + 1)
+                else acc, i
+            go 0 pos
 
-    let decode (c:char) = System.Convert.ToInt32(c)
-    let encode (x:int) = System.Convert.ToChar(x)
-
-    let outputDigit(outputChar,intFormatChar,digit) = 
-        let digitc = 
-            if digit < 10 
-            then  decode '0' + digit 
-            else decode (if intFormatChar = 'x' then 'a' else 'A') + (digit - 10) 
-        outputChar (encode digitc)
-
-    let outputSpace(outputChar,width,len) = 
-        match width with 
-        | None -> () 
-        | Some width -> 
-             for i = 1 to (width - len) do 
-                 outputChar ' '; 
-
-    let outputZeros(outputChar,width,len) = 
-        match width with 
-        | None -> () 
-        | Some width -> 
-             for i = 1 to (width - len) do 
-                 outputChar '0'
-
-    let outputRightSpace(outputChar,leftJustify,width,len) =
-        if leftJustify then outputSpace(outputChar,width,len)
-
-    let outputUInt64(outputChar,intFormatChar,width,info,(n:uint64)) = 
-        let nbase = match intFormatChar with 'o' -> 8uL | 'x' | 'X' -> 16uL | _ -> 10uL 
-        let numDigits = 
-            let mutable numDigits = 1 
-            let mutable nval = n / nbase 
-            while nval > 0UL do 
-                numDigits <- numDigits + 1; 
-                nval <- nval / nbase; 
-            numDigits 
-        let topdiv = 
-            let mutable topdiv = 1UL 
-            for i = 1 to numDigits - 1 do 
-                topdiv <- topdiv * nbase; 
-            topdiv 
-      
-        let len = numDigits + (outputSignAndLeftSpace(outputChar,info,true,width,numDigits))
-        
-        let mutable residue = n 
-        let mutable divisor = topdiv 
-        while divisor > 0UL do 
-            let digit = residue / divisor 
-            outputDigit(outputChar,intFormatChar, int32(int64 digit));
-            residue <- residue % divisor;
-            divisor <- divisor / nbase;
-        outputRightSpace(outputChar,info.leftJustify,width,len)
-
-    let outputInt64(outputChar,intFormatChar,width,info,(n:int64)) =     
-        let nbase = match intFormatChar with 'o' -> 8L | 'x' | 'X' -> 16L | _ -> 10L 
-        let numDigits = 
-            let mutable numDigits = 1 
-            let mutable nval = if n >= 0L then n / nbase else - (n / nbase) 
-            while nval > 0L do 
-                numDigits <- numDigits + 1; 
-                nval <- nval / nbase; 
-            numDigits 
-        let topdiv = 
-            let mutable topdiv = 1L 
-            for i = 1 to numDigits - 1 do 
-                topdiv <- topdiv * nbase; 
-            topdiv 
-        
-        let len = numDigits + (outputSignAndLeftSpace(outputChar,info,(n >= 0L),width,numDigits) )
-        
-        let mutable residue = 
-            if   n = System.Int64.MinValue then System.Int64.MaxValue
-            elif n < 0L            then - n 
-            else n 
-        let mutable divisor = topdiv 
-        while divisor > 0L do 
-            let digit = 
-                if n = System.Int64.MinValue && divisor = 1L 
-                then (match intFormatChar with 'd' | 'i' -> 8L | _ -> 100L) // nb. special case for min_int 
-                else residue / divisor 
-            outputDigit(outputChar,intFormatChar,int32 digit);
-            residue <- residue % divisor;
-            divisor <- divisor / nbase;
-        outputRightSpace(outputChar,info.leftJustify,width,len)
-
-    // The general technique used this file is to interpret
-    // a format string and use reflection to construct a function value that matches
-    // the specification of the format string.  
-    //
-    // Generics add some serious complications here - we have to generate
-    // a function value of exactly the right runtime type, though the most
-    // natural scheme is to produce one of type 'obj -> obj'.  We get around
-    // this by using a semi-reflective approach to creating and invoking
-    // function values of the right type.  This comes with some
-    // overheads (though they are not too bad) and thus could and should be 
-    // optimized in some special cases, e.g. where a format string
-    // just contains a single simple format specifier such as '%x'
-#if FX_ATLEAST_PORTABLE
-    let staticInvokeFlags = BindingFlags.Public ||| BindingFlags.Static
-#else
-    let staticInvokeFlags = BindingFlags.Public ||| BindingFlags.InvokeMethod ||| BindingFlags.Static
-#endif    
-    let mkFunctionValue (tys: System.Type[]) (impl:obj->obj) = 
-        FSharpValue.MakeFunction(FSharpType.MakeFunctionType(tys.[0],tys.[1]), impl)
-
-    let funTyC = typeof<(obj -> obj)>.GetGenericTypeDefinition()  
-    let mkFunTy a b = funTyC.MakeGenericType([| a;b |])
-
-    let isNamedType(ty:System.Type) = not (ty.IsArray ||  ty.IsByRef ||  ty.IsPointer)
-    let isFunctionType (ty1:System.Type)  = 
-        isNamedType(ty1) && ty1.IsGenericType && (ty1.GetGenericTypeDefinition()).Equals(funTyC)
-
-    let rec destFunTy (ty:System.Type) =
-        if isFunctionType ty then 
-            ty, ty.GetGenericArguments() 
-        else
-            match ty.BaseType with 
-            | null -> raise <| System.InvalidOperationException(SR.GetString(SR.printfNotAFunType))
-            | b -> destFunTy b 
-#if FX_ATLEAST_PORTABLE
-    let instanceInvokeFlags = BindingFlags.Public ||| BindingFlags.Instance
-#else     
-    let instanceInvokeFlags = BindingFlags.Public ||| BindingFlags.InvokeMethod ||| BindingFlags.Instance
-#endif    
-    let invokeFunctionValue (f:obj) (x:obj) = 
-        let fTy,_ = destFunTy (f.GetType())
-#if FX_ATLEAST_PORTABLE
-        let meth = fTy.GetMethod("Invoke",instanceInvokeFlags)
-        meth.Invoke(f,[| x |])
-#else        
-#if FX_NO_CULTURE_INFO_ARGS
-        fTy.InvokeMember("Invoke",instanceInvokeFlags,(null:Binder),f,[| x |]) 
-#else
-        fTy.InvokeMember("Invoke",instanceInvokeFlags,(null:Binder),f,[| x |],CultureInfo.InvariantCulture(*FxCop:1304*)) 
-#endif
-#endif
-
-    let buildFunctionForOneArgPat (ty: System.Type) impl = 
-        let _,tys = destFunTy ty 
-        let rty = tys.[1]
-        // PERF: this technique is a bit slow (e.g. in simple cases, like 'sprintf "%x"') 
-        mkFunctionValue tys (fun inp -> impl rty inp)
-
-    let buildFunctionForTwoArgPat args ty i go = 
-        let _,tys1 = destFunTy ty 
-        let rty1 = tys1.[1] 
-        let _,tys2 =  destFunTy rty1 
-        let rty2 = tys2.[1] 
-        mkFunctionValue tys1 (fun inpf -> 
-          mkFunctionValue tys2 (fun inpx -> 
-            go (inpx::inpf::args) rty2 (i+1)))
-
-    let buildFunctionForOneFunArgPat args ty i go = 
-        let _,tys1 = destFunTy ty 
-        let rty1 = tys1.[1] 
-        mkFunctionValue tys1 (fun inpf -> go (inpf::args) rty1 (i+1))
-
-    let isDigit c = ('0' <= c && c <= '9')
-    let rec parseFlags info (fmt:string) i = 
-        if i >= fmt.Length then raise <| System.ArgumentException (SR.GetString(SR.printfMissingFormatSpecifier));
-        match fmt.[i] with
-        | '-' -> info.leftJustify <- true; parseFlags info fmt (i+1)
-        | '+' -> info.numPrefixIfPos <- Some '+'; parseFlags info fmt (i+1)
-        | '0' -> info.addZeros <- true; parseFlags info fmt (i+1)
-        | ' ' -> info.numPrefixIfPos <- Some ' '; parseFlags info fmt (i+1)
-        | '#' -> raise <| System.ArgumentException (SR.GetString(SR.printfHashFormatSpecifierIllegal)); 
-        | _ -> i 
-
-    let rec parseDigitsPrecision (fmt:string) len i = 
-        if i >= len then raise <| System.ArgumentException (SR.GetString(SR.printfPrecisonSpecifierIllegal));
-        match fmt.[i] with
-        | c when isDigit c -> parseDigitsPrecision fmt len (i+1)
-        | _ -> i 
-
-    let parsePrecision (fmt:string) len i = 
-        if i >= len then raise <| System.ArgumentException (SR.GetString(SR.printfPrecisonSpecifierIllegal));
-        match fmt.[i] with
-        | c when isDigit c -> false,parseDigitsPrecision fmt len (i+1)
-        | '*' -> true,(i+1)
-        | _ -> false,i 
-
-    let rec parseSliceDotAndPrecision (fmt:string) len i = 
-        match fmt.[i] with
-        | '.' -> 
-            let w1 = i 
-            let precisionArg,i = parsePrecision fmt len (i+1) 
-            w1,Some (precisionArg,i),i
-        | _ -> i,None,i 
-
-    let rec parseSliceWidthAndPrecision (fmt:string) len i = 
-        if i >= len then raise <| System.ArgumentException (SR.GetString(SR.printfWidthSpecifierIllegal));
-        match fmt.[i] with
-        | c when isDigit c -> parseSliceWidthAndPrecision fmt len (i+1)
-        | '*' -> true,parseSliceDotAndPrecision fmt len (i+1)
-        | _ -> false,parseSliceDotAndPrecision fmt len i
-
-    let invariantCulture = System.Globalization.CultureInfo.InvariantCulture 
-    let parseWidthAndPrecision fmt len i = 
-        let w0 = i 
-        let widthArg,(w1,w2,i) = parseSliceWidthAndPrecision fmt len i 
-        let width = 
-            if (w0 = w1) then None 
-            elif widthArg then Some(None)
-            else Some (Some(System.Int32.Parse (fmt.[w0..w1-1],invariantCulture)) )
-        let precision = 
-            match w2 with 
-            | None -> None 
-            | Some (precisionArg,w2') -> 
-                if precisionArg then Some(None)
-                else Some (Some(System.Int32.Parse (fmt.[w1+1..w2'-1],invariantCulture)) )
-        width,precision,i 
-      
-    let newInfo ()= 
-        { leftJustify      = false;
-          numPrefixIfPos = None;
-          addZeros         = false; }
-
-    let defaultInfo = newInfo() 
-
-    let formatString outputChar info width (s:string) isNum = 
-        match s with 
-        | null -> outputSpace(outputChar,width,0)
-        | _ -> 
-            if not info.leftJustify then
-                if isNum && info.addZeros then outputZeros(outputChar,width,s.Length)
-                else outputSpace(outputChar,width,s.Length);
-            s |> String.iter outputChar; 
-            if info.leftJustify then
-                if isNum && info.addZeros then outputZeros(outputChar,width,s.Length)
-                else outputSpace(outputChar,width,s.Length)
-                
-    let capture1 (fmt:string) i args ty (go : obj list -> System.Type -> int -> obj) : obj = 
-        let info = newInfo() 
-        let len = fmt.Length 
-        let i = parseFlags info fmt i 
-        let width,precision,i = parseWidthAndPrecision fmt len i 
-        let intFormatChar = fmt.[i] 
-
-        let captureCoreArgs args ty =
-            match intFormatChar with
-            | '%' -> go args ty (i+1) 
-            | 'd' | 'i' | 'o' | 'u' | 'x' | 'X' -> buildFunctionForOneArgPat ty (fun rty n -> go (n::args) rty (i+1))
-            | 'l' -> buildFunctionForOneArgPat ty (fun rty n -> go (n::args) rty (i+2))
-            | 'n' -> buildFunctionForOneArgPat ty (fun rty n -> go (n::args) rty (i+2))
-            | 'L' -> buildFunctionForOneArgPat ty (fun rty n -> go (n::args) rty (i+2))
-                  
-            | 'U' -> 
-                let i = i+1 
-                let intFormatChar = fmt.[i]
-                match intFormatChar with
-                 | 'd' | 'i' | 'o' | 'u' | 'x' | 'X' -> buildFunctionForOneArgPat ty (fun rty n -> go (n::args) rty (i+1))
-                 | 'l' ->  buildFunctionForOneArgPat ty (fun rty n -> go (n::args) rty (i+2))
-                 | 'n' ->  buildFunctionForOneArgPat ty (fun rty n -> go (n::args) rty (i+2))
-                 | 'L' ->  buildFunctionForOneArgPat ty (fun rty n -> go (n::args) rty (i+2))
-                 | _ -> raise <| System.ArgumentException (SR.GetString1(SR.printfSpecifierAfterIllegal, "U"))
-                  
-            | 'f' | 'F' | 'e' | 'E' | 'g' | 'G' -> buildFunctionForOneArgPat ty (fun rty n -> go (n::args) rty (i+1))
-            | 'M' -> buildFunctionForOneArgPat ty (fun rty n -> go (n::args) rty (i+1))
-            | 's' -> buildFunctionForOneArgPat ty (fun rty n -> go (n::args) rty (i+1))
-            | 'c' -> buildFunctionForOneArgPat ty (fun rty n -> go (n::args) rty (i+1))
-            | 'b' -> buildFunctionForOneArgPat ty (fun rty n -> go (n::args) rty (i+1))
-            | 'O' -> buildFunctionForOneArgPat ty (fun rty xobj -> go (xobj::args) rty (i+1))
-            | 'A' -> buildFunctionForOneArgPat ty (fun rty xobj -> go (xobj::args) rty (i+1))
-            | 'a' -> buildFunctionForTwoArgPat args ty i go
-            | 't' -> buildFunctionForOneFunArgPat args ty i go
-            | _ -> raise <| System.ArgumentException(SR.GetString1(SR.printfBadFormatSpecifier,intFormatChar.ToString()))
-        let capturePrecisionArg args ty = 
-            match precision with 
-            | None | Some(Some _) -> captureCoreArgs args ty
-            | Some(None) -> buildFunctionForOneArgPat ty (fun rty n -> captureCoreArgs (n :: args) rty)
-        let captureWidthArg args ty = 
-            match width with 
-            | None | Some(Some _) -> capturePrecisionArg args ty
-            | Some(None) -> buildFunctionForOneArgPat ty (fun rty n -> capturePrecisionArg (n :: args) rty)
-        captureWidthArg args ty
-        
-
-    let unboxAsInt64 (n:obj) = 
-        match n with 
-        | :? sbyte      as x -> x |> int64
-        | :? int16      as x -> x |> int64
-        | :? int32      as x -> x |> int64
-        | :? nativeint  as x -> x |> int64
-        | :? int64      as x -> x
-        | :? byte       as x -> x |> uint64 |> int64
-        | :? uint16     as x -> x |> uint64 |> int64
-        | :? uint32     as x -> x |> uint64 |> int64
-        | :? uint64     as x -> x |> int64 
-        | :? unativeint as x -> x |> uint64 |> int64
-        | _ -> raise <| System.ArgumentException (SR.GetString(SR.printfBadIntegerForDynamicFomatter))
-        
-    let unboxAsUInt64 (n:obj) = 
-        let unsigned = 
-            match n with 
-            | :? sbyte     as x -> x |> byte   |> box
-            | :? int16     as x -> x |> uint16 |> box
-            | :? int32     as x -> x |> uint32 |> box
-            | :? int64     as x -> x |> uint64 |> box
-            | :? nativeint as x -> x |> unativeint |> box
-            | _ -> n
-        unboxAsInt64 unsigned |> uint64
-        
-    let formatOne (outa: 'c -> unit) (outputChar: char -> unit) (os : 'b) (fmt:string) i args : (int * obj list) = 
-        let info = newInfo() 
-        let len = fmt.Length 
-        let i = parseFlags info fmt i 
-        let width,precision,i = parseWidthAndPrecision fmt len i 
-        let intFormatChar = fmt.[i]
-
-        let width,args = 
-            match width,args with
-            | None,args -> None,args
-            | Some(Some w),args -> Some w,args
-            | Some(None),n::args -> Some (unbox n), args
-            | _ -> raise <| System.ArgumentException (SR.GetString(SR.printfExpectedWidth)) 
-
-        let precision,args = 
-            match precision,args with
-            | None,args -> None,args
-            | Some(Some w),args -> Some w,args
-            | Some(None),n::args -> Some (unbox n), args
-            | _ -> raise <| System.ArgumentException (SR.GetString(SR.printfExpectedPrecision)) 
-
-        match intFormatChar,args with
-        | '%',args -> 
-            outputChar intFormatChar; i+1, args
-        | ('d' | 'i'),n::args -> 
-            match n with 
-            | (:? byte | :? uint16 | :? uint32 | :? uint64 | :? unativeint)  -> 
-                outputUInt64(outputChar,intFormatChar,width,info,(unboxAsUInt64 n)); 
-            | _ -> 
-                outputInt64(outputChar,intFormatChar,width,info,(unboxAsInt64 n)); 
-            i+1,args
-        | ('o' | 'u' | 'x' | 'X'),n::args -> 
-            outputUInt64(outputChar,intFormatChar,width,info,(unboxAsUInt64 n)); 
-            i+1,args
-        | ('l' | 'L'),n::args ->
-            let i = i+1 
-            let intFormatChar = fmt.[i]
-            match intFormatChar with
-            | 'd' | 'i' ->
-                outputInt64(outputChar,intFormatChar,width,info,(unboxAsInt64 n)); 
-                i+1,args
-            | 'o' | 'u' | 'x' | 'X' -> 
-                outputUInt64(outputChar,intFormatChar,width,info,(unboxAsUInt64 n)); 
-                i+1,args
-            | _ -> raise <| System.ArgumentException (SR.GetString1(SR.printfSpecifierAfterIllegal, "n"))
-        | 'n',n::args ->
-            let i = i+1 
-            let intFormatChar = fmt.[i]
-            match intFormatChar with
-            | 'd' | 'i' ->
-                outputInt64(outputChar,intFormatChar,width,info,(unboxAsInt64 n)); 
-                i+1,args
-            | 'o' | 'u' | 'x' | 'X' -> 
-                outputUInt64(outputChar,intFormatChar,width,info,(unboxAsUInt64 n)); 
-                i+1,args
-            | _ -> raise <| System.ArgumentException (SR.GetString1(SR.printfSpecifierAfterIllegal, "l"))
-        | 'U',n::args -> 
-            let i = i+1 
-            let intFormatChar = fmt.[i]
-            match intFormatChar with
-            | 'd' | 'i' | 'o' | 'u' | 'x' | 'X' -> 
-                outputUInt64(outputChar,intFormatChar,width,info,(unboxAsUInt64 n)); 
-                i+1,args
-            | 'l' ->
-                let i = i+1 
-                let intFormatChar = fmt.[i]
-                match intFormatChar with
-                | 'd' | 'i' | 'o' | 'u' | 'x' | 'X' -> 
-                    outputUInt64(outputChar,intFormatChar,width,info,(unboxAsUInt64 n)); 
-                    i+1,args
-                | _ -> raise <| System.ArgumentException (SR.GetString1(SR.printfSpecifierAfterIllegal, "Ul"))
-            | 'n' ->
-                let i = i+1 
-                let intFormatChar = fmt.[i]
-                match intFormatChar with
-                | 'd' | 'i' | 'o' | 'u' | 'x' | 'X' -> 
-                    outputUInt64(outputChar,intFormatChar,width,info,(unboxAsUInt64 n)); 
-                    i+1,args
-                | _ -> raise <| System.ArgumentException (SR.GetString1(SR.printfSpecifierAfterIllegal, "Un"))
-            | 'L' ->
-                let i = i+1 
-                let intFormatChar = fmt.[i]
-                match intFormatChar with
-                | 'd' | 'i' | 'o' | 'u' | 'x' | 'X' -> 
-                    outputUInt64(outputChar,intFormatChar,width,info,(unboxAsUInt64 n)); 
-                    i+1,args
-                | _ -> raise <| System.ArgumentException (SR.GetString1(SR.printfSpecifierAfterIllegal, "UL"))
-            | _ -> raise <| System.ArgumentException (SR.GetString1(SR.printfSpecifierAfterIllegal, "U"))
-              
-        | ('f' | 'F' | 'e' | 'E' | 'g' | 'G'),n::args -> 
-            let s, number, positive = 
-                match n with 
-                | :? float as f -> f.ToString(stringOfChar intFormatChar + (match precision with None -> "6" | Some n -> stringOfInt (max (min n 99) 0)),invariantCulture), not (f = infinity || f = -infinity || System.Double.IsNaN f), f >= 0.
-                | :? float32 as f -> f.ToString(stringOfChar intFormatChar + (match precision with None -> "6" | Some n -> stringOfInt (max (min n 99) 0)),invariantCulture), not (f = infinityf || f = -infinityf || System.Single.IsNaN f), f >= 0.f
-                | :? decimal as f -> f.ToString(stringOfChar intFormatChar + (match precision with None -> "6" | Some n -> stringOfInt (max (min n 99) 0)),invariantCulture), true, f >= 0M
-                | _ -> raise <| System.ArgumentException (SR.GetString(SR.printfBadFloatValue))
-                  
-            let s = match info.numPrefixIfPos with Some c when positive -> stringOfChar c + s  | _ -> s
-            formatString outputChar info width s number;
-            i+1,args
-        | 'M',n::args -> 
-            let d = (unbox n : System.Decimal) 
-            let s = d.ToString("G",invariantCulture) 
-            let s = match info.numPrefixIfPos with Some c when d >= 0M -> stringOfChar c + s | _ -> s
-            formatString outputChar info width s true;
-            i+1,args
-        | 's',nobj::args -> formatString outputChar info width (unbox nobj) false; i+1,args
-        | 'c',nobj::args -> formatString outputChar info width (stringOfChar (unbox nobj)) false; i+1,args
-        | 'b',nobj::args -> formatString outputChar info width (if (unbox nobj) then "true" else "false") false; i+1,args
-        | 'O',xobj::args -> formatString outputChar info width (match xobj with null -> "<null>" | _ -> xobj.ToString()) false; i+1,args
-        | 'A',xobj::args -> 
-            let bindingFlags = 
-                match info.numPrefixIfPos with 
-                | None     -> BindingFlags.Public                            // Default see Public only
-                | Some '+' -> BindingFlags.Public ||| BindingFlags.NonPublic // %+A, sees anything possible
-                | Some c   -> failwith ("internal: %A has an unexpected numeric prefix '" + string c + "'") 
-            let opts = FormatOptions.Default  
-            let opts = match width with None -> opts | Some w -> { opts with PrintWidth = w }
-            // printfn %0A is considered to mean 'print width zero'
-            let opts = if info.addZeros then { opts with PrintWidth = 0 } else opts
-            
-            let opts = match precision with None -> opts | Some w -> { opts with PrintSize = w }
-            let txt = 
-                match xobj with 
-                | null -> "<null>" 
-                | _ -> 
-                    Display.anyToStringForPrintf opts bindingFlags xobj
-                    
-            txt |> String.iter outputChar; 
-            i+1,args
-        | 'a',fobj::xobj::args -> 
-            outa (unbox (invokeFunctionValue (invokeFunctionValue fobj (box os)) xobj)); 
-            i+1,args
-        | 't',f::args -> outa ((unbox f) os); i+1,args
-        | _ -> raise <| System.ArgumentException (SR.GetString(SR.printfBadFormatSpecifier))
-
-
-    let gprintf (initialize : unit -> 'b * ('c -> unit) * (char -> unit) * (unit -> 'd)) (fmt : PrintfFormat<'a,'b,'c,'d>) : 'a = 
-        let fmt = fmt.Value
-        match fmt with 
-        // optimize some common cases 
-        | "%s" -> unbox (box (fun (s:string) -> let _,_,outputChar,finalize = initialize() in formatString outputChar defaultInfo None s false; finalize()))
-        // | "%x" -> unbox (box (fun (n:int)    -> let os,outa,outputChar,finalize = initialize() in outputUInt64 outputChar 'x' None defaultInfo (int32_to_uint64 n); finalize()))
-        // | "%d" -> unbox (box (fun (n:int)    -> let os,outa,outputChar,finalize = initialize() in outputInt64  outputChar 'd' None defaultInfo (int32_to_int64 n); finalize()))
-        | _ -> 
-            let len = fmt.Length 
-
-            /// After all arguments are captures we reinterpret and execute the actions
-            let run args = 
-                let os,outa,outputChar,finalize = initialize()
-                let rec go args i = 
-                    if i >= len ||  (fmt.[i] = '%' && i+1 >= len) then (box (finalize())) 
-                    elif System.Char.IsSurrogatePair(fmt,i) then 
-                       outputChar fmt.[i];
-                       outputChar fmt.[i+1];
-                       go args (i+2)
-                    else
-                    
-                        match fmt.[i] with
-                        | '%' ->
-                            let i,args = formatOne outa outputChar os fmt (i+1) args 
-                            go args i 
-                        | c ->
-                            outputChar c; go args (i+1) 
-                go args 0
-
-            /// Function to capture the arguments and then run.
-            let rec capture args ty i = 
-                if i >= len ||  (fmt.[i] = '%' && i+1 >= len) then 
-                    run (List.rev args) 
-                elif System.Char.IsSurrogatePair(fmt,i) then 
-                   capture args ty (i+2)
+        let rec findNextFormatSpecifier (s : string)  i = 
+            if i >= s.Length then 
+                s.Length
+            else
+            let c = s.[i]
+            if c = '%' then
+                if i + 1 < s.Length then
+                    if s.[i + 1] = '%' then findNextFormatSpecifier s (i + 2)
+                    else i
                 else
-                    match fmt.[i] with
-                    | '%' ->
-                        let i = i+1 
-                        capture1 fmt i args ty capture
-                    | _ ->
-                        capture args ty (i+1) 
+                    raise (ArgumentException("Missing format specifier"))
+            else findNextFormatSpecifier s (i + 1)
 
-            (unbox (capture [] (typeof<'a>) 0) : 'a)
+        let parseFlags (s : string) i : FormatFlags * int = 
+            let rec go flags i = 
+                match s.[i] with
+                | '0' -> go (flags ||| FormatFlags.PadWithZeros) (i + 1)
+                | '+' -> go (flags ||| FormatFlags.PlusForPositives) (i + 1)
+                | ' ' -> go (flags ||| FormatFlags.SpaceForPositives) (i + 1)
+                | '-' -> go (flags ||| FormatFlags.LeftJustify) (i + 1)
+                | _ -> flags, i
+            go FormatFlags.None i
+
+        let parseWidth (s : string) i : int * int = 
+            if s.[i] = '*' then StarValue, (i + 1)
+            elif isDigit (s.[i]) then intFromString s i
+            else NotSpecifiedValue, i
+
+        let parsePrecision (s : string) i : int * int = 
+            if s.[i] = '.' then
+                if s.[i + 1] = '*' then StarValue, i + 2
+                elif isDigit (s.[i + 1]) then intFromString s (i + 1)
+                else raise (ArgumentException("invalid precision value"))
+            else NotSpecifiedValue, i
+        
+        let parseTypeChar (s : string) i : char * int = 
+            s.[i], (i + 1)
+    
+    /// Abstracts generated printer from the details of particular environment: how to write text, how to produce results etc...
+    [<AbstractClass>]
+    type PrintfEnv<'State, 'Residue, 'Result> =
+        val State : 'State
+        new(s : 'State) = { State = s }
+        abstract Finalize : unit -> 'Result
+        abstract Write : string -> unit
+        abstract WriteT : 'Residue -> unit
+    
+    type Utils =
+        static member inline Write (env : PrintfEnv<_, _, _>, a, b) =
+            env.Write a
+            env.Write b
+        static member inline Write (env : PrintfEnv<_, _, _>, a, b, c) =
+            Utils.Write(env, a, b)
+            env.Write c
+        static member inline Write (env : PrintfEnv<_, _, _>, a, b, c, d) =
+            Utils.Write(env, a, b)
+            Utils.Write(env, c, d)
+        static member inline Write (env : PrintfEnv<_, _, _>, a, b, c, d, e) =
+            Utils.Write(env, a, b, c)
+            Utils.Write(env, d, e)
+        static member inline Write (env : PrintfEnv<_, _, _>, a, b, c, d, e, f) =
+            Utils.Write(env, a, b, c, d)
+            Utils.Write(env, e, f)
+        static member inline Write (env : PrintfEnv<_, _, _>, a, b, c, d, e, f, g) =
+            Utils.Write(env, a, b, c, d, e)
+            Utils.Write(env, f, g)
+        static member inline Write (env : PrintfEnv<_, _, _>, a, b, c, d, e, f, g, h) =
+            Utils.Write(env, a, b, c, d, e, f)
+            Utils.Write(env, g, h)
+        static member inline Write (env : PrintfEnv<_, _, _>, a, b, c, d, e, f, g, h, i) =
+            Utils.Write(env, a, b, c, d, e, f, g)
+            Utils.Write(env, h ,i)
+        static member inline Write (env : PrintfEnv<_, _, _>, a, b, c, d, e, f, g, h, i, j) =
+            Utils.Write(env, a, b, c, d, e, f, g, h)
+            Utils.Write(env, i, j)
+        static member inline Write (env : PrintfEnv<_, _, _>, a, b, c, d, e, f, g, h, i, j, k) =
+            Utils.Write(env, a, b, c, d, e, f, g, h, i)
+            Utils.Write(env, j, k)
+        static member inline Write (env : PrintfEnv<_, _, _>, a, b, c, d, e, f, g, h, i, j, k, l, m) =
+            Utils.Write(env, a, b, c, d, e, f, g, h, i, j, k)
+            Utils.Write(env, l, m)
+    
+    /// Type of results produced by specialization
+    /// This is function that accepts thunk to create PrintfEnv on demand and returns concrete instance of Printer (curried function)
+    /// After all arguments is collected, specialization obtains concrete PrintfEnv from the thunk and use it to output collected data.
+    type PrintfFactory<'State, 'Residue, 'Result, 'Printer> = (unit -> PrintfEnv<'State, 'Residue, 'Result>) -> 'Printer
+
+    [<Literal>]
+    let MaxArgumentsInSpecialization = 5
+
+    /// Specializations are created via factory methods. These methods accepts 2 kinds of arguments
+    /// - parts of format string that corresponds to raw text
+    /// - functions that can transform collected values to strings
+    /// basic shape of the signature of specialization
+    /// <prefix-string> + <converter for arg1> + <suffix that comes after arg1> + ... <converter for arg-N> + <suffix that comes after arg-N>
+    type Specializations<'State, 'Residue, 'Result> private ()=
+     
+        static member Final1<'A>
+            (
+                s0, conv1, s1
+            ) =
+            (fun (env : unit -> PrintfEnv<'State, 'Residue, 'Result>) ->
+                (fun (a : 'A) ->
+                    let env = env()
+                    Utils.Write(env, s0, (conv1 a), s1)
+                    env.Finalize()
+                )
+            )
+        static member Final2<'A, 'B>
+            (
+                s0, conv1, s1, conv2, s2
+            ) =
+            (fun (env : unit -> PrintfEnv<'State, 'Residue, 'Result>) ->
+                (fun (a : 'A) (b : 'B) ->
+                    let env = env()
+                    Utils.Write(env, s0, (conv1 a), s1, (conv2 b), s2)
+                    env.Finalize()
+                )
+            )
+
+        static member Final3<'A, 'B, 'C>
+            (
+                s0, conv1, s1, conv2, s2, conv3, s3
+            ) =
+            (fun (env : unit -> PrintfEnv<'State, 'Residue, 'Result>) ->
+                (fun (a : 'A) (b : 'B) (c : 'C) ->
+                    let env = env()
+                    Utils.Write(env, s0, (conv1 a), s1, (conv2 b), s2, (conv3 c), s3)
+                    env.Finalize()
+                )
+            )
+
+        static member Final4<'A, 'B, 'C, 'D>
+            (
+                s0, conv1, s1, conv2, s2, conv3, s3, conv4, s4
+            ) =
+            (fun (env : unit -> PrintfEnv<'State, 'Residue, 'Result>) ->
+                (fun (a : 'A) (b : 'B) (c : 'C) (d : 'D)->
+                    let env = env()
+                    Utils.Write(env, s0, (conv1 a), s1, (conv2 b), s2, (conv3 c), s3, (conv4 d), s4)
+                    env.Finalize()
+                )
+            )
+        static member Final5<'A, 'B, 'C, 'D, 'E>
+            (
+                s0, conv1, s1, conv2, s2, conv3, s3, conv4, s4, conv5, s5
+            ) =
+            (fun (env : unit -> PrintfEnv<'State, 'Residue, 'Result>) ->
+                (fun (a : 'A) (b : 'B) (c : 'C) (d : 'D) (e : 'E)->
+                    let env = env()
+                    Utils.Write(env, s0, (conv1 a), s1, (conv2 b), s2, (conv3 c), s3, (conv4 d), s4, (conv5 e), s5)
+                    env.Finalize()
+                )
+            )
+        static member Chained1<'A, 'Tail>
+            (
+                s0, conv1,
+                next
+            ) =
+            (fun (env : unit -> PrintfEnv<'State, 'Residue, 'Result>) ->
+                (fun (a : 'A) ->
+                    let env() = 
+                        let env = env()
+                        Utils.Write(env, s0, (conv1 a))
+                        env
+                    next env : 'Tail
+                )
+            )
+        static member Chained2<'A, 'B, 'Tail>
+            (
+                s0, conv1, s1, conv2,
+                next
+            ) =
+            (fun (env : unit -> PrintfEnv<'State, 'Residue, 'Result>) ->
+                (fun (a : 'A) (b : 'B) ->
+                    let env() = 
+                        let env = env()
+                        Utils.Write(env, s0, (conv1 a), s1, (conv2 b))
+                        env
+                    next env : 'Tail
+                )
+            )
+
+        static member Chained3<'A, 'B, 'C, 'Tail>
+            (
+                s0, conv1, s1, conv2, s2, conv3,
+                next
+            ) =
+            (fun (env : unit -> PrintfEnv<'State, 'Residue, 'Result>) ->
+                (fun (a : 'A) (b : 'B) (c : 'C) ->
+                    let env() = 
+                        let env = env()
+                        Utils.Write(env, s0, (conv1 a), s1, (conv2 b), s2, (conv3 c))
+                        env
+                    next env : 'Tail
+                )
+            )
+
+        static member Chained4<'A, 'B, 'C, 'D, 'Tail>
+            (
+                s0, conv1, s1, conv2, s2, conv3, s3, conv4,
+                next
+            ) =
+            (fun (env : unit -> PrintfEnv<'State, 'Residue, 'Result>) ->
+                (fun (a : 'A) (b : 'B) (c : 'C) (d : 'D)->
+                    let env() = 
+                        let env = env()
+                        Utils.Write(env, s0, (conv1 a), s1, (conv2 b), s2, (conv3 c), s3, (conv4 d))
+                        env
+                    next env : 'Tail
+                )
+            )
+        static member Chained5<'A, 'B, 'C, 'D, 'E, 'Tail>
+            (
+                s0, conv1, s1, conv2, s2, conv3, s3, conv4, s4, conv5,
+                next
+            ) =
+            (fun (env : unit -> PrintfEnv<'State, 'Residue, 'Result>) ->
+                (fun (a : 'A) (b : 'B) (c : 'C) (d : 'D) (e : 'E)->
+                    let env() = 
+                        let env = env()
+                        Utils.Write(env, s0, (conv1 a), s1, (conv2 b), s2, (conv3 c), s3, (conv4 d), s4, (conv5 e))
+                        env
+                    next env : 'Tail
+                )
+            )
+
+        static member TFinal(s1 : string, s2 : string) = 
+            (fun (env : unit -> PrintfEnv<'State, 'Residue, 'Result>) ->
+                (fun (f : 'State -> 'Residue) -> 
+                    let env = env()
+                    env.Write(s1)
+                    env.WriteT(f env.State)
+                    env.Write s2
+                    env.Finalize()
+                )
+            )
+        static member TChained<'Tail>(s1 : string, next : PrintfFactory<'State, 'Residue, 'Result,'Tail>) = 
+            (fun (env : unit -> PrintfEnv<'State, 'Residue, 'Result>) ->
+                (fun (f : 'State -> 'Residue) -> 
+                    let env() = 
+                        let env = env()
+                        env.Write(s1)
+                        env.WriteT(f env.State)
+                        env
+                    next(env) : 'Tail
+                )
+            )
+
+        static member LittleAFinal<'A>(s1 : string, s2 : string) = 
+            (fun (env : unit -> PrintfEnv<'State, 'Residue, 'Result>) ->
+                (fun (f : 'State -> 'A ->'Residue) (a : 'A) -> 
+                    let env = env()
+                    env.Write s1
+                    env.WriteT(f env.State a)
+                    env.Write s2
+                    env.Finalize()
+                )
+            )
+        static member LittleAChained<'A, 'Tail>(s1 : string, next : PrintfFactory<'State, 'Residue, 'Result,'Tail>) = 
+            (fun (env : unit -> PrintfEnv<'State, 'Residue, 'Result>) ->
+                (fun (f : 'State -> 'A ->'Residue) (a : 'A) -> 
+                    let env() = 
+                        let env = env()
+                        env.Write s1
+                        env.WriteT(f env.State a)
+                        env
+                    next env : 'Tail
+                )
+            )
+        static member StarFinal1<'A>(s1 : string, conv, s2 : string) = 
+            (fun (env : unit -> PrintfEnv<'State, 'Residue, 'Result>) ->
+                (fun (star1 : int) (a : 'A) -> 
+                    let env = env()
+                    env.Write s1
+                    env.Write (conv a star1 : string)
+                    env.Write s2
+                    env.Finalize()
+                )
+            )
+        static member StarFinal2<'A>(s1 : string, conv, s2 : string) = 
+            (fun (env : unit -> PrintfEnv<'State, 'Residue, 'Result>) ->
+                (fun (star1 : int) (star2 : int) (a : 'A) -> 
+                    let env = env()
+                    env.Write s1
+                    env.Write (conv a star1 star2: string)
+                    env.Write s2
+                    env.Finalize()
+                )
+            )
+
+        static member StarChained1<'A, 'Tail>(s1 : string, conv, next : PrintfFactory<'State, 'Residue, 'Result,'Tail>) = 
+            (fun (env : unit -> PrintfEnv<'State, 'Residue, 'Result>) ->
+                (fun (star1 : int) (a : 'A) -> 
+                    let env() =
+                        let env = env()
+                        env.Write s1
+                        env.Write(conv a star1 : string)
+                        env
+                    next env : 'Tail
+                )
+            )
+        static member StarChained2<'A, 'Tail>(s1 : string, conv, next : PrintfFactory<'State, 'Residue, 'Result,'Tail>) = 
+            (fun (env : unit -> PrintfEnv<'State, 'Residue, 'Result>) ->
+                (fun (star1 : int) (star2 : int) (a : 'A) -> 
+                    let env() =
+                        let env = env()
+                        env.Write s1
+                        env.Write(conv a star1 star2 : string)
+                        env
+                    next env : 'Tail
+                )
+            )
+    
+    let inline (===) a b = Object.ReferenceEquals(a, b)
+    let invariantCulture = System.Globalization.CultureInfo.InvariantCulture 
+
+    let inline boolToString v = if v then "true" else "false"
+    let inline stringToSafeString v = if v = null then "" else v
+
+    [<Literal>]
+    let DefaultPrecision = 6
+
+    let getFormatForFloat (ch : char) (prec : int) = ch.ToString() +  prec.ToString()
+    let normalizePrecision prec = min (max prec 0) 99
+
+    /// Contains helpers to convert printer functions to functions that prints value with respect to specified justification
+    /// There are two kinds to printers: 
+    /// 'T -> string - converts value to string - used for strings, basic integers etc..
+    /// string -> 'T -> string - converts value to string with given format string - used by numbers with floating point, typically precision is set via format string 
+    /// To support both categories there are two entry points:
+    /// - withPadding - adapts first category
+    /// - withPaddingFormatted - adapts second category
+    module Padding = 
+        /// pad here is function that converts T to string with respect of justification
+        /// basic - function that converts T to string without appying justification rules
+        /// adaptPaddedFormatted returns boxed function that has various number of arguments depending on if width\precision flags has '*' value 
+        let inline adaptPaddedFormatted (spec : FormatSpecifier) getFormat (basic : string -> 'T -> string) (pad : string -> int -> 'T -> string) = 
+            if spec.IsStarWidth then
+                if spec.IsStarPrecision then
+                    // width=*, prec=*
+                    box(fun v width prec -> 
+                        let fmt = getFormat (normalizePrecision prec)
+                        pad fmt width v
+                        )
+                else 
+                    // width=*, prec=?
+                    let prec = if spec.IsPrecisionSpecified then normalizePrecision spec.Precision else DefaultPrecision
+                    let fmt = getFormat prec
+                    box(fun v width -> 
+                        pad fmt width v
+                        )
+            elif spec.IsStarPrecision then
+                if spec.IsWidthSpecified then
+                    // width=val, prec=*
+                    box(fun v prec -> 
+                        let fmt = getFormat prec
+                        pad fmt spec.Width v
+                        )
+                else
+                    // width=X, prec=*
+                    box(fun v prec -> 
+                        let fmt = getFormat prec
+                        basic fmt v
+                        )                        
+            else
+                let prec = if spec.IsPrecisionSpecified then normalizePrecision spec.Precision else DefaultPrecision
+                let fmt = getFormat prec
+                if spec.IsWidthSpecified then
+                    // width=val, prec=*
+                    box(fun v -> 
+                        pad fmt spec.Width v
+                        )
+                else
+                    // width=X, prec=*
+                    box(fun v -> 
+                        basic fmt v
+                        )
+
+        /// pad here is function that converts T to string with respect of justification
+        /// basic - function that converts T to string without appying justification rules
+        /// adaptPadded returns boxed function that has various number of arguments depending on if width flags has '*' value 
+        let inline adaptPadded (spec : FormatSpecifier) (basic : 'T -> string) (pad : int -> 'T -> string) = 
+            if spec.IsStarWidth then
+                    // width=*, prec=?
+                    box(fun v width -> 
+                        pad width v
+                        )
+            else
+                if spec.IsWidthSpecified then
+                    // width=val, prec=*
+                    box(fun v -> 
+                        pad spec.Width v
+                        )
+                else
+                    // width=X, prec=*
+                    box(fun v -> 
+                        basic v
+                        )
+
+        let inline withPaddingFormatted (spec : FormatSpecifier) getFormat  (defaultFormat : string) (f : string ->  'T -> string) left right =
+            if not (spec.IsWidthSpecified || spec.IsPrecisionSpecified) then
+                box (f defaultFormat)
+            else
+                if isLeftJustify spec.Flags then
+                    adaptPaddedFormatted spec getFormat f left
+                else
+                    adaptPaddedFormatted spec getFormat f right
+
+        let inline withPadding (spec : FormatSpecifier) (f : 'T -> string) left right =
+            if not (spec.IsWidthSpecified) then
+                box f
+            else
+                if isLeftJustify spec.Flags then
+                    adaptPadded spec f left
+                else
+                    adaptPadded  spec f right
+
+    let inline isNumber (x: ^T) =
+        not (^T: (static member IsPositiveInfinity: 'T -> bool) x) && not (^T: (static member IsNegativeInfinity: 'T -> bool) x) && not (^T: (static member IsNaN: 'T -> bool) x)
+
+    let inline isInteger n = 
+        n % LanguagePrimitives.GenericOne = LanguagePrimitives.GenericZero
+    
+    let inline isPositive n = 
+        n >= LanguagePrimitives.GenericZero
+
+    /// contains functions to handle left\right justifications for non-numeric types (strings\bools)
+    module Basic =
+        let inline leftJustify f padChar = 
+            fun (w : int) v -> 
+                (f v : string).PadRight(w, padChar)
+    
+        let inline rightJustify f padChar = 
+            fun (w : int) v -> 
+                (f v : string).PadLeft(w, padChar)
+    
+    
+    /// contains functions to handle left\right and no justification case for numbers
+    module GenericNumber =
+        /// handles right justification when pad char = '0'
+        /// this case can be tricky:
+        /// - negative numbers, -7 should be printed as '-007', not '00-7'
+        /// - positive numbers when prefix for positives is set: 7 should be '+007', not '00+7'
+        let inline rightJustifyWithZeroAsPadChar (str : string) isNumber isPositive w (prefixForPositives : string) =
+            System.Diagnostics.Debug.Assert(prefixForPositives.Length = 0 || prefixForPositives.Length = 1)
+            if isNumber then
+                if isPositive then
+                    prefixForPositives + (if w = 0 then str else str.PadLeft(w - prefixForPositives.Length, '0')) // save space to 
+                else
+                    if str.[0] = '-' then
+                        let str = str.Substring(1)
+                        "-" + (if w = 0 then str else str.PadLeft(w - 1, '0'))
+                    else
+                        str.PadLeft(w, '0')
+            else
+                str.PadLeft(w, ' ')
+        
+        /// handler right justification when pad char = ' '
+        let inline rightJustifyWithSpaceAsPadChar (str : string) isNumber isPositive w (prefixForPositives : string) =
+            System.Diagnostics.Debug.Assert(prefixForPositives.Length = 0 || prefixForPositives.Length = 1)
+            (if isNumber && isPositive then prefixForPositives + str else str).PadLeft(w, ' ')
+        
+        /// handles left justification with formatting with 'G'\'g' - either for decimals or with 'g'\'G' is explicitly set 
+        let inline leftJustifyWithGFormat (str : string) isNumber isInteger isPositive w (prefixForPositives : string) padChar  =
+            if isNumber then
+                let str = if isPositive then prefixForPositives + str else str
+                // NOTE: difference - for 'g' format we use isInt check to detect situations when '5.0' is printed as '5'
+                // in this case we need to override padding and always use ' ', otherwise we'll produce incorrect results
+                if isInteger then
+                    str.PadRight(w, ' ') // don't pad integer numbers with '0' when 'g' format is specified (may yield incorrect results)
+                else
+                    str.PadRight(w, padChar) // non-integer => string representation has point => can pad with any character
+            else
+                str.PadRight(w, ' ') // pad NaNs with ' '
+
+        let inline leftJustifyWithNonGFormat (str : string) isNumber isPositive w (prefixForPositives : string) padChar  =
+            if isNumber then
+                let str = if isPositive then prefixForPositives + str else str
+                str.PadRight(w, padChar)
+            else
+                str.PadRight(w, ' ') // pad NaNs with ' ' 
+        
+        /// processes given string based depending on values isNumber\isPositive
+        let inline noJustificationCore (str : string) isNumber isPositive prefixForPositives = 
+            if isNumber && isPositive then prefixForPositives + str
+            else str
+        
+        /// noJustification handler for f : 'T -> string - basic integer types
+        let inline noJustification f (prefix : string) isUnsigned =
+            if isUnsigned then
+                fun v -> noJustificationCore (f v) true true prefix
+            else 
+                fun v -> noJustificationCore (f v) true (isPositive v) prefix
+
+        /// noJustification handler for f : string -> 'T -> string - floating point types
+        let inline noJustificationWithFormat f (prefix : string) = 
+            fun (fmt : string) v -> noJustificationCore (f fmt v) true (isPositive v) prefix
+
+        /// leftJustify handler for f : 'T -> string - basic integer types
+        let inline leftJustify isGFormat f (prefix : string) padChar isUnsigned = 
+            if isUnsigned then
+                if isGFormat then
+                    fun (w : int) v ->
+                        leftJustifyWithGFormat (f v) true (isInteger v) true w prefix padChar
+                else
+                    fun (w : int) v ->
+                        leftJustifyWithNonGFormat (f v) true true w prefix padChar
+            else
+                if isGFormat then
+                    fun (w : int) v ->
+                        leftJustifyWithGFormat (f v) true (isInteger v) (isPositive v) w prefix padChar
+                else
+                    fun (w : int) v ->
+                        leftJustifyWithNonGFormat (f v) true (isPositive v) w prefix padChar
+        
+        /// leftJustify handler for f : string -> 'T -> string - floating point types                    
+        let inline leftJustifyWithFormat isGFormat f (prefix : string) padChar = 
+            if isGFormat then
+                fun (fmt : string) (w : int) v ->
+                    leftJustifyWithGFormat (f fmt v) true (isInteger v) (isPositive v) w prefix padChar
+            else
+                fun (fmt : string) (w : int) v ->
+                    leftJustifyWithNonGFormat (f fmt v) true (isPositive v) w prefix padChar    
+
+        /// rightJustify handler for f : 'T -> string - basic integer types
+        let inline rightJustify f (prefixForPositives : string) padChar isUnsigned =
+            if isUnsigned then
+                if padChar = '0' then
+                    fun (w : int) v ->
+                        rightJustifyWithZeroAsPadChar (f v) true true w prefixForPositives
+                else
+                    System.Diagnostics.Debug.Assert((padChar = ' '))
+                    fun (w : int) v ->
+                        rightJustifyWithSpaceAsPadChar (f v) true true w prefixForPositives
+            else
+                if padChar = '0' then
+                    fun (w : int) v ->
+                        rightJustifyWithZeroAsPadChar (f v) true (isPositive v) w prefixForPositives
+
+                else
+                    System.Diagnostics.Debug.Assert((padChar = ' '))
+                    fun (w : int) v ->
+                        rightJustifyWithSpaceAsPadChar (f v) true (isPositive v) w prefixForPositives
+
+        /// rightJustify handler for f : string -> 'T -> string - floating point types                    
+        let inline rightJustifyWithFormat f (prefixForPositives : string) padChar =
+            if padChar = '0' then
+                fun (fmt : string) (w : int) v ->
+                    rightJustifyWithZeroAsPadChar (f fmt v) true (isPositive v) w prefixForPositives
+
+            else
+                System.Diagnostics.Debug.Assert((padChar = ' '))
+                fun (fmt : string) (w : int) v ->
+                    rightJustifyWithSpaceAsPadChar (f fmt v) true (isPositive v) w prefixForPositives
+    module Float = 
+        let inline noJustification f (prefixForPositives : string) = 
+            fun (fmt : string) v -> 
+                GenericNumber.noJustificationCore (f fmt v) (isNumber v) (isPositive v) prefixForPositives
+    
+        let inline leftJustify isGFormat f (prefix : string) padChar = 
+            if isGFormat then
+                fun (fmt : string) (w : int) v ->
+                    GenericNumber.leftJustifyWithGFormat (f fmt v) (isNumber v) (isInteger v) (isPositive v) w prefix padChar
+            else
+                fun (fmt : string) (w : int) v ->
+                    GenericNumber.leftJustifyWithNonGFormat (f fmt v) (isNumber v) (isPositive v) w prefix padChar  
+
+        let inline rightJustify f (prefixForPositives : string) padChar =
+            if padChar = '0' then
+                fun (fmt : string) (w : int) v ->
+                    GenericNumber.rightJustifyWithZeroAsPadChar (f fmt v) (isNumber v) (isPositive v) w prefixForPositives
+            else
+                System.Diagnostics.Debug.Assert((padChar = ' '))
+                fun (fmt : string) (w : int) v ->
+                    GenericNumber.rightJustifyWithSpaceAsPadChar (f fmt v) (isNumber v) (isPositive v) w prefixForPositives
+
+    let isDecimalFormatSpecifier (spec : FormatSpecifier) = 
+        spec.TypeChar = 'M'
+
+    let getPadAndPrefix allowZeroPadding (spec : FormatSpecifier) = 
+        let padChar = if allowZeroPadding && isPadWithZeros spec.Flags then '0' else ' ';
+        let prefix = 
+            if isPlusForPositives spec.Flags then "+" 
+            elif isSpaceForPositives spec.Flags then " "
+            else ""
+        padChar, prefix    
+
+    let isGFormat(spec : FormatSpecifier) = 
+        isDecimalFormatSpecifier spec || System.Char.ToLower(spec.TypeChar) = 'g'
+
+    let inline basicWithPadding (spec : FormatSpecifier) f =
+        let padChar, _ = getPadAndPrefix false spec
+        Padding.withPadding spec f (Basic.leftJustify f padChar) (Basic.rightJustify f padChar)
+    
+    let inline numWithPadding (spec : FormatSpecifier) isUnsigned f  =
+        let allowZeroPadding = not (isLeftJustify spec.Flags) || isDecimalFormatSpecifier spec
+        let padChar, prefix = getPadAndPrefix allowZeroPadding spec
+        let isGFormat = isGFormat spec
+        Padding.withPadding spec (GenericNumber.noJustification f prefix isUnsigned) (GenericNumber.leftJustify isGFormat f prefix padChar isUnsigned) (GenericNumber.rightJustify f prefix padChar isUnsigned)
+
+    let inline decimalWithPadding (spec : FormatSpecifier) getFormat defaultFormat f =
+        let padChar, prefix = getPadAndPrefix true spec
+        let isGFormat = isGFormat spec
+        Padding.withPaddingFormatted spec getFormat defaultFormat (GenericNumber.noJustificationWithFormat f prefix) (GenericNumber.leftJustifyWithFormat isGFormat f prefix padChar) (GenericNumber.rightJustifyWithFormat f prefix padChar)
+
+    let inline floatWithPadding (spec : FormatSpecifier) getFormat defaultFormat f =
+        let padChar, prefix = getPadAndPrefix true spec
+        let isGFormat = isGFormat spec
+        Padding.withPaddingFormatted spec getFormat defaultFormat (Float.noJustification f prefix) (Float.leftJustify isGFormat f prefix padChar) (Float.rightJustify f prefix padChar)
+    
+    let inline identity v =  v
+    let inline toString  v =   (^T : (member ToString : IFormatProvider -> string)(v, invariantCulture))
+    let inline toFormattedString fmt = fun (v : ^T) -> (^T : (member ToString : string * IFormatProvider -> string)(v, fmt, invariantCulture))
+
+    let inline numberToString c spec alt unsignedConv  =
+        if c = 'd' || c = 'i' then
+            numWithPadding spec false (alt >> toString : ^T -> string)
+        elif c = 'u' then
+            numWithPadding spec true  (alt >> unsignedConv >> toString : ^T -> string) 
+        elif c = 'x' then
+            numWithPadding spec true (alt >> toFormattedString "x" : ^T -> string)
+        elif c = 'X' then
+            numWithPadding spec true (alt >> toFormattedString "X" : ^T -> string )
+        elif c = 'o' then
+            numWithPadding spec true (fun (v : ^T) -> Convert.ToString(int64(unsignedConv (alt v)), 8))
+        else raise (ArgumentException())    
+    
+    type ObjectPrinter = 
+        static member ObjectToString<'T>(spec : FormatSpecifier) = 
+            basicWithPadding spec (fun (v : 'T) -> match box v with null -> "<null>" | x -> x.ToString())
+        
+        static member GenericToStringCore(v : 'T, opts : Microsoft.FSharp.Text.StructuredPrintfImpl.FormatOptions, bindingFlags) = 
+            // printfn %0A is considered to mean 'print width zero'
+            match box v with 
+            | null -> "<null>" 
+            | _ -> Microsoft.FSharp.Text.StructuredPrintfImpl.Display.anyToStringForPrintf opts bindingFlags v
+
+        static member GenericToString<'T>(spec : FormatSpecifier) = 
+            let bindingFlags = 
+#if FX_RESHAPED_REFLECTION
+                isPlusForPositives spec.Flags // true - show non-public
+#else
+                if isPlusForPositives spec.Flags then BindingFlags.Public ||| BindingFlags.NonPublic
+                else BindingFlags.Public 
+#endif
+
+            let useZeroWidth = isPadWithZeros spec.Flags
+            let opts = 
+                let o = Microsoft.FSharp.Text.StructuredPrintfImpl.FormatOptions.Default
+                let o =
+                    if useZeroWidth then { o with PrintWidth = 0} 
+                    elif spec.IsWidthSpecified then { o with PrintWidth = spec.Width}
+                    else o
+                if spec.IsPrecisionSpecified then { o with PrintSize = spec.Precision}
+                else o
+            match spec.IsStarWidth, spec.IsStarPrecision with
+            | true, true ->
+                box (fun (v : 'T) (width : int) (prec : int) ->
+                    let opts = { opts with PrintSize = prec }
+                    let opts  = if not useZeroWidth then { opts with PrintWidth = width} else opts
+                    ObjectPrinter.GenericToStringCore(v, opts, bindingFlags)
+                    )
+            | true, false ->
+                box (fun (v : 'T) (width : int) ->
+                    let opts  = if not useZeroWidth then { opts with PrintWidth = width} else opts
+                    ObjectPrinter.GenericToStringCore(v, opts, bindingFlags)
+                    )
+            | false, true ->
+                box (fun (v : 'T) (prec : int) ->
+                    let opts = { opts with PrintSize = prec }
+                    ObjectPrinter.GenericToStringCore(v, opts, bindingFlags)
+                    )
+            | false, false ->
+                box (fun (v : 'T) ->
+                    ObjectPrinter.GenericToStringCore(v, opts, bindingFlags)
+                    )
+    
+    let basicNumberToString (ty : Type) (spec : FormatSpecifier) =
+        System.Diagnostics.Debug.Assert(not spec.IsPrecisionSpecified, "not spec.IsPrecisionSpecified")
+
+        let ch = spec.TypeChar
+
+        match Type.GetTypeCode(ty) with
+        | TypeCode.Int32    -> numberToString ch spec identity (uint32 : int -> uint32) 
+        | TypeCode.Int64    -> numberToString ch spec identity (uint64 : int64 -> uint64)
+        | TypeCode.Byte     -> numberToString ch spec identity (byte : byte -> byte) 
+        | TypeCode.SByte    -> numberToString ch spec identity (byte : sbyte -> byte)
+        | TypeCode.Int16    -> numberToString ch spec identity (uint16 : int16 -> uint16)
+        | TypeCode.UInt16   -> numberToString ch spec identity (uint16 : uint16 -> uint16)
+        | TypeCode.UInt32   -> numberToString ch spec identity (uint32 : uint32 -> uint32)
+        | TypeCode.UInt64   -> numberToString ch spec identity (uint64 : uint64 -> uint64)
+        | _ ->
+        if ty === typeof<nativeint> then 
+            if IntPtr.Size = 4 then 
+                numberToString ch spec (fun (v : IntPtr) -> v.ToInt32()) uint32
+            else
+                numberToString ch spec (fun (v : IntPtr) -> v.ToInt64()) uint64
+        elif ty === typeof<unativeint> then 
+            if IntPtr.Size = 4 then
+                numberToString ch spec (fun (v : UIntPtr) -> v.ToUInt32()) uint32
+            else
+                numberToString ch spec (fun (v : UIntPtr) -> v.ToUInt64()) uint64
+
+        else raise (ArgumentException(ty.Name + " not a basic integer type"))
+
+    let basicFloatToString ty spec = 
+        let defaultFormat = getFormatForFloat spec.TypeChar DefaultPrecision
+        match Type.GetTypeCode(ty) with
+        | TypeCode.Single   -> floatWithPadding spec (getFormatForFloat spec.TypeChar) defaultFormat (fun fmt (v : float32) -> toFormattedString fmt v)
+        | TypeCode.Double   -> floatWithPadding spec (getFormatForFloat spec.TypeChar) defaultFormat (fun fmt (v : float) -> toFormattedString fmt v)
+        | TypeCode.Decimal  -> decimalWithPadding spec (getFormatForFloat spec.TypeChar) defaultFormat (fun fmt (v : decimal) -> toFormattedString fmt v)
+        | _ -> raise (ArgumentException(ty.Name + " not a basic floating point type"))
+
+    let private NonPublicStatics = BindingFlags.NonPublic ||| BindingFlags.Static
+
+    let private getValueConverter (ty : Type) (spec : FormatSpecifier) : obj = 
+        match spec.TypeChar with
+        | 'b' ->  
+            System.Diagnostics.Debug.Assert(ty === typeof<bool>, "ty === typeof<bool>")
+            basicWithPadding spec boolToString
+        | 's' ->
+            System.Diagnostics.Debug.Assert(ty === typeof<string>, "ty === typeof<string>")
+            basicWithPadding spec stringToSafeString
+        | 'c' ->
+            System.Diagnostics.Debug.Assert(ty === typeof<char>, "ty === typeof<char>")
+            basicWithPadding spec (fun (c : char) -> c.ToString())
+        | 'M'  ->
+            System.Diagnostics.Debug.Assert(ty === typeof<decimal>, "ty === typeof<decimal>")
+            decimalWithPadding spec (fun _ -> "G") "G" (fun fmt (v : decimal) -> toFormattedString fmt v) // %M ignores precision
+        | 'd' | 'i' | 'x' | 'X' | 'u' | 'o'-> 
+            basicNumberToString ty spec
+        | 'e' | 'E' 
+        | 'f' | 'F' 
+        | 'g' | 'G' -> 
+            basicFloatToString ty spec
+        | 'A' ->
+            let mi = typeof<ObjectPrinter>.GetMethod("GenericToString", NonPublicStatics)
+            let mi = mi.MakeGenericMethod(ty)
+            mi.Invoke(null, [| box spec |])
+        | 'O' -> 
+            let mi = typeof<ObjectPrinter>.GetMethod("ObjectToString", NonPublicStatics)
+            let mi = mi.MakeGenericMethod(ty)
+            mi.Invoke(null, [| box spec |])
+        | _ -> 
+            raise (ArgumentException(SR.GetString(SR.printfBadFormatSpecifier)))
+    
+    let extractCurriedArguments (ty : Type) n = 
+        System.Diagnostics.Debug.Assert(n = 1 || n = 2 || n = 3, "n = 1 || n = 2 || n = 3")
+        let buf = Array.zeroCreate (n + 1)
+        let rec go (ty : Type) i = 
+            if i < n then
+                match ty.GetGenericArguments() with
+                | [| argTy; retTy|] ->
+                    buf.[i] <- argTy
+                    go retTy (i + 1)
+                | _ -> failwith (String.Format("Expected function with {0} arguments", n))
+            else 
+                System.Diagnostics.Debug.Assert((i = n), "i = n")
+                buf.[i] <- ty
+                buf           
+        go ty 0
+    
+    [<Literal>]
+    let ContinuationOnStack = -1
+    
+    type private PrintfBuilderStack() = 
+        let args = Stack(10)
+        let types = Stack(5)
+
+        let stackToArray size start count (s : Stack<_>) = 
+            let arr = Array.zeroCreate size
+            for i = 0 to count - 1 do
+                arr.[start + i] <- s.Pop()
+            arr
+        
+        member this.GetArgumentAndTypesAsArrays
+            (
+                argsArraySize, argsArrayStartPos, argsArrayTotalCount, 
+                typesArraySize, typesArrayStartPos, typesArrayTotalCount 
+            ) = 
+            let argsArray = stackToArray argsArraySize argsArrayStartPos argsArrayTotalCount args
+            let typesArray = stackToArray typesArraySize typesArrayStartPos typesArrayTotalCount types
+            argsArray, typesArray
+
+        member this.PopContinuationWithType() = 
+            System.Diagnostics.Debug.Assert(args.Count = 1, "args.Count = 1")
+            System.Diagnostics.Debug.Assert(types.Count = 1, "types.Count = 1")
+            
+            let cont = args.Pop()
+            let contTy = types.Pop()
+
+            cont, contTy
+
+        member this.PopValueUnsafe() = args.Pop()
+
+        member this.PushContinuationWithType (cont : obj, contTy : Type) = 
+            System.Diagnostics.Debug.Assert(this.IsEmpty, "this.IsEmpty")
+            System.Diagnostics.Debug.Assert(
+                (
+                    let _arg, retTy = Microsoft.FSharp.Reflection.FSharpType.GetFunctionElements(cont.GetType())
+                    contTy.IsAssignableFrom retTy
+                ),
+                "incorrect type"
+                )
+
+            this.PushArgumentWithType(cont, contTy)
+
+        member this.PushArgument(value : obj) =
+            args.Push value
+
+        member this.PushArgumentWithType(value : obj, ty) =
+            args.Push value
+            types.Push ty
+
+        member this.HasContinuationOnStack(expectedNumberOfArguments) = 
+            types.Count = expectedNumberOfArguments + 1
+
+        member this.IsEmpty = 
+            System.Diagnostics.Debug.Assert(args.Count = types.Count, "args.Count = types.Count")
+            args.Count = 0
+
+    /// Parses format string and creates result printer function.
+    /// First it recursively consumes format string up to the end, then during unwinding builds printer using PrintfBuilderStack as storage for arguments.
+    /// idea of implementation is very simple: every step can either push argument to the stack (if current block of 5 format specifiers is not yet filled) 
+    //  or grab the content of stack, build intermediate printer and push it back to stack (so it can later be consumed by as argument) 
+    type private PrintfBuilder<'S, 'Re, 'Res>() =
+    
+        let mutable count = 0
+
+        let verifyMethodInfoWasTaken (mi : System.Reflection.MemberInfo) =
+            if mi = null then 
+                ignore (System.Diagnostics.Debugger.Launch())
+            
+        let buildSpecialChained(spec : FormatSpecifier, argTys : Type[], prefix : string, tail : obj, retTy) = 
+            if spec.TypeChar = 'a' then
+                let mi = typeof<Specializations<'S, 'Re, 'Res>>.GetMethod("LittleAChained", NonPublicStatics)
+                verifyMethodInfoWasTaken mi
+                let mi = mi.MakeGenericMethod([| argTys.[1];  retTy |])
+                let args = [| box prefix; tail   |]
+                mi.Invoke(null, args)
+            elif spec.TypeChar = 't' then
+                let mi = typeof<Specializations<'S, 'Re, 'Res>>.GetMethod("TChained", NonPublicStatics)
+                verifyMethodInfoWasTaken mi
+                let mi = mi.MakeGenericMethod([| retTy |])
+                let args = [| box prefix; tail |]
+                mi.Invoke(null, args)
+            else
+                System.Diagnostics.Debug.Assert(spec.IsStarPrecision || spec.IsStarWidth , "spec.IsStarPrecision || spec.IsStarWidth ")
+
+                let n = if spec.IsStarWidth = spec.IsStarPrecision then 2 else 1
+                let argTy = argTys.[argTys.Length - 2]
+
+                let mi = typeof<Specializations<'S, 'Re, 'Res>>.GetMethod("StarChained" + (n.ToString()), NonPublicStatics)
+                verifyMethodInfoWasTaken mi
+                let mi = mi.MakeGenericMethod([| argTy;  retTy |])
+                let conv = getValueConverter argTy spec 
+                let args = [| box prefix; box conv; tail |]
+                mi.Invoke(null, args)
+            
+        let buildSpecialFinal(spec : FormatSpecifier, argTys : Type[], prefix : string, suffix : string) =
+            if spec.TypeChar = 'a' then
+                let mi = typeof<Specializations<'S, 'Re, 'Res>>.GetMethod("LittleAFinal", NonPublicStatics)
+                verifyMethodInfoWasTaken mi
+                let mi = mi.MakeGenericMethod(argTys.[1] : Type)
+                let args = [| box prefix; box suffix |]
+                mi.Invoke(null, args)
+            elif spec.TypeChar = 't' then
+                let mi = typeof<Specializations<'S, 'Re, 'Res>>.GetMethod("TFinal", NonPublicStatics)
+                verifyMethodInfoWasTaken mi
+                let args = [| box prefix; box suffix |]
+                mi.Invoke(null, args)
+            else
+                System.Diagnostics.Debug.Assert(spec.IsStarPrecision || spec.IsStarWidth , "spec.IsStarPrecision || spec.IsStarWidth ")
+
+                let n = if spec.IsStarWidth = spec.IsStarPrecision then 2 else 1
+                let argTy = argTys.[argTys.Length - 2]
+
+                let mi = typeof<Specializations<'S, 'Re, 'Res>>.GetMethod("StarFinal" + (n.ToString()), NonPublicStatics)
+                verifyMethodInfoWasTaken mi
+                let mi = mi.MakeGenericMethod(argTy)
+                let conv = getValueConverter argTy spec 
+                let args = [| box prefix; box conv; box suffix  |]
+                mi.Invoke(null, args)
+
+        let buildPlainFinal(args : obj[], argTypes : Type[]) = 
+            let mi = typeof<Specializations<'S, 'Re, 'Res>>.GetMethod("Final" + (argTypes.Length.ToString()), NonPublicStatics)
+            verifyMethodInfoWasTaken mi
+            let mi = mi.MakeGenericMethod(argTypes)
+            mi.Invoke(null, args)
+    
+        let buildPlainChained(args : obj[], argTypes : Type[]) = 
+            let mi = typeof<Specializations<'S, 'Re, 'Res>>.GetMethod("Chained" + ((argTypes.Length - 1).ToString()), NonPublicStatics)
+            verifyMethodInfoWasTaken mi
+            let mi = mi.MakeGenericMethod(argTypes)
+            mi.Invoke(null, args)   
+
+        let builderStack = PrintfBuilderStack()
+
+        let ContinuationOnStack = -1
+
+        let buildPlain numberOfArgs prefix = 
+            let n = numberOfArgs * 2
+            let hasCont = builderStack.HasContinuationOnStack numberOfArgs
+
+            let extra = if hasCont then 1 else 0
+            let plainArgs, plainTypes = 
+                builderStack.GetArgumentAndTypesAsArrays(n + 1, 1, n, (numberOfArgs + extra), 0, numberOfArgs)
+
+            plainArgs.[0] <- box prefix
+
+            if hasCont then
+                let cont, contTy = builderStack.PopContinuationWithType()
+                plainArgs.[plainArgs.Length - 1] <- cont
+                plainTypes.[plainTypes.Length - 1] <- contTy
+
+                buildPlainChained(plainArgs, plainTypes)
+            else
+                buildPlainFinal(plainArgs, plainTypes)
+
+        let rec parseFromFormatSpecifier (prefix : string) (s : string) (funcTy : Type) i : int = 
+            
+            if i >= s.Length then 0
+            else
+            
+            System.Diagnostics.Debug.Assert(s.[i] = '%', "s.[i] = '%'")
+            count <- count + 1
+
+            let flags, i = FormatString.parseFlags s (i + 1)
+            let width, i = FormatString.parseWidth s i
+            let precision, i = FormatString.parsePrecision s i
+            let typeChar, i = FormatString.parseTypeChar s i
+            let spec = { TypeChar = typeChar; Precision = precision; Flags = flags; Width = width}
+            
+            let next = FormatString.findNextFormatSpecifier s i
+            let suffix = s.Substring(i, next - i)
+
+            let argTys = 
+                let n = 
+                    if spec.TypeChar = 'a' then 2 
+                    elif spec.IsStarWidth || spec.IsStarPrecision then
+                        if spec.IsStarWidth = spec.IsStarPrecision then 3 
+                        else 2
+                    else 1
+                extractCurriedArguments funcTy n
+
+            let retTy = argTys.[argTys.Length - 1]
+
+            let numberOfArgs = parseFromFormatSpecifier suffix s retTy next
+
+            if spec.TypeChar = 'a' || spec.TypeChar = 't' || spec.IsStarWidth || spec.IsStarPrecision then
+                if numberOfArgs = ContinuationOnStack then
+
+                    let cont, contTy = builderStack.PopContinuationWithType()
+                    let currentCont = buildSpecialChained(spec, argTys, prefix, cont, contTy)
+                    builderStack.PushContinuationWithType(currentCont, funcTy)
+
+                    ContinuationOnStack
+                else
+                    if numberOfArgs = 0 then
+                        System.Diagnostics.Debug.Assert(builderStack.IsEmpty, "builderStack.IsEmpty")
+
+                        let currentCont = buildSpecialFinal(spec, argTys, prefix, suffix)
+                        builderStack.PushContinuationWithType(currentCont, funcTy)
+                        ContinuationOnStack
+                    else
+                        
+                        
+                        let hasCont = builderStack.HasContinuationOnStack(numberOfArgs)
+                        
+                        let expectedNumberOfItemsOnStack = numberOfArgs * 2
+                        let sizeOfTypesArray = 
+                            if hasCont then numberOfArgs + 1
+                            else numberOfArgs
+                                                
+                        let plainArgs, plainTypes = 
+                            builderStack.GetArgumentAndTypesAsArrays(expectedNumberOfItemsOnStack + 1, 1, expectedNumberOfItemsOnStack, sizeOfTypesArray, 0, numberOfArgs )
+
+                        plainArgs.[0] <- box suffix
+
+                        let next =
+                            if hasCont then
+                                let nextCont, nextContTy = builderStack.PopContinuationWithType()
+                                plainArgs.[plainArgs.Length - 1] <- nextCont
+                                plainTypes.[plainTypes.Length - 1] <- nextContTy
+                                buildPlainChained(plainArgs, plainTypes)
+                            else
+                                buildPlainFinal(plainArgs, plainTypes)
+                            
+                        let next = buildSpecialChained(spec, argTys, prefix, next, retTy)
+                        builderStack.PushContinuationWithType(next, funcTy)
+
+                        ContinuationOnStack
+            else
+                if numberOfArgs = ContinuationOnStack then
+                    let idx = argTys.Length - 2
+                    builderStack.PushArgument suffix
+                    builderStack.PushArgumentWithType((getValueConverter argTys.[idx] spec), argTys.[idx])
+                    1
+                else
+                    builderStack.PushArgument suffix
+                    builderStack.PushArgumentWithType((getValueConverter argTys.[0] spec), argTys.[0])
+                    
+                    if numberOfArgs = MaxArgumentsInSpecialization - 1 then
+                        let cont = buildPlain (numberOfArgs + 1) prefix
+                        builderStack.PushContinuationWithType(cont, funcTy)
+                        ContinuationOnStack
+                    else 
+                        numberOfArgs + 1
+
+        let parseFormatString (s : string) (funcTy : System.Type) : obj = 
+            let prefixPos = FormatString.findNextFormatSpecifier s 0
+            if prefixPos = s.Length then 
+                box (fun (env : unit -> PrintfEnv<'S, 'Re, 'Res>) -> 
+                    let env = env()
+                    env.Write s
+                    env.Finalize()
+                    )
+            else
+                let prefix = if prefixPos = 0 then "" else s.Substring(0, prefixPos)
+                let n = parseFromFormatSpecifier prefix s funcTy prefixPos
+                
+                if n = ContinuationOnStack || n = 0 then
+                    builderStack.PopValueUnsafe()
+                else
+                    buildPlain n prefix
+                            
+        member this.Build<'T>(s : string) : PrintfFactory<'S, 'Re, 'Res, 'T> * int = 
+            parseFormatString s typeof<'T> :?> _, (2 * count + 1) // second component is used in SprintfEnv as value for internal buffer
+
+    /// Type of element that is stored in cache 
+    /// Pair: factory for the printer + number of text blocks that printer will produce (used to preallocate buffers)
+    type CachedItem<'T, 'State, 'Residue, 'Result> = PrintfFactory<'State, 'Residue, 'Result, 'T> * int
+
+    /// 2-level cache.
+    /// 1st-level stores last value that was consumed by the current thread in thread-static field thus providing shortcuts for scenarios when 
+    /// printf is called in tight loop
+    /// 2nd level is global dictionary that maps format string to the corresponding PrintfFactory
+    type Cache<'T, 'State, 'Residue, 'Result>() =
+        static let generate(fmt) = PrintfBuilder<'State, 'Residue, 'Result>().Build<'T>(fmt)        
+#if FSHARP_CORE_4_5
+        static let mutable map = System.Collections.Concurrent.ConcurrentDictionary<string, CachedItem<'T, 'State, 'Residue, 'Result>>()
+        static let getOrAddFunc = Func<_, _>(generate)
+#else
+        static let mutable map = Dictionary<string, CachedItem<'T, 'State, 'Residue, 'Result>>()
+#endif
+
+        static let get(key : string) = 
+#if FSHARP_CORE_4_5
+            map.GetOrAdd(key, getOrAddFunc)
+#else
+            lock map (fun () ->
+                let mutable res = Unchecked.defaultof<_>
+                if map.TryGetValue(key, &res) then res
+                else
+                let v = 
+#if DEBUG
+                    try 
+                        generate(key)
+                    with
+                        e -> raise (ArgumentException("PRINTF::" + key, e))
+#else
+                        generate(key)
+#endif
+                map.Add(key, v)
+                v
+            )
+#endif
+
+        [<DefaultValue; ThreadStatic>]
+        static val mutable private last : string * CachedItem<'T, 'State, 'Residue, 'Result>
+    
+        static member Get(key : Format<'T, 'State, 'Residue, 'Result>) =
+            if not (Cache<'T, 'State, 'Residue, 'Result>.last === null) 
+                && key.Value.Equals (fst Cache<'T, 'State, 'Residue, 'Result>.last) then
+                    snd Cache<'T, 'State, 'Residue, 'Result>.last
+            else
+                let v = get(key.Value)
+                Cache<'T, 'State, 'Residue, 'Result>.last <- (key.Value, v)
+                v
+
+    type StringPrintfEnv<'Result>(k, n) = 
+        inherit PrintfEnv<unit, string, 'Result>(())
+
+        let buf : string[] = Array.zeroCreate n
+        let mutable ptr = 0
+
+        override this.Finalize() : 'Result = k (String.Concat(buf))
+        override this.Write(s : string) = 
+            buf.[ptr] <- s
+            ptr <- ptr + 1
+        override this.WriteT(s) = this.Write s
+
+    type StringBuilderPrintfEnv<'Result>(k, buf) = 
+        inherit PrintfEnv<Text.StringBuilder, unit, 'Result>(buf)
+        override this.Finalize() : 'Result = k ()
+        override this.Write(s : string) = ignore(buf.Append(s))
+        override this.WriteT(()) = ()
+
+    type TextWriterPrintfEnv<'Result>(k, tw : IO.TextWriter) =
+        inherit PrintfEnv<IO.TextWriter, unit, 'Result>(tw)
+        override this.Finalize() : 'Result = k()
+        override this.Write(s : string) = tw.Write s
+        override this.WriteT(()) = ()
+    
+    let inline doPrintf fmt f = 
+        let formatter, n = Cache<_, _, _, _>.Get fmt
+        let env() = f(n)
+        formatter env
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module Printf = 
+module Printf =
 
-    open System.Text
-    open System.Diagnostics
     open PrintfImpl
 
-    type BuilderFormat<'T,'Result>    = Format<'T, StringBuilder, unit, 'Result>
+    type BuilderFormat<'T,'Result>    = Format<'T, System.Text.StringBuilder, unit, 'Result>
     type StringFormat<'T,'Result>     = Format<'T, unit, string, 'Result>
-    type TextWriterFormat<'T,'Result> = Format<'T, TextWriter, unit, 'Result>
+    type TextWriterFormat<'T,'Result> = Format<'T, System.IO.TextWriter, unit, 'Result>
     type BuilderFormat<'T>     = BuilderFormat<'T,unit>
     type StringFormat<'T>      = StringFormat<'T,string>
     type TextWriterFormat<'T>  = TextWriterFormat<'T,unit>
 
+    [<CompiledName("PrintFormatToStringThen")>]
+    let ksprintf continutation (format : StringFormat<'T, 'Result>) : 'T = 
+        doPrintf format (fun n -> 
+            StringPrintfEnv(continutation, n) :> PrintfEnv<_, _, _>
+        )
+
+    [<CompiledName("PrintFormatToStringThen")>]
+    let sprintf (format : StringFormat<'T>)  = ksprintf id format
+
+    [<CompiledName("PrintFormatThen")>]
+    let kprintf f fmt = ksprintf f fmt
+
+    [<CompiledName("PrintFormatToStringBuilderThen")>]
+    let kbprintf f (buf: System.Text.StringBuilder) fmt = 
+        doPrintf fmt (fun _ -> 
+            StringBuilderPrintfEnv(f, buf) :> PrintfEnv<_, _, _> 
+        )
+    
+    [<CompiledName("PrintFormatToTextWriterThen")>]
+    let kfprintf f os fmt =
+        doPrintf fmt (fun _ -> 
+            TextWriterPrintfEnv(f, os) :> PrintfEnv<_, _, _>
+        )
+
+    [<CompiledName("PrintFormatToStringBuilder")>]
+    let bprintf buf fmt  = kbprintf ignore buf fmt 
+
+    [<CompiledName("PrintFormatToTextWriter")>]
+    let fprintf (os: System.IO.TextWriter) fmt  = kfprintf ignore os fmt 
+
+    [<CompiledName("PrintFormatLineToTextWriter")>]
+    let fprintfn (os: System.IO.TextWriter) fmt  = kfprintf (fun _ -> os.WriteLine()) os fmt
+
+    [<CompiledName("PrintFormatToStringThenFail")>]
+    let failwithf fmt = ksprintf failwith fmt
+
+#if FX_NO_SYSTEM_CONSOLE
+#else    
 #if EXTRAS_FOR_SILVERLIGHT_COMPILER
     let outWriter = ref System.Console.Out
     let errorWriter = ref System.Console.Error
 
     let setWriter (out : System.IO.TextWriter) = outWriter := out
     let setError  (error : System.IO.TextWriter) = errorWriter := error
-#endif
     
-    [<CompiledName("PrintFormatToStringThen")>]
-    let ksprintf (f : string -> 'd) (fp : StringFormat<'a,'d>)  = 
-        let init () = 
-            let buf = new StringBuilder() 
-            let outputChar (c:char) = ignore (buf.Append(c)) 
-            let outa (s:string) = ignore (buf.Append(s)) 
-            let finish () = f (buf.ToString())
-            (),outa,outputChar,finish 
-        PrintfImpl.gprintf init fp
-
-    [<CompiledName("PrintFormatThen")>]
-    let kprintf f fmt = ksprintf f fmt
-
-    let kprintf_imperative f handle outputChar fmt =
-        let init () = 
-            let outa () = () 
-            handle,outa,outputChar,f
-        PrintfImpl.gprintf init fmt
-
-    [<CompiledName("PrintFormatToStringBuilderThen")>]
-    let kbprintf f (buf: StringBuilder) fmt = kprintf_imperative f buf (fun c -> ignore (buf.Append(c))) fmt
-
-    [<CompiledName("PrintFormatToTextWriterThen")>]
-    let kfprintf f os fmt = kprintf_imperative f  (os :> TextWriter) (fun c -> ignore (os.Write(c))) fmt
-
-    [<CompiledName("PrintFormatToStringThen")>]
-    let sprintf fmt  = ksprintf (fun x -> x) fmt
-
-    [<CompiledName("PrintFormatToStringThenFail")>]
-    let failwithf fmt  = ksprintf failwith fmt
-
-    [<CompiledName("PrintFormatToStringBuilder")>]
-    let bprintf buf fmt  = kbprintf (fun _ -> ()) buf fmt 
-
-    [<CompiledName("PrintFormatToTextWriter")>]
-    let fprintf (os: TextWriter) fmt  = kfprintf (fun _ -> ()) os fmt 
-
-    [<CompiledName("PrintFormatLineToTextWriter")>]
-    let fprintfn (os: TextWriter) fmt  = kfprintf (fun _ -> os.WriteLine()) os fmt 
-
-#if FX_NO_SYSTEM_CONSOLE
-#else    
-#if EXTRAS_FOR_SILVERLIGHT_COMPILER
     [<CompiledName("PrintFormat")>]
     let printf fmt = fprintf (!outWriter) fmt
 
@@ -648,6 +1307,4 @@ module Printf =
     [<CompiledName("PrintFormatLineToError")>]
     let eprintfn fmt = fprintfn System.Console.Error fmt
 #endif
-#endif    
-
-
+#endif 

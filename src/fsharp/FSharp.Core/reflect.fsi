@@ -59,16 +59,6 @@ type UnionCaseInfo =
 /// such as records, unions and tuples.</summary>
 type FSharpValue = 
 
-    /// <summary>Creates an instance of a record type.</summary>
-    ///
-    /// <remarks>Assumes the given input is a record type.</remarks>
-    /// <param name="recordType">The type of record to make.</param>
-    /// <param name="values">The array of values to initialize the record.</param>
-    /// <param name="bindingFlags">Optional binding flags for the record.</param>
-    /// <exception cref="System.ArgumentException">Thrown when the input type is not a record type.</exception>
-    /// <returns>The created record.</returns>
-    static member MakeRecord: recordType:Type * values:obj [] * ?bindingFlags:BindingFlags  -> obj
-
     /// <summary>Reads a field from a record value.</summary>
     ///
     /// <remarks>Assumes the given input is a record value. If not, ArgumentException is raised.</remarks>
@@ -77,16 +67,6 @@ type FSharpValue =
     /// <exception cref="System.ArgumentException">Thrown when the input type is not a record type.</exception>
     /// <returns>The field from the record.</returns>
     static member GetRecordField:  record:obj * info:PropertyInfo -> obj
-
-    /// <summary>Reads all the fields from a record value.</summary>
-    ///
-    /// <remarks>Assumes the given input is a record value. If not, ArgumentException is raised.</remarks>
-    /// <param name="record">The record object.</param>
-    /// <param name="bindingFlags">Optional binding flags for the record.</param>
-    /// <exception cref="System.ArgumentException">Thrown when the input type is not a record type.</exception>
-    /// <returns>The array of fields from the record.</returns>
-    static member GetRecordFields:  record:obj * ?bindingFlags:BindingFlags  -> obj[]
-
     
     /// <summary>Precompute a function for reading a particular field from a record.
     /// Assumes the given type is a RecordType with a field of the given name. 
@@ -99,6 +79,27 @@ type FSharpValue =
     /// <exception cref="System.ArgumentException">Thrown when the input type is not a record type.</exception>
     /// <returns>A function to read the specified field from the record.</returns>
     static member PreComputeRecordFieldReader : info:PropertyInfo -> (obj -> obj)
+
+#if FX_RESHAPED_REFLECTION
+#else
+    /// <summary>Creates an instance of a record type.</summary>
+    ///
+    /// <remarks>Assumes the given input is a record type.</remarks>
+    /// <param name="recordType">The type of record to make.</param>
+    /// <param name="values">The array of values to initialize the record.</param>
+    /// <param name="bindingFlags">Optional binding flags for the record.</param>
+    /// <exception cref="System.ArgumentException">Thrown when the input type is not a record type.</exception>
+    /// <returns>The created record.</returns>
+    static member MakeRecord: recordType:Type * values:obj [] * ?bindingFlags:BindingFlags  -> obj
+
+    /// <summary>Reads all the fields from a record value.</summary>
+    ///
+    /// <remarks>Assumes the given input is a record value. If not, ArgumentException is raised.</remarks>
+    /// <param name="record">The record object.</param>
+    /// <param name="bindingFlags">Optional binding flags for the record.</param>
+    /// <exception cref="System.ArgumentException">Thrown when the input type is not a record type.</exception>
+    /// <returns>The array of fields from the record.</returns>
+    static member GetRecordFields:  record:obj * ?bindingFlags:BindingFlags  -> obj[]
 
     /// <summary>Precompute a function for reading all the fields from a record. The fields are returned in the
     /// same order as the fields reported by a call to Microsoft.FSharp.Reflection.Type.GetInfo for
@@ -115,8 +116,6 @@ type FSharpValue =
     /// <exception cref="System.ArgumentException">Thrown when the input type is not a record type.</exception>
     /// <returns>An optimized reader for the given record type.</returns>
     static member PreComputeRecordReader : recordType:Type  * ?bindingFlags:BindingFlags -> (obj -> obj[])
-
-
     /// <summary>Precompute a function for constructing a record value. </summary>
     ///
     /// <remarks>Assumes the given type is a RecordType.
@@ -191,6 +190,16 @@ type FSharpValue =
     /// <returns>The description of the constructor of the given union case.</returns>
     static member PreComputeUnionConstructorInfo: unionCase:UnionCaseInfo * ?bindingFlags:BindingFlags -> MethodInfo
 
+    /// <summary>Reads all the fields from a value built using an instance of an F# exception declaration</summary>
+    ///
+    /// <remarks>Assumes the given input is an F# exception value. If not, ArgumentException is raised.</remarks>
+    /// <param name="exn">The exception instance.</param>
+    /// <param name="bindingFlags">Optional binding flags.</param>
+    /// <exception cref="System.ArgumentException">Thrown when the input type is not an F# exception.</exception>
+    /// <returns>The fields from the given exception.</returns>
+    static member GetExceptionFields:  exn:obj * ?bindingFlags:BindingFlags  -> obj[]
+#endif
+
     /// <summary>Creates an instance of a tuple type</summary>
     ///
     /// <remarks>Assumes at least one element is given. If not, ArgumentException is raised.</remarks>
@@ -260,20 +269,12 @@ type FSharpValue =
     /// <returns>A typed function from the given dynamic implementation.</returns>
     static member MakeFunction           : functionType:Type * implementation:(obj -> obj) -> obj
 
-    /// <summary>Reads all the fields from a value built using an instance of an F# exception declaration</summary>
-    ///
-    /// <remarks>Assumes the given input is an F# exception value. If not, ArgumentException is raised.</remarks>
-    /// <param name="exn">The exception instance.</param>
-    /// <param name="bindingFlags">Optional binding flags.</param>
-    /// <exception cref="System.ArgumentException">Thrown when the input type is not an F# exception.</exception>
-    /// <returns>The fields from the given exception.</returns>
-    static member GetExceptionFields:  exn:obj * ?bindingFlags:BindingFlags  -> obj[]
-
-
 [<AbstractClass; Sealed>]
 /// <summary>Contains operations associated with constructing and analyzing F# types such as records, unions and tuples</summary>
 type FSharpType =
 
+#if FX_RESHAPED_REFLECTION
+#else
     /// <summary>Reads all the fields from a record value, in declaration order</summary>
     ///
     /// <remarks>Assumes the given input is a record value. If not, ArgumentException is raised.</remarks>
@@ -290,6 +291,36 @@ type FSharpType =
     /// <exception cref="System.ArgumentException">Thrown when the input type is not a union type.</exception>
     /// <returns>An array of descriptions of the cases of the given union type.</returns>
     static member GetUnionCases: unionType:Type * ?bindingFlags:BindingFlags -> UnionCaseInfo[]
+
+    
+    /// <summary>Return true if the <c>typ</c> is a representation of an F# record type </summary>
+    /// <param name="typ">The type to check.</param>
+    /// <param name="bindingFlags">Optional binding flags.</param>
+    /// <returns>True if the type check succeeds.</returns>
+    static member IsRecord: typ:Type * ?bindingFlags:BindingFlags -> bool
+
+    /// <summary>Returns true if the <c>typ</c> is a representation of an F# union type or the runtime type of a value of that type</summary>
+    /// <param name="typ">The type to check.</param>
+    /// <param name="bindingFlags">Optional binding flags.</param>
+    /// <returns>True if the type check succeeds.</returns>
+    static member IsUnion: typ:Type * ?bindingFlags:BindingFlags -> bool
+
+    /// <summary>Reads all the fields from an F# exception declaration, in declaration order</summary>
+    ///
+    /// <remarks>Assumes <c>exceptionType</c> is an exception representation type. If not, ArgumentException is raised.</remarks>
+    /// <param name="exceptionType">The exception type to read.</param>
+    /// <param name="bindingFlags">Optional binding flags.</param>
+    /// <exception cref="System.ArgumentException">Thrown if the given type is not an exception.</exception>
+    /// <returns>An array containing the PropertyInfo of each field in the exception.</returns>
+    static member GetExceptionFields: exceptionType:Type * ?bindingFlags:BindingFlags -> PropertyInfo[]
+
+    /// <summary>Returns true if the <c>typ</c> is a representation of an F# exception declaration</summary>
+    /// <param name="exceptionType">The type to check.</param>
+    /// <param name="bindingFlags">Optional binding flags.</param>
+    /// <returns>True if the type check is an F# exception.</returns>
+    static member IsExceptionRepresentation: exceptionType:Type * ?bindingFlags:BindingFlags -> bool
+
+#endif
 
     /// <summary>Returns a <c>System.Type</c> representing the F# function type with the given domain and range</summary>
     /// <param name="domain">The input type of the function.</param>
@@ -317,17 +348,6 @@ type FSharpType =
     /// <returns>True if the type check succeeds.</returns>
     static member IsModule: typ:Type -> bool
 
-    /// <summary>Return true if the <c>typ</c> is a representation of an F# record type </summary>
-    /// <param name="typ">The type to check.</param>
-    /// <param name="bindingFlags">Optional binding flags.</param>
-    /// <returns>True if the type check succeeds.</returns>
-    static member IsRecord: typ:Type * ?bindingFlags:BindingFlags -> bool
-
-    /// <summary>Returns true if the <c>typ</c> is a representation of an F# union type or the runtime type of a value of that type</summary>
-    /// <param name="typ">The type to check.</param>
-    /// <param name="bindingFlags">Optional binding flags.</param>
-    /// <returns>True if the type check succeeds.</returns>
-    static member IsUnion: typ:Type * ?bindingFlags:BindingFlags -> bool
 
     /// <summary>Gets the tuple elements from the representation of an F# tuple type.</summary>
     /// <param name="tupleType">The input tuple type.</param>
@@ -339,24 +359,258 @@ type FSharpType =
     /// <returns>A tuple of the domain and range types of the input function.</returns>
     static member GetFunctionElements : functionType:Type -> Type * Type
 
-    /// <summary>Reads all the fields from an F# exception declaration, in declaration order</summary>
-    ///
-    /// <remarks>Assumes <c>exceptionType</c> is an exception representation type. If not, ArgumentException is raised.</remarks>
-    /// <param name="exceptionType">The exception type to read.</param>
-    /// <param name="bindingFlags">Optional binding flags.</param>
-    /// <exception cref="System.ArgumentException">Thrown if the given type is not an exception.</exception>
-    /// <returns>An array containing the PropertyInfo of each field in the exception.</returns>
-    static member GetExceptionFields: exceptionType:Type * ?bindingFlags:BindingFlags -> PropertyInfo[]
+[<AutoOpen>]
+module FSharpReflectionExtensions =
+    type FSharpValue with
+        /// <summary>Creates an instance of a record type.</summary>
+        ///
+        /// <remarks>Assumes the given input is a record type.</remarks>
+        /// <param name="recordType">The type of record to make.</param>
+        /// <param name="values">The array of values to initialize the record.</param>
+        /// <param name="allowAccessToPrivateRepresentation">Optional flags that denotes accessibility of the private representation.</param>
+        /// <exception cref="System.ArgumentException">Thrown when the input type is not a record type.</exception>
+        /// <returns>The created record.</returns>
+        static member MakeRecord: recordType:Type * values:obj [] * ?allowAccessToPrivateRepresentation : bool -> obj
+        /// <summary>Reads all the fields from a record value.</summary>
+        ///
+        /// <remarks>Assumes the given input is a record value. If not, ArgumentException is raised.</remarks>
+        /// <param name="record">The record object.</param>
+        /// <param name="allowAccessToPrivateRepresentation">Optional flag that denotes accessibility of the private representation.</param>
+        /// <exception cref="System.ArgumentException">Thrown when the input type is not a record type.</exception>
+        /// <returns>The array of fields from the record.</returns>
+        static member GetRecordFields:  record:obj * ?allowAccessToPrivateRepresentation : bool  -> obj[]
 
-    /// <summary>Returns true if the <c>typ</c> is a representation of an F# exception declaration</summary>
-    /// <param name="exceptionType">The type to check.</param>
-    /// <param name="bindingFlags">Optional binding flags.</param>
-    /// <returns>True if the type check is an F# exception.</returns>
-    static member IsExceptionRepresentation: exceptionType:Type * ?bindingFlags:BindingFlags -> bool
+        /// <summary>Precompute a function for reading all the fields from a record. The fields are returned in the
+        /// same order as the fields reported by a call to Microsoft.FSharp.Reflection.Type.GetInfo for
+        /// this type.</summary>
+        ///
+        /// <remarks>Assumes the given type is a RecordType. 
+        /// If not, ArgumentException is raised during pre-computation.
+        ///
+        /// Using the computed function will typically be faster than executing a corresponding call to Value.GetInfo
+        /// because the path executed by the computed function is optimized given the knowledge that it will be
+        /// used to read values of the given type.</remarks>
+        /// <param name="recordType">The type of record to read.</param>
+        /// <param name="allowAccessToPrivateRepresentation">Optional flag that denotes accessibility of the private representation.</param>    
+        /// <exception cref="System.ArgumentException">Thrown when the input type is not a record type.</exception>
+        /// <returns>An optimized reader for the given record type.</returns>
+        static member PreComputeRecordReader : recordType:Type * ?allowAccessToPrivateRepresentation : bool -> (obj -> obj[])
+        /// <summary>Precompute a function for constructing a record value. </summary>
+        ///
+        /// <remarks>Assumes the given type is a RecordType.
+        /// If not, ArgumentException is raised during pre-computation.</remarks>
+        /// <param name="recordType">The type of record to construct.</param>
+        /// <param name="allowAccessToPrivateRepresentation">Optional flag that denotes accessibility of the private representation.</param>    
+        /// <exception cref="System.ArgumentException">Thrown when the input type is not a record type.</exception>
+        /// <returns>A function to construct records of the given type.</returns>
+        static member PreComputeRecordConstructor : recordType:Type * ?allowAccessToPrivateRepresentation : bool -> (obj[] -> obj)
 
-#if SILVERLIGHT
-[<Class>]
-type DynamicFunction<'T1,'T2> =
-    inherit FSharpFunc<obj -> obj, obj>
-    new : unit -> DynamicFunction<'T1,'T2>
+        /// <summary>Get a ConstructorInfo for a record type</summary>
+        /// <param name="recordType">The record type.</param>
+        /// <param name="allowAccessToPrivateRepresentation">Optional flag that denotes accessibility of the private representation.</param>    
+        /// <returns>A ConstructorInfo for the given record type.</returns>
+        static member PreComputeRecordConstructorInfo: recordType:Type * ?allowAccessToPrivateRepresentation : bool-> ConstructorInfo
+    
+        /// <summary>Create a union case value.</summary>
+        /// <param name="unionCase">The description of the union case to create.</param>
+        /// <param name="args">The array of arguments to construct the given case.</param>
+        /// <param name="allowAccessToPrivateRepresentation">Optional flag that denotes accessibility of the private representation.</param>    
+        /// <returns>The constructed union case.</returns>
+        static member MakeUnion: unionCase:UnionCaseInfo * args:obj [] * ?allowAccessToPrivateRepresentation : bool-> obj
+
+        /// <summary>Identify the union case and its fields for an object</summary>
+        ///
+        /// <remarks>Assumes the given input is a union case value. If not, ArgumentException is raised.
+        ///
+        /// If the type is not given, then the runtime type of the input object is used to identify the
+        /// relevant union type. The type should always be given if the input object may be null. For example, 
+        /// option values may be represented using the 'null'.</remarks>
+        /// <param name="value">The input union case.</param>
+        /// <param name="unionType">The union type containing the value.</param>
+        /// <param name="allowAccessToPrivateRepresentation">Optional flag that denotes accessibility of the private representation.</param>    
+        /// <exception cref="System.ArgumentException">Thrown when the input type is not a union case value.</exception>
+        /// <returns>The description of the union case and its fields.</returns>
+        static member GetUnionFields:  value:obj * unionType:Type * ?allowAccessToPrivateRepresentation : bool -> UnionCaseInfo * obj []
+    
+        /// <summary>Assumes the given type is a union type. 
+        /// If not, ArgumentException is raised during pre-computation.</summary>
+        ///
+        /// <remarks>Using the computed function is more efficient than calling GetUnionCase
+        /// because the path executed by the computed function is optimized given the knowledge that it will be
+        /// used to read values of the given type.</remarks>
+        /// <param name="unionType">The type of union to optimize reading.</param>
+        /// <param name="allowAccessToPrivateRepresentation">Optional flag that denotes accessibility of the private representation.</param>
+        /// <returns>An optimized function to read the tags of the given union type.</returns>
+        static member PreComputeUnionTagReader          : unionType:Type * ?allowAccessToPrivateRepresentation : bool -> (obj -> int)
+
+        /// <summary>Precompute a property or static method for reading an integer representing the case tag of a union type.</summary>
+        /// <param name="unionType">The type of union to read.</param>
+        /// <param name="allowAccessToPrivateRepresentation">Optional flag that denotes accessibility of the private representation.</param>    
+        /// <returns>The description of the union case reader.</returns>
+        static member PreComputeUnionTagMemberInfo : unionType:Type * ?allowAccessToPrivateRepresentation : bool -> MemberInfo
+
+        /// <summary>Precomputes a function for reading all the fields for a particular discriminator case of a union type</summary>
+        ///
+        /// <remarks>Using the computed function will typically be faster than executing a corresponding call to GetFields</remarks>
+        /// <param name="unionCase">The description of the union case to read.</param>
+        /// <param name="allowAccessToPrivateRepresentation">Optional flag that denotes accessibility of the private representation.</param>    
+        /// <returns>A function to for reading the fields of the given union case.</returns>
+        static member PreComputeUnionReader       : unionCase:UnionCaseInfo * ?allowAccessToPrivateRepresentation : bool -> (obj -> obj[])
+
+        /// <summary>Precomputes a function for constructing a discriminated union value for a particular union case. </summary>
+        /// <param name="unionCase">The description of the union case.</param>
+        /// <param name="allowAccessToPrivateRepresentation">Optional flag that denotes accessibility of the private representation.</param>    
+        /// <returns>A function for constructing values of the given union case.</returns>
+        static member PreComputeUnionConstructor : unionCase:UnionCaseInfo * ?allowAccessToPrivateRepresentation : bool -> (obj[] -> obj)
+
+        /// <summary>A method that constructs objects of the given case</summary>
+        /// <param name="unionCase">The description of the union case.</param>
+        /// <param name="allowAccessToPrivateRepresentation">Optional flag that denotes accessibility of the private representation.</param>    
+        /// <returns>The description of the constructor of the given union case.</returns>
+        static member PreComputeUnionConstructorInfo: unionCase:UnionCaseInfo * ?allowAccessToPrivateRepresentation : bool -> MethodInfo
+
+        /// <summary>Reads all the fields from a value built using an instance of an F# exception declaration</summary>
+        ///
+        /// <remarks>Assumes the given input is an F# exception value. If not, ArgumentException is raised.</remarks>
+        /// <param name="exn">The exception instance.</param>
+        /// <param name="allowAccessToPrivateRepresentation">Optional flag that denotes accessibility of the private representation.</param>    
+        /// <exception cref="System.ArgumentException">Thrown when the input type is not an F# exception.</exception>
+        /// <returns>The fields from the given exception.</returns>
+        static member GetExceptionFields:  exn:obj * ?allowAccessToPrivateRepresentation : bool -> obj[]
+
+    type FSharpType with
+        /// <summary>Reads all the fields from a record value, in declaration order</summary>
+        ///
+        /// <remarks>Assumes the given input is a record value. If not, ArgumentException is raised.</remarks>
+        /// <param name="recordType">The input record type.</param>
+        /// <param name="allowAccessToPrivateRepresentation">Optional flag that denotes accessibility of the private representation.</param>    
+        /// <returns>An array of descriptions of the properties of the record type.</returns>
+        static member GetRecordFields: recordType:Type * ?allowAccessToPrivateRepresentation : bool -> PropertyInfo[]
+
+        /// <summary>Gets the cases of a union type.</summary>
+        ///
+        /// <remarks>Assumes the given type is a union type. If not, ArgumentException is raised during pre-computation.</remarks>
+        /// <param name="unionType">The input union type.</param>
+        /// <param name="allowAccessToPrivateRepresentation">Optional flag that denotes accessibility of the private representation.</param>    
+        /// <exception cref="System.ArgumentException">Thrown when the input type is not a union type.</exception>
+        /// <returns>An array of descriptions of the cases of the given union type.</returns>
+        static member GetUnionCases: unionType:Type * ?allowAccessToPrivateRepresentation : bool -> UnionCaseInfo[]
+
+
+        /// <summary>Return true if the <c>typ</c> is a representation of an F# record type </summary>
+        /// <param name="typ">The type to check.</param>
+        /// <param name="allowAccessToPrivateRepresentation">Optional flag that denotes accessibility of the private representation.</param>    
+        /// <returns>True if the type check succeeds.</returns>
+        static member IsRecord: typ:Type * ?allowAccessToPrivateRepresentation : bool -> bool
+
+        /// <summary>Returns true if the <c>typ</c> is a representation of an F# union type or the runtime type of a value of that type</summary>
+        /// <param name="typ">The type to check.</param>
+        /// <param name="allowAccessToPrivateRepresentation">Optional flag that denotes accessibility of the private representation.</param>    
+        /// <returns>True if the type check succeeds.</returns>
+        static member IsUnion: typ:Type * ?allowAccessToPrivateRepresentation : bool -> bool
+
+        /// <summary>Reads all the fields from an F# exception declaration, in declaration order</summary>
+        ///
+        /// <remarks>Assumes <c>exceptionType</c> is an exception representation type. If not, ArgumentException is raised.</remarks>
+        /// <param name="exceptionType">The exception type to read.</param>
+        /// <param name="allowAccessToPrivateRepresentation">Optional flag that denotes accessibility of the private representation.</param>    
+        /// <exception cref="System.ArgumentException">Thrown if the given type is not an exception.</exception>
+        /// <returns>An array containing the PropertyInfo of each field in the exception.</returns>
+        static member GetExceptionFields: exceptionType:Type * ?allowAccessToPrivateRepresentation : bool -> PropertyInfo[]
+
+        /// <summary>Returns true if the <c>typ</c> is a representation of an F# exception declaration</summary>
+        /// <param name="exceptionType">The type to check.</param>
+        /// <param name="allowAccessToPrivateRepresentation">Optional flag that denotes accessibility of the private representation.</param>    
+        /// <returns>True if the type check is an F# exception.</returns>
+        static member IsExceptionRepresentation: exceptionType:Type * ?allowAccessToPrivateRepresentation : bool -> bool
+
+#if FX_RESHAPED_REFLECTION
+
+namespace Microsoft.FSharp.Core
+
+open System
+open System.Reflection
+
+module internal ReflectionAdapters =
+
+    [<System.Flags>]
+    type BindingFlags =
+        | DeclaredOnly  = 2
+        | Instance      = 4 
+        | Static        = 8
+        | Public        = 16
+        | NonPublic     = 32
+
+    val isDeclaredFlag  : BindingFlags -> bool
+    val isPublicFlag    : BindingFlags -> bool
+    val isStaticFlag    : BindingFlags -> bool
+    val isInstanceFlag  : BindingFlags -> bool
+    val isNonPublicFlag : BindingFlags -> bool
+    val isAcceptable    : BindingFlags -> isStatic : bool -> isPublic : bool -> bool    
+
+    [<System.Flags>]
+    type TypeCode = 
+        | Int32     = 0
+        | Int64     = 1
+        | Byte      = 2
+        | SByte     = 3
+        | Int16     = 4
+        | UInt16    = 5
+        | UInt32    = 6
+        | UInt64    = 7
+        | Single    = 8
+        | Double    = 9
+        | Decimal   = 10
+        | Other     = 11
+
+    type System.Type with
+        member GetNestedType : name : string * bindingFlags : BindingFlags -> Type
+        member GetMethods : bindingFlags : BindingFlags -> MethodInfo[]
+        member GetFields : bindingFlags : BindingFlags -> FieldInfo[]
+        member GetProperties : ?bindingFlags : BindingFlags -> PropertyInfo[]
+        member GetMethod : name : string * ?bindingFlags : BindingFlags -> MethodInfo
+        member GetProperty : name : string * bindingFlags : BindingFlags -> PropertyInfo
+        member IsGenericTypeDefinition : bool
+        member GetGenericArguments : unit -> Type[]
+        member BaseType : Type
+        member GetConstructor : parameterTypes : Type[] -> ConstructorInfo
+        member GetInterfaces : unit -> Type[]
+        member GetConstructors : ?bindingFlags : BindingFlags -> ConstructorInfo[]
+        member GetMethods : unit -> MethodInfo[]
+        member Assembly : Assembly
+        member IsSubclassOf : Type -> bool
+        member IsEnum : bool
+        member GetField : string * BindingFlags -> FieldInfo
+        member GetProperty : string * Type * Type[] -> PropertyInfo
+        static member GetTypeCode : System.Type -> TypeCode
+
+    type System.Reflection.Assembly with
+        member GetTypes : unit -> Type[]
+
+    type System.Reflection.MemberInfo with
+        member GetCustomAttributes : attributeType : Type * inherits : bool -> obj[]
+
+    type System.Reflection.MethodInfo with
+        member GetCustomAttributes : inherits : bool -> obj[]
+
+    type System.Reflection.PropertyInfo with
+        member GetGetMethod : bool -> MethodInfo
+        member GetSetMethod : bool -> MethodInfo
+
+    type System.Delegate with
+        static member CreateDelegate :  Type * MethodInfo -> System.Delegate
+        static member CreateDelegate :  Type * obj * MethodInfo -> System.Delegate
+            
 #endif
+
+namespace Microsoft.FSharp.Reflection
+
+open Microsoft.FSharp.Core
+
+module internal ReflectionUtils = 
+#if FX_RESHAPED_REFLECTION
+    type BindingFlags = ReflectionAdapters.BindingFlags
+#else
+    type BindingFlags = System.Reflection.BindingFlags
+#endif
+    val toBindingFlags  : allowAccessToNonPublicMembers : bool -> BindingFlags

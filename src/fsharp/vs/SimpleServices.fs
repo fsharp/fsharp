@@ -85,6 +85,10 @@ namespace Microsoft.FSharp.Compiler.SimpleSourceCodeServices
             async { let! items = results.GetDeclarations(Some info, (line, col), source.[line], (names, residue), hasChangedSinceLastTypeCheck)
                     return [| for i in items.Items -> Declaration(i.Name, (fun () -> formatTip i.DescriptionText xmlCommentRetriever)) |] }
 
+        member x.GetRawDeclarations(line, col, names, residue, formatter:DataTipText->string[]) =
+            async { let! items = results.GetDeclarations(Some info, (line, col), source.[line], (names, residue), hasChangedSinceLastTypeCheck)
+                    return [| for i in items.Items -> i.Name, (fun() -> formatter i.DescriptionText), i.Glyph |] }
+
         /// Get the Visual Studio F1-help keyword for the item at the given position
         member x.GetF1Keyword(line, col, names) =
             results.GetF1Keyword((line, col), source.[line], names)
@@ -93,6 +97,9 @@ namespace Microsoft.FSharp.Compiler.SimpleSourceCodeServices
         member x.GetDataTipText(line, col, names, ?xmlCommentRetriever) =
             let tip = results.GetDataTipText((line, col), source.[line], names, identToken)
             formatTip tip xmlCommentRetriever
+
+        member x.GetRawDataTipText(line, col, names) =
+            results.GetDataTipText((line, col), source.[line], names, identToken)
 
         /// Get the location of the declaration at the given position
         member x.GetDeclarationLocation(line: int, col: int, names, isDecl) =
@@ -167,14 +174,16 @@ namespace Microsoft.FSharp.Compiler.SimpleSourceCodeServices
                     member x.ErrorSinkImpl(exn) = errorSink false exn
                     member x.ErrorCount = errors |> Seq.filter (fun e -> e.Severity = Severity.Error) |> Seq.length }
 
-            let createErrorLogger _ =  errorLogger
-      
+            let loggerProvider = 
+                { new ErrorLoggerProvider() with
+                    member log.CreateErrorLoggerThatQuitsAfterMaxErrors(tcConfigBuilder, exiter) = errorLogger }
+     
             let result = 
                 use unwindParsePhase = PushThreadBuildPhaseUntilUnwind (BuildPhase.Parse)            
                 use unwindEL_2 = PushErrorLoggerPhaseUntilUnwind (fun _ -> errorLogger)
                 let exiter = { new Exiter with member x.Exit n = raise StopProcessing }
                 try 
-                    mainCompile (argv, true, exiter, createErrorLogger); 
+                    typecheckAndCompile (argv, true, exiter, loggerProvider); 
                     0
                 with e -> 
                     stopProcessingRecovery e Range.range0
@@ -213,7 +222,7 @@ namespace Microsoft.FSharp.Compiler.SimpleSourceCodeServices
                             (ilGlobals ,
                              Microsoft.FSharp.Compiler.AbstractIL.ILRuntimeWriter.emEnv0,
                              assemblyBuilder,moduleBuilder,
-                             ilxMainModule,
+                             { ilxMainModule with Resources=Microsoft.FSharp.Compiler.AbstractIL.IL.mkILResources [] },
                              debugInfo,
                              (fun s -> 
                                  match tcImportsRef.Value.Value.TryFindExistingFullyQualifiedPathFromAssemblyRef s with 

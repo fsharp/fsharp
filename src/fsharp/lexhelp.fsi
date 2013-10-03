@@ -9,8 +9,6 @@
 // You must not remove this notice, or any other, from this software.
 //----------------------------------------------------------------------------
 
-// Helper functions for the F# lexer lex.mll
-
 
 module internal Microsoft.FSharp.Compiler.Lexhelp
 

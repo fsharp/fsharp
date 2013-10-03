@@ -108,6 +108,7 @@ val pdbInitialize:
     string  (* .pdb to write *) ->
     PdbWriter
 val pdbClose: PdbWriter -> unit
+val pdbCloseDocument : PdbDocumentWriter -> unit
 val pdbSetUserEntryPoint: PdbWriter -> int32 -> unit
 val pdbDefineDocument: PdbWriter -> string -> PdbDocumentWriter
 val pdbOpenMethod: PdbWriter -> int32 -> unit

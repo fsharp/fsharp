@@ -30,6 +30,12 @@ open Microsoft.FSharp.Text.StructuredPrintfImpl.LayoutOps
 
 #nowarn "52" //  The value has been copied to ensure the original is not mutated by this operation
 
+#if FX_RESHAPED_REFLECTION
+open PrimReflectionAdapters
+open ReflectionAdapters
+type BindingFlags = ReflectionAdapters.BindingFlags
+#endif
+
 //--------------------------------------------------------------------------
 // RAW quotations - basic data types
 //--------------------------------------------------------------------------
@@ -61,7 +67,11 @@ module Helpers =
     let staticBindingFlags = BindingFlags.Static ||| BindingFlags.Public ||| BindingFlags.NonPublic ||| BindingFlags.DeclaredOnly
     let staticOrInstanceBindingFlags = BindingFlags.Instance ||| BindingFlags.Static ||| BindingFlags.Public ||| BindingFlags.NonPublic ||| BindingFlags.DeclaredOnly
     let instanceBindingFlags = BindingFlags.Instance ||| BindingFlags.Public ||| BindingFlags.NonPublic ||| BindingFlags.DeclaredOnly
-    let publicOrPrivateBindingFlags = System.Reflection.BindingFlags.Public ||| System.Reflection.BindingFlags.NonPublic
+#if FX_RESHAPED_REFLECTION
+    let publicOrPrivateBindingFlags = true
+#else
+    let publicOrPrivateBindingFlags = BindingFlags.Public ||| BindingFlags.NonPublic
+#endif
 
     let isDelegateType (typ:Type) = 
         if typ.IsSubclassOf(typeof<Delegate>) then
@@ -81,6 +91,8 @@ module Helpers =
         | null -> nullArg argName 
         | _ -> ()
         
+    let getTypesFromParamInfos (infos : ParameterInfo[]) = infos |> Array.map (fun pi -> pi.ParameterType)
+
 open Helpers
 
 
@@ -844,6 +856,14 @@ module Patterns =
     //-------------------------------------------------------------------------
     // General Method Binder
 
+    /// Usually functions in modules are not overloadable so having name is enough to recover the function.
+    /// However type extensions break this assumption - it is possible to have multiple extension methods in module that will have the same name.
+    /// This type is used to denote different binding results so we can distinguish the latter case and retry binding later when more information is available.
+    [<NoEquality; NoComparison>]
+    type ModuleDefinitionBindingResult<'T, 'R> =
+        | Unique of 'T
+        | Ambiguous of 'R
+
     let typeEquals     (s:Type) (t:Type) = s.Equals(t)
     let typesEqual (ss:Type list) (tt:Type list) =
       (ss.Length = tt.Length) && List.forall2 typeEquals ss tt
@@ -914,12 +934,92 @@ module Patterns =
         match ty.GetProperty(nm,staticBindingFlags) with
         | null -> raise <| System.InvalidOperationException (SR.GetString2(SR.QcannotBindProperty, nm, ty.ToString()))
         | res -> res
-
-            
+    
+    // tries to locate unique function in a given type
+    // in case of multiple candidates returns None so bindModuleFunctionWithCallSiteArgs will be used for more precise resolution
     let bindModuleFunction (ty:Type,nm) = 
-        match ty.GetMethod(nm,staticBindingFlags) with 
-        | null -> raise <| System.InvalidOperationException (SR.GetString2(SR.QcannotBindFunction, nm, ty.ToString()))
-        | res -> res
+        match ty.GetMethods(staticBindingFlags) |> Array.filter (fun mi -> mi.Name = nm) with 
+        | [||] -> raise <| System.InvalidOperationException (SR.GetString2(SR.QcannotBindFunction, nm, ty.ToString()))
+        | [| res |] -> Some res
+        | _ -> None
+    
+    let bindModuleFunctionWithCallSiteArgs (ty:Type, nm, argTypes : Type list, tyArgs : Type list) = 
+        let argTypes = List.toArray argTypes
+        let tyArgs = List.toArray tyArgs
+        let methInfo = 
+            try 
+#if FX_ATLEAST_PORTABLE
+                match ty.GetMethod(nm, argTypes) with 
+#else             
+                match ty.GetMethod(nm,staticOrInstanceBindingFlags,null, argTypes,null) with 
+#endif                 
+                | null -> None
+                | res -> Some(res)
+            with :? AmbiguousMatchException -> None 
+        match methInfo with 
+        | Some methInfo -> methInfo
+        | _ ->
+            // narrow down set of candidates by removing methods with a different name\number of arguments\number of type parameters
+            let candidates = 
+                ty.GetMethods(staticBindingFlags)
+                |> Array.filter(fun mi ->
+                    mi.Name = nm &&
+                    mi.GetParameters().Length = argTypes.Length &&
+                    let methodTyArgCount = if mi.IsGenericMethod then mi.GetGenericArguments().Length else 0
+                    methodTyArgCount = tyArgs.Length
+                )
+            let fail() = raise <| System.InvalidOperationException (SR.GetString2(SR.QcannotBindFunction, nm, ty.ToString()))
+            match candidates with
+            | [||] -> fail()
+            | [| solution |] -> solution
+            | candidates ->
+                let solution =
+                    // no type arguments - just perform pairwise comparison of type in methods signature and argument type from the callsite
+                    if tyArgs.Length = 0 then
+                        candidates
+                        |> Array.tryFind(fun mi ->
+                            let paramTys = mi.GetParameters() |> Array.map (fun pi -> pi.ParameterType)
+                            Array.forall2 (=) argTypes paramTys
+                        )
+                    else
+                        let FAIL = -1
+                        let MATCH = 2
+                        let GENERIC_MATCH = 1
+                        // if signature has type arguments then it is possible to have several candidates like
+                        // - Foo(_ : 'a)
+                        // - Foo(_ : int)
+                        // and callsite
+                        // - Foo<int>(_ : int)
+                        // here instantiation of first method we'll have two similar signatures
+                        // however compiler will pick second one and we must do the same.
+
+                        // here we compute weights for every signature
+                        // for every parameter type:
+                        // - non-matching with actual argument type stops computation and return FAIL as the final result
+                        // - exact match with actual argument type adds MATCH value to the final result
+                        // - parameter type is generic that after instantiation matches actual argument type adds GENERIC_MATCH to the final result
+                        // - parameter type is generic that after instantiation doesn't actual argument type stops computation and return FAIL as the final result
+                        let weight (mi : MethodInfo) =
+                            let parameters = mi.GetParameters()
+                            let rec iter i acc = 
+                                if i >= argTypes.Length then acc
+                                else
+                                let param = parameters.[i]
+                                if param.ParameterType.IsGenericParameter then
+                                    let actualTy = tyArgs.[param.ParameterType.GenericParameterPosition]
+                                    if actualTy = argTypes.[i] then iter (i + 1) (acc + GENERIC_MATCH) else FAIL
+                                else
+                                    if param.ParameterType = argTypes.[i] then iter (i + 1) (acc + MATCH) else FAIL
+                            iter 0 0
+                        let solution, weight = 
+                            candidates 
+                            |> Array.map (fun mi -> mi, weight mi)
+                            |> Array.maxBy snd
+                        if weight = FAIL then None
+                        else Some solution
+                match solution with
+                | Some mi -> mi
+                | None -> fail() 
             
     let mkNamedType (tc:Type,tyargs)  =
         match  tyargs with 
@@ -933,13 +1033,50 @@ module Patterns =
 
     let inst (tyargs:Type list) (i: Instantiable<'T>) = i (fun idx -> tyargs.[idx]) // Note, O(n) looks, but #tyargs is always small
     
+    let bindPropBySearchIfCandidateIsNull (ty : Type) propName retType argTypes candidate = 
+        match candidate with
+        | null ->
+            let props = 
+                ty.GetProperties(staticOrInstanceBindingFlags)
+                |> Array.filter (fun pi -> 
+                    let paramTypes = getTypesFromParamInfos (pi.GetIndexParameters())
+                    pi.Name = propName && 
+                    pi.PropertyType = retType && 
+                    Array.length argTypes = paramTypes.Length && 
+                    Array.forall2 (=) argTypes paramTypes
+                    )
+            match props with
+            | [| pi |] -> pi
+            | _ -> null
+        | pi -> pi
+    
+    let bindCtorBySearchIfCandidateIsNull (ty : Type) argTypes candidate = 
+        match candidate with
+        | null -> 
+            let ctors = 
+                ty.GetConstructors(instanceBindingFlags)
+                |> Array.filter (fun ci ->
+                    let paramTypes = getTypesFromParamInfos (ci.GetParameters())
+                    Array.length argTypes = paramTypes.Length &&
+                    Array.forall2 (=) argTypes paramTypes
+                )
+            match ctors with
+            | [| ctor |] -> ctor
+            | _ -> null
+        | ctor -> ctor
+                  
+
     let bindProp (tc,propName,retType,argTypes,tyargs) =
         // We search in the instantiated type, rather than searching the generic type.
         let typ = mkNamedType(tc,tyargs)
         let argtyps : Type list = argTypes |> inst tyargs
         let retType : Type = retType |> inst tyargs |> removeVoid
 #if FX_ATLEAST_PORTABLE
-        typ.GetProperty(propName, retType, Array.ofList argtyps) |> checkNonNullResult ("propName", SR.GetString1(SR.QfailedToBindProperty, propName)) // fxcop may not see "propName" as an arg
+        try 
+            typ.GetProperty(propName, staticOrInstanceBindingFlags) 
+        with :? AmbiguousMatchException -> null // more than one property found with the specified name and matching binding constraints - return null to initiate manual search
+        |> bindPropBySearchIfCandidateIsNull typ propName retType (Array.ofList argtyps)
+        |> checkNonNullResult ("propName", SR.GetString1(SR.QfailedToBindProperty, propName)) // fxcop may not see "propName" as an arg
 #else        
         typ.GetProperty(propName, staticOrInstanceBindingFlags, null, retType, Array.ofList argtyps, null) |> checkNonNullResult ("propName", SR.GetString1(SR.QfailedToBindProperty, propName)) // fxcop may not see "propName" as an arg
 #endif
@@ -950,7 +1087,10 @@ module Patterns =
     let bindGenericCtor (tc:Type,argTypes:Instantiable<Type list>) =
         let argtyps =  instFormal (getGenericArguments tc) argTypes
 #if FX_ATLEAST_PORTABLE
-        tc.GetConstructor(Array.ofList argtyps) |> checkNonNullResult ("tc", SR.GetString(SR.QfailedToBindConstructor))  // fxcop may not see "tc" as an arg
+        let argTypes = Array.ofList argtyps
+        tc.GetConstructor(argTypes) 
+        |> bindCtorBySearchIfCandidateIsNull tc argTypes
+        |> checkNonNullResult ("tc", SR.GetString(SR.QfailedToBindConstructor))  // fxcop may not see "tc" as an arg
 #else        
         tc.GetConstructor(instanceBindingFlags,null,Array.ofList argtyps,null) |> checkNonNullResult ("tc", SR.GetString(SR.QfailedToBindConstructor))  // fxcop may not see "tc" as an arg
 #endif
@@ -958,7 +1098,10 @@ module Patterns =
         let typ = mkNamedType(tc,tyargs)
         let argtyps = argTypes |> inst tyargs
 #if FX_ATLEAST_PORTABLE
-        typ.GetConstructor(Array.ofList argtyps) |> checkNonNullResult ("tc", SR.GetString(SR.QfailedToBindConstructor)) // fxcop may not see "tc" as an arg
+        let argTypes = Array.ofList argtyps
+        typ.GetConstructor(argTypes) 
+        |> bindCtorBySearchIfCandidateIsNull typ argTypes
+        |> checkNonNullResult ("tc", SR.GetString(SR.QfailedToBindConstructor)) // fxcop may not see "tc" as an arg
 #else        
         typ.GetConstructor(instanceBindingFlags,null,Array.ofList argtyps,null) |> checkNonNullResult ("tc", SR.GetString(SR.QfailedToBindConstructor)) // fxcop may not see "tc" as an arg
 #endif
@@ -1114,7 +1257,11 @@ module Patterns =
         if a = "" then mscorlib
         elif a = "." then st.localAssembly 
         else 
+#if FX_RESHAPED_REFLECTION
+            match System.Reflection.Assembly.Load(AssemblyName(a)) with 
+#else
             match System.Reflection.Assembly.Load(a) with 
+#endif
             | null -> raise <| System.InvalidOperationException(SR.GetString1(SR.QfailedToBindAssembly, a.ToString()))
             | ass -> ass
         
@@ -1165,8 +1312,15 @@ module Patterns =
         match tag with 
         | 0 -> u_tup3 u_constSpec u_dtypes (u_list u_Expr) st 
                 |> (fun (a,b,args) (env:BindingEnv) -> 
+                    let args = List.map (fun e -> e env) args
+                    let a =
+                        match a with
+                        | Unique v -> v
+                        | Ambiguous f ->
+                            let argTys = List.map typeOf args
+                            f argTys
                     let tyargs = b env.typeInst 
-                    E(CombTerm(a tyargs, List.map (fun e -> e env) args ))) 
+                    E(CombTerm(a tyargs, args ))) 
         | 1 -> let x = u_VarRef st 
                (fun env -> E(VarTerm (x env)))
         | 2 -> let a = u_VarDecl st
@@ -1202,8 +1356,11 @@ module Patterns =
 
     and u_ModuleDefn st = 
         let (ty,nm,isProp) = u_tup3 u_NamedType u_string u_bool st 
-        if isProp then StaticPropGetOp(bindModuleProperty(ty,nm)) 
-        else StaticMethodCallOp(bindModuleFunction(ty,nm))
+        if isProp then Unique(StaticPropGetOp(bindModuleProperty(ty,nm)))
+        else 
+        match bindModuleFunction(ty, nm) with
+        | Some mi -> Unique(StaticMethodCallOp(mi))
+        | None -> Ambiguous(fun argTypes tyargs -> StaticMethodCallOp(bindModuleFunctionWithCallSiteArgs(ty, nm, argTypes, tyargs)))
 
     and u_MethodInfoData st = 
         u_tup5 u_NamedType (u_list u_dtype) u_dtype u_string u_int st
@@ -1219,8 +1376,9 @@ module Patterns =
         match tag with 
         | 0 -> 
             match u_ModuleDefn st with 
-            | StaticMethodCallOp(minfo) -> (minfo :> MethodBase)
-            | StaticPropGetOp(pinfo) -> (pinfo.GetGetMethod(true) :> MethodBase)
+            | Unique(StaticMethodCallOp(minfo)) -> (minfo :> MethodBase)
+            | Unique(StaticPropGetOp(pinfo)) -> (pinfo.GetGetMethod(true) :> MethodBase)
+            | Ambiguous(_) -> raise (System.Reflection.AmbiguousMatchException())
             | _ -> failwith "unreachable"
         | 1 -> 
             let data = u_MethodInfoData st
@@ -1235,61 +1393,68 @@ module Patterns =
       
     and u_constSpec st = 
         let tag = u_byte_as_int st 
-        match tag with 
-        | 0 -> u_void       st |> (fun () NoTyArgs -> IfThenElseOp)
-        | 1 -> u_ModuleDefn st  |> (fun op tyargs -> 
-                                        match op with 
-                                        | StaticMethodCallOp(minfo) -> StaticMethodCallOp(instMeth(minfo,tyargs))
-                                        // OK to throw away the tyargs here since this only non-generic values in modules get represented by static properties
-                                        | op -> op)
-        | 2 -> u_void            st |> (fun () NoTyArgs -> LetRecOp)
-        | 3 -> u_NamedType        st |> (fun x tyargs -> NewRecordOp (mkNamedType(x,tyargs)))
-        | 4 -> u_RecdField       st |> (fun prop tyargs -> InstancePropGetOp(prop tyargs))
-        | 5 -> u_UnionCaseInfo   st |> (fun unionCase tyargs -> NewUnionCaseOp(unionCase tyargs))
-        | 6 -> u_UnionCaseField  st |> (fun prop tyargs -> InstancePropGetOp(prop tyargs) )
-        | 7 -> u_UnionCaseInfo   st |> (fun unionCase tyargs -> UnionCaseTestOp(unionCase tyargs))
-        | 8 -> u_void          st |> (fun () (OneTyArg(tyarg)) -> NewTupleOp tyarg)
-        | 9 -> u_int           st |> (fun x (OneTyArg(tyarg)) -> TupleGetOp (tyarg,x))
-        // Note, these get type args because they may be the result of reading literal field constants
-        | 11 -> u_bool         st |> (fun x (OneTyArg(tyarg)) -> mkLiftedValueOpG (x, tyarg))
-        | 12 -> u_string       st |> (fun x (OneTyArg(tyarg)) -> mkLiftedValueOpG (x, tyarg))
-        | 13 -> u_float32      st |> (fun x (OneTyArg(tyarg)) -> mkLiftedValueOpG (x, tyarg))
-        | 14 -> u_double       st |> (fun a (OneTyArg(tyarg)) -> mkLiftedValueOpG (a, tyarg))
-        | 15 -> u_char         st |> (fun a (OneTyArg(tyarg)) -> mkLiftedValueOpG (a, tyarg))
-        | 16 -> u_sbyte        st |> (fun a (OneTyArg(tyarg)) -> mkLiftedValueOpG (a, tyarg))
-        | 17 -> u_byte         st |> (fun a (OneTyArg(tyarg)) -> mkLiftedValueOpG (a, tyarg))
-        | 18 -> u_int16        st |> (fun a (OneTyArg(tyarg)) -> mkLiftedValueOpG (a, tyarg))
-        | 19 -> u_uint16       st |> (fun a (OneTyArg(tyarg)) -> mkLiftedValueOpG (a, tyarg))
-        | 20 -> u_int32        st |> (fun a (OneTyArg(tyarg)) -> mkLiftedValueOpG (a, tyarg))
-        | 21 -> u_uint32       st |> (fun a (OneTyArg(tyarg)) -> mkLiftedValueOpG (a, tyarg))
-        | 22 -> u_int64        st |> (fun a (OneTyArg(tyarg)) -> mkLiftedValueOpG (a, tyarg))
-        | 23 -> u_uint64       st |> (fun a (OneTyArg(tyarg)) -> mkLiftedValueOpG (a, tyarg))
-        | 24 -> u_void         st |> (fun () NoTyArgs -> mkLiftedValueOpG ((), typeof<unit>))
-        | 25 -> u_PropInfoData st |> (fun (a,b,c,d) tyargs -> let pinfo = bindProp(a,b,c,d,tyargs) in if pinfoIsStatic pinfo then StaticPropGetOp(pinfo) else InstancePropGetOp(pinfo))
-        | 26 -> u_CtorInfoData st |> (fun (a,b) tyargs  -> NewObjectOp (bindCtor(a,b,tyargs)))
-        | 28 -> u_void         st |> (fun () (OneTyArg(ty)) -> CoerceOp ty)
-        | 29 -> u_void         st |> (fun () NoTyArgs -> SequentialOp)
-        | 30 -> u_void         st |> (fun () NoTyArgs -> ForIntegerRangeLoopOp)
-        | 31 -> u_MethodInfoData st |> (fun p tyargs -> let minfo = bindMeth(p,tyargs) in if minfo.IsStatic then StaticMethodCallOp(minfo) else InstanceMethodCallOp(minfo))
-        | 32 -> u_void           st |> (fun () (OneTyArg(ty)) -> NewArrayOp ty)
-        | 33 -> u_void           st |> (fun () (OneTyArg(ty)) -> NewDelegateOp ty)
-        | 34 -> u_void           st |> (fun () NoTyArgs -> WhileLoopOp)
-        | 35 -> u_void           st |> (fun () NoTyArgs -> LetOp)
-        | 36 -> u_RecdField      st |> (fun prop tyargs -> InstancePropSetOp(prop tyargs))
-        | 37 -> u_tup2 u_NamedType u_string st |> (fun (a,b) tyargs -> let finfo = bindField(a,b,tyargs) in if finfo.IsStatic then StaticFieldGetOp(finfo) else InstanceFieldGetOp(finfo))
-        | 38 -> u_void           st |> (fun () NoTyArgs -> LetRecCombOp)
-        | 39 -> u_void           st |> (fun () NoTyArgs -> AppOp)
-        | 40 -> u_void           st |> (fun () (OneTyArg(ty)) -> ValueOp(null,ty))
-        | 41 -> u_void           st |> (fun () (OneTyArg(ty)) -> DefaultValueOp(ty))
-        | 42 -> u_PropInfoData   st |> (fun (a,b,c,d) tyargs -> let pinfo = bindProp(a,b,c,d,tyargs) in if pinfoIsStatic pinfo then StaticPropSetOp(pinfo) else InstancePropSetOp(pinfo))
-        | 43 -> u_tup2 u_NamedType u_string st |> (fun (a,b) tyargs -> let finfo = bindField(a,b,tyargs) in if finfo.IsStatic then StaticFieldSetOp(finfo) else InstanceFieldSetOp(finfo))
-        | 44 -> u_void           st |> (fun () NoTyArgs -> AddressOfOp)
-        | 45 -> u_void           st |> (fun () NoTyArgs -> AddressSetOp)
-        | 46 -> u_void           st |> (fun () (OneTyArg(ty)) -> TypeTestOp(ty))
-        | 47 -> u_void           st |> (fun () NoTyArgs -> TryFinallyOp)
-        | 48 -> u_void           st |> (fun () NoTyArgs -> TryWithOp)
-        | 49 -> u_void           st |> (fun () NoTyArgs -> VarSetOp)
-        | _ -> failwithf "u_constSpec, unrecognized tag %d" tag
+        if tag = 1 then
+            let bindModuleDefn r tyargs = 
+                match r with
+                | StaticMethodCallOp(minfo) -> StaticMethodCallOp(instMeth(minfo,tyargs))
+                // OK to throw away the tyargs here since this only non-generic values in modules get represented by static properties
+                | x -> x                
+            match u_ModuleDefn st with
+            | Unique(r) -> Unique(bindModuleDefn r)
+            | Ambiguous(f) -> Ambiguous(fun argTypes tyargs -> bindModuleDefn (f argTypes tyargs) tyargs) 
+        else
+        let constSpec = 
+            match tag with 
+            | 0 -> u_void       st |> (fun () NoTyArgs -> IfThenElseOp)
+            | 2 -> u_void            st |> (fun () NoTyArgs -> LetRecOp)
+            | 3 -> u_NamedType        st |> (fun x tyargs -> NewRecordOp (mkNamedType(x,tyargs)))
+            | 4 -> u_RecdField       st |> (fun prop tyargs -> InstancePropGetOp(prop tyargs))
+            | 5 -> u_UnionCaseInfo   st |> (fun unionCase tyargs -> NewUnionCaseOp(unionCase tyargs))
+            | 6 -> u_UnionCaseField  st |> (fun prop tyargs -> InstancePropGetOp(prop tyargs) )
+            | 7 -> u_UnionCaseInfo   st |> (fun unionCase tyargs -> UnionCaseTestOp(unionCase tyargs))
+            | 8 -> u_void          st |> (fun () (OneTyArg(tyarg)) -> NewTupleOp tyarg)
+            | 9 -> u_int           st |> (fun x (OneTyArg(tyarg)) -> TupleGetOp (tyarg,x))
+            // Note, these get type args because they may be the result of reading literal field constants
+            | 11 -> u_bool         st |> (fun x (OneTyArg(tyarg)) -> mkLiftedValueOpG (x, tyarg))
+            | 12 -> u_string       st |> (fun x (OneTyArg(tyarg)) -> mkLiftedValueOpG (x, tyarg))
+            | 13 -> u_float32      st |> (fun x (OneTyArg(tyarg)) -> mkLiftedValueOpG (x, tyarg))
+            | 14 -> u_double       st |> (fun a (OneTyArg(tyarg)) -> mkLiftedValueOpG (a, tyarg))
+            | 15 -> u_char         st |> (fun a (OneTyArg(tyarg)) -> mkLiftedValueOpG (a, tyarg))
+            | 16 -> u_sbyte        st |> (fun a (OneTyArg(tyarg)) -> mkLiftedValueOpG (a, tyarg))
+            | 17 -> u_byte         st |> (fun a (OneTyArg(tyarg)) -> mkLiftedValueOpG (a, tyarg))
+            | 18 -> u_int16        st |> (fun a (OneTyArg(tyarg)) -> mkLiftedValueOpG (a, tyarg))
+            | 19 -> u_uint16       st |> (fun a (OneTyArg(tyarg)) -> mkLiftedValueOpG (a, tyarg))
+            | 20 -> u_int32        st |> (fun a (OneTyArg(tyarg)) -> mkLiftedValueOpG (a, tyarg))
+            | 21 -> u_uint32       st |> (fun a (OneTyArg(tyarg)) -> mkLiftedValueOpG (a, tyarg))
+            | 22 -> u_int64        st |> (fun a (OneTyArg(tyarg)) -> mkLiftedValueOpG (a, tyarg))
+            | 23 -> u_uint64       st |> (fun a (OneTyArg(tyarg)) -> mkLiftedValueOpG (a, tyarg))
+            | 24 -> u_void         st |> (fun () NoTyArgs -> mkLiftedValueOpG ((), typeof<unit>))
+            | 25 -> u_PropInfoData st |> (fun (a,b,c,d) tyargs -> let pinfo = bindProp(a,b,c,d,tyargs) in if pinfoIsStatic pinfo then StaticPropGetOp(pinfo) else InstancePropGetOp(pinfo))
+            | 26 -> u_CtorInfoData st |> (fun (a,b) tyargs  -> NewObjectOp (bindCtor(a,b,tyargs)))
+            | 28 -> u_void         st |> (fun () (OneTyArg(ty)) -> CoerceOp ty)
+            | 29 -> u_void         st |> (fun () NoTyArgs -> SequentialOp)
+            | 30 -> u_void         st |> (fun () NoTyArgs -> ForIntegerRangeLoopOp)
+            | 31 -> u_MethodInfoData st |> (fun p tyargs -> let minfo = bindMeth(p,tyargs) in if minfo.IsStatic then StaticMethodCallOp(minfo) else InstanceMethodCallOp(minfo))
+            | 32 -> u_void           st |> (fun () (OneTyArg(ty)) -> NewArrayOp ty)
+            | 33 -> u_void           st |> (fun () (OneTyArg(ty)) -> NewDelegateOp ty)
+            | 34 -> u_void           st |> (fun () NoTyArgs -> WhileLoopOp)
+            | 35 -> u_void           st |> (fun () NoTyArgs -> LetOp)
+            | 36 -> u_RecdField      st |> (fun prop tyargs -> InstancePropSetOp(prop tyargs))
+            | 37 -> u_tup2 u_NamedType u_string st |> (fun (a,b) tyargs -> let finfo = bindField(a,b,tyargs) in if finfo.IsStatic then StaticFieldGetOp(finfo) else InstanceFieldGetOp(finfo))
+            | 38 -> u_void           st |> (fun () NoTyArgs -> LetRecCombOp)
+            | 39 -> u_void           st |> (fun () NoTyArgs -> AppOp)
+            | 40 -> u_void           st |> (fun () (OneTyArg(ty)) -> ValueOp(null,ty))
+            | 41 -> u_void           st |> (fun () (OneTyArg(ty)) -> DefaultValueOp(ty))
+            | 42 -> u_PropInfoData   st |> (fun (a,b,c,d) tyargs -> let pinfo = bindProp(a,b,c,d,tyargs) in if pinfoIsStatic pinfo then StaticPropSetOp(pinfo) else InstancePropSetOp(pinfo))
+            | 43 -> u_tup2 u_NamedType u_string st |> (fun (a,b) tyargs -> let finfo = bindField(a,b,tyargs) in if finfo.IsStatic then StaticFieldSetOp(finfo) else InstanceFieldSetOp(finfo))
+            | 44 -> u_void           st |> (fun () NoTyArgs -> AddressOfOp)
+            | 45 -> u_void           st |> (fun () NoTyArgs -> AddressSetOp)
+            | 46 -> u_void           st |> (fun () (OneTyArg(ty)) -> TypeTestOp(ty))
+            | 47 -> u_void           st |> (fun () NoTyArgs -> TryFinallyOp)
+            | 48 -> u_void           st |> (fun () NoTyArgs -> TryWithOp)
+            | 49 -> u_void           st |> (fun () NoTyArgs -> VarSetOp)
+            | _ -> failwithf "u_constSpec, unrecognized tag %d" tag
+        Unique constSpec
     let u_ReflectedDefinition = u_tup2 u_MethodBase u_Expr
     let u_ReflectedDefinitions = u_list u_ReflectedDefinition
 
@@ -1396,17 +1561,117 @@ module Patterns =
 #if FX_NO_REFLECTION_METADATA_TOKENS // not available on Compact Framework
     [<StructuralEquality; NoComparison>]
     type ReflectedDefinitionTableKey = 
-        | Key of System.Type * int * System.Type[]
+        // Key is declaring type * type parameters count * name * parameter types * return type
+        // Registered reflected definitions can contain generic methods or constructors in generic types,
+        // however TryGetReflectedDefinition can be queried with concrete instantiations of the same methods that doesnt contain type parameters.
+        // To make these two cases match we apply the following transformations:
+        // 1. if declaring type is generic - key will contain generic type definition, otherwise - type itself
+        // 2. if method is instantiation of generic one - pick parameters from generic method definition, otherwise - from methods itself
+        // 3  if method is constructor and declaring type is generic then we'll use the following trick to treat C<'a>() and C<int>() as the same type
+        // - we resolve method handle of the constructor using generic type definition - as a result for constructor from instantiated type we obtain matching constructor in generic type definition 
+        | Key of System.Type * int * string * System.Type[] * System.Type
         static member GetKey(methodBase:MethodBase) = 
-#if FX_NO_REFLECTION_MODULES
-            Key(methodBase.DeclaringType,
-                (if methodBase.IsGenericMethod then methodBase.GetGenericArguments().Length else 0),
-                methodBase.GetParameters() |> Array.map (fun p -> p.ParameterType))
+            let isGenericType = methodBase.DeclaringType.IsGenericType
+            let declaringType = 
+                if isGenericType then 
+                    methodBase.DeclaringType.GetGenericTypeDefinition() 
+                else methodBase.DeclaringType
+            let tyArgsCount = 
+                if methodBase.IsGenericMethod then 
+                    methodBase.GetGenericArguments().Length 
+                else 0
+#if FX_RESHAPED_REFLECTION
+            // this is very unfortunate consequence of limited Reflection capabilities on .NETCore
+            // what we want: having MethodBase for some concrete method or constructor we would like to locate corresponding MethodInfo\ConstructorInfo from the open generic type (cannonical form).
+            // It is necessary to build the key for the table of reflected definitions: reflection definition is saved for open generic type but user may request it using
+            // arbitrary instantiation.
+            let findMethodInOpenGenericType (mb : ('T :> MethodBase)) : 'T = 
+                let candidates = 
+                    let bindingFlags = 
+                        (if mb.IsPublic then BindingFlags.Public else BindingFlags.NonPublic) |||
+                        (if mb.IsStatic then BindingFlags.Static else BindingFlags.Instance)
+                    let candidates : MethodBase[] =
+                        downcast (
+                            if mb.IsConstructor then
+                                box (declaringType.GetConstructors(bindingFlags))
+                            else
+                                box (declaringType.GetMethods(bindingFlags))
+                        )
+                    candidates |> Array.filter (fun c -> 
+                        c.Name = mb.Name && 
+                        (c.GetParameters().Length) = (mb.GetParameters().Length) &&
+                        (c.IsGenericMethod = mb.IsGenericMethod) &&
+                        (if c.IsGenericMethod then c.GetGenericArguments().Length = mb.GetGenericArguments().Length else true)
+                        )
+                let solution = 
+                    if candidates.Length = 0 then failwith "Unexpected, failed to locate matching method"
+                    elif candidates.Length = 1 then candidates.[0]
+                    else
+                    // here we definitely know that candidates
+                    // a. has matching name
+                    // b. has the same number of arguments
+                    // c. has the same number of type parameters if any
+
+                    let originalParameters = mb.GetParameters()
+                    let originalTypeArguments = mb.DeclaringType.GetGenericArguments()
+                    let EXACT_MATCHING_COST = 2
+                    let GENERIC_TYPE_MATCHING_COST = 1
+
+                    // loops through the parameters and computes the rate of the current candidate.
+                    // having the argument:
+                    // - rate is increased on EXACT_MATCHING_COST if type of argument that candidate has at position i exactly matched the type of argument for the original method.
+                    // - rate is increased on GENERIC_TYPE_MATCHING_COST if candidate has generic argument at given position and its type matched the type of argument for the original method.
+                    // - otherwise rate will be 0
+                    let evaluateCandidate (mb : MethodBase) : int = 
+                        let parameters = mb.GetParameters()
+                        let rec loop i resultSoFar = 
+                            if i >= parameters.Length then resultSoFar
+                            else
+                            let p = parameters.[i]
+                            let orig = originalParameters.[i]
+                            if p.ParameterType = orig.ParameterType then loop (i + 1) (resultSoFar + EXACT_MATCHING_COST) // exact matching
+                            elif p.ParameterType.IsGenericParameter && p.ParameterType.DeclaringType = mb.DeclaringType then
+                                let pos = p.ParameterType.GenericParameterPosition
+                                if originalTypeArguments.[pos] = orig.ParameterType then loop (i + 1) (resultSoFar + GENERIC_TYPE_MATCHING_COST)
+                                else 0
+                            else
+                                0
+
+                        loop 0 0
+
+                    Array.maxBy evaluateCandidate candidates                       
+
+                solution :?> 'T
+#endif
+            match methodBase with
+            | :? MethodInfo as mi ->
+                let mi = 
+                    if mi.IsGenericMethod then 
+                        let mi = mi.GetGenericMethodDefinition()
+                        if isGenericType then
+#if FX_RESHAPED_REFLECTION
+                            findMethodInOpenGenericType mi
 #else
-            Key(methodBase.DeclaringType.Module.ModuleHandle,
-                (if methodBase.IsGenericMethod then methodBase.GetGenericArguments().Length else 0),            
-                methodBase.GetParameters() |> Array.map (fun p -> p.Type))
-#endif                
+                            MethodBase.GetMethodFromHandle(mi.MethodHandle, declaringType.TypeHandle) :?> MethodInfo
+#endif
+                        else
+                            mi
+                    else mi
+                let paramTypes = mi.GetParameters() |> getTypesFromParamInfos
+                Key(declaringType, tyArgsCount, methodBase.Name, paramTypes, mi.ReturnType)
+            | :? ConstructorInfo as ci ->
+                let mi = 
+                    if isGenericType then
+#if FX_RESHAPED_REFLECTION
+                        findMethodInOpenGenericType ci
+#else
+                        MethodBase.GetMethodFromHandle(ci. MethodHandle, declaringType.TypeHandle) :?> ConstructorInfo // convert ctor with concrete args to ctor with generic args
+#endif
+                    else
+                        ci
+                let paramTypes = mi.GetParameters() |> getTypesFromParamInfos
+                Key(declaringType, tyArgsCount, methodBase.Name, paramTypes, declaringType)
+            | _ -> failwith "Unexpected MethodBase type, %A" (methodBase.GetType()) // per MSDN ConstructorInfo and MethodInfo are the only derived types from MethodBase
 #else
     [<StructuralEquality; NoComparison>]
     type ReflectedDefinitionTableKey = 

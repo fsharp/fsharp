@@ -1407,6 +1407,7 @@ module internal VsMocks =
     let vsTargetFrameworkAssemblies30 = vsTargetFrameworkAssembliesN 0x30000u
     let vsTargetFrameworkAssemblies35 = vsTargetFrameworkAssembliesN 0x30005u
     let vsTargetFrameworkAssemblies40 = vsTargetFrameworkAssembliesN 0x40000u
+    let vsTargetFrameworkAssemblies45 = vsTargetFrameworkAssembliesN 0x40005u
     
     let vsFrameworkMultiTargeting =
         { new IVsFrameworkMultiTargeting with
@@ -1458,26 +1459,38 @@ module internal VsMocks =
         }
 
     let MakeVsSolutionBuildManagerAndConfigChangeNotifier() =
-        let id = ref 0u
-        let listeners = new Dictionary<uint32,IVsUpdateSolutionEvents>()
+        let mkEventsStorage () = 
+            let listeners = Dictionary()
+            let id = ref 0u
+            let add l = 
+                let cookie = !id
+                listeners.Add(cookie, l)
+                id := !id + 1u
+                cookie
+            let remove v =
+                listeners.Remove(v) |> ignore
+            let enumerate() = listeners.Values
+            add, remove, enumerate
+
+        let add1, remove1, enumerate1 = mkEventsStorage()
+        let add2, remove2, _ = mkEventsStorage()
         let configDict = new Dictionary<IVsHierarchy,string>()
         let configChangeNotifier(h : IVsHierarchy, s : string) = 
             if configDict.ContainsKey(h) then
                 configDict.[h] <- s
             else
                 configDict.Add(h,s)
-            for kvp in listeners do
-                kvp.Value.OnActiveProjectCfgChange(h) |> ignore 
+            for (kvp : IVsUpdateSolutionEvents) in enumerate1() do
+                kvp.OnActiveProjectCfgChange(h) |> ignore 
         let vsSolutionBuildManager = 
             { new IVsSolutionBuildManager with
                 member x.DebugLaunch(grfLaunch) = err(__LINE__)
                 member x.StartSimpleUpdateSolutionConfiguration(dwFlags, dwDefQueryResults,   fSuppressUI) = err(__LINE__)
                 member x.AdviseUpdateSolutionEvents(  pIVsUpdateSolutionEvents,  outpdwCookie : byref<uint32> ) =
-                    listeners.Add(!id, pIVsUpdateSolutionEvents)
-                    id := !id + 1u
+                    outpdwCookie <- add1 pIVsUpdateSolutionEvents 
                     0
                 member x.UnadviseUpdateSolutionEvents(dwCookie) =
-                    listeners.Remove(dwCookie) |> ignore
+                    remove1 dwCookie
                     0
                 member x.UpdateSolutionConfigurationIsActive(pfIsActive) = err(__LINE__)
                 member x.CanCancelUpdateSolutionConfiguration(pfCanCancel) = err(__LINE__)
@@ -1502,7 +1515,8 @@ module internal VsMocks =
                 member x.set_StartupProject(  pHierarchy) = err(__LINE__)
                 member x.GetProjectDependencies(  pHier, celt,   rgpHier, pcActual) = err(__LINE__)
               interface IVsSolutionBuildManager2 with
-                member x.AdviseUpdateSolutionEvents(_pIVsUpdateSolutionEvents, _pdwCookie) =
+                member x.AdviseUpdateSolutionEvents(pIVsUpdateSolutionEvents, pdwCookie) =
+                    pdwCookie <- add2 pIVsUpdateSolutionEvents
                     0
                 member x.CalculateProjectDependencies() = err(__LINE__)
                 member x.CanCancelUpdateSolutionConfiguration(_pfCanCancel) = err(__LINE__)
@@ -1518,7 +1532,9 @@ module internal VsMocks =
                 member x.StartSimpleUpdateSolutionConfiguration(_dwFlags, _dwDefQueryResults, _fSuppressUI) = err(__LINE__)
                 member x.StartUpdateProjectConfigurations(_cProjs, _rgpHierProjs, _dwFlags, _fSuppressUI) = err(__LINE__)
                 member x.StartUpdateSpecificProjectConfigurations(_cProjs, _rgpHier, _rgpcfg, _rgdwCleanFlags, _rgdwBuildFlags, _rgdwDeployFlags, _dwFlags, _fSuppressUI) = err(__LINE__)
-                member x.UnadviseUpdateSolutionEvents(_dwCookie) = err(__LINE__)
+                member x.UnadviseUpdateSolutionEvents(dwCookie) = 
+                    remove2 dwCookie
+                    0
                 member x.UpdateSolutionConfigurationIsActive(_pfIsActive) = err(__LINE__)
                 member x.get_CodePage(_puiCodePage) = err(__LINE__)
                 member x.get_IsDebug(_pfIsDebug) = err(__LINE__)
@@ -1580,6 +1596,11 @@ module internal VsMocks =
         sp.AddService(typeof<SVsTargetFrameworkAssemblies>, box vsTargetFrameworkAssemblies40, false)
         sp.AddService(typeof<SVsFrameworkMultiTargeting>, box vsFrameworkMultiTargeting, false)
         sp, ccn
+    let MakeMockServiceProviderAndConfigChangeNotifier45() =
+        let sp, ccn = MakeMockServiceProviderAndConfigChangeNotifierNoTargetFrameworkAssembliesService()
+        sp.AddService(typeof<SVsTargetFrameworkAssemblies>, box vsTargetFrameworkAssemblies45, false)
+        sp.AddService(typeof<SVsFrameworkMultiTargeting>, box vsFrameworkMultiTargeting, false)
+        sp, ccn
 
     // This is the mock thing that all tests, except the multitargeting tests call.
     // By default, let it use the 4.0 assembly version.
@@ -1615,7 +1636,7 @@ module internal VsActual =
 
     let vsInstallDir =
 #if FX_ATLEAST_45
-        let key = @"SOFTWARE\Microsoft\VisualStudio\11.0"
+        let key = @"SOFTWARE\Microsoft\VisualStudio\12.0"
 #else
         let key = @"SOFTWARE\Microsoft\VisualStudio\10.0"
 #endif

@@ -11,7 +11,7 @@
 //----------------------------------------------------------------------------
 
 /// Anything to do with special names of identifiers and other lexical rules 
-module (* internal *) Microsoft.FSharp.Compiler.Range
+module internal Microsoft.FSharp.Compiler.Range
 
 open System.IO
 open System.Collections.Generic

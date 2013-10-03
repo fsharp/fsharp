@@ -124,6 +124,7 @@ type public TcGlobals =
 #else
       ilxPubCloEnv : EraseIlxFuncs.cenv;
 #endif
+      emitDebugInfoInQuotations : bool
       compilingFslib: bool;
       mlCompatibility : bool;
       directoryToResolveRelativePaths : string;
@@ -247,8 +248,8 @@ type public TcGlobals =
       system_Int32_typ             : TType; 
       system_String_typ            : TType; 
       system_Type_typ              : TType; 
-      system_TypedReference_tcref  : TyconRef; 
-      system_ArgIterator_tcref     : TyconRef; 
+      system_TypedReference_tcref  : TyconRef option;
+      system_ArgIterator_tcref     : TyconRef option; 
       system_Decimal_tcref : TyconRef; 
       system_SByte_tcref : TyconRef; 
       system_Int16_tcref : TyconRef; 
@@ -264,11 +265,11 @@ type public TcGlobals =
       system_UIntPtr_tcref : TyconRef; 
       system_Single_tcref : TyconRef; 
       system_Double_tcref : TyconRef; 
-      system_RuntimeArgumentHandle_tcref : TyconRef; 
+      system_RuntimeArgumentHandle_tcref : TyconRef option; 
       system_RuntimeTypeHandle_typ       : TType;
       system_RuntimeMethodHandle_typ     : TType;
-      system_MarshalByRefObject_tcref    : TyconRef;
-      system_MarshalByRefObject_typ      : TType;
+      system_MarshalByRefObject_tcref    : TyconRef option;
+      system_MarshalByRefObject_typ      : TType option;
       system_Reflection_MethodInfo_typ   : TType;
       system_Array_tcref           : TyconRef;
       system_Object_tcref          : TyconRef;
@@ -291,12 +292,12 @@ type public TcGlobals =
       attrib_ProjectionParameterAttribute : BuiltinAttribInfo;
       attrib_AttributeUsageAttribute     : BuiltinAttribInfo;
       attrib_ParamArrayAttribute         : BuiltinAttribInfo;
-      attrib_IDispatchConstantAttribute  : BuiltinAttribInfo;
-      attrib_IUnknownConstantAttribute   : BuiltinAttribInfo;
+      attrib_IDispatchConstantAttribute  : BuiltinAttribInfo option;
+      attrib_IUnknownConstantAttribute   : BuiltinAttribInfo option;
       attrib_SystemObsolete              : BuiltinAttribInfo;
       attrib_DllImportAttribute          : BuiltinAttribInfo;
       attrib_CompiledNameAttribute       : BuiltinAttribInfo;
-      attrib_NonSerializedAttribute      : BuiltinAttribInfo;
+      attrib_NonSerializedAttribute      : BuiltinAttribInfo option;
       attrib_AutoSerializableAttribute   : BuiltinAttribInfo;
       attrib_StructLayoutAttribute       : BuiltinAttribInfo;
       attrib_TypeForwardedToAttribute    : BuiltinAttribInfo;
@@ -307,22 +308,25 @@ type public TcGlobals =
       attrib_InAttribute                 : BuiltinAttribInfo;
       attrib_OutAttribute                : BuiltinAttribInfo;
       attrib_OptionalAttribute           : BuiltinAttribInfo;
-      attrib_ThreadStaticAttribute       : BuiltinAttribInfo;
-      attrib_SpecialNameAttribute        : BuiltinAttribInfo;
+      attrib_ThreadStaticAttribute       : BuiltinAttribInfo option;
+      attrib_SpecialNameAttribute        : BuiltinAttribInfo option;
       attrib_VolatileFieldAttribute      : BuiltinAttribInfo;
-      attrib_ContextStaticAttribute      : BuiltinAttribInfo;
+      attrib_ContextStaticAttribute      : BuiltinAttribInfo option;
       attrib_FlagsAttribute              : BuiltinAttribInfo;
       attrib_DefaultMemberAttribute      : BuiltinAttribInfo;
       attrib_DebuggerDisplayAttribute    : BuiltinAttribInfo;
       attrib_DebuggerTypeProxyAttribute  : BuiltinAttribInfo;
       attrib_PreserveSigAttribute        : BuiltinAttribInfo;
       attrib_MethodImplAttribute         : BuiltinAttribInfo;
-      tcref_System_Collections_Generic_IList       : TyconRef;
-      tcref_System_Collections_Generic_ICollection : TyconRef;
-      tcref_System_Collections_Generic_IEnumerable : TyconRef;
-      tcref_System_Collections_IEnumerable         : TyconRef;
-      tcref_System_Collections_Generic_IEnumerator : TyconRef;
-      tcref_System_Attribute                       : TyconRef;
+      attrib_ExtensionAttribute          : BuiltinAttribInfo;
+      tcref_System_Collections_Generic_IList               : TyconRef;
+      tcref_System_Collections_Generic_IReadOnlyList       : TyconRef;
+      tcref_System_Collections_Generic_ICollection         : TyconRef;
+      tcref_System_Collections_Generic_IReadOnlyCollection : TyconRef;
+      tcref_System_Collections_Generic_IEnumerable         : TyconRef;
+      tcref_System_Collections_IEnumerable                 : TyconRef;
+      tcref_System_Collections_Generic_IEnumerator         : TyconRef;
+      tcref_System_Attribute                               : TyconRef;
 
       attrib_RequireQualifiedAccessAttribute        : BuiltinAttribInfo; 
       attrib_EntryPointAttribute                    : BuiltinAttribInfo; 
@@ -363,7 +367,7 @@ type public TcGlobals =
       attrib_MeasureableAttribute                   : BuiltinAttribInfo;
       attrib_NoDynamicInvocationAttribute           : BuiltinAttribInfo;
       
-      attrib_SecurityAttribute                      : BuiltinAttribInfo;
+      attrib_SecurityAttribute                      : BuiltinAttribInfo option;
       attrib_SecurityCriticalAttribute              : BuiltinAttribInfo;
       attrib_SecuritySafeCriticalAttribute          : BuiltinAttribInfo;
 
@@ -413,7 +417,7 @@ type public TcGlobals =
       unchecked_subtraction_vref : ValRef;
       unchecked_multiply_vref    : ValRef;
       unchecked_defaultof_vref   : ValRef;
-
+      unchecked_subtraction_info : IntrinsicValRef
       seq_info                  : IntrinsicValRef;
       reraise_info              : IntrinsicValRef;
       reraise_vref              : ValRef;      
@@ -425,6 +429,7 @@ type public TcGlobals =
       typedefof_info            : IntrinsicValRef;
       typedefof_vref            : ValRef;
       enum_vref                 : ValRef;
+      enumOfValue_vref          : ValRef
       new_decimal_info          : IntrinsicValRef;
       
       // 'outer' refers to 'before optimization has boiled away inlined functions'
@@ -515,6 +520,7 @@ type public TcGlobals =
 
 
       array_get_info             : IntrinsicValRef;
+      array_length_info          : IntrinsicValRef;
       array2D_get_info           : IntrinsicValRef;
       array3D_get_info           : IntrinsicValRef;
       array4D_get_info           : IntrinsicValRef;
@@ -557,7 +563,7 @@ let global_g = ref (None : TcGlobals option)
 #endif
 
 let mkTcGlobals (compilingFslib,sysCcu,ilg,fslibCcu,directoryToResolveRelativePaths,mlCompatibility,
-                 using40environment,indirectCallArrayMethods,isInteractive,getTypeCcu) = 
+                 using40environment,indirectCallArrayMethods,isInteractive,getTypeCcu, emitDebugInfoInQuotations) = 
   let int_tcr        = mk_MFCore_tcref fslibCcu "int"
   let nativeint_tcr  = mk_MFCore_tcref fslibCcu "nativeint"
   let unativeint_tcr = mk_MFCore_tcref fslibCcu "unativeint"
@@ -638,6 +644,7 @@ let mkTcGlobals (compilingFslib,sysCcu,ilg,fslibCcu,directoryToResolveRelativePa
   let decimal_ty      = mkSysNonGenericTy sys "Decimal"
   let unit_ty         = mkNonGenericTy unit_tcr_nice 
   let system_Type_typ = mkSysNonGenericTy sys "Type" 
+
   
   let system_Reflection_MethodInfo_typ = mkSysNonGenericTy ["System";"Reflection"] "MethodInfo"
   let nullable_tcr = mkSysTyconRef sys "Nullable`1"
@@ -806,10 +813,15 @@ let mkTcGlobals (compilingFslib,sysCcu,ilg,fslibCcu,directoryToResolveRelativePa
 
   let mk_MFCore_attrib nm : BuiltinAttribInfo = 
       AttribInfo(mkILTyRef(IlxSettings.ilxFsharpCoreLibScopeRef (), nm),mk_MFCore_tcref fslibCcu nm) 
-
-  let mkMscorlibAttrib (nm:string) : BuiltinAttribInfo = 
+    
+  let mkAttrib (nm:string) scopeRef : BuiltinAttribInfo = 
       let path, typeName = splitILTypeName nm
-      AttribInfo(mkILTyRef (ilg.mscorlibScopeRef,nm), mkSysTyconRef path typeName)
+      AttribInfo(mkILTyRef (scopeRef, nm), mkSysTyconRef path typeName)
+
+   
+  let mkSystemRuntimeAttrib (nm:string) : BuiltinAttribInfo = mkAttrib nm ilg.traits.ScopeRef    
+  let mkSystemRuntimeInteropServicesAttribute nm = mkAttrib nm (ilg.traits.SystemRuntimeInteropServicesScopeRef.Value)
+  let mkSystemDiagnosticsDebugAttribute nm = mkAttrib nm (ilg.traits.SystemDiagnosticsDebugScopeRef.Value)
 
   let mk_doc filename = ILSourceDocument.Create(language=None, vendor=None, documentType=None, file=filename)
   // Build the memoization table for files
@@ -831,6 +843,9 @@ let mkTcGlobals (compilingFslib,sysCcu,ilg,fslibCcu,directoryToResolveRelativePa
   let less_than_or_equals_operator_info    = makeIntrinsicValRef(fslib_MFOperators_nleref,                   CompileOpName "<="                     ,None                 ,None          ,[vara],     mk_rel_sig varaTy) 
   let greater_than_operator_info           = makeIntrinsicValRef(fslib_MFOperators_nleref,                   CompileOpName ">"                      ,None                 ,None          ,[vara],     mk_rel_sig varaTy) 
   let greater_than_or_equals_operator_info = makeIntrinsicValRef(fslib_MFOperators_nleref,                   CompileOpName ">="                     ,None                 ,None          ,[vara],     mk_rel_sig varaTy) 
+  
+  let enumOfValue_info                     = makeIntrinsicValRef(fslib_MFLanguagePrimitives_nleref,          "EnumOfValue"        ,None                 ,None          ,[vara; varb],     ([[varaTy]], varbTy)) 
+  
   let generic_comparison_withc_outer_info = makeIntrinsicValRef(fslib_MFLanguagePrimitives_nleref,           "GenericComparisonWithComparer"        ,None                 ,None          ,[vara],     mk_compare_withc_sig  varaTy) 
   let generic_hash_withc_tuple2_info = makeIntrinsicValRef(fslib_MFHashCompare_nleref,           "FastHashTuple2"                                   ,None                 ,None          ,[vara;varb],               mk_hash_withc_sig (decodeTupleTy [varaTy; varbTy]))   
   let generic_hash_withc_tuple3_info = makeIntrinsicValRef(fslib_MFHashCompare_nleref,           "FastHashTuple3"                                   ,None                 ,None          ,[vara;varb;varc],          mk_hash_withc_sig (decodeTupleTy [varaTy; varbTy; varcTy]))   
@@ -924,6 +939,7 @@ let mkTcGlobals (compilingFslib,sysCcu,ilg,fslibCcu,directoryToResolveRelativePa
   let splice_raw_expr_info       = makeIntrinsicValRef(fslib_MFExtraTopLevelOperators_nleref,                "op_SpliceUntyped"                     ,None                 ,None                          ,[vara],     ([[mkRawQuotedExprTy]], varaTy))
   let new_decimal_info           = makeIntrinsicValRef(fslib_MFIntrinsicFunctions_nleref,                    "MakeDecimal"                          ,None                 ,None                          ,[],         ([[int_ty]; [int_ty]; [int_ty]; [bool_ty]; [byte_ty]], decimal_ty))
   let array_get_info             = makeIntrinsicValRef(fslib_MFIntrinsicFunctions_nleref,                    "GetArray"                             ,None                 ,None                          ,[vara],     ([[mkArrayType varaTy]; [int_ty]], varaTy))
+  let array_length_info          = makeIntrinsicValRef(fslib_MFArrayModule_nleref,                           "length"                               ,None                 ,Some "Length"                 ,[vara],     ([[mkArrayType varaTy]], varaTy))
   let unpickle_quoted_info       = makeIntrinsicValRef(fslib_MFQuotations_nleref,                            "Deserialize"                          ,Some "Expr"          ,None                          ,[],          ([[system_Type_typ ;mkListTy system_Type_typ ;mkListTy mkRawQuotedExprTy ; mkArrayType byte_ty]], mkRawQuotedExprTy ))
   let cast_quotation_info        = makeIntrinsicValRef(fslib_MFQuotations_nleref,                            "Cast"                                 ,Some "Expr"          ,None                          ,[vara],      ([[mkRawQuotedExprTy]], mkQuotedExprTy varaTy))
   let lift_value_info            = makeIntrinsicValRef(fslib_MFQuotations_nleref,                            "Value"                                ,Some "Expr"          ,None                          ,[vara],      ([[varaTy]], mkRawQuotedExprTy))
@@ -953,6 +969,7 @@ let mkTcGlobals (compilingFslib,sysCcu,ilg,fslibCcu,directoryToResolveRelativePa
     knownFSharpCoreModules         = knownFSharpCoreModules
     compilingFslib                 = compilingFslib;
     mlCompatibility                = mlCompatibility;
+    emitDebugInfoInQuotations      = emitDebugInfoInQuotations
     directoryToResolveRelativePaths= directoryToResolveRelativePaths;
     unionCaseRefEq                 = unionCaseRefEq;
     valRefEq                 = valRefEq;
@@ -1064,9 +1081,9 @@ let mkTcGlobals (compilingFslib,sysCcu,ilg,fslibCcu,directoryToResolveRelativePa
     system_String_typ    = mkSysNonGenericTy sys "String";
     system_Int32_typ     = mkSysNonGenericTy sys "Int32";
     system_Type_typ                  = system_Type_typ;
-    system_TypedReference_tcref        = mkSysTyconRef sys "TypedReference" ;
-    system_ArgIterator_tcref           = mkSysTyconRef sys "ArgIterator" ;
-    system_RuntimeArgumentHandle_tcref =  mkSysTyconRef sys "RuntimeArgumentHandle";
+    system_TypedReference_tcref        = if ilg.traits.TypedReferenceTypeScopeRef.IsSome then Some(mkSysTyconRef sys "TypedReference") else None
+    system_ArgIterator_tcref           = if ilg.traits.ArgIteratorTypeScopeRef.IsSome then Some(mkSysTyconRef sys "ArgIterator") else None
+    system_RuntimeArgumentHandle_tcref =  if ilg.traits.RuntimeArgumentHandleTypeScopeRef.IsSome then Some (mkSysTyconRef sys "RuntimeArgumentHandle") else None;
     system_SByte_tcref =  mkSysTyconRef sys "SByte";
     system_Decimal_tcref =  mkSysTyconRef sys "Decimal";
     system_Int16_tcref =  mkSysTyconRef sys "Int16";
@@ -1085,8 +1102,9 @@ let mkTcGlobals (compilingFslib,sysCcu,ilg,fslibCcu,directoryToResolveRelativePa
     system_RuntimeTypeHandle_typ = mkSysNonGenericTy sys "RuntimeTypeHandle";
     system_RuntimeMethodHandle_typ = system_RuntimeMethodHandle_typ;
     
-    system_MarshalByRefObject_tcref = mkSysTyconRef sys "MarshalByRefObject";
-    system_MarshalByRefObject_typ = mkSysNonGenericTy sys "MarshalByRefObject";
+    system_MarshalByRefObject_tcref =  if ilg.traits.MarshalByRefObjectScopeRef.IsSome then Some(mkSysTyconRef sys "MarshalByRefObject") else None
+    system_MarshalByRefObject_typ = if ilg.traits.MarshalByRefObjectScopeRef.IsSome then Some(mkSysNonGenericTy sys "MarshalByRefObject") else None
+
     system_Reflection_MethodInfo_typ = system_Reflection_MethodInfo_typ;
     
     system_Array_tcref  = mkSysTyconRef sys "Array";
@@ -1118,7 +1136,9 @@ let mkTcGlobals (compilingFslib,sysCcu,ilg,fslibCcu,directoryToResolveRelativePa
 
 
     tcref_System_Collections_Generic_IList       = mkSysTyconRef sysGenerics "IList`1";
+    tcref_System_Collections_Generic_IReadOnlyList       = mkSysTyconRef sysGenerics "IReadOnlyList`1";
     tcref_System_Collections_Generic_ICollection = mkSysTyconRef sysGenerics "ICollection`1";
+    tcref_System_Collections_Generic_IReadOnlyCollection = mkSysTyconRef sysGenerics "IReadOnlyCollection`1";
     tcref_System_Collections_IEnumerable         = tcref_System_Collections_IEnumerable
 
     tcref_System_Collections_Generic_IEnumerable = IEnumerable_tcr;
@@ -1126,36 +1146,37 @@ let mkTcGlobals (compilingFslib,sysCcu,ilg,fslibCcu,directoryToResolveRelativePa
     
     tcref_System_Attribute = System_Attribute_tcr;
 
-    attrib_AttributeUsageAttribute = mkMscorlibAttrib "System.AttributeUsageAttribute";
-    attrib_ParamArrayAttribute     = mkMscorlibAttrib "System.ParamArrayAttribute";
-    attrib_IDispatchConstantAttribute  = mkMscorlibAttrib "System.Runtime.CompilerServices.IDispatchConstantAttribute";
-    attrib_IUnknownConstantAttribute  = mkMscorlibAttrib "System.Runtime.CompilerServices.IUnknownConstantAttribute";
+    attrib_AttributeUsageAttribute = mkSystemRuntimeAttrib "System.AttributeUsageAttribute";
+    attrib_ParamArrayAttribute     = mkSystemRuntimeAttrib "System.ParamArrayAttribute";
+    attrib_IDispatchConstantAttribute  = if ilg.traits.IDispatchConstantAttributeScopeRef.IsSome then Some(mkSystemRuntimeAttrib "System.Runtime.CompilerServices.IDispatchConstantAttribute") else None
+    attrib_IUnknownConstantAttribute  = if ilg.traits.IUnknownConstantAttributeScopeRef.IsSome then Some (mkSystemRuntimeAttrib "System.Runtime.CompilerServices.IUnknownConstantAttribute") else None
     
-    attrib_SystemObsolete          = mkMscorlibAttrib "System.ObsoleteAttribute";
-    attrib_DllImportAttribute      = mkMscorlibAttrib "System.Runtime.InteropServices.DllImportAttribute";
-    attrib_StructLayoutAttribute   = mkMscorlibAttrib "System.Runtime.InteropServices.StructLayoutAttribute";
-    attrib_TypeForwardedToAttribute   = mkMscorlibAttrib "System.Runtime.CompilerServices.TypeForwardedToAttribute";
-    attrib_ComVisibleAttribute     = mkMscorlibAttrib "System.Runtime.InteropServices.ComVisibleAttribute";
-    attrib_ComImportAttribute      = mkMscorlibAttrib "System.Runtime.InteropServices.ComImportAttribute";
-    attrib_FieldOffsetAttribute    = mkMscorlibAttrib "System.Runtime.InteropServices.FieldOffsetAttribute" ;
-    attrib_MarshalAsAttribute      = mkMscorlibAttrib "System.Runtime.InteropServices.MarshalAsAttribute";
-    attrib_InAttribute             = mkMscorlibAttrib "System.Runtime.InteropServices.InAttribute" ;
-    attrib_OutAttribute            = mkMscorlibAttrib "System.Runtime.InteropServices.OutAttribute" ;
-    attrib_OptionalAttribute       = mkMscorlibAttrib "System.Runtime.InteropServices.OptionalAttribute" ;
-    attrib_ThreadStaticAttribute   = mkMscorlibAttrib "System.ThreadStaticAttribute";
-    attrib_SpecialNameAttribute   = mkMscorlibAttrib "System.Runtime.CompilerServices.SpecialNameAttribute";
+    attrib_SystemObsolete          = mkSystemRuntimeAttrib "System.ObsoleteAttribute";
+    attrib_DllImportAttribute      = mkSystemRuntimeInteropServicesAttribute "System.Runtime.InteropServices.DllImportAttribute";
+    attrib_StructLayoutAttribute   = mkSystemRuntimeAttrib "System.Runtime.InteropServices.StructLayoutAttribute";
+    attrib_TypeForwardedToAttribute   = mkSystemRuntimeAttrib "System.Runtime.CompilerServices.TypeForwardedToAttribute";
+    attrib_ComVisibleAttribute     = mkSystemRuntimeAttrib "System.Runtime.InteropServices.ComVisibleAttribute";
+    attrib_ComImportAttribute      = mkSystemRuntimeInteropServicesAttribute "System.Runtime.InteropServices.ComImportAttribute";
+    attrib_FieldOffsetAttribute    = mkSystemRuntimeAttrib "System.Runtime.InteropServices.FieldOffsetAttribute" ;
+    attrib_MarshalAsAttribute      = mkSystemRuntimeInteropServicesAttribute "System.Runtime.InteropServices.MarshalAsAttribute";
+    attrib_InAttribute             = mkSystemRuntimeInteropServicesAttribute "System.Runtime.InteropServices.InAttribute" ;
+    attrib_OutAttribute            = mkSystemRuntimeAttrib "System.Runtime.InteropServices.OutAttribute" ;
+    attrib_OptionalAttribute       = mkSystemRuntimeInteropServicesAttribute "System.Runtime.InteropServices.OptionalAttribute" ;
+    attrib_ThreadStaticAttribute   = if ilg.traits.ThreadStaticAttributeScopeRef.IsSome then Some(mkSystemRuntimeAttrib "System.ThreadStaticAttribute") else None
+    attrib_SpecialNameAttribute   = if ilg.traits.SpecialNameAttributeScopeRef.IsSome then Some(mkSystemRuntimeAttrib "System.Runtime.CompilerServices.SpecialNameAttribute") else None
     attrib_VolatileFieldAttribute   = mk_MFCore_attrib "VolatileFieldAttribute";
-    attrib_ContextStaticAttribute  = mkMscorlibAttrib "System.ContextStaticAttribute";
-    attrib_FlagsAttribute          = mkMscorlibAttrib "System.FlagsAttribute";
-    attrib_DefaultMemberAttribute  = mkMscorlibAttrib "System.Reflection.DefaultMemberAttribute";
-    attrib_DebuggerDisplayAttribute  = mkMscorlibAttrib "System.Diagnostics.DebuggerDisplayAttribute";
-    attrib_DebuggerTypeProxyAttribute  = mkMscorlibAttrib "System.Diagnostics.DebuggerTypeProxyAttribute";
-    attrib_PreserveSigAttribute    = mkMscorlibAttrib "System.Runtime.InteropServices.PreserveSigAttribute";
-    attrib_MethodImplAttribute     = mkMscorlibAttrib "System.Runtime.CompilerServices.MethodImplAttribute";
+    attrib_ContextStaticAttribute  = if ilg.traits.ContextStaticAttributeScopeRef.IsSome then Some (mkSystemRuntimeAttrib "System.ContextStaticAttribute") else None;
+    attrib_FlagsAttribute          = mkSystemRuntimeAttrib "System.FlagsAttribute";
+    attrib_DefaultMemberAttribute  = mkSystemRuntimeAttrib "System.Reflection.DefaultMemberAttribute";
+    attrib_DebuggerDisplayAttribute  = mkSystemDiagnosticsDebugAttribute "System.Diagnostics.DebuggerDisplayAttribute";
+    attrib_DebuggerTypeProxyAttribute  = mkSystemDiagnosticsDebugAttribute "System.Diagnostics.DebuggerTypeProxyAttribute";
+    attrib_PreserveSigAttribute    = mkSystemRuntimeInteropServicesAttribute "System.Runtime.InteropServices.PreserveSigAttribute";
+    attrib_MethodImplAttribute     = mkSystemRuntimeAttrib "System.Runtime.CompilerServices.MethodImplAttribute";
+    attrib_ExtensionAttribute     = mkSystemRuntimeAttrib "System.Runtime.CompilerServices.ExtensionAttribute";
     
     attrib_ProjectionParameterAttribute           = mk_MFCore_attrib "ProjectionParameterAttribute";
     attrib_CustomOperationAttribute               = mk_MFCore_attrib "CustomOperationAttribute";
-    attrib_NonSerializedAttribute                 = mkMscorlibAttrib "System.NonSerializedAttribute";
+    attrib_NonSerializedAttribute                 = if ilg.traits.NonSerializedAttributeScopeRef.IsSome then Some(mkSystemRuntimeAttrib "System.NonSerializedAttribute") else None;
     attrib_AutoSerializableAttribute              = mk_MFCore_attrib "AutoSerializableAttribute";
     attrib_RequireQualifiedAccessAttribute        = mk_MFCore_attrib "RequireQualifiedAccessAttribute";
     attrib_EntryPointAttribute                    = mk_MFCore_attrib "EntryPointAttribute";
@@ -1164,7 +1185,7 @@ let mkTcGlobals (compilingFslib,sysCcu,ilg,fslibCcu,directoryToResolveRelativePa
     attrib_ExperimentalAttribute                  = mk_MFCore_attrib "ExperimentalAttribute";
     attrib_UnverifiableAttribute                  = mk_MFCore_attrib "UnverifiableAttribute";
     attrib_LiteralAttribute                       = mk_MFCore_attrib "LiteralAttribute";
-    attrib_ConditionalAttribute                   = mkMscorlibAttrib "System.Diagnostics.ConditionalAttribute";
+    attrib_ConditionalAttribute                   = mkSystemRuntimeAttrib "System.Diagnostics.ConditionalAttribute";
     attrib_OptionalArgumentAttribute              = mk_MFCore_attrib "OptionalArgumentAttribute";
     attrib_RequiresExplicitTypeArgumentsAttribute = mk_MFCore_attrib "RequiresExplicitTypeArgumentsAttribute";
     attrib_DefaultValueAttribute                  = mk_MFCore_attrib "DefaultValueAttribute";
@@ -1195,9 +1216,9 @@ let mkTcGlobals (compilingFslib,sysCcu,ilg,fslibCcu,directoryToResolveRelativePa
     attrib_MeasureAttribute                       = mk_MFCore_attrib "MeasureAttribute";
     attrib_MeasureableAttribute                   = mk_MFCore_attrib "MeasureAnnotatedAbbreviationAttribute";
     attrib_NoDynamicInvocationAttribute           = mk_MFCore_attrib "NoDynamicInvocationAttribute";
-    attrib_SecurityAttribute                      = mkMscorlibAttrib "System.Security.Permissions.SecurityAttribute"
-    attrib_SecurityCriticalAttribute              = mkMscorlibAttrib "System.Security.SecurityCriticalAttribute"
-    attrib_SecuritySafeCriticalAttribute          = mkMscorlibAttrib "System.Security.SecuritySafeCriticalAttribute"
+    attrib_SecurityAttribute                      = if ilg.traits.SecurityPermissionAttributeTypeScopeRef.IsSome then Some(mkSystemRuntimeAttrib"System.Security.Permissions.SecurityAttribute") else None
+    attrib_SecurityCriticalAttribute              = mkSystemRuntimeAttrib "System.Security.SecurityCriticalAttribute"
+    attrib_SecuritySafeCriticalAttribute          = mkSystemRuntimeAttrib "System.Security.SecuritySafeCriticalAttribute"
 
     // Build a map that uses the "canonical" F# type names and TyconRef's for these
     // in preference to the .NET type names. Doing this normalization is a fairly performance critical
@@ -1303,7 +1324,7 @@ let mkTcGlobals (compilingFslib,sysCcu,ilg,fslibCcu,directoryToResolveRelativePa
     unchecked_subtraction_vref = ValRefForIntrinsic unchecked_subtraction_info;
     unchecked_multiply_vref    = ValRefForIntrinsic unchecked_multiply_info;
     unchecked_defaultof_vref    = ValRefForIntrinsic unchecked_defaultof_info;
-
+    unchecked_subtraction_info = unchecked_subtraction_info
     compare_operator_vref    = ValRefForIntrinsic compare_operator_info;
     equals_operator_vref    = ValRefForIntrinsic equals_operator_info;
     equals_nullable_operator_vref    = ValRefForIntrinsic equals_nullable_operator_info;
@@ -1328,9 +1349,11 @@ let mkTcGlobals (compilingFslib,sysCcu,ilg,fslibCcu,directoryToResolveRelativePa
     typedefof_info             = typedefof_info;
     typedefof_vref             = ValRefForIntrinsic typedefof_info;
     enum_vref                  = ValRefForIntrinsic enum_info;
+    enumOfValue_vref           = ValRefForIntrinsic enumOfValue_info;
     range_op_vref              = ValRefForIntrinsic range_op_info;
     range_int32_op_vref        = ValRefForIntrinsic range_int32_op_info;
     //range_step_op_vref         = ValRefForIntrinsic range_step_op_info;
+    array_length_info          = array_length_info
     array_get_vref             = ValRefForIntrinsic array_get_info;
     array2D_get_vref           = ValRefForIntrinsic array2D_get_info;
     array3D_get_vref           = ValRefForIntrinsic array3D_get_info;
@@ -1427,6 +1450,6 @@ let mkTcGlobals (compilingFslib,sysCcu,ilg,fslibCcu,directoryToResolveRelativePa
      
 let public mkMscorlibAttrib g nm : BuiltinAttribInfo = 
       let path, typeName = splitILTypeName nm
-      AttribInfo(mkILTyRef (g.ilg.mscorlibScopeRef,nm), g.mkSysTyconRef path typeName)
+      AttribInfo(mkILTyRef (g.ilg.traits.ScopeRef,nm), g.mkSysTyconRef path typeName)
 
 

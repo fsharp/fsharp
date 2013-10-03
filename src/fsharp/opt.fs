@@ -2965,10 +2965,16 @@ and OptimizeBinding cenv isRec env (TBind(v,e,spBind)) =
                // MarshalByRef methods may not be inlined
                (match v.ActualParent with 
                 | Parent tcref -> 
+                    match cenv.g.system_MarshalByRefObject_tcref with
+                    | None -> false
+                    | Some mbrTyconRef ->
                     // Check we can deref system_MarshalByRefObject_tcref. When compiling against the Silverlight mscorlib we can't
-                    cenv.g.system_MarshalByRefObject_tcref.TryDeref.IsSome &&
-                    // Check if this is a subtype of MarshalByRefObject
-                    ExistsSameHeadTypeInHierarchy cenv.g cenv.amap v.Range (generalizedTyconRef tcref) cenv.g.system_MarshalByRefObject_typ 
+                    if mbrTyconRef.TryDeref.IsSome then
+                        // Check if this is a subtype of MarshalByRefObject
+                        assert (cenv.g.system_MarshalByRefObject_typ.IsSome)
+                        ExistsSameHeadTypeInHierarchy cenv.g cenv.amap v.Range (generalizedTyconRef tcref) cenv.g.system_MarshalByRefObject_typ.Value
+                    else 
+                        false
                 | ParentNone -> false) ||
 
                // These values are given a special going-over by the optimizer and 

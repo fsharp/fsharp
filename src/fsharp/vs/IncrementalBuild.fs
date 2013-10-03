@@ -1195,7 +1195,7 @@ module internal IncrementalFSharpBuild =
             // the import of a set of framework DLLs into F# CCUs. That is, the F# CCUs that result from a set of DLLs (including
             // FSharp.Core.dll andb mscorlib.dll) must be logically invariant of all the other compiler configuration parameters.
             let key = (frameworkDLLsKey,
-                       tcConfig.mscorlibAssemblyName, 
+                       tcConfig.primaryAssembly.Name, 
                        tcConfig.ClrRoot,
                        tcConfig.fsharpBinariesDir)
             match frameworkTcImportsCache.TryGet key with 
@@ -1356,7 +1356,7 @@ module internal IncrementalFSharpBuild =
             
             try  
                 IncrementalBuilderEventsMRU.Add(IBEParsed filename)
-                let result = ParseOneInputFile(tcConfig,lexResourceManager,[],filename ,isLastCompiland,errorLogger,(*retryLocked*)true)
+                let result = ParseOneInputFile(tcConfig,lexResourceManager, [], filename ,isLastCompiland,errorLogger,(*retryLocked*)true)
                 Trace.PrintLine("FSharpBackgroundBuildVerbose", fun _ -> sprintf "done.")
                 result,sourceRange,filename,errorLogger.GetErrors ()
             with exn -> 
@@ -1674,7 +1674,7 @@ module internal IncrementalFSharpBuild =
             /// Create a type-check configuration
             let tcConfigB = 
                 let defaultFSharpBinariesDir = Internal.Utilities.FSharpEnvironment.BinFolderOfDefaultFSharpCompiler.Value
-    
+                    
                 // see also fsc.fs:runFromCommandLineToImportingAssemblies(), as there are many similarities to where the PS creates a tcConfigB
                 let tcConfigB = 
                     TcConfigBuilder.CreateNew(defaultFSharpBinariesDir, implicitIncludeDir=projectDirectory, 
@@ -1686,6 +1686,10 @@ module internal IncrementalFSharpBuild =
                     <- if useScriptResolutionRules 
                         then MSBuildResolver.DesigntimeLike  
                         else MSBuildResolver.CompileTimeLike
+                
+                tcConfigB.conditionalCompilationDefines <- 
+                    let define = if useScriptResolutionRules then "INTERACTIVE" else "COMPILED"
+                    define::tcConfigB.conditionalCompilationDefines
 
                 // Apply command-line arguments.
                 try
