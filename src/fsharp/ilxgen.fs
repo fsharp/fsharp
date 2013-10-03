@@ -6791,15 +6791,20 @@ and GenExnDef cenv mgbuf eenv m (exnc:Tycon) =
         
         let interfaces =  exnc.ImmediateInterfaceTypesOfFSharpTycon |> List.map (GenType cenv.amap m cenv.g eenv.tyenv) 
         let tdef = 
+          let serCtors = 
+            if cenv.opts.netFxHasSerializableAttribute then
+#if BE_SECURITY_TRANSPARENT
+              ignore(getObjectDataMethodForSerialization)
+              [ ilCtorDefForSerialziation ]
+#else
+              [ getObjectDataMethodForSerialization; ilCtorDefForSerialziation ]
+#endif
+            else
+              []
           mkILGenericClass
             (ilTypeName,access,[],cenv.g.ilg.typ_Exception, 
              interfaces,  
-#if BE_SECURITY_TRANSPARENT
-             (ignore(getObjectDataMethodForSerialization);
-              mkILMethods ([ilCtorDef] @ ilMethodDefsForComparison @ ilCtorDefNoArgs @ [ ilCtorDefForSerialziation ] @ ilMethodDefsForProperties)),
-#else
-             mkILMethods ([ilCtorDef] @ ilMethodDefsForComparison @ ilCtorDefNoArgs @ [ getObjectDataMethodForSerialization; ilCtorDefForSerialziation ] @ ilMethodDefsForProperties),
-#endif
+             mkILMethods ([ilCtorDef] @ ilMethodDefsForComparison @ ilCtorDefNoArgs @ serCtors @ ilMethodDefsForProperties),
              mkILFields ilFieldDefs,
              emptyILTypeDefs, 
              mkILProperties ilPropertyDefs,
