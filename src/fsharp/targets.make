@@ -57,9 +57,6 @@ do-2-0: $(objdir) $(objdir)$(TARGET_2_0) $(objdir)$(TARGET_4_0) $(objdir)$(TARGE
 	@if test "x$(DELAY_SIGN)" = "x1"; then \
 		sn -q -R $(outdir)$(ASSEMBLY) $(srcdir)../../../mono.snk; \
 	fi
-	@if test -e Microsoft.FSharp.Targets; then \
-		cp Microsoft.FSharp.Targets $(outdir)Microsoft.FSharp.Targets; \
-	fi
 
 do-2-1: DEFINES += $(DEFINES_2_1)
 do-2-1: REFERENCES += $(REFERENCES_2_1)
@@ -85,9 +82,6 @@ do-2-1: $(objdir) $(objdir)$(TARGET_2_1) $(objdir)$(TARGET_4_0) $(objdir)$(TARGE
 	fi
 	@if test "x$(DELAY_SIGN)" = "x1"; then \
 		sn -q -R $(outdir)$(ASSEMBLY) $(srcdir)../../../mono.snk; \
-	fi
-	@if test -e Microsoft.FSharp.Targets; then \
-		cp Microsoft.FSharp.Targets $(outdir)Microsoft.FSharp.Targets; \
 	fi
 
 do-4-0: DEFINES += $(DEFINES_4_0)
@@ -118,6 +112,9 @@ do-4-0: $(objdir) $(objdir)$(TARGET_2_0) $(objdir)$(TARGET_4_0) $(objdir)$(TARGE
 	@if test -e Microsoft.FSharp.Targets; then \
 		cp Microsoft.FSharp.Targets $(outdir)Microsoft.FSharp.Targets; \
 	fi
+	@if test -e Microsoft.Portable.FSharp.Targets; then \
+		cp Microsoft.Portable.FSharp.Targets $(outdir)Microsoft.Portable.FSharp.Targets; \
+	fi
 
 install-lib-2: TARGET := $(TARGET_2_0)
 install-lib-2: VERSION := $(VERSION_2_0)
@@ -145,18 +142,55 @@ install-bin-4: TARGET := $(TARGET_4_0)
 # For F# 3.0 project files this is
 #     .../Microsoft SDKs/F#/3.0/Framework/v4.0/Microsoft.FSharp.Targets
 # 
+# For F# 3.1 project files this is
+#     .../lib/mono/xbuild/Microsoft/VisualStudio/v$(VisualStudioVersion)/FSharp/Microsoft.FSharp.Targets
+# 
+# xbuild sets 'VisualStudioVersion' to empty.
+#
+# We put a forwarding targets file into all three locations. We also put one in 
+#     .../lib/mono/xbuild/Microsoft/VisualStudio/v12.0/FSharp/Microsoft.FSharp.Targets
+# since this is the correct location, and 'xbuild' may in future start setting VisualStudioVersion to this value.
 install-lib-2 install-lib-2-1 install-lib-4:
 	@echo "Installing $(ASSEMBLY)"
 	@mkdir -p $(DESTDIR)$(gacdir)/$(TARGET)
 	gacutil -i $(outdir)$(ASSEMBLY) -root $(DESTDIR)$(libdir) -package $(TARGET)
 	@if test -e $(outdir)Microsoft.FSharp.Targets; then \
+	    $(INSTALL_LIB) $(outdir)Microsoft.FSharp.Targets $(DESTDIR)$(gacdir)/$(TARGET)/; \
+	    echo '<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">' > $(tmpdir)Microsoft.FSharp.Targets; \
+	    echo '    <Import Project="$(DESTDIR)$(gacdir)/$(TARGET)/Microsoft.FSharp.Targets" />' >> $(tmpdir)Microsoft.FSharp.Targets; \
+		echo '</Project>' >> $(tmpdir)Microsoft.FSharp.Targets; \
 	    mkdir -p $(DESTDIR)$(gacdir)/Microsoft\ F#/v$(TARGET)/; \
 	    mkdir -p $(DESTDIR)$(gacdir)/Microsoft\ SDKs/F#/3.0/Framework/v$(TARGET)/; \
-	    ln -fs ../../$(TARGET)/$(ASSEMBLY) $(DESTDIR)$(gacdir)/Microsoft\ F#/v$(TARGET)/$(ASSEMBLY); \
-	    ln -fs ../../../../../$(TARGET)/$(ASSEMBLY) $(DESTDIR)$(gacdir)/Microsoft\ SDKs/F#/3.0/Framework/v$(TARGET)/$(ASSEMBLY); \
-	    $(INSTALL_LIB) $(outdir)Microsoft.FSharp.Targets $(DESTDIR)$(gacdir)/$(TARGET)/; \
-	    ln -fs ../../$(TARGET)/Microsoft.FSharp.Targets $(DESTDIR)$(gacdir)/Microsoft\ F#/v$(TARGET)/Microsoft.FSharp.Targets; \
-	    ln -fs ../../../../../$(TARGET)/Microsoft.FSharp.Targets $(DESTDIR)$(gacdir)/Microsoft\ SDKs/F#/3.0/Framework/v$(TARGET)/Microsoft.FSharp.Targets; \
+	    mkdir -p $(DESTDIR)$(gacdir)/Microsoft\ SDKs/F#/3.1/Framework/v$(TARGET)/; \
+	    mkdir -p $(DESTDIR)$(gacdir)/xbuild/Microsoft/VisualStudio/v/FSharp/; \
+	    mkdir -p $(DESTDIR)$(gacdir)/xbuild/Microsoft/VisualStudio/v12.0/FSharp/; \
+	    mkdir -p $(DESTDIR)$(gacdir)/Microsoft\ F#/v$(TARGET)/; \
+	    $(INSTALL_LIB) $(tmpdir)Microsoft.FSharp.Targets $(DESTDIR)$(gacdir)/Microsoft\ F#/v$(TARGET)/; \
+	    $(INSTALL_LIB) $(tmpdir)Microsoft.FSharp.Targets $(DESTDIR)$(gacdir)/Microsoft\ SDKs/F#/3.0/Framework/v$(TARGET)/; \
+	    $(INSTALL_LIB) $(tmpdir)Microsoft.FSharp.Targets $(DESTDIR)$(gacdir)/Microsoft\ SDKs/F#/3.1/Framework/v$(TARGET)/; \
+	    $(INSTALL_LIB) $(tmpdir)Microsoft.FSharp.Targets $(DESTDIR)$(gacdir)/Microsoft\ SDKs/F#/3.2/Framework/v$(TARGET)/; \
+	    $(INSTALL_LIB) $(tmpdir)Microsoft.FSharp.Targets $(DESTDIR)$(gacdir)/xbuild/Microsoft/VisualStudio/v/FSharp/; \
+	    $(INSTALL_LIB) $(tmpdir)Microsoft.FSharp.Targets $(DESTDIR)$(gacdir)/xbuild/Microsoft/VisualStudio/v12.0/FSharp/; \
+	    $(INSTALL_LIB) $(tmpdir)Microsoft.FSharp.Targets $(DESTDIR)$(gacdir)/xbuild/Microsoft/VisualStudio/v14.0/FSharp/; \
+	fi
+	@if test -e $(outdir)Microsoft.Portable.FSharp.Targets; then \
+	    $(INSTALL_LIB) $(outdir)Microsoft.Portable.FSharp.Targets $(DESTDIR)$(gacdir)/$(TARGET)/; \
+	    echo '<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">' > $(tmpdir)Microsoft.Portable.FSharp.Targets; \
+	    echo '    <Import Project="$(DESTDIR)$(gacdir)/$(TARGET)/Microsoft.Portable.FSharp.Targets" />' >> $(tmpdir)Microsoft.Portable.FSharp.Targets; \
+		echo '</Project>' >> $(tmpdir)Microsoft.Portable.FSharp.Targets; \
+	    mkdir -p $(DESTDIR)$(gacdir)/Microsoft\ F#/v$(TARGET)/; \
+	    mkdir -p $(DESTDIR)$(gacdir)/Microsoft\ SDKs/F#/3.0/Framework/v$(TARGET)/; \
+	    mkdir -p $(DESTDIR)$(gacdir)/Microsoft\ SDKs/F#/3.1/Framework/v$(TARGET)/; \
+	    mkdir -p $(DESTDIR)$(gacdir)/xbuild/Microsoft/VisualStudio/v/FSharp/; \
+	    mkdir -p $(DESTDIR)$(gacdir)/xbuild/Microsoft/VisualStudio/v12.0/FSharp/; \
+	    mkdir -p $(DESTDIR)$(gacdir)/Microsoft\ F#/v$(TARGET)/; \
+	    $(INSTALL_LIB) $(tmpdir)Microsoft.Portable.FSharp.Targets $(DESTDIR)$(gacdir)/Microsoft\ F#/v$(TARGET)/; \
+	    $(INSTALL_LIB) $(tmpdir)Microsoft.Portable.FSharp.Targets $(DESTDIR)$(gacdir)/Microsoft\ SDKs/F#/3.0/Framework/v$(TARGET)/; \
+	    $(INSTALL_LIB) $(tmpdir)Microsoft.Portable.FSharp.Targets $(DESTDIR)$(gacdir)/Microsoft\ SDKs/F#/3.1/Framework/v$(TARGET)/; \
+	    $(INSTALL_LIB) $(tmpdir)Microsoft.Portable.FSharp.Targets $(DESTDIR)$(gacdir)/Microsoft\ SDKs/F#/3.2/Framework/v$(TARGET)/; \
+	    $(INSTALL_LIB) $(tmpdir)Microsoft.Portable.FSharp.Targets $(DESTDIR)$(gacdir)/xbuild/Microsoft/VisualStudio/v/FSharp/; \
+	    $(INSTALL_LIB) $(tmpdir)Microsoft.Portable.FSharp.Targets $(DESTDIR)$(gacdir)/xbuild/Microsoft/VisualStudio/v12.0/FSharp/; \
+	    $(INSTALL_LIB) $(tmpdir)Microsoft.Portable.FSharp.Targets $(DESTDIR)$(gacdir)/xbuild/Microsoft/VisualStudio/v14.0/FSharp/; \
 	fi
 	@if test -e $(outdir)$(NAME).xml; then \
 		$(INSTALL_LIB) $(outdir)$(NAME).xml $(DESTDIR)$(gacdir)/gac/$(NAME)/$(VERSION)__$(TOKEN); \
