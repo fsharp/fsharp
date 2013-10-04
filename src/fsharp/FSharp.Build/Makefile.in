@@ -37,5 +37,5 @@ do-final: do-4-0
 
 clean: clean-4-0
 
-install: install-lib-2 install-lib-4 install-lib-4-5
+install: install-lib-4 install-lib-4-5
 
