@@ -57,7 +57,7 @@ install-lib-2 install-lib-2-1 install-lib-4-0:
 	gacutil -i $(outdir)$(ASSEMBLY) -root $(DESTDIR)$(libdir) -package $(TARGET)
 	@if test -e $(outdir)Microsoft.FSharp.Targets; then \
 	    $(INSTALL_LIB) $(outdir)Microsoft.FSharp.Targets $(DESTDIR)$(gacdir)/$(TARGET)/; \
-	    @mkdir -p $(tmpdir)
+	    mkdir -p $(tmpdir); \
 	    echo '<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">' > $(tmpdir)Microsoft.FSharp.Targets; \
 	    echo '    <Import Project="$(DESTDIR)$(gacdir)/$(TARGET)/Microsoft.FSharp.Targets" />' >> $(tmpdir)Microsoft.FSharp.Targets; \
 	    echo '</Project>' >> $(tmpdir)Microsoft.FSharp.Targets; \
