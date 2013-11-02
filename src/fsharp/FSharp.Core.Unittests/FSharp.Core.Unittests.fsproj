@@ -1,11 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
-    <FSharpSourcesRoot>..\..</FSharpSourcesRoot>
-    <ProjectGuid>{88e2d422-6852-46e3-a740-83e391dc7973}</ProjectGuid>
     <FSharpSourcesRoot>$(MSBuildProjectDirectory)\..\..</FSharpSourcesRoot>
-    <ProductVersion>10.0.0</ProductVersion>
-    <UsePartialTypes>False</UsePartialTypes>
   </PropertyGroup>
   <Import Project="$(FSharpSourcesRoot)\FSharpSource.Settings.targets" />
   <PropertyGroup>
@@ -17,6 +13,7 @@
     <OutputType>Library</OutputType>
     <AssemblyName>FSharp.Core.Unittests</AssemblyName>
     <Name>SystematicUnitTests</Name>
+    <ProjectGuid>{88e2d422-6852-46e3-a740-83e391dc7973}</ProjectGuid>
     <!-- Prevent compiler from inlining calls to FSharp.Core to improve code coverage accuracy -->
     <Optimize>false</Optimize>
     <Tailcalls>false</Tailcalls>

@@ -13,7 +13,6 @@
     <DefineConstants>BUILDING_WITH_LKG;$(DefineConstants)</DefineConstants>
     <BuildWith>LKG</BuildWith>
     <ProjectGuid>{D8BC791F-C1A9-49DC-9432-0F3090537555}</ProjectGuid>
-    <TargetFrameworkVersion Condition="'$(TargetFramework)'=='net20'">v3.5</TargetFrameworkVersion>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
   </PropertyGroup>
   <!-- MonoDevelop likes these here to recognise the configurations -->

@@ -13,6 +13,10 @@ Copyright (C) Microsoft Corporation. Apache 2.0 License.
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <UsingTask TaskName="FsSrGen" AssemblyFile="FSharp.SRGen.Build.Tasks.dll"/>
   <PropertyGroup>
+    <!-- Visual Studio and MSBuild use this dependency to trigger resource generation at the right time -->
+    <PrepareForBuildDependsOn>ProcessFsSrGen;$(PrepareForBuildDependsOn)</PrepareForBuildDependsOn>
+    <!-- XBuild and MonoDevelop and Xamarin Studio use this dependency to trigger resource generation at the right time -->
+    <!-- For some reason these don't recognize 'PrepareForBuildDependsOn' -->
     <BuildDependsOn>ProcessFsSrGen;$(BuildDependsOn)</BuildDependsOn>
   </PropertyGroup>
 

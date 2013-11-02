@@ -2,9 +2,6 @@
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <FSharpSourcesRoot>$(MSBuildProjectDirectory)\..\..</FSharpSourcesRoot>
-    <ProductVersion>10.0.0</ProductVersion>
-    <SchemaVersion>2.0</SchemaVersion>
-    <UsePartialTypes>False</UsePartialTypes>
   </PropertyGroup>
   <Import Project="$(FSharpSourcesRoot)\FSharpSource.Settings.targets" />
   <PropertyGroup>
@@ -13,7 +10,6 @@
     <OutputType>Library</OutputType>
     <AssemblyName>FSharp.Build</AssemblyName>
     <AllowCrossTargeting>true</AllowCrossTargeting>
-    <TargetFrameworkVersion Condition="'$(TargetFramework)'=='net20'">v3.5</TargetFrameworkVersion>
     <ProjectGuid>{702A7979-BCF9-4C41-853E-3ADFC9897890}</ProjectGuid>
   </PropertyGroup>
   <!-- MonoDevelop likes these here to recognise the configurations -->
@@ -42,19 +38,10 @@
     <Reference Include="System" />
     <Reference Include="Microsoft.Build.Engine" />
     <Reference Include="Microsoft.Build.Framework" />
-    <Reference Include="Microsoft.Build.Utilities.v3.5" Condition="'$(TargetFramework)'=='net20'" />
-    <Reference Include="Microsoft.Build.Tasks.v3.5" Condition="'$(TargetFramework)'=='net20'" />
 
-    <Reference Include="Microsoft.Build" Condition="'$(TargetFramework)'=='net40'"  />
-    <Reference Include="Microsoft.Build.Utilities.v4.0" Condition="'$(TargetFramework)'=='net40'" />
-    <Reference Include="Microsoft.Build.Tasks.v4.0" Condition="'$(TargetFramework)'=='net40'" />
-    <ProjectReference Include="$(FSharpSourcesRoot)\fsharp\FSharp.Core\FSharp.Core.fsproj">
-		  <Project>{DED3BBD7-53F4-428A-8C9F-27968E768605}</Project>
-		  <Name>FSharp.Core</Name>
-	  </ProjectReference>
-    <Reference Include="Microsoft.Build" Condition="'$(TargetFramework)'=='net40'" />
-    <Reference Include="Microsoft.Build.Utilities.v4.0" Condition="'$(TargetFramework)'=='net40'" />
-    <Reference Include="Microsoft.Build.Tasks.v4.0" Condition="'$(TargetFramework)'=='net40'" />
+    <Reference Include="Microsoft.Build" />
+    <Reference Include="Microsoft.Build.Utilities.v4.0" />
+    <Reference Include="Microsoft.Build.Tasks.v4.0" />
     <ProjectReference Include="..\FSharp.Core\FSharp.Core.fsproj">
       <Project>{DED3BBD7-53F4-428A-8C9F-27968E768605}</Project>
       <Name>FSharp.Core</Name>
