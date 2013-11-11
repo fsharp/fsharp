@@ -444,11 +444,7 @@ type internal ReadLineConsole() =
                 change()
             // Control-d
             | (ConsoleModifiers.Control, '\004') ->
-                if (input.Length = 0) then
-                    raise <| new System.IO.EndOfStreamException()
-                else
-                    delete ();
-                    change()
+                exit 0 //quit
             | _ ->
                 // Note: If KeyChar=0, the not a proper char, e.g. it could be part of a multi key-press character,
                 //       e.g. e-acute is ' and e with the French (Belgium) IME and US Intl KB.
