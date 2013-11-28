@@ -47,8 +47,8 @@ queriesLeafExpressionConvert
 queriesNullableOperators
 queriesOverIEnumerable
 queriesOverIQueryable
-queriesOverIQueryableLinqToEntities
-queriesOverIQueryableLinqToSql
+#queriesOverIQueryableLinqToEntities
+#queriesOverIQueryableLinqToSql
 queriesOverOData
 quotes
 quotesDebugInfo
