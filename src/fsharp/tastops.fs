@@ -539,14 +539,44 @@ let rec sizeMeasure g ms =
 let mkNativePtrType g ty = TType_app (g.nativeptr_tcr, [ty])
 let mkByrefTy g ty = TType_app (g.byref_tcr, [ty])
 
-let mkArrayTy g n ty m = 
-    if n = 1 then TType_app (g.il_arr1_tcr, [ty]) 
-    elif n = 2 then TType_app (g.il_arr2_tcr, [ty]) 
-    elif n = 3 then TType_app (g.il_arr3_tcr, [ty]) 
-    elif n = 4 then TType_app (g.il_arr4_tcr, [ty]) 
-    else 
-       errorR(Error(FSComp.SR.tastopsMaxArrayFour(),m));
-       TType_app (g.il_arr4_tcr, [ty]) 
+let mkArrayTy g n ty m =
+    match n with
+    | 1 -> TType_app (g.il_arr1_tcr, [ty])
+    | 2 -> TType_app (g.il_arr2_tcr, [ty])
+    | 3 -> TType_app (g.il_arr3_tcr, [ty])
+    | 4 -> TType_app (g.il_arr4_tcr, [ty])
+    | 5 -> TType_app (g.il_arr5_tcr, [ty])
+    | 6 -> TType_app (g.il_arr6_tcr, [ty])
+    | 7 -> TType_app (g.il_arr7_tcr, [ty])
+    | 8 -> TType_app (g.il_arr8_tcr, [ty])
+    | 9 -> TType_app (g.il_arr9_tcr, [ty])
+    | 10 -> TType_app (g.il_arr10_tcr, [ty])
+    | 11 -> TType_app (g.il_arr11_tcr, [ty])
+    | 12 -> TType_app (g.il_arr12_tcr, [ty])
+    | 13 -> TType_app (g.il_arr13_tcr, [ty])
+    | 14 -> TType_app (g.il_arr14_tcr, [ty])
+    | 15 -> TType_app (g.il_arr15_tcr, [ty])
+    | 16 -> TType_app (g.il_arr16_tcr, [ty])
+    | 17 -> TType_app (g.il_arr17_tcr, [ty])
+    | 18 -> TType_app (g.il_arr18_tcr, [ty])
+    | 19 -> TType_app (g.il_arr19_tcr, [ty])
+    | 20 -> TType_app (g.il_arr20_tcr, [ty])
+    | 21 -> TType_app (g.il_arr21_tcr, [ty])
+    | 22 -> TType_app (g.il_arr22_tcr, [ty])
+    | 23 -> TType_app (g.il_arr23_tcr, [ty])
+    | 24 -> TType_app (g.il_arr24_tcr, [ty])
+    | 25 -> TType_app (g.il_arr25_tcr, [ty])
+    | 26 -> TType_app (g.il_arr26_tcr, [ty])
+    | 27 -> TType_app (g.il_arr27_tcr, [ty])
+    | 28 -> TType_app (g.il_arr28_tcr, [ty])
+    | 29 -> TType_app (g.il_arr29_tcr, [ty])
+    | 30 -> TType_app (g.il_arr30_tcr, [ty])
+    | 31 -> TType_app (g.il_arr31_tcr, [ty])
+    | 32 -> TType_app (g.il_arr32_tcr, [ty])
+    | _ ->
+       // TODO : Give a better message for zero/negative inputs here.
+       errorR(Error(FSComp.SR.tastopsMaxArrayThirtyTwo(),m));
+       TType_app (g.il_arr32_tcr, [ty])
 
 
 //--------------------------------------------------------------------------
@@ -1406,13 +1436,69 @@ let isArrayTyconRef g tcr =
     tyconRefEq g tcr g.il_arr1_tcr || 
     tyconRefEq g tcr g.il_arr2_tcr || 
     tyconRefEq g tcr g.il_arr3_tcr || 
-    tyconRefEq g tcr g.il_arr4_tcr 
+    tyconRefEq g tcr g.il_arr4_tcr || 
+    tyconRefEq g tcr g.il_arr5_tcr || 
+    tyconRefEq g tcr g.il_arr6_tcr || 
+    tyconRefEq g tcr g.il_arr7_tcr || 
+    tyconRefEq g tcr g.il_arr8_tcr || 
+    tyconRefEq g tcr g.il_arr9_tcr || 
+    tyconRefEq g tcr g.il_arr10_tcr || 
+    tyconRefEq g tcr g.il_arr11_tcr || 
+    tyconRefEq g tcr g.il_arr12_tcr || 
+    tyconRefEq g tcr g.il_arr13_tcr || 
+    tyconRefEq g tcr g.il_arr14_tcr || 
+    tyconRefEq g tcr g.il_arr15_tcr || 
+    tyconRefEq g tcr g.il_arr16_tcr || 
+    tyconRefEq g tcr g.il_arr17_tcr || 
+    tyconRefEq g tcr g.il_arr18_tcr || 
+    tyconRefEq g tcr g.il_arr19_tcr || 
+    tyconRefEq g tcr g.il_arr20_tcr || 
+    tyconRefEq g tcr g.il_arr21_tcr || 
+    tyconRefEq g tcr g.il_arr22_tcr || 
+    tyconRefEq g tcr g.il_arr23_tcr || 
+    tyconRefEq g tcr g.il_arr24_tcr || 
+    tyconRefEq g tcr g.il_arr25_tcr || 
+    tyconRefEq g tcr g.il_arr26_tcr || 
+    tyconRefEq g tcr g.il_arr27_tcr || 
+    tyconRefEq g tcr g.il_arr28_tcr || 
+    tyconRefEq g tcr g.il_arr29_tcr || 
+    tyconRefEq g tcr g.il_arr30_tcr || 
+    tyconRefEq g tcr g.il_arr31_tcr || 
+    tyconRefEq g tcr g.il_arr32_tcr
 
 let rankOfArrayTyconRef g tcr = 
     if tyconRefEq g tcr g.il_arr1_tcr then 1
     elif tyconRefEq g tcr g.il_arr2_tcr then 2
     elif tyconRefEq g tcr g.il_arr3_tcr then 3
     elif tyconRefEq g tcr g.il_arr4_tcr then 4
+    elif tyconRefEq g tcr g.il_arr5_tcr then 5
+    elif tyconRefEq g tcr g.il_arr6_tcr then 6
+    elif tyconRefEq g tcr g.il_arr7_tcr then 7
+    elif tyconRefEq g tcr g.il_arr8_tcr then 8
+    elif tyconRefEq g tcr g.il_arr9_tcr then 9
+    elif tyconRefEq g tcr g.il_arr10_tcr then 10
+    elif tyconRefEq g tcr g.il_arr11_tcr then 11
+    elif tyconRefEq g tcr g.il_arr12_tcr then 12
+    elif tyconRefEq g tcr g.il_arr13_tcr then 13
+    elif tyconRefEq g tcr g.il_arr14_tcr then 14
+    elif tyconRefEq g tcr g.il_arr15_tcr then 15
+    elif tyconRefEq g tcr g.il_arr16_tcr then 16
+    elif tyconRefEq g tcr g.il_arr17_tcr then 17
+    elif tyconRefEq g tcr g.il_arr18_tcr then 18
+    elif tyconRefEq g tcr g.il_arr19_tcr then 19
+    elif tyconRefEq g tcr g.il_arr20_tcr then 20
+    elif tyconRefEq g tcr g.il_arr21_tcr then 21
+    elif tyconRefEq g tcr g.il_arr22_tcr then 22
+    elif tyconRefEq g tcr g.il_arr23_tcr then 23
+    elif tyconRefEq g tcr g.il_arr24_tcr then 24
+    elif tyconRefEq g tcr g.il_arr25_tcr then 25
+    elif tyconRefEq g tcr g.il_arr26_tcr then 26
+    elif tyconRefEq g tcr g.il_arr27_tcr then 27
+    elif tyconRefEq g tcr g.il_arr28_tcr then 28
+    elif tyconRefEq g tcr g.il_arr29_tcr then 29
+    elif tyconRefEq g tcr g.il_arr30_tcr then 30
+    elif tyconRefEq g tcr g.il_arr31_tcr then 31
+    elif tyconRefEq g tcr g.il_arr32_tcr then 32
     else failwith "rankOfArrayTyconRef: unsupported array rank"
 
 //-------------------------------------------------------------------------
@@ -5333,9 +5419,39 @@ let rec mkExprAddrOfExpr g mustTakeAddress useReadonlyForGenericArrayAddress mut
             | _ -> false
         (fun x -> x), Expr.Op (TOp.ILAsm ([IL.I_ldelema(readonly,isNativePtr,shape,mkILTyvarTy 0us)],[mkByrefTy g elemTy]), [elemTy],[aexpr;nexpr],m)
 
-    // LVALUE:  "e.[n1,n2]", "e.[n1,n2,n3]", "e.[n1,n2,n3,n4]" where e is an array of structs 
-    | Expr.App(Expr.Val(vf,_,_),_,[elemTy],(aexpr::args),_) 
-         when (valRefEq g vf g.array2D_get_vref || valRefEq g vf g.array3D_get_vref || valRefEq g vf g.array4D_get_vref) -> 
+    // LVALUE:  "e.[n1,n2]", "e.[n1,n2,n3]", "e.[n1,n2,n3,n4], etc." where e is an array of structs 
+    | Expr.App(Expr.Val(vf,_,_),_,[elemTy],(aexpr::args),_)
+         when  (valRefEq g vf g.array2D_get_vref ||
+                valRefEq g vf g.array3D_get_vref ||
+                valRefEq g vf g.array4D_get_vref ||
+                valRefEq g vf g.array5D_get_vref ||
+                valRefEq g vf g.array6D_get_vref ||
+                valRefEq g vf g.array7D_get_vref ||
+                valRefEq g vf g.array8D_get_vref ||
+                valRefEq g vf g.array9D_get_vref ||
+                valRefEq g vf g.array10D_get_vref ||
+                valRefEq g vf g.array11D_get_vref ||
+                valRefEq g vf g.array12D_get_vref ||
+                valRefEq g vf g.array13D_get_vref ||
+                valRefEq g vf g.array14D_get_vref ||
+                valRefEq g vf g.array15D_get_vref ||
+                valRefEq g vf g.array16D_get_vref ||
+                valRefEq g vf g.array17D_get_vref ||
+                valRefEq g vf g.array18D_get_vref ||
+                valRefEq g vf g.array19D_get_vref ||
+                valRefEq g vf g.array20D_get_vref ||
+                valRefEq g vf g.array21D_get_vref ||
+                valRefEq g vf g.array22D_get_vref ||
+                valRefEq g vf g.array23D_get_vref ||
+                valRefEq g vf g.array24D_get_vref ||
+                valRefEq g vf g.array25D_get_vref ||
+                valRefEq g vf g.array26D_get_vref ||
+                valRefEq g vf g.array27D_get_vref ||
+                valRefEq g vf g.array28D_get_vref ||
+                valRefEq g vf g.array29D_get_vref ||
+                valRefEq g vf g.array30D_get_vref ||
+                valRefEq g vf g.array31D_get_vref ||
+                valRefEq g vf g.array32D_get_vref) ->
         
         let shape = ILArrayShape.FromRank args.Length
         let readonly = if isTyparTy g elemTy &&  useReadonlyForGenericArrayAddress then ReadonlyAddress else NormalAddress
@@ -5824,6 +5940,35 @@ let mkCallArrayGet   g m ty e1 e2                  = mkApps g (typedExprForIntri
 let mkCallArray2DGet g m ty e1 idx1 idx2           = mkApps g (typedExprForIntrinsic g m g.array2D_get_info, [[ty]], [ e1 ; idx1; idx2 ],  m)
 let mkCallArray3DGet g m ty e1 idx1 idx2 idx3      = mkApps g (typedExprForIntrinsic g m g.array3D_get_info, [[ty]], [ e1 ; idx1; idx2; idx3 ],  m)
 let mkCallArray4DGet g m ty e1 idx1 idx2 idx3 idx4 = mkApps g (typedExprForIntrinsic g m g.array4D_get_info, [[ty]], [ e1 ; idx1; idx2; idx3; idx4 ],  m)
+let mkCallArray5DGet g m ty e1 idx1 idx2 idx3 idx4 idx5 = mkApps g (typedExprForIntrinsic g m g.array5D_get_info, [[ty]], [ e1 ; idx1; idx2; idx3; idx4; idx5 ],  m)
+let mkCallArray6DGet g m ty e1 idx1 idx2 idx3 idx4 idx5 idx6 = mkApps g (typedExprForIntrinsic g m g.array6D_get_info, [[ty]], [ e1 ; idx1; idx2; idx3; idx4; idx5; idx6 ],  m)
+let mkCallArray7DGet g m ty e1 idx1 idx2 idx3 idx4 idx5 idx6 idx7 = mkApps g (typedExprForIntrinsic g m g.array7D_get_info, [[ty]], [ e1 ; idx1; idx2; idx3; idx4; idx5; idx6; idx7 ],  m)
+let mkCallArray8DGet g m ty e1 idx1 idx2 idx3 idx4 idx5 idx6 idx7 idx8 = mkApps g (typedExprForIntrinsic g m g.array8D_get_info, [[ty]], [ e1 ; idx1; idx2; idx3; idx4; idx5; idx6; idx7; idx8 ],  m)
+let mkCallArray9DGet g m ty e1 idx1 idx2 idx3 idx4 idx5 idx6 idx7 idx8 idx9 = mkApps g (typedExprForIntrinsic g m g.array9D_get_info, [[ty]], [ e1 ; idx1; idx2; idx3; idx4; idx5; idx6; idx7; idx8; idx9 ],  m)
+let mkCallArray10DGet g m ty e1 idx1 idx2 idx3 idx4 idx5 idx6 idx7 idx8 idx9 idx10 = mkApps g (typedExprForIntrinsic g m g.array10D_get_info, [[ty]], [ e1 ; idx1; idx2; idx3; idx4; idx5; idx6; idx7; idx8; idx9; idx10 ],  m)
+let mkCallArray11DGet g m ty e1 idx1 idx2 idx3 idx4 idx5 idx6 idx7 idx8 idx9 idx10 idx11 = mkApps g (typedExprForIntrinsic g m g.array11D_get_info, [[ty]], [ e1 ; idx1; idx2; idx3; idx4; idx5; idx6; idx7; idx8; idx9; idx10; idx11 ],  m)
+let mkCallArray12DGet g m ty e1 idx1 idx2 idx3 idx4 idx5 idx6 idx7 idx8 idx9 idx10 idx11 idx12 = mkApps g (typedExprForIntrinsic g m g.array12D_get_info, [[ty]], [ e1 ; idx1; idx2; idx3; idx4; idx5; idx6; idx7; idx8; idx9; idx10; idx11; idx12 ],  m)
+let mkCallArray13DGet g m ty e1 idx1 idx2 idx3 idx4 idx5 idx6 idx7 idx8 idx9 idx10 idx11 idx12 idx13 = mkApps g (typedExprForIntrinsic g m g.array13D_get_info, [[ty]], [ e1 ; idx1; idx2; idx3; idx4; idx5; idx6; idx7; idx8; idx9; idx10; idx11; idx12; idx13 ],  m)
+let mkCallArray14DGet g m ty e1 idx1 idx2 idx3 idx4 idx5 idx6 idx7 idx8 idx9 idx10 idx11 idx12 idx13 idx14 = mkApps g (typedExprForIntrinsic g m g.array14D_get_info, [[ty]], [ e1 ; idx1; idx2; idx3; idx4; idx5; idx6; idx7; idx8; idx9; idx10; idx11; idx12; idx13; idx14 ],  m)
+let mkCallArray15DGet g m ty e1 idx1 idx2 idx3 idx4 idx5 idx6 idx7 idx8 idx9 idx10 idx11 idx12 idx13 idx14 idx15 = mkApps g (typedExprForIntrinsic g m g.array15D_get_info, [[ty]], [ e1 ; idx1; idx2; idx3; idx4; idx5; idx6; idx7; idx8; idx9; idx10; idx11; idx12; idx13; idx14; idx15 ],  m)
+let mkCallArray16DGet g m ty e1 idx1 idx2 idx3 idx4 idx5 idx6 idx7 idx8 idx9 idx10 idx11 idx12 idx13 idx14 idx15 idx16 = mkApps g (typedExprForIntrinsic g m g.array16D_get_info, [[ty]], [ e1 ; idx1; idx2; idx3; idx4; idx5; idx6; idx7; idx8; idx9; idx10; idx11; idx12; idx13; idx14; idx15; idx16 ],  m)
+let mkCallArray17DGet g m ty e1 idx1 idx2 idx3 idx4 idx5 idx6 idx7 idx8 idx9 idx10 idx11 idx12 idx13 idx14 idx15 idx16 idx17 = mkApps g (typedExprForIntrinsic g m g.array17D_get_info, [[ty]], [ e1 ; idx1; idx2; idx3; idx4; idx5; idx6; idx7; idx8; idx9; idx10; idx11; idx12; idx13; idx14; idx15; idx16; idx17 ],  m)
+let mkCallArray18DGet g m ty e1 idx1 idx2 idx3 idx4 idx5 idx6 idx7 idx8 idx9 idx10 idx11 idx12 idx13 idx14 idx15 idx16 idx17 idx18 = mkApps g (typedExprForIntrinsic g m g.array18D_get_info, [[ty]], [ e1 ; idx1; idx2; idx3; idx4; idx5; idx6; idx7; idx8; idx9; idx10; idx11; idx12; idx13; idx14; idx15; idx16; idx17; idx18 ],  m)
+let mkCallArray19DGet g m ty e1 idx1 idx2 idx3 idx4 idx5 idx6 idx7 idx8 idx9 idx10 idx11 idx12 idx13 idx14 idx15 idx16 idx17 idx18 idx19 = mkApps g (typedExprForIntrinsic g m g.array19D_get_info, [[ty]], [ e1 ; idx1; idx2; idx3; idx4; idx5; idx6; idx7; idx8; idx9; idx10; idx11; idx12; idx13; idx14; idx15; idx16; idx17; idx18; idx19 ],  m)
+let mkCallArray20DGet g m ty e1 idx1 idx2 idx3 idx4 idx5 idx6 idx7 idx8 idx9 idx10 idx11 idx12 idx13 idx14 idx15 idx16 idx17 idx18 idx19 idx20 = mkApps g (typedExprForIntrinsic g m g.array20D_get_info, [[ty]], [ e1 ; idx1; idx2; idx3; idx4; idx5; idx6; idx7; idx8; idx9; idx10; idx11; idx12; idx13; idx14; idx15; idx16; idx17; idx18; idx19; idx20 ],  m)
+let mkCallArray21DGet g m ty e1 idx1 idx2 idx3 idx4 idx5 idx6 idx7 idx8 idx9 idx10 idx11 idx12 idx13 idx14 idx15 idx16 idx17 idx18 idx19 idx20 idx21 = mkApps g (typedExprForIntrinsic g m g.array21D_get_info, [[ty]], [ e1 ; idx1; idx2; idx3; idx4; idx5; idx6; idx7; idx8; idx9; idx10; idx11; idx12; idx13; idx14; idx15; idx16; idx17; idx18; idx19; idx20; idx21 ],  m)
+let mkCallArray22DGet g m ty e1 idx1 idx2 idx3 idx4 idx5 idx6 idx7 idx8 idx9 idx10 idx11 idx12 idx13 idx14 idx15 idx16 idx17 idx18 idx19 idx20 idx21 idx22 = mkApps g (typedExprForIntrinsic g m g.array22D_get_info, [[ty]], [ e1 ; idx1; idx2; idx3; idx4; idx5; idx6; idx7; idx8; idx9; idx10; idx11; idx12; idx13; idx14; idx15; idx16; idx17; idx18; idx19; idx20; idx21; idx22 ],  m)
+let mkCallArray23DGet g m ty e1 idx1 idx2 idx3 idx4 idx5 idx6 idx7 idx8 idx9 idx10 idx11 idx12 idx13 idx14 idx15 idx16 idx17 idx18 idx19 idx20 idx21 idx22 idx23 = mkApps g (typedExprForIntrinsic g m g.array23D_get_info, [[ty]], [ e1 ; idx1; idx2; idx3; idx4; idx5; idx6; idx7; idx8; idx9; idx10; idx11; idx12; idx13; idx14; idx15; idx16; idx17; idx18; idx19; idx20; idx21; idx22; idx23 ],  m)
+let mkCallArray24DGet g m ty e1 idx1 idx2 idx3 idx4 idx5 idx6 idx7 idx8 idx9 idx10 idx11 idx12 idx13 idx14 idx15 idx16 idx17 idx18 idx19 idx20 idx21 idx22 idx23 idx24 = mkApps g (typedExprForIntrinsic g m g.array24D_get_info, [[ty]], [ e1 ; idx1; idx2; idx3; idx4; idx5; idx6; idx7; idx8; idx9; idx10; idx11; idx12; idx13; idx14; idx15; idx16; idx17; idx18; idx19; idx20; idx21; idx22; idx23; idx24 ],  m)
+let mkCallArray25DGet g m ty e1 idx1 idx2 idx3 idx4 idx5 idx6 idx7 idx8 idx9 idx10 idx11 idx12 idx13 idx14 idx15 idx16 idx17 idx18 idx19 idx20 idx21 idx22 idx23 idx24 idx25 = mkApps g (typedExprForIntrinsic g m g.array25D_get_info, [[ty]], [ e1 ; idx1; idx2; idx3; idx4; idx5; idx6; idx7; idx8; idx9; idx10; idx11; idx12; idx13; idx14; idx15; idx16; idx17; idx18; idx19; idx20; idx21; idx22; idx23; idx24; idx25 ],  m)
+let mkCallArray26DGet g m ty e1 idx1 idx2 idx3 idx4 idx5 idx6 idx7 idx8 idx9 idx10 idx11 idx12 idx13 idx14 idx15 idx16 idx17 idx18 idx19 idx20 idx21 idx22 idx23 idx24 idx25 idx26 = mkApps g (typedExprForIntrinsic g m g.array26D_get_info, [[ty]], [ e1 ; idx1; idx2; idx3; idx4; idx5; idx6; idx7; idx8; idx9; idx10; idx11; idx12; idx13; idx14; idx15; idx16; idx17; idx18; idx19; idx20; idx21; idx22; idx23; idx24; idx25; idx26 ],  m)
+let mkCallArray27DGet g m ty e1 idx1 idx2 idx3 idx4 idx5 idx6 idx7 idx8 idx9 idx10 idx11 idx12 idx13 idx14 idx15 idx16 idx17 idx18 idx19 idx20 idx21 idx22 idx23 idx24 idx25 idx26 idx27 = mkApps g (typedExprForIntrinsic g m g.array27D_get_info, [[ty]], [ e1 ; idx1; idx2; idx3; idx4; idx5; idx6; idx7; idx8; idx9; idx10; idx11; idx12; idx13; idx14; idx15; idx16; idx17; idx18; idx19; idx20; idx21; idx22; idx23; idx24; idx25; idx26; idx27 ],  m)
+let mkCallArray28DGet g m ty e1 idx1 idx2 idx3 idx4 idx5 idx6 idx7 idx8 idx9 idx10 idx11 idx12 idx13 idx14 idx15 idx16 idx17 idx18 idx19 idx20 idx21 idx22 idx23 idx24 idx25 idx26 idx27 idx28 = mkApps g (typedExprForIntrinsic g m g.array28D_get_info, [[ty]], [ e1 ; idx1; idx2; idx3; idx4; idx5; idx6; idx7; idx8; idx9; idx10; idx11; idx12; idx13; idx14; idx15; idx16; idx17; idx18; idx19; idx20; idx21; idx22; idx23; idx24; idx25; idx26; idx27; idx28 ],  m)
+let mkCallArray29DGet g m ty e1 idx1 idx2 idx3 idx4 idx5 idx6 idx7 idx8 idx9 idx10 idx11 idx12 idx13 idx14 idx15 idx16 idx17 idx18 idx19 idx20 idx21 idx22 idx23 idx24 idx25 idx26 idx27 idx28 idx29 = mkApps g (typedExprForIntrinsic g m g.array29D_get_info, [[ty]], [ e1 ; idx1; idx2; idx3; idx4; idx5; idx6; idx7; idx8; idx9; idx10; idx11; idx12; idx13; idx14; idx15; idx16; idx17; idx18; idx19; idx20; idx21; idx22; idx23; idx24; idx25; idx26; idx27; idx28; idx29 ],  m)
+let mkCallArray30DGet g m ty e1 idx1 idx2 idx3 idx4 idx5 idx6 idx7 idx8 idx9 idx10 idx11 idx12 idx13 idx14 idx15 idx16 idx17 idx18 idx19 idx20 idx21 idx22 idx23 idx24 idx25 idx26 idx27 idx28 idx29 idx30 = mkApps g (typedExprForIntrinsic g m g.array30D_get_info, [[ty]], [ e1 ; idx1; idx2; idx3; idx4; idx5; idx6; idx7; idx8; idx9; idx10; idx11; idx12; idx13; idx14; idx15; idx16; idx17; idx18; idx19; idx20; idx21; idx22; idx23; idx24; idx25; idx26; idx27; idx28; idx29; idx30 ],  m)
+let mkCallArray31DGet g m ty e1 idx1 idx2 idx3 idx4 idx5 idx6 idx7 idx8 idx9 idx10 idx11 idx12 idx13 idx14 idx15 idx16 idx17 idx18 idx19 idx20 idx21 idx22 idx23 idx24 idx25 idx26 idx27 idx28 idx29 idx30 idx31 = mkApps g (typedExprForIntrinsic g m g.array31D_get_info, [[ty]], [ e1 ; idx1; idx2; idx3; idx4; idx5; idx6; idx7; idx8; idx9; idx10; idx11; idx12; idx13; idx14; idx15; idx16; idx17; idx18; idx19; idx20; idx21; idx22; idx23; idx24; idx25; idx26; idx27; idx28; idx29; idx30; idx31 ],  m)
+let mkCallArray32DGet g m ty e1 idx1 idx2 idx3 idx4 idx5 idx6 idx7 idx8 idx9 idx10 idx11 idx12 idx13 idx14 idx15 idx16 idx17 idx18 idx19 idx20 idx21 idx22 idx23 idx24 idx25 idx26 idx27 idx28 idx29 idx30 idx31 idx32 = mkApps g (typedExprForIntrinsic g m g.array32D_get_info, [[ty]], [ e1 ; idx1; idx2; idx3; idx4; idx5; idx6; idx7; idx8; idx9; idx10; idx11; idx12; idx13; idx14; idx15; idx16; idx17; idx18; idx19; idx20; idx21; idx22; idx23; idx24; idx25; idx26; idx27; idx28; idx29; idx30; idx31; idx32 ],  m)
+
 let mkCallNewDecimal g m (e1,e2,e3,e4,e5)          = mkApps g (typedExprForIntrinsic g m g.new_decimal_info, [], [ e1;e2;e3;e4;e5 ],  m)
 
 let mkCallNewFormat g m aty bty cty dty ety e1    = mkApps g (typedExprForIntrinsic g m g.new_format_info, [[aty;bty;cty;dty;ety]], [ e1 ],  m)
@@ -6660,6 +6805,34 @@ let rec typeEnc g (gtpsType,gtpsMethod) ty =
             | 2 -> "[0:,0:]"
             | 3 -> "[0:,0:,0:]"
             | 4 -> "[0:,0:,0:,0:]"
+            | 5 -> "[0:,0:,0:,0:,0:]"
+            | 6 -> "[0:,0:,0:,0:,0:,0:]"
+            | 7 -> "[0:,0:,0:,0:,0:,0:,0:]"
+            | 8 -> "[0:,0:,0:,0:,0:,0:,0:,0:]"
+            | 9 -> "[0:,0:,0:,0:,0:,0:,0:,0:,0:]"
+            | 10 -> "[0:,0:,0:,0:,0:,0:,0:,0:,0:,0:]"
+            | 11 -> "[0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:]"
+            | 12 -> "[0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:]"
+            | 13 -> "[0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:]"
+            | 14 -> "[0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:]"
+            | 15 -> "[0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:]"
+            | 16 -> "[0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:]"
+            | 17 -> "[0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:]"
+            | 18 -> "[0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:]"
+            | 19 -> "[0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:]"
+            | 20 -> "[0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:]"
+            | 21 -> "[0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:]"
+            | 22 -> "[0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:]"
+            | 23 -> "[0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:]"
+            | 24 -> "[0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:]"
+            | 25 -> "[0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:]"
+            | 26 -> "[0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:]"
+            | 27 -> "[0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:]"
+            | 28 -> "[0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:]"
+            | 29 -> "[0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:]"
+            | 30 -> "[0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:]"
+            | 31 -> "[0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:]"
+            | 32 -> "[0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:,0:]"
             | _ -> failwith "impossible: rankOfArrayTyconRef: unsupported array rank"
         typeEnc g (gtpsType,gtpsMethod) (List.head tinst) ^ arraySuffix
     | TType_ucase (UCRef(tcref,_),tinst)   

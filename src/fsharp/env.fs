@@ -198,6 +198,34 @@ type public TcGlobals =
       il_arr2_tcr     : TyconRef;
       il_arr3_tcr     : TyconRef;
       il_arr4_tcr     : TyconRef;
+      il_arr5_tcr     : TyconRef;
+      il_arr6_tcr     : TyconRef;
+      il_arr7_tcr     : TyconRef;
+      il_arr8_tcr     : TyconRef;
+      il_arr9_tcr     : TyconRef;
+      il_arr10_tcr     : TyconRef;
+      il_arr11_tcr     : TyconRef;
+      il_arr12_tcr     : TyconRef;
+      il_arr13_tcr     : TyconRef;
+      il_arr14_tcr     : TyconRef;
+      il_arr15_tcr     : TyconRef;
+      il_arr16_tcr     : TyconRef;
+      il_arr17_tcr     : TyconRef;
+      il_arr18_tcr     : TyconRef;
+      il_arr19_tcr     : TyconRef;
+      il_arr20_tcr     : TyconRef;
+      il_arr21_tcr     : TyconRef;
+      il_arr22_tcr     : TyconRef;
+      il_arr23_tcr     : TyconRef;
+      il_arr24_tcr     : TyconRef;
+      il_arr25_tcr     : TyconRef;
+      il_arr26_tcr     : TyconRef;
+      il_arr27_tcr     : TyconRef;
+      il_arr28_tcr     : TyconRef;
+      il_arr29_tcr     : TyconRef;
+      il_arr30_tcr     : TyconRef;
+      il_arr31_tcr     : TyconRef;
+      il_arr32_tcr     : TyconRef;
       tuple1_tcr      : TyconRef;
       tuple2_tcr      : TyconRef;
       tuple3_tcr      : TyconRef;
@@ -482,10 +510,40 @@ type public TcGlobals =
       range_op_vref             : ValRef;
       range_int32_op_vref       : ValRef;
       //range_step_op_vref        : ValRef;
+
       array_get_vref            : ValRef;
       array2D_get_vref          : ValRef;
       array3D_get_vref          : ValRef;
       array4D_get_vref          : ValRef;
+      array5D_get_vref          : ValRef;
+      array6D_get_vref          : ValRef;
+      array7D_get_vref          : ValRef;
+      array8D_get_vref          : ValRef;
+      array9D_get_vref          : ValRef;
+      array10D_get_vref         : ValRef;
+      array11D_get_vref         : ValRef;
+      array12D_get_vref         : ValRef;
+      array13D_get_vref         : ValRef;
+      array14D_get_vref         : ValRef;
+      array15D_get_vref         : ValRef;
+      array16D_get_vref         : ValRef;
+      array17D_get_vref         : ValRef;
+      array18D_get_vref         : ValRef;
+      array19D_get_vref         : ValRef;
+      array20D_get_vref         : ValRef;
+      array21D_get_vref         : ValRef;
+      array22D_get_vref         : ValRef;
+      array23D_get_vref         : ValRef;
+      array24D_get_vref         : ValRef;
+      array25D_get_vref         : ValRef;
+      array26D_get_vref         : ValRef;
+      array27D_get_vref         : ValRef;
+      array28D_get_vref         : ValRef;
+      array29D_get_vref         : ValRef;
+      array30D_get_vref         : ValRef;
+      array31D_get_vref         : ValRef;
+      array32D_get_vref         : ValRef;
+
       seq_collect_vref          : ValRef;
       seq_collect_info          : IntrinsicValRef;
       seq_using_info            : IntrinsicValRef;
@@ -513,11 +571,39 @@ type public TcGlobals =
       lazy_force_info           : IntrinsicValRef;
       lazy_create_info          : IntrinsicValRef;
 
+      array_get_info            : IntrinsicValRef;
+      array2D_get_info          : IntrinsicValRef;
+      array3D_get_info          : IntrinsicValRef;
+      array4D_get_info          : IntrinsicValRef;
+      array5D_get_info          : IntrinsicValRef;
+      array6D_get_info          : IntrinsicValRef;
+      array7D_get_info          : IntrinsicValRef;
+      array8D_get_info          : IntrinsicValRef;
+      array9D_get_info          : IntrinsicValRef;
+      array10D_get_info         : IntrinsicValRef;
+      array11D_get_info         : IntrinsicValRef;
+      array12D_get_info         : IntrinsicValRef;
+      array13D_get_info         : IntrinsicValRef;
+      array14D_get_info         : IntrinsicValRef;
+      array15D_get_info         : IntrinsicValRef;
+      array16D_get_info         : IntrinsicValRef;
+      array17D_get_info         : IntrinsicValRef;
+      array18D_get_info         : IntrinsicValRef;
+      array19D_get_info         : IntrinsicValRef;
+      array20D_get_info         : IntrinsicValRef;
+      array21D_get_info         : IntrinsicValRef;
+      array22D_get_info         : IntrinsicValRef;
+      array23D_get_info         : IntrinsicValRef;
+      array24D_get_info         : IntrinsicValRef;
+      array25D_get_info         : IntrinsicValRef;
+      array26D_get_info         : IntrinsicValRef;
+      array27D_get_info         : IntrinsicValRef;
+      array28D_get_info         : IntrinsicValRef;
+      array29D_get_info         : IntrinsicValRef;
+      array30D_get_info         : IntrinsicValRef;
+      array31D_get_info         : IntrinsicValRef;
+      array32D_get_info         : IntrinsicValRef;
 
-      array_get_info             : IntrinsicValRef;
-      array2D_get_info           : IntrinsicValRef;
-      array3D_get_info           : IntrinsicValRef;
-      array4D_get_info           : IntrinsicValRef;
       unpickle_quoted_info       : IntrinsicValRef;
       cast_quotation_info        : IntrinsicValRef;
       lift_value_info            : IntrinsicValRef;
@@ -625,10 +711,39 @@ let mkTcGlobals (compilingFslib,sysCcu,ilg,fslibCcu,directoryToResolveRelativePa
   let query_builder_tcref         = mk_MFLinq_tcref fslibCcu "QueryBuilder" 
   let querySource_tcr         = mk_MFLinq_tcref fslibCcu "QuerySource`2" 
   let linqExpression_tcr     = mkSysTyconRef ["System";"Linq";"Expressions"] "Expression`1"
-  let il_arr1_tcr              = mk_MFCore_tcref fslibCcu "[]`1"
+
+  let il_arr1_tcr              = mk_MFCore_tcref fslibCcu "[]`1";
   let il_arr2_tcr              = mk_MFCore_tcref fslibCcu "[,]`1";
   let il_arr3_tcr              = mk_MFCore_tcref fslibCcu "[,,]`1";
   let il_arr4_tcr              = mk_MFCore_tcref fslibCcu "[,,,]`1";
+  let il_arr5_tcr              = mk_MFCore_tcref fslibCcu "[,,,,]`1";
+  let il_arr6_tcr              = mk_MFCore_tcref fslibCcu "[,,,,,]`1";
+  let il_arr7_tcr              = mk_MFCore_tcref fslibCcu "[,,,,,,]`1";
+  let il_arr8_tcr              = mk_MFCore_tcref fslibCcu "[,,,,,,,]`1";
+  let il_arr9_tcr              = mk_MFCore_tcref fslibCcu "[,,,,,,,,]`1";
+  let il_arr10_tcr             = mk_MFCore_tcref fslibCcu "[,,,,,,,,,]`1";
+  let il_arr11_tcr             = mk_MFCore_tcref fslibCcu "[,,,,,,,,,,]`1";
+  let il_arr12_tcr             = mk_MFCore_tcref fslibCcu "[,,,,,,,,,,,]`1";
+  let il_arr13_tcr             = mk_MFCore_tcref fslibCcu "[,,,,,,,,,,,,]`1";
+  let il_arr14_tcr             = mk_MFCore_tcref fslibCcu "[,,,,,,,,,,,,,]`1";
+  let il_arr15_tcr             = mk_MFCore_tcref fslibCcu "[,,,,,,,,,,,,,,]`1";
+  let il_arr16_tcr             = mk_MFCore_tcref fslibCcu "[,,,,,,,,,,,,,,,]`1";
+  let il_arr17_tcr             = mk_MFCore_tcref fslibCcu "[,,,,,,,,,,,,,,,,]`1";
+  let il_arr18_tcr             = mk_MFCore_tcref fslibCcu "[,,,,,,,,,,,,,,,,,]`1";
+  let il_arr19_tcr             = mk_MFCore_tcref fslibCcu "[,,,,,,,,,,,,,,,,,,]`1";
+  let il_arr20_tcr             = mk_MFCore_tcref fslibCcu "[,,,,,,,,,,,,,,,,,,,]`1";
+  let il_arr21_tcr             = mk_MFCore_tcref fslibCcu "[,,,,,,,,,,,,,,,,,,,,]`1";
+  let il_arr22_tcr             = mk_MFCore_tcref fslibCcu "[,,,,,,,,,,,,,,,,,,,,,]`1";
+  let il_arr23_tcr             = mk_MFCore_tcref fslibCcu "[,,,,,,,,,,,,,,,,,,,,,,]`1";
+  let il_arr24_tcr             = mk_MFCore_tcref fslibCcu "[,,,,,,,,,,,,,,,,,,,,,,,]`1";
+  let il_arr25_tcr             = mk_MFCore_tcref fslibCcu "[,,,,,,,,,,,,,,,,,,,,,,,,]`1";
+  let il_arr26_tcr             = mk_MFCore_tcref fslibCcu "[,,,,,,,,,,,,,,,,,,,,,,,,,]`1";
+  let il_arr27_tcr             = mk_MFCore_tcref fslibCcu "[,,,,,,,,,,,,,,,,,,,,,,,,,,]`1";
+  let il_arr28_tcr             = mk_MFCore_tcref fslibCcu "[,,,,,,,,,,,,,,,,,,,,,,,,,,,]`1";
+  let il_arr29_tcr             = mk_MFCore_tcref fslibCcu "[,,,,,,,,,,,,,,,,,,,,,,,,,,,,]`1";
+  let il_arr30_tcr             = mk_MFCore_tcref fslibCcu "[,,,,,,,,,,,,,,,,,,,,,,,,,,,,,]`1";
+  let il_arr31_tcr             = mk_MFCore_tcref fslibCcu "[,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,]`1";
+  let il_arr32_tcr             = mk_MFCore_tcref fslibCcu "[,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,]`1";
   
   let bool_ty         = mkNonGenericTy bool_tcr   
   let int_ty          = mkNonGenericTy int_tcr    
@@ -689,6 +804,35 @@ let mkTcGlobals (compilingFslib,sysCcu,ilg,fslibCcu,directoryToResolveRelativePa
   let mk_array2_typ ty      = TType_app(il_arr2_tcr, [ty])
   let mk_array3_typ ty      = TType_app(il_arr3_tcr, [ty])
   let mk_array4_typ ty      = TType_app(il_arr4_tcr, [ty])
+  let mk_array5_typ ty      = TType_app(il_arr5_tcr, [ty])
+  let mk_array6_typ ty      = TType_app(il_arr6_tcr, [ty])
+  let mk_array7_typ ty      = TType_app(il_arr7_tcr, [ty])
+  let mk_array8_typ ty      = TType_app(il_arr8_tcr, [ty])
+  let mk_array9_typ ty      = TType_app(il_arr9_tcr, [ty])
+  let mk_array10_typ ty      = TType_app(il_arr10_tcr, [ty])
+  let mk_array11_typ ty      = TType_app(il_arr11_tcr, [ty])
+  let mk_array12_typ ty      = TType_app(il_arr12_tcr, [ty])
+  let mk_array13_typ ty      = TType_app(il_arr13_tcr, [ty])
+  let mk_array14_typ ty      = TType_app(il_arr14_tcr, [ty])
+  let mk_array15_typ ty      = TType_app(il_arr15_tcr, [ty])
+  let mk_array16_typ ty      = TType_app(il_arr16_tcr, [ty])
+  let mk_array17_typ ty      = TType_app(il_arr17_tcr, [ty])
+  let mk_array18_typ ty      = TType_app(il_arr18_tcr, [ty])
+  let mk_array19_typ ty      = TType_app(il_arr19_tcr, [ty])
+  let mk_array20_typ ty      = TType_app(il_arr20_tcr, [ty])
+  let mk_array21_typ ty      = TType_app(il_arr21_tcr, [ty])
+  let mk_array22_typ ty      = TType_app(il_arr22_tcr, [ty])
+  let mk_array23_typ ty      = TType_app(il_arr23_tcr, [ty])
+  let mk_array24_typ ty      = TType_app(il_arr24_tcr, [ty])
+  let mk_array25_typ ty      = TType_app(il_arr25_tcr, [ty])
+  let mk_array26_typ ty      = TType_app(il_arr26_tcr, [ty])
+  let mk_array27_typ ty      = TType_app(il_arr27_tcr, [ty])
+  let mk_array28_typ ty      = TType_app(il_arr28_tcr, [ty])
+  let mk_array29_typ ty      = TType_app(il_arr29_tcr, [ty])
+  let mk_array30_typ ty      = TType_app(il_arr30_tcr, [ty])
+  let mk_array31_typ ty      = TType_app(il_arr31_tcr, [ty])
+  let mk_array32_typ ty      = TType_app(il_arr32_tcr, [ty])
+
   let mkLazyTy ty         = TType_app(lazy_tcr, [ty])
   
   let mkPrintfFormatTy aty bty cty dty ety = TType_app(format_tcr, [aty;bty;cty;dty; ety]) 
@@ -897,9 +1041,39 @@ let mkTcGlobals (compilingFslib,sysCcu,ilg,fslibCcu,directoryToResolveRelativePa
   let enum_info                  = makeIntrinsicValRef(fslib_MFOperators_nleref,                             "enum"                                 ,None                 ,Some "ToEnum" ,[vara],     ([[int_ty]],varaTy))  
   let range_op_info              = makeIntrinsicValRef(fslib_MFOperators_nleref,                             "op_Range"                             ,None                 ,None          ,[vara],     ([[varaTy];[varaTy]],mkSeqTy varaTy))
   let range_int32_op_info        = makeIntrinsicValRef(fslib_MFOperatorIntrinsics_nleref,                    "RangeInt32"                           ,None                 ,None          ,[],     ([[int_ty];[int_ty];[int_ty]],mkSeqTy int_ty))
+  
   let array2D_get_info           = makeIntrinsicValRef(fslib_MFIntrinsicFunctions_nleref,                    "GetArray2D"                           ,None                 ,None          ,[vara],     ([[mk_array2_typ varaTy];[int_ty]; [int_ty]],varaTy))  
   let array3D_get_info           = makeIntrinsicValRef(fslib_MFIntrinsicFunctions_nleref,                    "GetArray3D"                           ,None                 ,None          ,[vara],     ([[mk_array3_typ varaTy];[int_ty]; [int_ty]; [int_ty]],varaTy))
   let array4D_get_info           = makeIntrinsicValRef(fslib_MFIntrinsicFunctions_nleref,                    "GetArray4D"                           ,None                 ,None          ,[vara],     ([[mk_array4_typ varaTy];[int_ty]; [int_ty]; [int_ty]; [int_ty]],varaTy))
+  let array5D_get_info           = makeIntrinsicValRef(fslib_MFIntrinsicFunctions_nleref,                    "GetArray5D"                           ,None                 ,None          ,[vara],     ([[mk_array5_typ varaTy];[int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]],varaTy))
+  let array6D_get_info           = makeIntrinsicValRef(fslib_MFIntrinsicFunctions_nleref,                    "GetArray6D"                           ,None                 ,None          ,[vara],     ([[mk_array6_typ varaTy];[int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]],varaTy))
+  let array7D_get_info           = makeIntrinsicValRef(fslib_MFIntrinsicFunctions_nleref,                    "GetArray7D"                           ,None                 ,None          ,[vara],     ([[mk_array7_typ varaTy];[int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]],varaTy))
+  let array8D_get_info           = makeIntrinsicValRef(fslib_MFIntrinsicFunctions_nleref,                    "GetArray8D"                           ,None                 ,None          ,[vara],     ([[mk_array8_typ varaTy];[int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]],varaTy))
+  let array9D_get_info           = makeIntrinsicValRef(fslib_MFIntrinsicFunctions_nleref,                    "GetArray9D"                           ,None                 ,None          ,[vara],     ([[mk_array9_typ varaTy];[int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]],varaTy))
+  let array10D_get_info           = makeIntrinsicValRef(fslib_MFIntrinsicFunctions_nleref,                   "GetArray10D"                          ,None                 ,None          ,[vara],     ([[mk_array10_typ varaTy];[int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]],varaTy))
+  let array11D_get_info           = makeIntrinsicValRef(fslib_MFIntrinsicFunctions_nleref,                   "GetArray11D"                          ,None                 ,None          ,[vara],     ([[mk_array11_typ varaTy];[int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]],varaTy))
+  let array12D_get_info           = makeIntrinsicValRef(fslib_MFIntrinsicFunctions_nleref,                   "GetArray12D"                          ,None                 ,None          ,[vara],     ([[mk_array12_typ varaTy];[int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]],varaTy))
+  let array13D_get_info           = makeIntrinsicValRef(fslib_MFIntrinsicFunctions_nleref,                   "GetArray13D"                          ,None                 ,None          ,[vara],     ([[mk_array13_typ varaTy];[int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]],varaTy))
+  let array14D_get_info           = makeIntrinsicValRef(fslib_MFIntrinsicFunctions_nleref,                   "GetArray14D"                          ,None                 ,None          ,[vara],     ([[mk_array14_typ varaTy];[int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]],varaTy))
+  let array15D_get_info           = makeIntrinsicValRef(fslib_MFIntrinsicFunctions_nleref,                   "GetArray15D"                          ,None                 ,None          ,[vara],     ([[mk_array15_typ varaTy];[int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]],varaTy))
+  let array16D_get_info           = makeIntrinsicValRef(fslib_MFIntrinsicFunctions_nleref,                   "GetArray16D"                          ,None                 ,None          ,[vara],     ([[mk_array16_typ varaTy];[int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]],varaTy))
+  let array17D_get_info           = makeIntrinsicValRef(fslib_MFIntrinsicFunctions_nleref,                   "GetArray17D"                          ,None                 ,None          ,[vara],     ([[mk_array17_typ varaTy];[int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]],varaTy))
+  let array18D_get_info           = makeIntrinsicValRef(fslib_MFIntrinsicFunctions_nleref,                   "GetArray18D"                          ,None                 ,None          ,[vara],     ([[mk_array18_typ varaTy];[int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]],varaTy))
+  let array19D_get_info           = makeIntrinsicValRef(fslib_MFIntrinsicFunctions_nleref,                   "GetArray19D"                          ,None                 ,None          ,[vara],     ([[mk_array19_typ varaTy];[int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]],varaTy))
+  let array20D_get_info           = makeIntrinsicValRef(fslib_MFIntrinsicFunctions_nleref,                   "GetArray20D"                          ,None                 ,None          ,[vara],     ([[mk_array20_typ varaTy];[int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]],varaTy))
+  let array21D_get_info           = makeIntrinsicValRef(fslib_MFIntrinsicFunctions_nleref,                   "GetArray21D"                          ,None                 ,None          ,[vara],     ([[mk_array21_typ varaTy];[int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]],varaTy))
+  let array22D_get_info           = makeIntrinsicValRef(fslib_MFIntrinsicFunctions_nleref,                   "GetArray22D"                          ,None                 ,None          ,[vara],     ([[mk_array22_typ varaTy];[int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]],varaTy))
+  let array23D_get_info           = makeIntrinsicValRef(fslib_MFIntrinsicFunctions_nleref,                   "GetArray23D"                          ,None                 ,None          ,[vara],     ([[mk_array23_typ varaTy];[int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]],varaTy))
+  let array24D_get_info           = makeIntrinsicValRef(fslib_MFIntrinsicFunctions_nleref,                   "GetArray24D"                          ,None                 ,None          ,[vara],     ([[mk_array24_typ varaTy];[int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]],varaTy))
+  let array25D_get_info           = makeIntrinsicValRef(fslib_MFIntrinsicFunctions_nleref,                   "GetArray25D"                          ,None                 ,None          ,[vara],     ([[mk_array25_typ varaTy];[int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]],varaTy))
+  let array26D_get_info           = makeIntrinsicValRef(fslib_MFIntrinsicFunctions_nleref,                   "GetArray26D"                          ,None                 ,None          ,[vara],     ([[mk_array26_typ varaTy];[int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]],varaTy))
+  let array27D_get_info           = makeIntrinsicValRef(fslib_MFIntrinsicFunctions_nleref,                   "GetArray27D"                          ,None                 ,None          ,[vara],     ([[mk_array27_typ varaTy];[int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]],varaTy))
+  let array28D_get_info           = makeIntrinsicValRef(fslib_MFIntrinsicFunctions_nleref,                   "GetArray28D"                          ,None                 ,None          ,[vara],     ([[mk_array28_typ varaTy];[int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]],varaTy))
+  let array29D_get_info           = makeIntrinsicValRef(fslib_MFIntrinsicFunctions_nleref,                   "GetArray29D"                          ,None                 ,None          ,[vara],     ([[mk_array29_typ varaTy];[int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]],varaTy))
+  let array30D_get_info           = makeIntrinsicValRef(fslib_MFIntrinsicFunctions_nleref,                   "GetArray30D"                          ,None                 ,None          ,[vara],     ([[mk_array30_typ varaTy];[int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]],varaTy))
+  let array31D_get_info           = makeIntrinsicValRef(fslib_MFIntrinsicFunctions_nleref,                   "GetArray31D"                          ,None                 ,None          ,[vara],     ([[mk_array31_typ varaTy];[int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]],varaTy))
+  let array32D_get_info           = makeIntrinsicValRef(fslib_MFIntrinsicFunctions_nleref,                   "GetArray32D"                          ,None                 ,None          ,[vara],     ([[mk_array32_typ varaTy];[int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]; [int_ty]],varaTy))
+
   let seq_collect_info           = makeIntrinsicValRef(fslib_MFSeqModule_nleref,                             "collect"                              ,None                 ,Some "Collect",[vara;varb;varc],([[varaTy --> varbTy]; [mkSeqTy varaTy]], mkSeqTy varcTy))  
   let seq_delay_info             = makeIntrinsicValRef(fslib_MFSeqModule_nleref,                             "delay"                                ,None                 ,Some "Delay"  ,[varb],     ([[unit_ty --> mkSeqTy varbTy]], mkSeqTy varbTy)) 
   let seq_append_info            = makeIntrinsicValRef(fslib_MFSeqModule_nleref,                             "append"                               ,None                 ,Some "Append" ,[varb],     ([[mkSeqTy varbTy]; [mkSeqTy varbTy]], mkSeqTy varbTy))  
@@ -1017,6 +1191,34 @@ let mkTcGlobals (compilingFslib,sysCcu,ilg,fslibCcu,directoryToResolveRelativePa
     il_arr2_tcr    = il_arr2_tcr;
     il_arr3_tcr    = il_arr3_tcr;
     il_arr4_tcr    = il_arr4_tcr;
+    il_arr5_tcr    = il_arr5_tcr;
+    il_arr6_tcr    = il_arr6_tcr;
+    il_arr7_tcr    = il_arr7_tcr;
+    il_arr8_tcr    = il_arr8_tcr;
+    il_arr9_tcr    = il_arr9_tcr;
+    il_arr10_tcr    = il_arr10_tcr;
+    il_arr11_tcr    = il_arr11_tcr;
+    il_arr12_tcr    = il_arr12_tcr;
+    il_arr13_tcr    = il_arr13_tcr;
+    il_arr14_tcr    = il_arr14_tcr;
+    il_arr15_tcr    = il_arr15_tcr;
+    il_arr16_tcr    = il_arr16_tcr;
+    il_arr17_tcr    = il_arr17_tcr;
+    il_arr18_tcr    = il_arr18_tcr;
+    il_arr19_tcr    = il_arr19_tcr;
+    il_arr20_tcr    = il_arr20_tcr;
+    il_arr21_tcr    = il_arr21_tcr;
+    il_arr22_tcr    = il_arr22_tcr;
+    il_arr23_tcr    = il_arr23_tcr;
+    il_arr24_tcr    = il_arr24_tcr;
+    il_arr25_tcr    = il_arr25_tcr;
+    il_arr26_tcr    = il_arr26_tcr;
+    il_arr27_tcr    = il_arr27_tcr;
+    il_arr28_tcr    = il_arr28_tcr;
+    il_arr29_tcr    = il_arr29_tcr;
+    il_arr30_tcr    = il_arr30_tcr;
+    il_arr31_tcr    = il_arr31_tcr;
+    il_arr32_tcr    = il_arr32_tcr;
     tuple1_tcr     = tuple1_tcr;
     tuple2_tcr     = tuple2_tcr;
     tuple3_tcr     = tuple3_tcr;
@@ -1331,10 +1533,40 @@ let mkTcGlobals (compilingFslib,sysCcu,ilg,fslibCcu,directoryToResolveRelativePa
     range_op_vref              = ValRefForIntrinsic range_op_info;
     range_int32_op_vref        = ValRefForIntrinsic range_int32_op_info;
     //range_step_op_vref         = ValRefForIntrinsic range_step_op_info;
+
     array_get_vref             = ValRefForIntrinsic array_get_info;
     array2D_get_vref           = ValRefForIntrinsic array2D_get_info;
     array3D_get_vref           = ValRefForIntrinsic array3D_get_info;
     array4D_get_vref           = ValRefForIntrinsic array4D_get_info;
+    array5D_get_vref           = ValRefForIntrinsic array5D_get_info;
+    array6D_get_vref           = ValRefForIntrinsic array6D_get_info;
+    array7D_get_vref           = ValRefForIntrinsic array7D_get_info;
+    array8D_get_vref           = ValRefForIntrinsic array8D_get_info;
+    array9D_get_vref           = ValRefForIntrinsic array9D_get_info;
+    array10D_get_vref          = ValRefForIntrinsic array10D_get_info;
+    array11D_get_vref          = ValRefForIntrinsic array11D_get_info;
+    array12D_get_vref          = ValRefForIntrinsic array12D_get_info;
+    array13D_get_vref          = ValRefForIntrinsic array13D_get_info;
+    array14D_get_vref          = ValRefForIntrinsic array14D_get_info;
+    array15D_get_vref          = ValRefForIntrinsic array15D_get_info;
+    array16D_get_vref          = ValRefForIntrinsic array16D_get_info;
+    array17D_get_vref          = ValRefForIntrinsic array17D_get_info;
+    array18D_get_vref          = ValRefForIntrinsic array18D_get_info;
+    array19D_get_vref          = ValRefForIntrinsic array19D_get_info;
+    array20D_get_vref          = ValRefForIntrinsic array20D_get_info;
+    array21D_get_vref          = ValRefForIntrinsic array21D_get_info;
+    array22D_get_vref          = ValRefForIntrinsic array22D_get_info;
+    array23D_get_vref          = ValRefForIntrinsic array23D_get_info;
+    array24D_get_vref          = ValRefForIntrinsic array24D_get_info;
+    array25D_get_vref          = ValRefForIntrinsic array25D_get_info;
+    array26D_get_vref          = ValRefForIntrinsic array26D_get_info;
+    array27D_get_vref          = ValRefForIntrinsic array27D_get_info;
+    array28D_get_vref          = ValRefForIntrinsic array28D_get_info;
+    array29D_get_vref          = ValRefForIntrinsic array29D_get_info;
+    array30D_get_vref          = ValRefForIntrinsic array30D_get_info;
+    array31D_get_vref          = ValRefForIntrinsic array31D_get_info;
+    array32D_get_vref          = ValRefForIntrinsic array32D_get_info;
+
     seq_singleton_vref         = ValRefForIntrinsic seq_singleton_info;
     seq_collect_vref           = ValRefForIntrinsic seq_collect_info;
     seq_collect_info           = seq_collect_info;
@@ -1376,10 +1608,40 @@ let mkTcGlobals (compilingFslib,sysCcu,ilg,fslibCcu,directoryToResolveRelativePa
     create_event_info          = create_event_info;
     seq_to_list_info           = seq_to_list_info;
     seq_to_array_info          = seq_to_array_info;
+
     array_get_info             = array_get_info;
     array2D_get_info             = array2D_get_info;
     array3D_get_info             = array3D_get_info;
     array4D_get_info             = array4D_get_info;
+    array5D_get_info             = array5D_get_info;
+    array6D_get_info             = array6D_get_info;
+    array7D_get_info             = array7D_get_info;
+    array8D_get_info             = array8D_get_info;
+    array9D_get_info             = array9D_get_info;
+    array10D_get_info            = array10D_get_info;
+    array11D_get_info            = array11D_get_info;
+    array12D_get_info            = array12D_get_info;
+    array13D_get_info            = array13D_get_info;
+    array14D_get_info            = array14D_get_info;
+    array15D_get_info            = array15D_get_info;
+    array16D_get_info            = array16D_get_info;
+    array17D_get_info            = array17D_get_info;
+    array18D_get_info            = array18D_get_info;
+    array19D_get_info            = array19D_get_info;
+    array20D_get_info            = array20D_get_info;
+    array21D_get_info            = array21D_get_info;
+    array22D_get_info            = array22D_get_info;
+    array23D_get_info            = array23D_get_info;
+    array24D_get_info            = array24D_get_info;
+    array25D_get_info            = array25D_get_info;
+    array26D_get_info            = array26D_get_info;
+    array27D_get_info            = array27D_get_info;
+    array28D_get_info            = array28D_get_info;
+    array29D_get_info            = array29D_get_info;
+    array30D_get_info            = array30D_get_info;
+    array31D_get_info            = array31D_get_info;
+    array32D_get_info            = array32D_get_info;
+
     unpickle_quoted_info       = unpickle_quoted_info;
     cast_quotation_info        = cast_quotation_info;
     lift_value_info            = lift_value_info;
