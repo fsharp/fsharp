@@ -29,7 +29,7 @@ REM add %FSCBinPath% to path only if not already there. Otherwise, the path keep
 echo %path%; | find /i "%FSCBinPath%;" > NUL
 if ERRORLEVEL 1    set PATH=%PATH%;%FSCBinPath%
 
-if "%FSDIFF%"=="" set FSDIFF=%FSHARP_HOME%\src\tests\fsharpqa\testenv\bin\%processor_architecture%\diff.exe -dew
+if "%FSDIFF%"=="" set FSDIFF=%SCRIPT_ROOT%fsharpqa\testenv\bin\%processor_architecture%\diff.exe -dew 
 
 rem check if we're already configured, if not use the configuration from the last line of the config file
 if "%fsc%"=="" ( 
@@ -203,7 +203,7 @@ IF EXIST "%FSCBinPath%net20\FSharp.Core.dll" set FSCOREDLL20PATH=%FSCBinPath%net
 IF EXIST "%FSCBinPath%Runtime\2.0\FSharp.Core.dll" set FSCOREDLL20PATH=%FSCBinPath%Runtime\2.0\FSharp.Core.dll
 
 REM == Set standard flags for invoking powershell scripts
-IF NOT DEFINED PSH_FLAGS SET PSH_FLAGS=-nologo -noprofile -executionpolicy Unrestricted
+IF NOT DEFINED PSH_FLAGS SET PSH_FLAGS=-nologo -noprofile -executionpolicy bypass
 
 if DEFINED _UNATTENDEDLOG exit /b 0
 
