@@ -1,0 +1,20 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 9.00
+# Visual Studio 2005
+Project("{94D665CA-D915-4DE1-AA53-913450A1AE2D}") = "checkmri", "checkmri.fsharpp", "{52A4D03F-6242-4951-A460-2A59A3A0F8D3}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{52A4D03F-6242-4951-A460-2A59A3A0F8D3}.Debug|Win32.ActiveCfg = Debug|Win32
+		{52A4D03F-6242-4951-A460-2A59A3A0F8D3}.Debug|Win32.Build.0 = Debug|Win32
+		{52A4D03F-6242-4951-A460-2A59A3A0F8D3}.Release|Win32.ActiveCfg = Release|Win32
+		{52A4D03F-6242-4951-A460-2A59A3A0F8D3}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

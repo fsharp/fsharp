@@ -1,0 +1,6 @@
+DbmlFile
+EdmxFile
+ODataService
+SqlDataConnection
+SqlEntityConnection
+WsdlService

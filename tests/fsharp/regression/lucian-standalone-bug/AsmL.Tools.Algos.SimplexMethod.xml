@@ -1,0 +1,66 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>AsmL.Tools.Algos.SimplexMethod</name>
+    </assembly>
+    <members>
+        <member name="T:Microsoft.AsmL.Tools.Algos.SimplexMethod.LP">
+            <summary>
+            Solves the general liner program but always looking for minimum
+            </summary>
+        </member>
+        <member name="M:Microsoft.AsmL.Tools.Algos.SimplexMethod.LP.SetCosts(System.Double[])">
+            <summary>
+            set the cost function
+            </summary>
+            <param name="costs">the objective vector</param>
+        </member>
+        <member name="M:Microsoft.AsmL.Tools.Algos.SimplexMethod.LP.AddConstraint(System.Double[],Microsoft.AsmL.Tools.Algos.SimplexMethod.Relation,System.Double)">
+            <summary>
+            adds a constraint: the coeffiecents should not be very close to zero or too huge.
+            If it is the case, as one can scale for example the whole programm to zero,
+            then such coefficient will be treated az zeros. We are talking here about the numbers
+            with absolute values less than 1.0E-8
+            </summary>
+            <param name="coeff">the constraint coefficents</param>
+            <param name="relation">could be 'less or equal', equal or 'greater or equal'</param>
+            <param name="rightSide">right side of the constraint</param>
+        </member>
+        <member name="M:Microsoft.AsmL.Tools.Algos.SimplexMethod.LP.Minimize">
+            <summary>
+            Solves the linear program, minimizing, by going through stages one and two
+            </summary>
+        </member>
+        <member name="P:Microsoft.AsmL.Tools.Algos.SimplexMethod.LP.FeasibleSolution">
+            <summary>
+            finds a solution which is feasible but not necesserily optimal
+            </summary>
+        </member>
+        <member name="P:Microsoft.AsmL.Tools.Algos.SimplexMethod.LP.MinimalSolution">
+            <summary>
+            returns an optimal solution
+            </summary>
+        </member>
+        <member name="P:Microsoft.AsmL.Tools.Algos.SimplexMethod.LP.MinimalValue">
+            <summary>
+            return the value of the cost function at the optimal solution
+            if the client is too lazy to calculate it by himself
+            </summary>
+        </member>
+        <member name="T:Microsoft.AsmL.Tools.Algos.SimplexMethod.Solver">
+            <summary>
+            The problem is to find min c*x under constraint Ax=b,x>=0 where A|b=X is the tableu
+            Solver solves LP starting with a given feasible solution given by the basis array
+            a tableu and a cost. 
+            </summary>
+        </member>
+        <member name="M:Microsoft.AsmL.Tools.Algos.SimplexMethod.Solver.#ctor(System.Int32[],System.Double[0:,0:],System.Double[],System.Double[])">
+            <summary>
+            constructor
+            </summary>
+            <param name="basis">basis[i] is the var chosen for the constraint i</param>
+            <param name="X">the tableu, the tableu will be changed in place</param>
+            <param name="c">cost</param>
+        </member>
+    </members>
+</doc>

@@ -1,0 +1,86 @@
+{
+
+module Lex
+open System
+open Pars
+open Lexing
+
+let inc_lnum bol pos = 
+  let lnum = pos.pos_lnum in 
+  {pos with pos_lnum =  lnum+1; pos_bol = bol }
+
+let newline lexbuf = 
+  lexbuf_set_curr_p lexbuf 
+    ( inc_lnum (lexeme_end lexbuf) (lexeme_end_p lexbuf))
+
+}
+
+let digit = ['0'-'9']
+let whitespace = [' ' '\t' ]
+let newline = ('\n' | '\r' '\n')
+let quote = '"'
+
+rule token = parse
+| whitespace	{ token lexbuf }
+| newline  { newline lexbuf; token lexbuf }
+| "activity"	 { ACTIVITY }
+| "if" { IF }
+| "type" { TYPE }
+| "class" { CLASS }
+| "enum" { ENUM }
+| "important" { IMPORTANT }
+| "unimportant" { UNIMPORTANT }
+| "new" { NEW }
+| "signal" { SIGNAL }
+| "then" { THEN }
+| "else" { ELSE }
+| "on" { ON }
+| "first" { FIRST }
+| "external" { EXTERNAL }
+| "call" { CALL }
+| "return" { RETURN }
+| "extern" { EXTERN }
+| "begin_read" { BEGINREAD }
+| "end_read" { ENDREAD }
+| "begin_write" { BEGINWRITE }
+| "end_write" { ENDWRITE }
+| "!"      { PLING }
+| "|"      { PAR }
+| "."      { DOT }
+| "*"      { STAR }
+| ";"      { SEMI }
+| "="      { EQUALS }
+| "=="     { EQEQUALS }
+| ":="     { COLONEQUALS }
+| "!="     { NOTEQUALS }
+| ">="     { ABOVEEQUALS }
+| "<="     { BELOWEQUALS }
+| "&&"     { AND }
+| "||"     { OR }
+| ":"      { COLON }
+| "<"      { LANGLE }
+| ">"      { RANGLE }
+| "{"      { LBRACE }
+| "}"      { RBRACE }
+| "("      { LPAREN }
+| ")"      { RPAREN }
+| ","      { COMMA }
+| "+"      { PLUS }
+| "-"      { MINUS }
+| "/"      { DIV }
+| (quote)[^ '"' '\n']+(quote) { let s=lexeme lexbuf in STRING(String.sub s 1 (String.length(s)-2)) }
+| "true"   { BOOL(true) }
+| "false"  { BOOL(false) }
+| ['a'-'z' 'A'-'Z' '_'] ['a'-'z' 'A'-'Z' '_' '0'-'9']* { ID(lexeme lexbuf) }
+| "_"           { ID("_") }
+| ['-']?digit+       { INT (Int32.Parse(lexeme lexbuf)) }
+| ['-']?digit+('.'digit+)?(['e''E']digit+)?   { FLOAT (Double.Parse(lexeme lexbuf)) }
+| eof   { EOF }
+| "//"[^'\n']*'\n' {  newline lexbuf; token lexbuf }
+| "/*" { comment lexbuf }
+
+and comment = parse
+| newline  { newline lexbuf; comment lexbuf }
+| "*/" { token lexbuf }
+| _ { comment lexbuf }
+
