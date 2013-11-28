@@ -161,6 +161,26 @@ the command line, see above.
 The F# support in MonoDevelop uses an in-process background compiler. On the Mac this causes pausing garbage
 collections to kick in which makes editing the compiler in MonoDevelop awkward.
 
+### Running tests (on Windows)
+
+
+Set up a shell (release mode)
+
+```
+cd tests
+run40.bat   
+ngen install ..\lib\release\fsc.exe
+ngen install ..\lib\release\fsi.exe
+```
+Run the tests:
+```
+.\build-and-run.bat
+```
+Look in build-and-run.log.
+
+
+
+
 ### Building F# Core Unit Tests for .NET 4.x (optional)
 
 This uses the proto compiler to build the unit tests that check some parts of `FSharp.Core.dll` and `FSharp.Compiler.dll`. There is also another set of tests under `tests\fsharp`.

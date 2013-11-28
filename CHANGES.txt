@@ -1,0 +1,20 @@
+
+HEAD
+  * Added tests
+
+  * Merged F# 3.1 open source release
+
+  * Fixed build logic for F# 3.1
+
+3.0.30
+  * Partial fix for allowing F# 3.1 projects to compile using xbuild (also 
+    requires xbuild fix)
+
+  * Remove a multitude of links in xbuild directories in favour of targets 
+    files which include the canonical targets
+
+3.0.29
+
+  * Proper DESTDIR support (very useful for making custom deb/rpm packages)
+
+
