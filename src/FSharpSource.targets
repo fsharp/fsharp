@@ -8,8 +8,6 @@
     <!-- Tail calls on, even in debug -->
     <Tailcalls>true</Tailcalls>
     <TargetFramework Condition="'$(TargetFramework)'==''">net40</TargetFramework>
-    <!-- Use a 4.0 proto compiler -->
-    <protoCLIDir>4.0</protoCLIDir>
     <LkgPath>$(FSharpSourcesRoot)\..\lib\bootstrap\4.0</LkgPath>
     <FsLexUnicode>true</FsLexUnicode>
     <OtherFlags>$(OtherFlags) --times</OtherFlags>
@@ -27,7 +25,7 @@
     <AssemblyVersion Condition="'$(TargetFramework)' == 'net20'">2.3.1.0</AssemblyVersion>
     <AssemblyVersion Condition="'$(TargetFramework)' == 'portable-net45+sl5+win8' ">2.3.5.1</AssemblyVersion>
     <AssemblyVersion Condition="'$(TargetFramework)' == 'portable-net4+sl4+wp71+win8' ">2.3.6.1</AssemblyVersion>
-    <AssemblyVersion Condition="'$(TargetFramework)' == 'mono21' ">2.3.98.1</AssemblyVersion>
+    <AssemblyVersion Condition="'$(TargetFramework)' == 'monodroid' ">2.3.98.1</AssemblyVersion>
     <AssemblyVersion Condition="'$(TargetFramework)' == 'monotouch' ">2.3.99.1</AssemblyVersion>
     <AssemblyVersion Condition="'$(TargetFramework)' == 'portable-windows8+net45'">3.3.1.0</AssemblyVersion>
 
@@ -37,7 +35,7 @@
     <AssemblyVersion Condition="'$(TargetFramework)' == 'net40' AND '$(FSharpCoreBackVersion)' == '3.0' ">4.3.0.0</AssemblyVersion>
     <AssemblyVersion Condition="'$(TargetFramework)' == 'portable-net45+sl5+win8' AND '$(FSharpCoreBackVersion)' == '3.0' ">2.3.5.0</AssemblyVersion>
     <AssemblyVersion Condition="'$(TargetFramework)' == 'portable-net4+sl4+wp71+win8' AND '$(FSharpCoreBackVersion)' == '3.0' ">2.3.6.0</AssemblyVersion>
-    <AssemblyVersion Condition="'$(TargetFramework)' == 'mono21' AND '$(FSharpCoreBackVersion)' == '3.0' ">2.3.98.0</AssemblyVersion>
+    <AssemblyVersion Condition="'$(TargetFramework)' == 'monodroid' AND '$(FSharpCoreBackVersion)' == '3.0' ">2.3.98.0</AssemblyVersion>
     <AssemblyVersion Condition="'$(TargetFramework)' == 'monotouch' AND '$(FSharpCoreBackVersion)' == '3.0' ">2.3.99.0</AssemblyVersion>
     <!-- FSharp.Core using System.Runtime -->
     <OtherFlags>$(OtherFlags) --version:$(AssemblyVersion)</OtherFlags>
@@ -107,7 +105,7 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
   <PropertyGroup Condition="'$(TargetFramework)'=='net20'">
     <!-- If 3.5 is not configured explicitly, use 2.0 -->
     <TargetFrameworkVersion Condition="'$(TargetFrameworkVersion)'==''">v2.0</TargetFrameworkVersion>
-    <TargetFrameworkOutputDirectory>2.0</TargetFrameworkOutputDirectory>
+    <TargetFrameworkOutputDirectory>$(TargetFramework)</TargetFrameworkOutputDirectory>
     <DefineConstants>$(DefineConstants);FX_NO_STRUCTURAL_EQUALITY</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_CANCELLATIONTOKEN_CLASSES</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_TASK</DefineConstants>
@@ -123,7 +121,11 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
 
   <PropertyGroup Condition="'$(TargetFramework)'=='net40'">
     <TargetFrameworkVersion Condition="'$(TargetFrameworkVersion)' == '' ">v4.0</TargetFrameworkVersion>
-    <TargetFrameworkOutputDirectory>4.0</TargetFrameworkOutputDirectory>
+    <!-- When compiling for .NET 4.0 place all binaries directly in the primary output directory -->
+    <TargetFrameworkOutputDirectory>.</TargetFrameworkOutputDirectory>
+    <!-- When compiling back versions of the core library place binary in the qualified location -->
+    <!-- An additional back version qualification is added further below. -->
+    <TargetFrameworkOutputDirectory Condition="'$(FSharpCoreBackVersion)' != ''">$(TargetFramework)</TargetFrameworkOutputDirectory>
     <DefineConstants Condition="'$(TargetFrameworkVersion)' == 'v4.5'">$(DefineConstants);FX_ATLEAST_45</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_ATLEAST_40</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_ATLEAST_35</DefineConstants>
@@ -137,9 +139,9 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
   </PropertyGroup>
 
   <!-- Target MonoAndroid -->
-  <PropertyGroup Condition="'$(TargetFramework)'=='mono21'">
+  <PropertyGroup Condition="'$(TargetFramework)'=='monodroid'">
     <TargetFrameworkVersion>v2.1</TargetFrameworkVersion>
-    <TargetFrameworkOutputDirectory>2.1</TargetFrameworkOutputDirectory>
+    <TargetFrameworkOutputDirectory>$(TargetFramework)</TargetFrameworkOutputDirectory>
     <DefineConstants>$(DefineConstants);FX_NO_STRUCTURAL_EQUALITY</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_CUSTOMATTRIBUTEDATA</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_BIGINT_CULTURE_PARSE</DefineConstants>
@@ -153,7 +155,7 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
   <!-- Target MonoTouch -->
   <PropertyGroup Condition="'$(TargetFramework)'=='monotouch'">
     <TargetFrameworkVersion>v2.1</TargetFrameworkVersion>
-    <TargetFrameworkOutputDirectory>2.1monotouch</TargetFrameworkOutputDirectory>
+    <TargetFrameworkOutputDirectory>$(TargetFramework)</TargetFrameworkOutputDirectory>
     <DefineConstants>$(DefineConstants);FX_NO_STRUCTURAL_EQUALITY</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_CUSTOMATTRIBUTEDATA</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_BIGINT_CULTURE_PARSE</DefineConstants>
@@ -303,7 +305,7 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
   <!-- Target Silverlight 3.0 -->
   <PropertyGroup Condition="'$(TargetFramework)'=='sl3'">
     <TargetFrameworkVersion>v3.0</TargetFrameworkVersion>
-    <TargetFrameworkOutputDirectory>sl3</TargetFrameworkOutputDirectory>
+    <TargetFrameworkOutputDirectory>$(TargetFramework)</TargetFrameworkOutputDirectory>
     <DefineConstants>$(DefineConstants);SILVERLIGHT</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_CANCELLATIONTOKEN_CLASSES</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_TASK</DefineConstants>
@@ -382,7 +384,7 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <DefineConstants>$(DefineConstants);FX_ATLEAST_LINQ</DefineConstants>
     <TargetFrameworkIdentifier>Silverlight</TargetFrameworkIdentifier>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
-    <TargetFrameworkOutputDirectory>sl4</TargetFrameworkOutputDirectory>
+    <TargetFrameworkOutputDirectory>$(TargetFramework)</TargetFrameworkOutputDirectory>
     <SilverlightVersion>v4.0</SilverlightVersion>
   </PropertyGroup>
 
@@ -579,7 +581,7 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
   <!-- Target CompactFramework 3.5 -->
   <PropertyGroup Condition="'$(TargetFramework)'=='net35-cf'">
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
-    <TargetFrameworkOutputDirectory>3.5</TargetFrameworkOutputDirectory>
+    <TargetFrameworkOutputDirectory>$(TargetFramework)</TargetFrameworkOutputDirectory>
     <TargetFrameworkIdentifier>CompactFramework</TargetFrameworkIdentifier>
     <DefineConstants>$(DefineConstants);FX_ATLEAST_COMPACT_FRAMEWORK_35</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_CANCELLATIONTOKEN_CLASSES</DefineConstants>
@@ -673,7 +675,7 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
 
   <!-- If building an FSharp.Core for F# 3.0, put it in the 3.0 directory -->
   <PropertyGroup>
-    <TargetFrameworkOutputDirectory Condition="'$(FSharpCoreBackVersion)' != '3.0'">$(TargetFrameworkOutputDirectory)\$(FSharpCoreBackVersion)</TargetFrameworkOutputDirectory>
+    <TargetFrameworkOutputDirectory Condition="'$(FSharpCoreBackVersion)' == '3.0'">fsharp30\$(TargetFrameworkOutputDirectory)</TargetFrameworkOutputDirectory>
   </PropertyGroup>
 
   <!-- Always qualify the IntermediateOutputPath by the TargetFramework if any exists -->
@@ -689,28 +691,32 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
 
   <!-- Build with prototype compiler (location is given by settings below). The output is the final bootstrapped compiler -->
   <PropertyGroup Condition=" '$(BuildWith)' == ''">
-    <FscToolPath>$(FSharpSourcesRoot)\..\lib\proto\$(protoCLIDir)</FscToolPath>
+    <FscToolPath>$(FSharpSourcesRoot)\..\lib\proto</FscToolPath>
     <FscToolExe>fsc-proto.exe</FscToolExe>
     <OutputPath>$(FSharpSourcesRoot)\..\lib\$(ConfigurationOutputDirectory)\$(TargetFrameworkOutputDirectory)</OutputPath>
   </PropertyGroup>
 
 
   <!-- Include the proto targets file when building the final compiler using the proto -->
-  <Import Project="..\lib\proto\$(protoCLIDir)\Microsoft.FSharp-proto.targets" 
-          Condition="Exists('..\lib\proto\$(protoCLIDir)\Microsoft.FSharp-proto.targets') AND '$(BuildWith)' == ''"/>
+  <Import Project="..\lib\proto\Microsoft.FSharp-proto.targets" 
+          Condition="Exists('..\lib\proto\Microsoft.FSharp-proto.targets') AND '$(BuildWith)' == ''"/>
 
   <!-- Include the portable targets file when building the portable FSharp.Core -->
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\v4.0\Microsoft.Portable.Common.targets"
-          Condition="'$(TargetFramework)'=='portable-net4+sl4+wp71+win8'"/>
-  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\v4.0\Microsoft.Portable.Common.targets"
-          Condition="'$(TargetFramework)'=='portable-net45+sl5+win8'"/>
+          Condition="('$(TargetFramework)'=='portable-net4+sl4+wp71+win8' OR
+                      '$(TargetFramework)'=='portable-net45+sl5+win8')"></Import>
+
+  <!-- Include the Silverlight targets file if needed -->
+  <Import Project="Silverlight\$(SilverlightVersion)\FSharpSource.Silverlight.Common.targets"
+          Condition="('$(TargetFramework)'=='sl3' OR 
+                      '$(TargetFramework)'=='sl4' OR 
+                      '$(TargetFramework)'=='sl5' OR 
+                      '$(TargetFramework)'=='sl5-compiler')"/>
 
   <!-- Include the bootstrap targets file when building the proto compiler using the bootstrap -->
   <!-- Also include it if Proto targets file doesn't exist, e.g. when cleaning the build with /t:Clean -->
   <Import Project="$(LkgPath)\Microsoft.FSharp.Targets"  
-          Condition="(!Exists('..\lib\proto\$(protoCLIDir)\Microsoft.FSharp-proto.targets')  OR '$(BuildWith)' == 'LKG') " />
-  <Import Project="Silverlight\$(SilverlightVersion)\FSharpSource.Silverlight.Common.targets"
-          Condition="'$(TargetFramework)'=='sl3' or '$(TargetFramework)'=='sl4' or '$(TargetFramework)'=='sl5' or '$(TargetFramework)'=='sl5-compiler'"/>
+          Condition="(!Exists('..\lib\proto\Microsoft.FSharp-proto.targets')  OR '$(BuildWith)' == 'LKG') " />
 
   <!-- Reference an existing FSI.EXE for use from within MSBuild -->
   <PropertyGroup>

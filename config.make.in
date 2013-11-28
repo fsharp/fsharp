@@ -9,7 +9,7 @@ monogacdir := @MONOGACDIR@
 
 monogacdir20 := @MONOGACDIR20@
 
-#This is where to find MonoTouch of MonoAndroid, for "make build-2-1"
+#This is where to find MonoTouch of MonoAndroid, for "make build-monodroid"
 #
 #For now this is hardwired, it should be optionally detected by configure.ac
 monogacdir21 := @abs_top_srcdir@/dependencies/mono/2.1
@@ -18,34 +18,48 @@ monogacdir35 := @MONOGACDIR35@
 monogacdir40 := @MONOGACDIR40@
 
 gacdir := ${libdir}mono
-gacdir20 := ${gacdir}/2.0
-gacdir40 := ${gacdir}/4.0
 
 tooldir := $(topdir)lib/bootstrap/4.0/
 
 monoopts = @mono_gc_options@
 MONO_OPTIONS += @mono_gc_options@
 
+TargetFramework = net40
 CONFIG = release
 Configuration = Release
 DISTVERSION = 201011
+outsuffix = $(TargetFramework)
 
-VERSION_2_0 = 2.3.1.0
-VERSION_2_1 = 2.3.98.0
-VERSION_4_0 = 4.3.1.0
-TARGET_2_0 = 2.0
-TARGET_2_1 = 2.1
-TARGET_4_0 = 4.0
+ifeq (x-$(TargetFramework),x-net20)
+VERSION = 2.3.1.0
+TARGET = 2.0
+endif
+
+ifeq (x-$(TargetFramework),x-net40)
+VERSION = 4.3.1.0
+TARGET = 4.0
+outsuffix = .
+endif
+
+ifeq (x-$(TargetFramework),x-monodroid)
+VERSION = 2.3.98.1
+TARGET = monodroid
+endif
+
+
+ifeq (x-$(TargetFramework),x-monotouch)
+VERSION = 2.3.99.1
+TARGET = monotouch
+endif
+
 DELAY_SIGN_TOKEN = b03f5f7f11d50a3a
 SIGN_TOKEN = f536804aa0eb945b
 
 bootstrapdir = $(bootstrap)/4.0/
 tmpdir = .libs/$(CONFIG)/
 objdir = $(tmpdir)$(TARGET)/
-protodir = $(builddir)/lib/proto/4.0/
-outdir = $(builddir)lib/$(CONFIG)/$(TARGET)/
-outdir20 = $(builddir)lib/$(CONFIG)/$(TARGET_2_0)
-outdir40 = $(builddir)lib/$(CONFIG)/$(TARGET_4_0)
+protodir = $(builddir)/lib/proto
+outdir = $(builddir)lib/$(CONFIG)/$(outsuffix)/
 
 INSTALL = $(SHELL) $(topdir)install-sh
 INSTALL_DATA = $(INSTALL) -c -m 644

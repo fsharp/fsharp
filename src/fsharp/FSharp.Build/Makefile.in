@@ -8,9 +8,5 @@ include @abs_top_builddir@/config.make
 
 include $(topdir)/src/fsharp/targets.make
 
-build-final: build-4-0
-
-clean: clean-4-0
-
-install: install-lib-4-0 install-lib-4-5
+install: install-lib install-lib-net45
 

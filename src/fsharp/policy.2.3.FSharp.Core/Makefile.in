@@ -10,28 +10,17 @@ include $(topdir)/src/fsharp/targets.make
 
 # override the targets to build the assembly
 
-$(outdir20)/$(NAME).dll: $(NAME).dll.config 
+$(outdir)/$(NAME).dll: $(NAME).dll.config 
 	@mkdir -p $(@D)
 	cp $(NAME).dll.config $(@D)
 	al /link:$(NAME).dll.config /out:$@ /delaysign /keyfile:$(topdir)msfinal.pub
 
-$(outdir40)/$(NAME).dll: $(NAME).dll.config 
-	@mkdir -p $(@D)
-	cp $(NAME).dll.config $(@D)
-	al /link:$(NAME).dll.config /out:$@ /delaysign /keyfile:$(topdir)msfinal.pub
-
-build-2-0: 
-	$(MAKE) $(outdir20)/$(NAME).dll
-
-build-4-0: 
-	$(MAKE) $(outdir40)/$(NAME).dll
-
-build-final: build-2-0 build-4-0
+build: 
+	$(MAKE) $(outdir)/$(NAME).dll
 
 clean: 
-	-rm -f $(outdir20)/$(NAME).dll $(outdir20)/$(NAME).dll
+	-rm -f $(outdir)/$(NAME).dll 
 
-install: install-lib-2 install-lib-4-0
-
+install: install-lib
 
 

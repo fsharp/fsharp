@@ -1,37 +1,12 @@
 SOURCES := $(patsubst $(srcdir)$(tmpdir)%,$(tmpdir)%,$(patsubst %,$(srcdir)%,$(sources)))
 
-.PHONY: install install-lib-2-0 install-lib-2-1 install-lib-4-0
+.PHONY: install install-lib-net20 install-lib-monodroid install-lib-net40
 
-build-2-0:
-	MONO_ENV_OPTIONS=$(monoopts) xbuild /p:Configuration=$(Configuration) /p:TargetFramework=net20 /p:MonoLibDir40=$(monogacdir40)
+build:
+	MONO_ENV_OPTIONS=$(monoopts) xbuild /p:Configuration=$(Configuration) /p:TargetFramework=$(TargetFramework) /p:MonoLibDir40=$(monogacdir40)
 
-build-2-1:
-	MONO_ENV_OPTIONS=$(monoopts) xbuild /p:Configuration=$(Configuration) /p:TargetFramework=mono21
-
-build-4-0:
-	MONO_ENV_OPTIONS=$(monoopts) xbuild /p:Configuration=$(Configuration) /p:TargetFramework=net40
-
-clean-2-0:
-	xbuild /p:Configuration=$(Configuration) /p:TargetFramework=net20 /t:Clean
-
-clean-2-1:
-	xbuild /p:Configuration=$(Configuration) /p:TargetFramework=mono21 /t:Clean
-
-clean-4-0:
-	xbuild /p:Configuration=$(Configuration) /p:TargetFramework=net40 /t:Clean
-
-
-install-lib-2: TARGET := $(TARGET_2_0)
-install-lib-2: VERSION := $(VERSION_2_0)
-
-install-lib-2-1: TARGET := $(TARGET_2_1)
-install-lib-2-1: VERSION := $(VERSION_2_1)
-
-install-lib-4-0: TARGET := $(TARGET_4_0)
-install-lib-4-0: VERSION := $(VERSION_4_0)
-
-# At the moment SDK binaries go in the mono/4.0 directory.
-install-bin: TARGET := $(TARGET_4_0)
+clean:
+	xbuild /p:Configuration=$(Configuration) /p:TargetFramework=$(TargetFramework) /t:Clean
 
 
 # Install the library binaries in the GAC and the framework directory, 
@@ -48,7 +23,7 @@ install-bin: TARGET := $(TARGET_4_0)
 #
 # We put the F# 3.1 targets and link the SDK DLLs for all three locations
 
-install-lib-2 install-lib-2-1 install-lib-4-0:
+install-lib:
 	@echo "Installing $(ASSEMBLY)"
 	@mkdir -p $(DESTDIR)$(gacdir)/$(TARGET)
 	@if test "x$(DELAY_SIGN)" = "x1"; then \
@@ -86,8 +61,10 @@ install-lib-2 install-lib-2-1 install-lib-4-0:
 		ln -fs ../gac/$(NAME)/$(VERSION)__$(TOKEN)/$(NAME).optdata $(DESTDIR)$(gacdir)/$(TARGET)/$(NAME).optdata; \
 	fi
 
-install-lib-4-5: install-lib-4-0
-	@if test -e $(DESTDIR)$(gacdir)/4.5/; then \
+# Also place some .NET 4.0 libraries into .NET 4.5
+install-lib-net45: 
+	@if test '$(TargetFramework)' = 'net40'; then \
+	  if test -e $(DESTDIR)$(gacdir)/4.5/; then \
 		ln -fs ../4.0/$(ASSEMBLY) $(DESTDIR)$(gacdir)/4.5/$(ASSEMBLY); \
 		if test -e $(DESTDIR)$(gacdir)/4.0/$(ASSEMBLY).config; then \
 		    ln -fs ../4.0/$(ASSEMBLY).config $(DESTDIR)$(gacdir)/4.5/$(ASSEMBLY).config; \
@@ -101,6 +78,7 @@ install-lib-4-5: install-lib-4-0
 		if test -e $(DESTDIR)$(gacdir)/4.0/$(NAME).optdata; then \
 		    ln -fs ../4.0/$(NAME).optdata $(DESTDIR)$(gacdir)/4.5/$(NAME).optdata; \
 		fi; \
+	  fi \
 	fi
 
 # The binaries fsc.exe and fsi.exe only get installed for Mono 4.0 profile

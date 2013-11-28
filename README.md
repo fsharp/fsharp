@@ -41,11 +41,13 @@ If you have only VS2012 installed, and not VS2010, you'll need to install the F#
 ```
 cd src
 msbuild fsharp-proto-build.proj
-ngen install ..\lib\proto\4.0\fsc-proto.exe
+ngen install ..\lib\proto\fsc-proto.exe
 msbuild fsharp-library-build.proj /p:Configuration=Release
 msbuild fsharp-compiler-build.proj /p:Configuration=Release
 ```
-You can also build the FSharp.Core for .NET 2.0, Mono 2.1, MonoTouch, Silverlight 5.0, Windows Phone 7.1, Portable Profile47 (net45+sl5+win8), Portable Profile88 (net4+sl4+wp71+win8) and XNA 4.0 for Xbox 360 profiles:
+You can also build the FSharp.Core for .NET 2.0, Xamarin Android, Xamarin iOS, 
+Portable Profile47 (net45+sl5+win8), Portable Profile88 (net4+sl4+wp71+win8), XNA 4.0 for Xbox 360, 
+Silverlight 5.0 and Windows Phone 7.1,  profiles:
 ```
 msbuild fsharp-library-build.proj /p:TargetFramework=net20 /p:Configuration=Release
 msbuild fsharp-library-build.proj /p:TargetFramework=portable-net45+sl5+win8 /p:Configuration=Release
@@ -53,7 +55,7 @@ msbuild fsharp-library-build.proj /p:TargetFramework=portable-net4+sl4+wp71+win8
 msbuild fsharp-library-build.proj /p:TargetFramework=portable-windows8+net45 /p:Configuration=Release
 msbuild fsharp-library-build.proj /p:TargetFramework=sl5 /p:Configuration=Release
 
-msbuild fsharp-library-build.proj /p:TargetFramework=mono21 /p:Configuration=Release
+msbuild fsharp-library-build.proj /p:TargetFramework=monodroid /p:Configuration=Release
 msbuild fsharp-library-build.proj /p:TargetFramework=monotouch /p:Configuration=Release
 msbuild fsharp-library-build.proj /p:TargetFramework=wp7 /p:Configuration=Release
 msbuild fsharp-library-build.proj /p:TargetFramework=net40-xna40-xbox360 /p:Configuration=Release
@@ -75,7 +77,7 @@ msbuild fsharp-library-build.proj /p:TargetFramework=portable-net4+sl4+wp71+win8
 msbuild fsharp-library-build.proj /p:TargetFramework=portable-windows8+net45 /p:Configuration=Release /p:FSharpCoreBackVersion=3.0
 msbuild fsharp-library-build.proj /p:TargetFramework=sl5 /p:Configuration=Release /p:FSharpCoreBackVersion=3.0
 
-msbuild fsharp-library-build.proj /p:TargetFramework=mono21 /p:Configuration=Release /p:FSharpCoreBackVersion=3.0
+msbuild fsharp-library-build.proj /p:TargetFramework=monodroid /p:Configuration=Release /p:FSharpCoreBackVersion=3.0
 msbuild fsharp-library-build.proj /p:TargetFramework=monotouch /p:Configuration=Release /p:FSharpCoreBackVersion=3.0
 msbuild fsharp-library-build.proj /p:TargetFramework=wp7 /p:Configuration=Release /p:FSharpCoreBackVersion=3.0
 msbuild fsharp-library-build.proj /p:TargetFramework=net40-xna40-xbox360 /p:Configuration=Release /p:FSharpCoreBackVersion=3.0

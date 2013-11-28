@@ -1473,7 +1473,7 @@ let OutputErrorOrWarningContext prefix fileLineFn os err =
 let GetFSharpCoreLibraryName () = "FSharp.Core"
 
 #if SILVERLIGHT
-let GetFSharpCoreReferenceUsedByCompiler() = GetFSharpCoreLibraryName()
+let GetFSharpCoreReferenceUsedByCompiler(useMonoResolution) = GetFSharpCoreLibraryName()
 let GetFsiLibraryName () = "FSharp.Compiler.Silverlight"  
 #else
 type internal TypeInThisAssembly = class end
