@@ -95,6 +95,7 @@ type Microsoft.FSharp.Control.Async with
                     return resArray }
 
 module BasicTests = 
+  let Run() =
     check "cew23242g" (Async.RunSynchronously (async { do () })) ()
     check "32o8f43k1" (Async.RunSynchronously (async { return () })) ()
     check "32o8f43k2" (Async.RunSynchronously (async { return 1 })) 1
@@ -112,16 +113,16 @@ module BasicTests =
                                                             return x+1 }) with _ -> 2) 2
 
     //check "32o8f43kt" (Async.RunSynchronously (Async.Catch (async {  do failwith "error" }))) (Choice2Of2 (Failure "error"))
-    check "32o8f43kt" (Async.RunSynchronously (Async.Catch (async {  return 1 }))) (Choice1Of2 1)
+    check "32o8f43kta" (Async.RunSynchronously (Async.Catch (async {  return 1 }))) (Choice1Of2 1)
 
-    check "32o8f43kt" (Async.RunSynchronously (async {  try 
+    check "32o8f43ktb" (Async.RunSynchronously (async { try 
                                                             do failwith "error" 
                                                             return 3
                                                         with _ -> 
                                                             return 2 
                                                       })) 2
 
-    check "32o8f43kt" 
+    check "32o8f43ktc" 
         (Async.RunSynchronously
              (async {  try 
                           do failwith "error" 
@@ -131,7 +132,7 @@ module BasicTests =
                     })) 
         2
 
-    check "32o8f43kt" 
+    check "32o8f43ktd" 
         (Async.RunSynchronously
             (async {  try 
                          try 
@@ -144,7 +145,8 @@ module BasicTests =
                     })) 
         2
 
-    check "32o8f43kt" (let x = ref 0 
+    check "32o8f43kte" 
+                      (let x = ref 0 
                        Async.RunSynchronously 
                            (async {  try 
                                         return ()
@@ -153,7 +155,8 @@ module BasicTests =
                                   });
                        !x) 10
 
-    check "32o8f43kt" (let x = ref 0 
+    check "32o8f43ktf" 
+                      (let x = ref 0 
                        (try 
                            Async.RunSynchronously 
                                (async {  try 
@@ -165,7 +168,8 @@ module BasicTests =
                        !x) 10
 
 
-    check "32o8f43kt" (let x = ref 0 
+    check "32o8f43ktg" 
+                      (let x = ref 0 
                        (try 
                            Async.RunSynchronously 
                                (async {  try 
@@ -179,7 +183,8 @@ module BasicTests =
                         with Failure _ -> ());
                        !x) 2
 
-    check "32o8f43kt" (let x = ref 0 
+    check "32o8f43kth" 
+                      (let x = ref 0 
                        (try 
                            Async.RunSynchronously 
                                (async {  try 
@@ -330,7 +335,8 @@ module StartChildTrampoliningCheck =
 
 
 module StartChildOutsideOfAsync =
-    open System.Threading
+  open System.Threading
+  let Run() =
 
     check "dshfukeryhu8we"
         (let b = async {return 27} |> Async.StartChild
@@ -359,19 +365,21 @@ module StartChildOutsideOfAsync =
         true
    
 
-check "32o8f43kaI: Spawn" 
-    (let result = ref 0
-     Async.Start(async { do printfn "hello 1"
-                         do! Async.Sleep(30) 
-                         do result := 1 });
-     while !result = 0 do 
-         printf "."
+module SpawnTests = 
+   let Run() = 
+    check "32o8f43kaI: Spawn" 
+        (let result = ref 0
+         Async.Start(async { do printfn "hello 1"
+                             do! Async.Sleep(30) 
+                             do result := 1 });
+         while !result = 0 do 
+             printf "."
 #if NetCore
-         Task.Delay(10).Wait()
+             Task.Delay(10).Wait()
 #else
-         System.Threading.Thread.Sleep(10)
+             System.Threading.Thread.Sleep(10)
 #endif
-     !result) 1
+         !result) 1
 
 
 module FromBeginEndTests = 
@@ -524,7 +532,7 @@ module AwaitEventTests =
                      expectedResult
 
 
-    AwaitEventTest()
+    //AwaitEventTest()
 
 
 module AsBeginEndTests = 
@@ -720,7 +728,7 @@ module AsBeginEndTests =
             (try req.EndAsync(iar) with :? System.OperationCanceledException as e -> 100 ))
            100
 
-    AsBeginEndTest()
+    //AsBeginEndTest()
 
 (*
 
@@ -771,6 +779,7 @@ check "32o8f43ka2: Cancel a For loop"
 *)
 
 module OnCancelTests = 
+  let Run() = 
     check "32o8f43ka1: No cancellation" 
         (let count = ref 0
          let res = ref 0
@@ -1004,6 +1013,7 @@ module SyncContextReturnTests =
 #endif
 
 module GenerateTests = 
+  let Run() = 
     for n = 0 to 20 do
         check (sprintf "32o8f43ka2: Async.Generate, n = %d" n)
             (Async.RunSynchronously (Async.Generate(n, (fun i -> async { return i })))) [| 0..n-1 |]
@@ -1028,6 +1038,7 @@ module GenerateTests =
             [| 0xdeadbeef |]
 
 module ParallelTests = 
+  let Run() = 
     for n = 1 to 20 do
         check 
             (sprintf "32o8f43ka6: Async.Parallel w/- last failure, n = %d" n)
@@ -1143,6 +1154,7 @@ module ParallelTests =
 #if NetCore
 #else
 module AsyncWaitOneTest1 = 
+  let Run() = 
         
     check 
         "c32398u1: AsyncWaitOne"
@@ -1268,6 +1280,7 @@ Async.RunSynchronously (async { let! n = s.AsyncRead(buffer,0,9) in return n }) 
 #if NetCore
 #else
 module AsyncGenerateTests = 
+  let Run() = 
     for length in 1 .. 10 do
         for chunks in 1 .. 10 do 
             check (sprintf "c3239438u: Run/Generate, length=%d, chunks=%d" length chunks)
@@ -2047,9 +2060,23 @@ module Bug391710 =
         check "Bug391710" true false
         printfn "%s" (e.ToString())
 
+// Some tests should not be run in the static constructor
+let RunAll() = 
+    BasicTests.Run()
+    StartChildOutsideOfAsync.Run()
+    SpawnTests.Run()
+    AsBeginEndTests.AsBeginEndTest()
+    AwaitEventTests.AwaitEventTest()
+    OnCancelTests.Run()
+    GenerateTests.Run()
+    ParallelTests.Run()
+    AsyncWaitOneTest1.Run()
+    AsyncGenerateTests.Run()
+
 #if ALL_IN_ONE
-let RUN() = failures
+let RUN() = RunAll(); failures
 #else
+RunAll()
 let aa =
   if not failures.IsEmpty then 
       stdout.WriteLine "Test Failed"

@@ -28,7 +28,9 @@ let test (s : string) b =
 
 let check (s:string) e r = 
   if r = e then  stdout.WriteLine (s+": YES") 
-  else (stdout.WriteLine ("\n***** "+s+": FAIL\n"); report_failure s)
+  else (stdout.Write ("\n***** "+s+": FAIL: "); 
+        printfn "Expected '%A', Got '%A'" r e
+        report_failure s)
 
 open System
 open System.Diagnostics

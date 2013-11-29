@@ -226,6 +226,8 @@ module WireVariations =
 
 //! Area variations
   
+#if Portable
+#else
 module AreaVariations = 
     (* Accepted *)
     open System.Drawing
@@ -373,7 +375,7 @@ module AreaVariations =
       val f : 'a -> 'a
       new (x:int) = { f = fun x -> x}  
     
-
+#endif
 
 
 //! Person
@@ -402,6 +404,8 @@ module ScalaPersonExample =
 
 //! Forms
   
+#if Portable
+#else
 module Forms1 = 
     open System.Drawing
     open System.Windows.Forms
@@ -448,6 +452,7 @@ module Forms2 =
     do  dp.GC.DrawLine(Pens.White,10,20,30,40)
     do  dp.Redraw()
 
+#endif
 
 module Regression1 = 
     (* Regression test: local vals of unit type are not given field storage (even if mutable) *)

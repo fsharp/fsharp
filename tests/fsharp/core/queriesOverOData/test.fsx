@@ -1,4 +1,8 @@
 ﻿// #Quotations
+#if ALL_IN_ONE
+module Core_queriesOverOData
+#endif
+
 #nowarn "57"
 #r "System.Data.Services.Client.dll"
 #r "FSharp.Data.TypeProviders.dll"

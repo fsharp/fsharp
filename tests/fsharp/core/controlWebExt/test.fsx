@@ -1,4 +1,7 @@
 // #Conformance #ComputationExpressions #Async 
+#if ALL_IN_ONE
+module Core_controlWebExt
+#endif
 #light
 
 let failuresFile =
@@ -101,7 +104,6 @@ module WebResponseTests =
         
         check "WebRequest cancellation test final result" !active 0
 
-    repeatedFetchAndCancelTest()
 
 
 module WebClientTests = 
@@ -145,18 +147,22 @@ module WebClientTests =
         printfn "final: active = %d" !active
         check "WebClient cancellation test final result" !active 0
 
-    repeatedFetchAndCancelTest()
 
+let RunAll() = 
+    WebClientTests.repeatedFetchAndCancelTest()
+    WebResponseTests.repeatedFetchAndCancelTest()
 
-let _ = 
-  if not failures.IsEmpty then (stdout.WriteLine("Test Failed, failures = {0}", failures); exit 1) 
-  else (stdout.WriteLine "Test Passed"; 
-        log "ALL OK, HAPPY HOLIDAYS, MERRY CHRISTMAS!"
-        System.IO.File.WriteAllText("test.ok","ok"); 
-// debug: why is the fsi test failing?  is it because test.ok does not exist?
-        if System.IO.File.Exists("test.ok") then
-            stdout.WriteLine ("test.ok found at {0}", System.IO.FileInfo("test.ok").FullName)
-        else
-            stdout.WriteLine ("test.ok not found")
-        exit 0)
-
+#if ALL_IN_ONE
+let RUN() = RunAll(); failures
+#else
+RunAll()
+let aa =
+  if not failures.IsEmpty then 
+      stdout.WriteLine "Test Failed"
+      exit 1
+  else   
+      stdout.WriteLine "Test Passed"
+      log "ALL OK, HAPPY HOLIDAYS, MERRY CHRISTMAS!"
+      System.IO.File.WriteAllText("test.ok","ok")
+      exit 0
+#endif

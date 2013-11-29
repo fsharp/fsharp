@@ -695,6 +695,8 @@ let _ = printString "hash is interesting (bytearray 1): "; if hash "abc"B = hash
 let _ = printString "hash is interesting (string array 1): "; if hash [| "abc"; "e" |] = hash [| "abc"; "d" |] then  reportFailure "basic test Q185" else stdout.WriteLine "YES"
 let _ = printString "hash is interesting (intarray 1): "; if hash [| 3; 4 |] = hash [| 3; 5 |] then  reportFailure "basic test Q186" else stdout.WriteLine "YES"
 
+#if MONO // See https://github.com/fsharp/fsharp/issues/188
+#else
 (* F# compiler does many special tricks to get fast type-specific structural hashing. *)
 (* A compiler could only work out that the following hash is type-specific if it inlines *)
 (* the whole function, which is very unlikely. *)
@@ -740,6 +742,7 @@ let _ = printString "type specific hash matches generic hash (string array,12): 
 let _ = printString "type specific hash matches generic hash (byte array,12): "; if hash "abc"B = genericHash "abc"B then stdout.WriteLine "YES" else  reportFailure "basic test Q204"
 let _ = printString "type specific hash matches generic hash (byte array,12): "; if hash ""B = genericHash ""B then stdout.WriteLine "YES" else  reportFailure "basic test Q205"
 let _ = printString "type specific hash matches generic hash (byte array,12): "; if hash [| |] = genericHash [| |] then stdout.WriteLine "YES" else  reportFailure "basic test Q206"
+#endif
 
 
 (*---------------------------------------------------------------------------

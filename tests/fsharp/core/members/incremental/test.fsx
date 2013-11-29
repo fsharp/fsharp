@@ -253,6 +253,8 @@ end
 
 //! Area variations
   
+#if Portable
+#else
 module AreaVariations = begin
     (* Accepted *)
     open System.Drawing
@@ -402,7 +404,7 @@ module AreaVariations = begin
         end
 end
 
-
+#endif
 //! Person
   
 (* Scala person example *)
@@ -429,6 +431,8 @@ end
 
 //! Forms
   
+#if Portable
+#else
 module Forms1 = begin
     open System.Drawing
     open System.Windows.Forms
@@ -475,6 +479,7 @@ module Forms2 = begin
     do  dp.GC.DrawLine(Pens.White,10,20,30,40)
     do  dp.Redraw()
 end
+#endif
 
 module Regression1 = begin
     (* Regression test: local vals of unit type are not given field storage (even if mutable) *)

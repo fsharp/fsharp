@@ -1,4 +1,8 @@
 // #Conformance #Regression 
+#if ALL_IN_ONE
+module Core_math_lalgebra
+#endif
+
 #light
 
 // CONTENTS-INDEX-REGEXP = FROM>^\//! <TO 

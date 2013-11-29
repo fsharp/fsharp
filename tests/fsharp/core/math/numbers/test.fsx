@@ -1,4 +1,8 @@
 // #Regression #Conformance #Regression 
+#if ALL_IN_ONE
+module Core_math_numbers
+#endif
+
 #light
 #nowarn "49";;
 #nowarn "44";;

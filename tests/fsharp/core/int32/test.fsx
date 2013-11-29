@@ -38,7 +38,10 @@ do SetCulture()
 
   
 do stdout.WriteLine "checking unchecked conversions"; 
+#if MONO // https://github.com/fsharp/fsharp/issues/186
+#else
 do test "testb3" (try nativeint 0.0 = 0n with _ -> false)
+#endif
 do test "testnr6" (try int64 0.0 = 0L with _ -> false)
 do test "testn46" (try int32 0.0 = 0 with _ -> false)
 do test "testqb3" (try int16 0.0 = 0s with _ -> false)

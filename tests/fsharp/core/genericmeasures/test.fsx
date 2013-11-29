@@ -51,11 +51,19 @@ module Core_genericMeasures =
             let x = 0<_>
             T.Foo1(x)
     
-    foo()
-    T.Bar()
-    T.Baz()
+    let RunAll() = 
+        foo()
+        T.Bar()
+        T.Baz()
     
-    let aa = 
-        stdout.WriteLine "Test Passed"
-        System.IO.File.WriteAllText("test.ok", "ok")
-        exit 0
+
+#if ALL_IN_ONE
+    let RUN() = RunAll(); []
+#else
+    RunAll();
+    stdout.WriteLine "Test Passed"
+    System.IO.File.WriteAllText("test.ok","ok")
+    exit 0
+#endif
+
+

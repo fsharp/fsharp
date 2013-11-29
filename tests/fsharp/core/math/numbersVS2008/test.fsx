@@ -1,4 +1,8 @@
 // #Regression #Conformance #Regression 
+#if ALL_IN_ONE
+module Core_math_numbersVS2008
+#endif
+
 #light
 #nowarn "49";;
 #nowarn "44";;
@@ -24,15 +28,16 @@ let test (s : string) b =
     if b then stderr.WriteLine " OK"
     else report_failure (s)
 
-let check s b1 b2 = test s (b1 = b2)
+let checkEq (s:string) b1 b2 = 
+    stderr.Write(s)
+    if b1 = b2 then stderr.WriteLine " OK"
+    else report_failure (s + sprintf ", expected %A, got %A" b2 b1)
 
 (* START *)
 
 // Misc construction.
 open Microsoft.FSharp.Math
 open System.Numerics
-let fail() = report_failure("Failed")
-let checkEq desc a b = if a<>b then printf "Failed %s. %A <> %A\n" desc a b; fail()
 
 // Regression 3481: Tables
   
@@ -241,7 +246,11 @@ let negative64s =
          (-1152921504606846977L , -1152921504606846976L , -1152921504606846975L);
          (-2305843009213693953L , -2305843009213693952L , -2305843009213693951L);
          (-4611686018427387905L , -4611686018427387904L , -4611686018427387903L);
+#if MONO // https://github.com/fsharp/fsharp/issues/190
+         (9223372036854775807L  , -9223372036854775808L , -9223372036854775807L); (* MinValue is -2^63 *)
+#else
          (999L                  , -9223372036854775808L , -9223372036854775807L); (* MinValue is -2^63 *)
+#endif
          (999L                  , 999L                  , 999L)]
 
 // Regression 3481: ToInt32
@@ -254,8 +263,10 @@ let triple64 k n = triple k n (fun x -> try int64 x with :? System.OverflowExcep
 printf "Checking BigInt ToInt32 and ToInt64\n"
 checkEq "BigInt.ToInt32 positives" positive32s (List.map (triple32  1I) [0 .. 32])
 checkEq "BigInt.ToInt32 negatives" negative32s (List.map (triple32 -1I) [0 .. 32])
-checkEq "BigInt.ToInt64 positives" positive64s (List.map (triple64  1I) [0 .. 64])
-checkEq "BigInt.ToInt64 positives" negative64s (List.map (triple64 -1I) [0 .. 64])
+for (a,b) in List.zip positive64s (List.map (triple64  1I) [0 .. 64]) do 
+  checkEq "BigInt.ToInt64 positives" a b 
+for (a,b) in List.zip negative64s (List.map (triple64 -1I) [0 .. 64]) do 
+  checkEq "BigInt.ToInt64 negatives" a b 
 ;;
 
 

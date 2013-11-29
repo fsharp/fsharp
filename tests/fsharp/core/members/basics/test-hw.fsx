@@ -2350,11 +2350,16 @@ module MemoizeSample =
                   lookasideTable.Clear() }
                   
 
+    do printfn "MemoizeSample - #0"
     let rec fibFast = memoize (fun n -> if n <= 2 then 1 else fibFast.[n-1] + fibFast.[n-2])
 
+    do printfn "Memoize #1"
     fibFast.[3]
+    do printfn "Memoize #2"
     fibFast.[30]
+    do printfn "Memoize #3"
     fibFast.Clear()
+    do printfn "Memoize #4"
     
 (*
 module NameLookupServiceExample = 
@@ -2404,6 +2409,7 @@ module NameLookupServiceExample =
 
 module ConstraintsInMembers = begin
 
+    do printfn "ConstraintsInMembers"
     type IDuplex = 
       interface 
       end
@@ -2431,6 +2437,7 @@ end
 
 module InterfaceCastingTests = begin
 
+    do printfn "InterfaceCastingTests"
     type IBar = 
         interface
         end
@@ -3159,7 +3166,8 @@ module UnitArgs =
 // Finish up
 
 
-
+#if MONO // bug repro1
+#else
 
 module SingleArgumentFunctions =
     type C() = 
@@ -3181,6 +3189,7 @@ module SingleArgumentFunctions =
     let c = C()
     printfn "c.Result = %d" c.Result
     test "vrewiorvw09j" (c.Result = 18)
+#endif
 
 module MultiArgumentFunctions =
     type C() = 
@@ -3232,6 +3241,8 @@ module GenericFunctions =
     printfn "c.Result = %d" c.Result
     test "vrewiorvw09d" (c.Result = 14)
 
+#if MONO // bug repro1 (uncomfirmed)
+#else
 module GenericFunctionInGenericClass =
     type C<'a>() = 
         let f1 x1 = x1 
@@ -3256,6 +3267,7 @@ module GenericFunctionInGenericClass =
     printfn "c2.Result = %d" c2.Result
     test "vrewiorvw09s" (c.Result = 42)
     test "vrewiorvw09a" (c2.Result = 50)
+#endif
 
 module TailCallLoop =
     type C<'a>() = 
