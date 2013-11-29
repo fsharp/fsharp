@@ -25,7 +25,7 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' " />
   <ItemGroup>
     <FsSrGen Include="FSIstrings.txt">
-      <Link>Utilities/FSIstrings.txt</Link>
+      <Link>FSIstrings.txt</Link>
     </FsSrGen>
     <Compile Include="..\..\assemblyinfo\assemblyinfo.fsi.exe.fs">
       <Link>Utilities/assemblyinfo.fsi.exe.fs</Link>

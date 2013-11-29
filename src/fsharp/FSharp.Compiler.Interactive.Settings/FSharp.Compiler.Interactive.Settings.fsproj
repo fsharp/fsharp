@@ -19,7 +19,7 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' " />
   <ItemGroup>
     <FsSrGen Include="..\FSInteractiveSettings.txt">
-      <Link>Utilities/FSInteractiveSettings.txt</Link>
+      <Link>FSInteractiveSettings.txt</Link>
     </FsSrGen>
     <Compile Include="..\..\assemblyinfo\assemblyinfo.FSharp.Compiler.Interactive.Settings.dll.fs">
       <Link>Utilities/assemblyinfo.FSharp.Compiler.Interactive.Settings.dll.fs</Link>
