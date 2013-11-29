@@ -32,7 +32,7 @@ let _ = test "fewoij332" (genericList.Item(1) = 1)
 let _ = 
   if !failures then (stdout.WriteLine "Test Failed"; exit 1) 
   else (stdout.WriteLine "Test Passed"; 
-        System.IO.File.ALL_IN_ONE; 
+        System.IO.File.WriteAllText("test.ok","ok");
         exit 0)
 
 
