@@ -25,10 +25,10 @@
       <Link>assemblyinfo.FSharp.Compiler.dll.fs</Link>
     </Compile>
     <FsSrGen Include="..\FSComp.txt">
-      <Link>ErrorText/FSComp.txt</Link>
+      <Link>FSComp.txt</Link>
     </FsSrGen>
     <EmbeddedResource Include="..\FSStrings.resx">
-      <Link>ErrorText/FSStrings.resx</Link>
+      <Link>FSStrings.resx</Link>
     </EmbeddedResource>
     <Compile Include="..\..\utils\sformat.fsi">
       <Link>ErrorText/sformat.fsi</Link>

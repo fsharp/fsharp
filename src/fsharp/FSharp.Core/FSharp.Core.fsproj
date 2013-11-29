@@ -28,7 +28,7 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' " />
   <ItemGroup>
     <EmbeddedResource Include="FSCore.resx">
-      <Link>Primitives/FSCore.resx</Link>
+      <Link>FSCore.resx</Link>
     </EmbeddedResource>
     <Compile Include="prim-types-prelude.fsi">
       <Link>Primitives/prim-types-prelude.fsi</Link>
