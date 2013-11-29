@@ -37,13 +37,9 @@ sudo make install
 By default that makes optimized binaries. To make debug, use ```make CONFIG=debug```
 
 ### On Windows, using msbuild (e.g.. if .NET is installed) 
-If you have only VS2012 installed, and not VS2010, you'll need to install the F# 2.0 Runtime (http://www.microsoft.com/en-us/download/details.aspx?id=13450)
+If you have only VS2012 or VS2013 installed, and not VS2010, you'll need to install the F# 2.0 Runtime (http://www.microsoft.com/en-us/download/details.aspx?id=13450)´.
 ```
-cd src
-msbuild fsharp-proto-build.proj
-ngen install ..\lib\proto\fsc-proto.exe
-msbuild fsharp-library-build.proj /p:Configuration=Release
-msbuild fsharp-compiler-build.proj /p:Configuration=Release
+build.bat
 ```
 You can also build the FSharp.Core for .NET 2.0, Xamarin Android, Xamarin iOS, 
 Portable Profile47 (net45+sl5+win8), Portable Profile88 (net4+sl4+wp71+win8), XNA 4.0 for Xbox 360, 
