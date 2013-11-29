@@ -1,8 +1,21 @@
 // #Conformance #MemberDefinitions #Overloading #ComputationExpressions 
-let failures = ref false
-let report_failure () = 
-  stderr.WriteLine " NO"; failures := true
-let test s b = stderr.Write(s:string);  if b then stderr.WriteLine " OK" else report_failure() 
+#if ALL_IN_ONE
+module Core_members_ops
+#endif
+
+let failures = ref []
+
+let report_failure (s : string) = 
+    stderr.Write" NO: "
+    stderr.WriteLine s
+    failures := !failures @ [s]
+
+let test (s : string) b = 
+    stderr.Write(s)
+    if b then stderr.WriteLine " OK"
+    else report_failure (s)
+
+let check s b1 b2 = test s (b1 = b2)
 
 //let inline (>>) (x:$a) (y:$b) = (($a.(>>) <> <'a,'b,'c> : $t1<'a,'b> * $t2<'b,'c> -> $t2<'a,'c>) (x,y))
 //let inline (+) (x:$t1) (y:$t2) = (($a.(+) <...> <> : $t1<...> * $t2 -> $t1<...>) (x,y))
@@ -569,9 +582,18 @@ module TraitCallsAndConstructors =
     let _ : Inherited = -aInherited
 
 
-let _ = 
-  if !failures then (stdout.WriteLine "Test Failed"; exit 1) 
-  else (stdout.WriteLine "Test Passed"; 
-        System.IO.File.WriteAllText("test.ok","ok"); 
-        exit 0)
+
+#if ALL_IN_ONE
+let RUN() = !failures
+#else
+let aa =
+  match !failures with 
+  | [] -> 
+      stdout.WriteLine "Test Passed"
+      System.IO.File.WriteAllText("test.ok","ok")
+      exit 0
+  | _ -> 
+      stdout.WriteLine "Test Failed"
+      exit 1
+#endif
 

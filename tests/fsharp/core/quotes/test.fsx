@@ -1,5 +1,5 @@
 ﻿// #Conformance #Quotations #Interop #Classes #ObjectConstructors #Attributes #Reflection 
-#if Portable
+#if ALL_IN_ONE
 module Core_quotes
 #endif
 #light
@@ -11,10 +11,15 @@ module Core_quotes
 
 
 #nowarn "57"
-let mutable failures = []
-let report_failure s = 
-    stderr.WriteLine " NO"; failures <- s :: failures
+let failures = ref []
+
+let report_failure (s : string) = 
+    stderr.Write" NO: "
+    stderr.WriteLine s
+    failures := !failures @ [s]
+
 let test s b = stderr.Write(s:string);  if b then stderr.WriteLine " OK" else report_failure s
+
 let check s v1 v2 = 
    stderr.Write(s:string);  
    if (v1 = v2) then 
@@ -2408,8 +2413,18 @@ module QuotationOfResizeArrayIteration =
                  -> true
          |    _ -> false)
         
+
+#if ALL_IN_ONE
+let RUN() = !failures
+#else
 let aa =
-  if not failures.IsEmpty then (printfn "Test Failed, failures = %A" failures; exit 1) 
-  else (stdout.WriteLine "Test Passed"; 
-        System.IO.File.WriteAllText("test.ok","ok"); 
-        exit 0)
+  match !failures with 
+  | [] -> 
+      stdout.WriteLine "Test Passed"
+      System.IO.File.WriteAllText("test.ok","ok")
+      exit 0
+  | _ -> 
+      stdout.WriteLine "Test Failed"
+      exit 1
+#endif
+

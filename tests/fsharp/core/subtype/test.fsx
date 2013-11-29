@@ -1,13 +1,21 @@
 // #Conformance #TypeInference #TypeConstraints #UnitsOfMeasure #Regression #Operators #Mutable 
-#if Portable
+#if ALL_IN_ONE
 module Core_subtype
 #endif
 #light
 
-let mutable failures = []
-let report_failure s = 
-  stderr.WriteLine " NO"; failures <- s :: failures
-let test s b = stderr.Write(s:string);  if b then stderr.WriteLine " OK" else report_failure s
+let failures = ref []
+
+let report_failure (s : string) = 
+    stderr.Write" NO: "
+    stderr.WriteLine s
+    failures := !failures @ [s]
+
+let test (s : string) b = 
+    stderr.Write(s)
+    if b then stderr.WriteLine " OK"
+    else report_failure (s)
+
 let check s v1 v2 = test s (v1 = v2)
 
 (* TEST SUITE FOR SUBTYPE CONSTRAINTS *)
@@ -120,9 +128,9 @@ let testUpcastToEnum6 (x: System.Enum) = (x :> System.Enum)
 let testUpcastToDelegate1 (x: System.Threading.ThreadStart) = (x :> System.Delegate) 
 
 let testUpcastToMulticastDelegate1 (x: System.Threading.ThreadStart) = (x :> System.MulticastDelegate) 
-#endif
 
 do for name in Directory.GetFiles("c:\\") do stdout.WriteLine name done
+#endif
 
 let f (x : #System.IComparable<'a>) = 1
 
@@ -1696,9 +1704,18 @@ module RecordPropertyConstraintTests =
     check "ckjwnewk" (f8()) (System.TimeSpan.FromSeconds 2.0) // after mutation
     check "ckjwnewk" (f10()) "Gary"
 
-let aa =
-  if not failures.IsEmpty then (printfn "Test Failed, failures = %A" failures; exit 1) 
 
-do (stdout.WriteLine "Test Passed"; 
-    System.IO.File.WriteAllText("test.ok","ok"); 
-    exit 0)
+#if ALL_IN_ONE
+let RUN() = !failures
+#else
+let aa =
+  match !failures with 
+  | [] -> 
+      stdout.WriteLine "Test Passed"
+      System.IO.File.WriteAllText("test.ok","ok")
+      exit 0
+  | _ -> 
+      stdout.WriteLine "Test Failed"
+      exit 1
+#endif
+

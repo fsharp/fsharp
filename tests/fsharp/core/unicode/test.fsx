@@ -1,10 +1,19 @@
 // #Conformance #Globalization 
-#if Portable
+#if ALL_IN_ONE
 module Core_unicode
 #endif
-let failures = ref false
-let reportFailure s  = 
-  stderr.WriteLine ("NO: "+s); failures := true
+
+let failures = ref []
+
+let reportFailure (s : string) = 
+    stderr.Write" NO: "
+    stderr.WriteLine s
+    failures := !failures @ [s]
+
+let test (s : string) b = 
+    stderr.Write(s)
+    if b then stderr.WriteLine " OK"
+    else reportFailure (s)
 
 (* TEST SUITE FOR UNICODE CHARS *)
 
@@ -136,9 +145,17 @@ let αβΛΘΩΨΧΣδζȚŶǺ = 22/7
 
 let π = 3.1415
 
+#if ALL_IN_ONE
+let RUN() = !failures
+#else
 let aa =
-  if !failures then (stdout.WriteLine "Test Failed"; exit 1) 
+  match !failures with 
+  | [] -> 
+      stdout.WriteLine "Test Passed"
+      System.IO.File.WriteAllText("test.ok","ok")
+      exit 0
+  | _ -> 
+      stdout.WriteLine "Test Failed"
+      exit 1
+#endif
 
-do (stdout.WriteLine "Test Passed"; 
-    System.IO.File.WriteAllText("test.ok","ok"); 
-    exit 0)

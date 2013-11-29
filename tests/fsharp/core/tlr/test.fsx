@@ -14,12 +14,21 @@ CONTENTS-START-LINE: HERE=1 SEP=2
  348.   wrap up
 CONTENTS-END-LINE:
 ----------------------------------------------------------------------------*)
-#if Portable
+#if ALL_IN_ONE
 module Core_tlr
 #endif
-let failures = ref false
-let report_failure s  = 
-  stderr.WriteLine ("NO: test "+s+" failed"); failures := true
+
+let failures = ref []
+
+let report_failure (s : string) = 
+    stderr.Write" NO: "
+    stderr.WriteLine s
+    failures := !failures @ [s]
+
+let test (s : string) b = 
+    stderr.Write(s)
+    if b then stderr.WriteLine " OK"
+    else report_failure (s)
 
 
 
@@ -392,9 +401,18 @@ end
 (*-------------------------------------------------------------------------
  *INDEX: wrap up
  *-------------------------------------------------------------------------*)    
-let aa =
-  if !failures then (stdout.WriteLine "Test Failed"; exit 1) 
 
-do (stdout.WriteLine "Test Passed"; 
-    System.IO.File.WriteAllText("test.ok","ok"); 
-    exit 0)
+#if ALL_IN_ONE
+let RUN() = !failures
+#else
+let aa =
+  match !failures with 
+  | [] -> 
+      stdout.WriteLine "Test Passed"
+      System.IO.File.WriteAllText("test.ok","ok")
+      exit 0
+  | _ -> 
+      stdout.WriteLine "Test Failed"
+      exit 1
+#endif
+

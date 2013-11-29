@@ -70,5 +70,5 @@ let testEvents =
 let _ = 
   if !failures then (stdout.WriteLine "Test Failed"; exit 1) 
   else (stdout.WriteLine "Test Passed"; 
-        System.IO.File.WriteAllText("test.ok","ok"); 
+        System.IO.File.ALL_IN_ONE; 
         exit 0)

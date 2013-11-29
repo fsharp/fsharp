@@ -1,12 +1,25 @@
 // #Regression #Conformance #SignatureFiles #Classes #ObjectConstructors #ObjectOrientedTypes #Fields #MemberDefinitions #MethodsAndProperties #Unions #InterfacesAndImplementations #Events #Overloading #Recursion #Regression 
 #light
 
+#if ALL_IN_ONE
+module Core_members_basics
+#else
 module Tests
+#endif
 
-let mutable failures = []
-let report_failure s = 
-  stderr.WriteLine " NO"; failures <- s :: failures
-let test s b = stderr.Write(s:string);  if b then stderr.WriteLine " OK" else report_failure s
+
+let failures = ref []
+
+let report_failure (s : string) = 
+    stderr.Write" NO: "
+    stderr.WriteLine s
+    failures := !failures @ [s]
+
+let test (s : string) b = 
+    stderr.Write(s)
+    if b then stderr.WriteLine " OK"
+    else report_failure (s)
+
 let check s v1 v2 = test s (v1 = v2)
 
 //--------------------------------------------------------------
@@ -44,13 +57,19 @@ test "fweoew093" ((f(1)).b = 2)
 
 open System
 open System.Collections
+#if Portable
+#else
 open System.Windows.Forms
+#endif
 
 //-----------------------------------------
 // Some simple object-expression tests
 
 let x0 = { new System.Object() with member __.GetHashCode() = 3 }
+#if Portable
+#else
 let x1 = { new System.Windows.Forms.Form() with member __.GetHashCode() = 3 }
+#endif
 
 //-----------------------------------------
 // Test defining an F# class
@@ -963,6 +982,8 @@ let [<DontPressThisButton("Please don't press this again")>] button () = 1
 // Test we can use base calls
 
 
+#if Portable
+#else
 open System.Windows.Forms
 
 type MyCanvas2 = 
@@ -974,6 +995,7 @@ type MyCanvas2 =
   end
 
 let form2 = new MyCanvas2()
+#endif
 
 
 //---------------------------------------------------------------------
@@ -1761,12 +1783,18 @@ module DefaultConstructorConstraints = begin
   let x1 = (f1() : obj)
   let x2 = (f1() : int)
   let x3 = (f1() : DateTime)
+#if Portable
+#else
   let x4 = (f1() : System.Windows.Forms.Form)
+#endif
   let f2 () = f1()
   let y1 = (f2() : obj)
   let y2 = (f2() : int)
   let y3 = (f2() : DateTime)
+#if Portable
+#else
   let y4 = (f2() : System.Windows.Forms.Form)
+#endif
   
 end
 
@@ -2007,6 +2035,8 @@ module T1 =
 
     Vector2D(1.0,1.0) = Vector2D(1.0,1.0)
 
+#if Portable
+#else
 module Ex5 = 
     open System.Drawing
     type Label(?text,?font) =
@@ -2018,6 +2048,7 @@ module Ex5 =
     Label(text="Hello World")
     Label(font=new Font(FontFamily.GenericMonospace,36.0f),
           text="Hello World")
+#endif
 
 module Ex6 = 
     type IShape =
@@ -5569,9 +5600,18 @@ module Devdiv2_5385_repro2 =
     printfn "test passed ok without NullReferenceException"
 
 
-let _ = 
-  if not failures.IsEmpty then (eprintfn "Test Failed, failures = %A" failures; exit 1) 
-  else (stdout.WriteLine "Test Passed"; 
-        System.IO.File.WriteAllText("test.ok","ok"); 
-        exit 0)
+
+#if ALL_IN_ONE
+let RUN() = !failures
+#else
+let aa =
+  match !failures with 
+  | [] -> 
+      stdout.WriteLine "Test Passed"
+      System.IO.File.WriteAllText("test.ok","ok")
+      exit 0
+  | _ -> 
+      stdout.WriteLine "Test Failed"
+      exit 1
+#endif
 

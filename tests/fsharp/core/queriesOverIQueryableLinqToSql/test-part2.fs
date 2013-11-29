@@ -549,10 +549,19 @@ FROM [dbo].[Customers] AS [t0]"""
     [<System.STAThread>]
     do()
 #endif
-let _ = 
-  if not failures.IsEmpty then (printfn "Test Failed, failures = %A" failures; exit 1) 
-  else (stdout.WriteLine "Test Passed"; 
-        System.IO.File.WriteAllText("test.ok","ok"); 
-        exit 0)
+
+#if ALL_IN_ONE
+let RUN() = failures
+#else
+let aa =
+  match failures with 
+  | [] -> 
+      stdout.WriteLine "Test Passed"
+      System.IO.File.WriteAllText("test.ok","ok")
+      exit 0
+  | _ -> 
+      stdout.WriteLine "Test Failed"
+      exit 1
+#endif
 
 

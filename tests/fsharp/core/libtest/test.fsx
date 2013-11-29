@@ -1,5 +1,5 @@
 // #Regression #Conformance #Regression #Exceptions #Constants #LetBindings #Lists #Collections #Stress #Sequences #Optimizations #Records #Unions 
-#if Portable
+#if ALL_IN_ONE
 module Core_libtest
 #endif
 
@@ -61,9 +61,9 @@ CONTENTS-END-LINE:
 #nowarn "62"
 #nowarn "44"
 
-let mutable failures = []
+let failures = ref []
 let reportFailure s = 
-  stdout.WriteLine "\n................TEST FAILED...............\n"; failures <- failures @ [s]
+  stdout.WriteLine "\n................TEST FAILED...............\n"; failures := !failures @ [s]
 
 (* TEST SUITE FOR STANDARD LIBRARY *)
 
@@ -5116,9 +5116,17 @@ module Regression_139182 =
 !* wrap up
  *--------------------------------------------------------------------------- *)
 
+#if ALL_IN_ONE
+let RUN() = !failures
+#else
 let aa =
-  if not failures.IsEmpty then (printfn "Test Failed, failures = %A" failures; exit 1) 
+  match !failures with 
+  | [] -> 
+      stdout.WriteLine "Test Passed"
+      System.IO.File.WriteAllText("test.ok","ok")
+      exit 0
+  | _ -> 
+      stdout.WriteLine "Test Failed"
+      exit 1
+#endif
 
-do (stdout.WriteLine "Test Passed"; 
-    System.IO.File.WriteAllText("test.ok","ok"); 
-    exit 0)

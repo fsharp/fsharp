@@ -1,5 +1,5 @@
 // #Regression #Conformance #Operators #SyntacticSugar #Exceptions #ControlFlow #Arrays #Tuples #Lists #Classes #Constants #Records 
-#if Portable
+#if ALL_IN_ONE
 module Core_syntax
 #endif
 #light
@@ -1794,9 +1794,17 @@ module AdHocTests =
               let (b, _, _) = (1,2,3)
               [b]      
     
-let _ = stdout.WriteLine "Test FInishing"
+#if ALL_IN_ONE
+let RUN() = !failures
+#else
 let aa =
-  if !failures then (stdout.WriteLine "Test Failed"; exit 1) 
-  else (stdout.WriteLine "Test Passed"; 
-        System.IO.File.WriteAllText("test.ok","ok"); 
-        exit 0)
+  match !failures with 
+  | false -> 
+      stdout.WriteLine "Test Passed"
+      System.IO.File.WriteAllText("test.ok","ok")
+      exit 0
+  | _ -> 
+      stdout.WriteLine "Test Failed"
+      exit 1
+#endif
+

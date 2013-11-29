@@ -2,7 +2,7 @@
 (*-------------------------------------------------------------------------
 !* attribute tests
  *------------------------------------------------------------------------- *)
-#if Portable
+#if ALL_IN_ONE
 module Core_attributes
 #endif
 #light
@@ -14,9 +14,17 @@ module Core_attributes
 #r "cslib.dll"
 #endif
 
-let mutable failures : string list = []
-let report_failure msg = 
-  printf "\n................TEST '%s' FAILED...............\n" msg; failures <- failures @ [msg]
+let failures = ref []
+
+let report_failure (s : string) = 
+    stderr.Write" NO: "
+    stderr.WriteLine s
+    failures := !failures @ [s]
+
+let test (s : string) b = 
+    stderr.Write(s)
+    if b then stderr.WriteLine " OK"
+    else report_failure (s)
 
 let check (s:string) e r = 
   if r = e then  stdout.WriteLine (s+": YES") 
@@ -1304,12 +1312,17 @@ module AttributeTestsOnExtensionProperties =
  *------------------------------------------------------------------------- *)
 
 
+#if ALL_IN_ONE
+let RUN() = !failures
+#else
 let aa =
-  match failures with
-  | [] -> () 
-  | _ ->
-        stdout.WriteLine "Test Failed"; exit 1
+  match !failures with 
+  | [] -> 
+      stdout.WriteLine "Test Passed"
+      System.IO.File.WriteAllText("test.ok","ok")
+      exit 0
+  | _ -> 
+      stdout.WriteLine "Test Failed"
+      exit 1
+#endif
 
-do (stdout.WriteLine "Test Passed"; 
-    System.IO.File.WriteAllText("test.ok","ok"); 
-    exit 0)

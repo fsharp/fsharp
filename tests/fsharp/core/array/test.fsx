@@ -1,13 +1,21 @@
 // #Conformance #Arrays #Stress #Structs #Mutable #ControlFlow #LetBindings 
-#if Portable
+#if ALL_IN_ONE
 module Core_array
 #endif
 
 #light
-let mutable failures = []
-let report_failure (s) = 
-  stderr.WriteLine " NO"; failures <- s :: failures
-let test s b = stderr.Write(s:string);  if b then stderr.WriteLine " OK" else report_failure() 
+let failures = ref []
+
+let report_failure (s : string) = 
+    stderr.Write" NO: "
+    stderr.WriteLine s
+    failures := !failures @ [s]
+
+let test (s : string) b = 
+    stderr.Write(s)
+    if b then stderr.WriteLine " OK"
+    else report_failure (s)
+
 let check s b1 b2 = test s (b1 = b2)
 
 
@@ -1312,9 +1320,17 @@ module bug6447 =
     do check "bug6447_hash_a2" (hash a2) 10727    
 #endif    
     
+#if ALL_IN_ONE
+let RUN() = !failures
+#else
 let aa =
-  if not failures.IsEmpty then (stdout.WriteLine "Test Failed"; exit 1) 
-  else (stdout.WriteLine "Test Passed"; 
-        System.IO.File.WriteAllText("test.ok","ok"); 
-        exit 0)
+  match !failures with 
+  | [] -> 
+      stdout.WriteLine "Test Passed"
+      System.IO.File.WriteAllText("test.ok","ok")
+      exit 0
+  | _ -> 
+      stdout.WriteLine "Test Failed"
+      exit 1
+#endif
 

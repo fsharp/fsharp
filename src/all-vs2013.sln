@@ -14,8 +14,6 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Fsc", "fsharp\Fsc\Fsc.fspro
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FSharp.Compiler", "fsharp\FSharp.Compiler\FSharp.Compiler.fsproj", "{2E4D67B4-522D-4CF7-97E4-BA940F0B18F3}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FSharp.Compiler.Silverlight", "fsharp\FSharp.Compiler.Silverlight\FSharp.Compiler.Silverlight.fsproj", "{A90A57BE-C2BD-4CB9-87DC-C0D18820FF6B}"
-EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FSharp.Core", "fsharp\FSharp.Core\FSharp.Core.fsproj", "{DED3BBD7-53F4-428A-8C9F-27968E768605}"
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FSharp.Build", "fsharp\FSharp.Build\FSharp.Build.fsproj", "{702A7979-BCF9-4C41-853E-3ADFC9897890}"
@@ -40,8 +38,6 @@ Global
 		{C94C257C-3C0A-4858-B5D8-D746498D1F08}.Release|Any CPU.ActiveCfg = Release|x86
 		{2E4D67B4-522D-4CF7-97E4-BA940F0B18F3}.Debug|Any CPU.ActiveCfg = Debug|x86
 		{2E4D67B4-522D-4CF7-97E4-BA940F0B18F3}.Release|Any CPU.ActiveCfg = Release|x86
-		{A90A57BE-C2BD-4CB9-87DC-C0D18820FF6B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{A90A57BE-C2BD-4CB9-87DC-C0D18820FF6B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DED3BBD7-53F4-428A-8C9F-27968E768605}.Debug|Any CPU.ActiveCfg = Debug|x86
 		{DED3BBD7-53F4-428A-8C9F-27968E768605}.Release|Any CPU.ActiveCfg = Release|x86
 		{702A7979-BCF9-4C41-853E-3ADFC9897890}.Debug|Any CPU.ActiveCfg = Debug|x86

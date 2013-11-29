@@ -3,16 +3,24 @@
  * Initially just some tests related to top-level let-pattern bug.
  * Later regression tests that patterns do project out the bits expected?
  *)
-#if Portable
+#if ALL_IN_ONE
 module Core_patterns
 #endif
 
 #light
 
-let failures = ref false
-let report_failure s  = 
-  stderr.WriteLine ("NO: test "+s+" failed"); failures := true
-let test s b = if b then () else report_failure(s) 
+let failures = ref []
+
+let report_failure (s : string) = 
+    stderr.Write" NO: "
+    stderr.WriteLine s
+    failures := !failures @ [s]
+
+let test (s : string) b = 
+    stderr.Write(s)
+    if b then stderr.WriteLine " OK"
+    else report_failure (s)
+
 let check s x1 x2 = 
     if (x1 = x2) then 
         stderr.WriteLine ("test "+s+": ok")
@@ -1093,9 +1101,18 @@ module TypecheckingBug_FSharp_1_0_6389 =
 
 (* check for failure else sign off "ok" *)
 
-let aa =
-  if !failures then (stdout.WriteLine "Test Failed"; exit 1) 
 
-do (stdout.WriteLine "Test Passed"; 
-    System.IO.File.WriteAllText("test.ok","ok"); 
-    exit 0)
+#if ALL_IN_ONE
+let RUN() = !failures
+#else
+let aa =
+  match !failures with 
+  | [] -> 
+      stdout.WriteLine "Test Passed"
+      System.IO.File.WriteAllText("test.ok","ok")
+      exit 0
+  | _ -> 
+      stdout.WriteLine "Test Failed"
+      exit 1
+#endif
+

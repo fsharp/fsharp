@@ -1,14 +1,22 @@
 // #Conformance #Constants 
-#if Portable 
+#if ALL_IN_ONE
 module Core_int32
 #endif
 
 #light
 
-let failures = ref false
-let report_failure (s) = 
-  stderr.WriteLine ("NO: " + s); failures := true; failwith ""
-let test s b = if b then () else report_failure(s) 
+let failures = ref []
+
+let report_failure (s : string) = 
+    stderr.Write" NO: "
+    stderr.WriteLine s
+    failures := !failures @ [s]
+
+let test (s : string) b = 
+    stderr.Write(s)
+    if b then stderr.WriteLine " OK"
+    else report_failure (s)
+
 
 (* TEST SUITE FOR Int32 *)
 
@@ -393,8 +401,17 @@ module MinMaxAbsNative = begin
            
 end
 
+#if ALL_IN_ONE
+let RUN() = !failures
+#else
 let aa =
-  if !failures then (stdout.WriteLine "Test Failed"; exit 1) 
-  else (stdout.WriteLine "Test Passed"; 
-        System.IO.File.WriteAllText("test.ok","ok"); 
-        exit 0)
+  match !failures with 
+  | [] -> 
+      stdout.WriteLine "Test Passed"
+      System.IO.File.WriteAllText("test.ok","ok")
+      exit 0
+  | _ -> 
+      stdout.WriteLine "Test Failed"
+      exit 1
+#endif
+

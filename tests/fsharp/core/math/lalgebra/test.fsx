@@ -9,10 +9,17 @@
 //CONTENTS-END-LINE:
 //----------------------------------------------------------------------------
 
-let failures = ref false
-let report_failure () = 
-  stderr.WriteLine " NO"; failures := true
-let test s b = stderr.Write(s:string);  if b then stderr.WriteLine " OK" else report_failure();;
+let failures = ref []
+
+let report_failure (s : string) = 
+    stderr.Write" NO: "
+    stderr.WriteLine s
+    failures := !failures @ [s]
+
+let test (s : string) b = 
+    stderr.Write(s)
+    if b then stderr.WriteLine " OK"
+    else report_failure (s)
 
 #nowarn "0049";;
 
@@ -301,8 +308,19 @@ RegressionTest "Netlib" maxDimension
 //! Finish
 //--------  
 
-let _ = 
-  if !failures then (stdout.WriteLine "Test Failed"; exit 1) 
-  else (stdout.WriteLine "Test Passed"; 
-        System.IO.File.WriteAllText("test.ok","ok"); 
-        exit 0)
+
+#if ALL_IN_ONE
+let RUN() = !failures
+#else
+let aa =
+  match !failures with 
+  | [] -> 
+      stdout.WriteLine "Test Passed"
+      System.IO.File.WriteAllText("test.ok","ok")
+      exit 0
+  | _ -> 
+      stdout.WriteLine "Test Failed"
+      exit 1
+#endif
+
+

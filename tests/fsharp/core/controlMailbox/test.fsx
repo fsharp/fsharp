@@ -1,5 +1,5 @@
 // #Regression #Conformance #ComputationExpressions #Async #Regression #Events #Stress 
-#if Portable
+#if ALL_IN_ONE
 module Core_controlMailBox
 #endif
 #light

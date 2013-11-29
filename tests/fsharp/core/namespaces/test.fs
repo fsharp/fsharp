@@ -6,10 +6,19 @@ namespace Hello.Goodbye
 type A = A | B | C
 
 module Utils = begin
-  let failures = ref false
-  let report_failure () = 
-    stderr.WriteLine " NO"; failures := true
-  let test s b = stderr.Write(s:string);  if b then stderr.WriteLine " OK" else report_failure() 
+    let failures = ref []
+
+    let report_failure (s : string) = 
+        stderr.Write" NO: "
+        stderr.WriteLine s
+        failures := !failures @ [s]
+
+    let test (s : string) b = 
+        stderr.Write(s)
+        if b then stderr.WriteLine " OK"
+        else report_failure (s)
+
+    let check s b1 b2 = test s (b1 = b2)
 end
 
 module X  = begin
@@ -71,9 +80,17 @@ end
 
 module Utils  = begin
 
-  let _ = 
-    if !Hello.Goodbye.Utils.failures then (stdout.WriteLine "Test Failed"; exit 1) 
-    else (stdout.WriteLine "Test Passed"; 
-          System.IO.File.WriteAllText("test.ok","ok"); 
-          exit 0)
+#if ALL_IN_ONE
+    let RUN() = !failures
+#else
+    let aa =
+      if not (!Hello.Goodbye.Utils.failures).IsEmpty then 
+          stdout.WriteLine "Test Failed"
+          exit 1
+      else   
+          stdout.WriteLine "Test Passed"
+          System.IO.File.WriteAllText("test.ok","ok")
+          exit 0
+#endif
+
 end

@@ -5,17 +5,26 @@
 #nowarn "62";;
 #nowarn "35";;
                            
-let failures = ref false
-let report_failure () = 
-  stderr.WriteLine " NO"; failures := true
-let test s b = stderr.Write(s:string);  if b then stderr.WriteLine " OK" else report_failure()
+let failures = ref []
+
+let report_failure (s : string) = 
+    stderr.Write" NO: "
+    stderr.WriteLine s
+    failures := !failures @ [s]
+
+let test (s : string) b = 
+    stderr.Write(s)
+    if b then stderr.WriteLine " OK"
+    else report_failure (s)
+
+let check s b1 b2 = test s (b1 = b2)
 
 (* START *)
 
 open Microsoft.FSharp.Math
 let throws f = try f() |> ignore; false with e -> true
 // Test functions
-let fail() = report_failure()//failwith "Failed"
+let fail() = report_failure("Failed")
 let checkEq desc a b = if a<>b then printf "Failed %s. %A <> %A\n" desc a b; fail()
 
 #if FIXED_3481
@@ -269,8 +278,18 @@ checkEq "negative32s" negative32s
 
 (* END *)  
 
-let _ = 
-  if !failures then (stdout.WriteLine "Test Failed"; exit 1) 
-  else (stdout.WriteLine "Test Passed"; 
-        System.IO.File.WriteAllText("test.ok","ok"); 
-        exit 0)
+
+#if ALL_IN_ONE
+let RUN() = !failures
+#else
+let aa =
+  match !failures with 
+  | [] -> 
+      stdout.WriteLine "Test Passed"
+      System.IO.File.WriteAllText("test.ok","ok")
+      exit 0
+  | _ -> 
+      stdout.WriteLine "Test Failed"
+      exit 1
+#endif
+

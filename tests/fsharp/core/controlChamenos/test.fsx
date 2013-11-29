@@ -1,5 +1,5 @@
 // #Conformance #ComputationExpressions #Async 
-#if Portable
+#if ALL_IN_ONE
 module Core_controlChamenos
 #endif
 #light

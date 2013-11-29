@@ -1,11 +1,15 @@
 // #Conformance #LetBindings #Recursion #TypeInference #ObjectConstructors #Classes #Records 
-#if Portable
+#if ALL_IN_ONE
 module Core_letrec
 #endif
 
-let failures = ref false
-let report_failure s = 
-  stderr.WriteLine ("FAIL: "+s); failures := true
+let failures = ref []
+
+let report_failure (s : string) = 
+    stderr.Write" NO: "
+    stderr.WriteLine s
+    failures := !failures @ [s]
+
 
 
 
@@ -25,8 +29,7 @@ do SetCulture()
 
 let test t s1 s2 = 
   if s1 <> s2 then 
-    (stderr.WriteLine ("test "+t+" failed");
-     failures := true)
+    report_failure ("test "+t+" failed")
   else
     stdout.WriteLine ("test "+t+" succeeded")   
 
@@ -641,16 +644,17 @@ module BasicPermutations =
           override x.Foo a = base.Foo(a)
 
 
-#if Portable
-let aa = 
-    if !failures then (stdout.WriteLine "Test Failed"; exit 1) 
-    else (stdout.WriteLine "Test Passed"; exit 0)
+#if ALL_IN_ONE
+let RUN() = !failures
 #else
-do 
-  if !failures then (stdout.WriteLine "Test Failed"; exit 1) 
-
-
-do (stdout.WriteLine "Test Passed"; 
-    System.IO.File.WriteAllText("test.ok","ok"); 
-    exit 0)
+let aa =
+  match !failures with 
+  | [] -> 
+      stdout.WriteLine "Test Passed"
+      System.IO.File.WriteAllText("test.ok","ok")
+      exit 0
+  | _ -> 
+      stdout.WriteLine "Test Failed"
+      exit 1
 #endif
+
