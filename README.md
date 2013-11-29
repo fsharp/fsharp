@@ -19,7 +19,7 @@ brew install automake
 ### On Linux and other Unix systems:
 The usual:
 ```
-./autogen.sh
+./autogen.sh --prefix=/usr
 make
 sudo make install
 ```
