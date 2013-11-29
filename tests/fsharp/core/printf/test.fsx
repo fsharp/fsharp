@@ -46,7 +46,6 @@ let verify actual expected = test expected actual expected
 
 let adjust1 obj n1 = unbox ((unbox obj) n1)
 
-(*
 let _ = test "percent00" (lazy(sprintf "%%")) "%"
 let _ = test "percent01" (lazy(sprintf " %%%% ")) " %% "
 let _ = test "percent02" (lazy(sprintf "%.2f%.2%" 2.)) "2.00%"
@@ -58,7 +57,6 @@ let _ = test "percent07" (lazy(sprintf "%-+.*%%*d%*.*%" 55 0 8 77 88)) "%8%"
 let _ = test "percent08" (lazy(sprintf "%%d")) "%d"
 let _ = test "percent09" (lazy(sprintf "% *% %d" 10 6)) "% 6"
 
-*)
 
 let _ = test "cewoui2a" (lazy(sprintf "%o" 0)) "0"
 let _ = test "cewoui2b" (lazy(sprintf "%o" 0)) "0"

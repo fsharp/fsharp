@@ -116,19 +116,6 @@ module internal PrintfImpl =
                 else acc, i
             go 0 pos
 
-        let rec findNextFormatSpecifier (s : string)  i = 
-            if i >= s.Length then 
-                s.Length
-            else
-            let c = s.[i]
-            if c = '%' then
-                if i + 1 < s.Length then
-                    if s.[i + 1] = '%' then findNextFormatSpecifier s (i + 2)
-                    else i
-                else
-                    raise (ArgumentException("Missing format specifier"))
-            else findNextFormatSpecifier s (i + 1)
-
         let parseFlags (s : string) i : FormatFlags * int = 
             let rec go flags i = 
                 match s.[i] with
@@ -154,6 +141,32 @@ module internal PrintfImpl =
         let parseTypeChar (s : string) i : char * int = 
             s.[i], (i + 1)
     
+        let findNextFormatSpecifier (s : string) i = 
+            let rec go i (buf : Text.StringBuilder) =
+                if i >= s.Length then 
+                    s.Length, buf.ToString()
+                else
+                    let c = s.[i]
+                    if c = '%' then
+                        if i + 1 < s.Length then
+                            let _, i1 = parseFlags s (i + 1)
+                            let w, i2 = parseWidth s i1
+                            let p, i3 = parsePrecision s i2
+                            let typeChar, i4 = parseTypeChar s i3
+                            // shortcut for the simpliest case
+                            // if typeChar is not % or it has star as width\precision - resort to long path
+                            if typeChar = '%' && not (w = StarValue || p = StarValue) then 
+                                buf.Append('%') |> ignore
+                                go i4 buf
+                            else 
+                                i, buf.ToString()
+                        else
+                            raise (ArgumentException("Missing format specifier"))
+                    else 
+                        buf.Append(c) |> ignore
+                        go (i + 1) buf
+            go i (Text.StringBuilder())
+
     /// Abstracts generated printer from the details of particular environment: how to write text, how to produce results etc...
     [<AbstractClass>]
     type PrintfEnv<'State, 'Residue, 'Result> =
@@ -395,13 +408,37 @@ module internal PrintfImpl =
                     env.Write s2
                     env.Finalize()
                 )
+            )   
+       
+        static member PercentStarFinal1(s1 : string, s2 : string) = 
+            (fun (env : unit -> PrintfEnv<'State, 'Residue, 'Result>) ->
+                (fun (_star1 : int) -> 
+                    let env = env()
+                    env.Write s1
+                    env.Write("%")
+                    env.Write s2
+                    env.Finalize()
+                )
             )
+
         static member StarFinal2<'A>(s1 : string, conv, s2 : string) = 
             (fun (env : unit -> PrintfEnv<'State, 'Residue, 'Result>) ->
                 (fun (star1 : int) (star2 : int) (a : 'A) -> 
                     let env = env()
                     env.Write s1
                     env.Write (conv a star1 star2: string)
+                    env.Write s2
+                    env.Finalize()
+                )
+            )
+
+       /// Handles case when '%*.*%' is used at the end of string
+        static member PercentStarFinal2(s1 : string, s2 : string) = 
+            (fun (env : unit -> PrintfEnv<'State, 'Residue, 'Result>) ->
+                (fun (_star1 : int) (_star2 : int) -> 
+                    let env = env()
+                    env.Write s1
+                    env.Write("%")
                     env.Write s2
                     env.Finalize()
                 )
@@ -418,6 +455,20 @@ module internal PrintfImpl =
                     next env : 'Tail
                 )
             )
+  
+        /// Handles case when '%*%' is used in the middle of the string so it needs to be chained to another printing block
+        static member PercentStarChained1<'Tail>(s1 : string, next : PrintfFactory<'State, 'Residue, 'Result,'Tail>) = 
+            (fun (env : unit -> PrintfEnv<'State, 'Residue, 'Result>) ->
+                (fun (_star1 : int) -> 
+                    let env() =
+                        let env = env()
+                        env.Write s1
+                        env.Write("%")
+                        env
+                    next env : 'Tail
+                )
+            )
+
         static member StarChained2<'A, 'Tail>(s1 : string, conv, next : PrintfFactory<'State, 'Residue, 'Result,'Tail>) = 
             (fun (env : unit -> PrintfEnv<'State, 'Residue, 'Result>) ->
                 (fun (star1 : int) (star2 : int) (a : 'A) -> 
@@ -425,6 +476,19 @@ module internal PrintfImpl =
                         let env = env()
                         env.Write s1
                         env.Write(conv a star1 star2 : string)
+                        env
+                    next env : 'Tail
+                )
+            )
+    
+        /// Handles case when '%*.*%' is used in the middle of the string so it needs to be chained to another printing block
+        static member PercentStarChained2<'Tail>(s1 : string, next : PrintfFactory<'State, 'Residue, 'Result,'Tail>) = 
+            (fun (env : unit -> PrintfEnv<'State, 'Residue, 'Result>) ->
+                (fun (_star1 : int) (_star2 : int) -> 
+                    let env() =
+                        let env = env()
+                        env.Write s1
+                        env.Write("%")
                         env
                     next env : 'Tail
                 )
@@ -946,9 +1010,13 @@ module internal PrintfImpl =
     
         let mutable count = 0
 
-        let verifyMethodInfoWasTaken (mi : System.Reflection.MemberInfo) =
-            if mi = null then 
+        let verifyMethodInfoWasTaken (_mi : System.Reflection.MemberInfo) =
+#if DEBUG
+            if _mi = null then 
                 ignore (System.Diagnostics.Debugger.Launch())
+#else
+            ()
+#endif
             
         let buildSpecialChained(spec : FormatSpecifier, argTys : Type[], prefix : string, tail : obj, retTy) = 
             if spec.TypeChar = 'a' then
@@ -966,14 +1034,23 @@ module internal PrintfImpl =
             else
                 System.Diagnostics.Debug.Assert(spec.IsStarPrecision || spec.IsStarWidth , "spec.IsStarPrecision || spec.IsStarWidth ")
 
-                let n = if spec.IsStarWidth = spec.IsStarPrecision then 2 else 1
-                let argTy = argTys.[argTys.Length - 2]
+                let mi = 
+                    let n = if spec.IsStarWidth = spec.IsStarPrecision then 2 else 1
+                    let prefix = if spec.TypeChar = '%' then "PercentStarChained" else "StarChained"
+                    let name = prefix + (string n)
+                    typeof<Specializations<'S, 'Re, 'Res>>.GetMethod(name, NonPublicStatics)
 
-                let mi = typeof<Specializations<'S, 'Re, 'Res>>.GetMethod("StarChained" + (n.ToString()), NonPublicStatics)
                 verifyMethodInfoWasTaken mi
-                let mi = mi.MakeGenericMethod([| argTy;  retTy |])
-                let conv = getValueConverter argTy spec 
-                let args = [| box prefix; box conv; tail |]
+                
+                let argTypes, args =
+                    if spec.TypeChar = '%' then
+                        [| retTy |], [| box prefix; tail |]
+                    else
+                        let argTy = argTys.[argTys.Length - 2]
+                        let conv = getValueConverter argTy spec 
+                        [| argTy; retTy |], [| box prefix; box conv; tail |]
+
+                let mi = mi.MakeGenericMethod argTypes
                 mi.Invoke(null, args)
             
         let buildSpecialFinal(spec : FormatSpecifier, argTys : Type[], prefix : string, suffix : string) =
@@ -991,14 +1068,23 @@ module internal PrintfImpl =
             else
                 System.Diagnostics.Debug.Assert(spec.IsStarPrecision || spec.IsStarWidth , "spec.IsStarPrecision || spec.IsStarWidth ")
 
-                let n = if spec.IsStarWidth = spec.IsStarPrecision then 2 else 1
-                let argTy = argTys.[argTys.Length - 2]
+                let mi = 
+                    let n = if spec.IsStarWidth = spec.IsStarPrecision then 2 else 1
+                    let prefix = if spec.TypeChar = '%' then "PercentStarFinal" else "StarFinal"
+                    let name = prefix + (string n)
+                    typeof<Specializations<'S, 'Re, 'Res>>.GetMethod(name, NonPublicStatics)
 
-                let mi = typeof<Specializations<'S, 'Re, 'Res>>.GetMethod("StarFinal" + (n.ToString()), NonPublicStatics)
                 verifyMethodInfoWasTaken mi
-                let mi = mi.MakeGenericMethod(argTy)
-                let conv = getValueConverter argTy spec 
-                let args = [| box prefix; box conv; box suffix  |]
+
+                let mi, args = 
+                    if spec.TypeChar = '%' then 
+                        mi, [| box prefix; box suffix  |]
+                    else
+                        let argTy = argTys.[argTys.Length - 2]
+                        let mi = mi.MakeGenericMethod(argTy)
+                        let conv = getValueConverter argTy spec 
+                        mi, [| box prefix; box conv; box suffix  |]
+
                 mi.Invoke(null, args)
 
         let buildPlainFinal(args : obj[], argTypes : Type[]) = 
@@ -1050,9 +1136,7 @@ module internal PrintfImpl =
             let typeChar, i = FormatString.parseTypeChar s i
             let spec = { TypeChar = typeChar; Precision = precision; Flags = flags; Width = width}
             
-            let next = FormatString.findNextFormatSpecifier s i
-            let suffix = s.Substring(i, next - i)
-
+            let next, suffix = FormatString.findNextFormatSpecifier s i
             let argTys = 
                 let n = 
                     if spec.TypeChar = 'a' then 2 
@@ -1060,6 +1144,11 @@ module internal PrintfImpl =
                         if spec.IsStarWidth = spec.IsStarPrecision then 3 
                         else 2
                     else 1
+
+                let n = if spec.TypeChar = '%' then n - 1 else n
+                
+                System.Diagnostics.Debug.Assert(n <> 0, "n <> 0")
+
                 extractCurriedArguments funcTy n
 
             let retTy = argTys.[argTys.Length - 1]
@@ -1127,15 +1216,14 @@ module internal PrintfImpl =
                         numberOfArgs + 1
 
         let parseFormatString (s : string) (funcTy : System.Type) : obj = 
-            let prefixPos = FormatString.findNextFormatSpecifier s 0
+            let prefixPos, prefix = FormatString.findNextFormatSpecifier s 0
             if prefixPos = s.Length then 
                 box (fun (env : unit -> PrintfEnv<'S, 'Re, 'Res>) -> 
                     let env = env()
-                    env.Write s
+                    env.Write prefix
                     env.Finalize()
                     )
             else
-                let prefix = if prefixPos = 0 then "" else s.Substring(0, prefixPos)
                 let n = parseFromFormatSpecifier prefix s funcTy prefixPos
                 
                 if n = ContinuationOnStack || n = 0 then
