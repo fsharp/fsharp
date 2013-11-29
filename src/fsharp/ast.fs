@@ -1740,6 +1740,90 @@ let mkSynDotBrackSlice3Get  m mDot arr (x1,y1) (x2,y2) (x3,y3) =
 let mkSynDotBrackSlice4Get  m mDot arr (x1,y1) (x2,y2) (x3,y3) (x4,y4) = 
     SynExpr.DotIndexedGet(arr,[x1;y1;x2;y2;x3;y3;x4;y4],mDot,m)
 
+let mkSynDotBrackSlice5Get  m mDot arr (x1,y1) (x2,y2) (x3,y3) (x4,y4) (x5,y5) = 
+    SynExpr.DotIndexedGet(arr,[x1;y1;x2;y2;x3;y3;x4;y4;x5;y5],mDot,m)
+
+let mkSynDotBrackSlice6Get  m mDot arr (x1,y1) (x2,y2) (x3,y3) (x4,y4) (x5,y5) (x6,y6) = 
+    SynExpr.DotIndexedGet(arr,[x1;y1;x2;y2;x3;y3;x4;y4;x5;y5;x6;y6],mDot,m)
+
+let mkSynDotBrackSlice7Get  m mDot arr (x1,y1) (x2,y2) (x3,y3) (x4,y4) (x5,y5) (x6,y6) (x7,y7) = 
+    SynExpr.DotIndexedGet(arr,[x1;y1;x2;y2;x3;y3;x4;y4;x5;y5;x6;y6;x7;y7],mDot,m)
+
+let mkSynDotBrackSlice8Get  m mDot arr (x1,y1) (x2,y2) (x3,y3) (x4,y4) (x5,y5) (x6,y6) (x7,y7) (x8,y8) = 
+    SynExpr.DotIndexedGet(arr,[x1;y1;x2;y2;x3;y3;x4;y4;x5;y5;x6;y6;x7;y7;x8;y8],mDot,m)
+
+let mkSynDotBrackSlice9Get  m mDot arr (x1,y1) (x2,y2) (x3,y3) (x4,y4) (x5,y5) (x6,y6) (x7,y7) (x8,y8) (x9,y9) = 
+    SynExpr.DotIndexedGet(arr,[x1;y1;x2;y2;x3;y3;x4;y4;x5;y5;x6;y6;x7;y7;x8;y8;x9;y9],mDot,m)
+
+let mkSynDotBrackSlice10Get  m mDot arr (x1,y1) (x2,y2) (x3,y3) (x4,y4) (x5,y5) (x6,y6) (x7,y7) (x8,y8) (x9,y9) (x10,y10) = 
+    SynExpr.DotIndexedGet(arr,[x1;y1;x2;y2;x3;y3;x4;y4;x5;y5;x6;y6;x7;y7;x8;y8;x9;y9;x10;y10],mDot,m)
+
+let mkSynDotBrackSlice11Get  m mDot arr (x1,y1) (x2,y2) (x3,y3) (x4,y4) (x5,y5) (x6,y6) (x7,y7) (x8,y8) (x9,y9) (x10,y10) (x11,y11) = 
+    SynExpr.DotIndexedGet(arr,[x1;y1;x2;y2;x3;y3;x4;y4;x5;y5;x6;y6;x7;y7;x8;y8;x9;y9;x10;y10;x11;y11],mDot,m)
+
+let mkSynDotBrackSlice12Get  m mDot arr (x1,y1) (x2,y2) (x3,y3) (x4,y4) (x5,y5) (x6,y6) (x7,y7) (x8,y8) (x9,y9) (x10,y10) (x11,y11) (x12,y12) = 
+    SynExpr.DotIndexedGet(arr,[x1;y1;x2;y2;x3;y3;x4;y4;x5;y5;x6;y6;x7;y7;x8;y8;x9;y9;x10;y10;x11;y11;x12;y12],mDot,m)
+
+let mkSynDotBrackSlice13Get  m mDot arr (x1,y1) (x2,y2) (x3,y3) (x4,y4) (x5,y5) (x6,y6) (x7,y7) (x8,y8) (x9,y9) (x10,y10) (x11,y11) (x12,y12) (x13,y13) = 
+    SynExpr.DotIndexedGet(arr,[x1;y1;x2;y2;x3;y3;x4;y4;x5;y5;x6;y6;x7;y7;x8;y8;x9;y9;x10;y10;x11;y11;x12;y12;x13;y13],mDot,m)
+
+let mkSynDotBrackSlice14Get  m mDot arr (x1,y1) (x2,y2) (x3,y3) (x4,y4) (x5,y5) (x6,y6) (x7,y7) (x8,y8) (x9,y9) (x10,y10) (x11,y11) (x12,y12) (x13,y13) (x14,y14) = 
+    SynExpr.DotIndexedGet(arr,[x1;y1;x2;y2;x3;y3;x4;y4;x5;y5;x6;y6;x7;y7;x8;y8;x9;y9;x10;y10;x11;y11;x12;y12;x13;y13;x14;y14],mDot,m)
+
+let mkSynDotBrackSlice15Get  m mDot arr (x1,y1) (x2,y2) (x3,y3) (x4,y4) (x5,y5) (x6,y6) (x7,y7) (x8,y8) (x9,y9) (x10,y10) (x11,y11) (x12,y12) (x13,y13) (x14,y14) (x15,y15) = 
+    SynExpr.DotIndexedGet(arr,[x1;y1;x2;y2;x3;y3;x4;y4;x5;y5;x6;y6;x7;y7;x8;y8;x9;y9;x10;y10;x11;y11;x12;y12;x13;y13;x14;y14;x15;y15],mDot,m)
+
+let mkSynDotBrackSlice16Get  m mDot arr (x1,y1) (x2,y2) (x3,y3) (x4,y4) (x5,y5) (x6,y6) (x7,y7) (x8,y8) (x9,y9) (x10,y10) (x11,y11) (x12,y12) (x13,y13) (x14,y14) (x15,y15) (x16,y16) = 
+    SynExpr.DotIndexedGet(arr,[x1;y1;x2;y2;x3;y3;x4;y4;x5;y5;x6;y6;x7;y7;x8;y8;x9;y9;x10;y10;x11;y11;x12;y12;x13;y13;x14;y14;x15;y15;x16;y16],mDot,m)
+
+let mkSynDotBrackSlice17Get  m mDot arr (x1,y1) (x2,y2) (x3,y3) (x4,y4) (x5,y5) (x6,y6) (x7,y7) (x8,y8) (x9,y9) (x10,y10) (x11,y11) (x12,y12) (x13,y13) (x14,y14) (x15,y15) (x16,y16) (x17,y17) = 
+    SynExpr.DotIndexedGet(arr,[x1;y1;x2;y2;x3;y3;x4;y4;x5;y5;x6;y6;x7;y7;x8;y8;x9;y9;x10;y10;x11;y11;x12;y12;x13;y13;x14;y14;x15;y15;x16;y16;x17;y17],mDot,m)
+
+let mkSynDotBrackSlice18Get  m mDot arr (x1,y1) (x2,y2) (x3,y3) (x4,y4) (x5,y5) (x6,y6) (x7,y7) (x8,y8) (x9,y9) (x10,y10) (x11,y11) (x12,y12) (x13,y13) (x14,y14) (x15,y15) (x16,y16) (x17,y17) (x18,y18) = 
+    SynExpr.DotIndexedGet(arr,[x1;y1;x2;y2;x3;y3;x4;y4;x5;y5;x6;y6;x7;y7;x8;y8;x9;y9;x10;y10;x11;y11;x12;y12;x13;y13;x14;y14;x15;y15;x16;y16;x17;y17;x18;y18],mDot,m)
+
+let mkSynDotBrackSlice19Get  m mDot arr (x1,y1) (x2,y2) (x3,y3) (x4,y4) (x5,y5) (x6,y6) (x7,y7) (x8,y8) (x9,y9) (x10,y10) (x11,y11) (x12,y12) (x13,y13) (x14,y14) (x15,y15) (x16,y16) (x17,y17) (x18,y18) (x19,y19) = 
+    SynExpr.DotIndexedGet(arr,[x1;y1;x2;y2;x3;y3;x4;y4;x5;y5;x6;y6;x7;y7;x8;y8;x9;y9;x10;y10;x11;y11;x12;y12;x13;y13;x14;y14;x15;y15;x16;y16;x17;y17;x18;y18;x19;y19],mDot,m)
+
+let mkSynDotBrackSlice20Get  m mDot arr (x1,y1) (x2,y2) (x3,y3) (x4,y4) (x5,y5) (x6,y6) (x7,y7) (x8,y8) (x9,y9) (x10,y10) (x11,y11) (x12,y12) (x13,y13) (x14,y14) (x15,y15) (x16,y16) (x17,y17) (x18,y18) (x19,y19) (x20,y20) = 
+    SynExpr.DotIndexedGet(arr,[x1;y1;x2;y2;x3;y3;x4;y4;x5;y5;x6;y6;x7;y7;x8;y8;x9;y9;x10;y10;x11;y11;x12;y12;x13;y13;x14;y14;x15;y15;x16;y16;x17;y17;x18;y18;x19;y19;x20;y20],mDot,m)
+
+let mkSynDotBrackSlice21Get  m mDot arr (x1,y1) (x2,y2) (x3,y3) (x4,y4) (x5,y5) (x6,y6) (x7,y7) (x8,y8) (x9,y9) (x10,y10) (x11,y11) (x12,y12) (x13,y13) (x14,y14) (x15,y15) (x16,y16) (x17,y17) (x18,y18) (x19,y19) (x20,y20) (x21,y21) = 
+    SynExpr.DotIndexedGet(arr,[x1;y1;x2;y2;x3;y3;x4;y4;x5;y5;x6;y6;x7;y7;x8;y8;x9;y9;x10;y10;x11;y11;x12;y12;x13;y13;x14;y14;x15;y15;x16;y16;x17;y17;x18;y18;x19;y19;x20;y20;x21;y21],mDot,m)
+
+let mkSynDotBrackSlice22Get  m mDot arr (x1,y1) (x2,y2) (x3,y3) (x4,y4) (x5,y5) (x6,y6) (x7,y7) (x8,y8) (x9,y9) (x10,y10) (x11,y11) (x12,y12) (x13,y13) (x14,y14) (x15,y15) (x16,y16) (x17,y17) (x18,y18) (x19,y19) (x20,y20) (x21,y21) (x22,y22) = 
+    SynExpr.DotIndexedGet(arr,[x1;y1;x2;y2;x3;y3;x4;y4;x5;y5;x6;y6;x7;y7;x8;y8;x9;y9;x10;y10;x11;y11;x12;y12;x13;y13;x14;y14;x15;y15;x16;y16;x17;y17;x18;y18;x19;y19;x20;y20;x21;y21;x22;y22],mDot,m)
+
+let mkSynDotBrackSlice23Get  m mDot arr (x1,y1) (x2,y2) (x3,y3) (x4,y4) (x5,y5) (x6,y6) (x7,y7) (x8,y8) (x9,y9) (x10,y10) (x11,y11) (x12,y12) (x13,y13) (x14,y14) (x15,y15) (x16,y16) (x17,y17) (x18,y18) (x19,y19) (x20,y20) (x21,y21) (x22,y22) (x23,y23) = 
+    SynExpr.DotIndexedGet(arr,[x1;y1;x2;y2;x3;y3;x4;y4;x5;y5;x6;y6;x7;y7;x8;y8;x9;y9;x10;y10;x11;y11;x12;y12;x13;y13;x14;y14;x15;y15;x16;y16;x17;y17;x18;y18;x19;y19;x20;y20;x21;y21;x22;y22;x23;y23],mDot,m)
+
+let mkSynDotBrackSlice24Get  m mDot arr (x1,y1) (x2,y2) (x3,y3) (x4,y4) (x5,y5) (x6,y6) (x7,y7) (x8,y8) (x9,y9) (x10,y10) (x11,y11) (x12,y12) (x13,y13) (x14,y14) (x15,y15) (x16,y16) (x17,y17) (x18,y18) (x19,y19) (x20,y20) (x21,y21) (x22,y22) (x23,y23) (x24,y24) = 
+    SynExpr.DotIndexedGet(arr,[x1;y1;x2;y2;x3;y3;x4;y4;x5;y5;x6;y6;x7;y7;x8;y8;x9;y9;x10;y10;x11;y11;x12;y12;x13;y13;x14;y14;x15;y15;x16;y16;x17;y17;x18;y18;x19;y19;x20;y20;x21;y21;x22;y22;x23;y23;x24;y24],mDot,m)
+
+let mkSynDotBrackSlice25Get  m mDot arr (x1,y1) (x2,y2) (x3,y3) (x4,y4) (x5,y5) (x6,y6) (x7,y7) (x8,y8) (x9,y9) (x10,y10) (x11,y11) (x12,y12) (x13,y13) (x14,y14) (x15,y15) (x16,y16) (x17,y17) (x18,y18) (x19,y19) (x20,y20) (x21,y21) (x22,y22) (x23,y23) (x24,y24) (x25,y25) = 
+    SynExpr.DotIndexedGet(arr,[x1;y1;x2;y2;x3;y3;x4;y4;x5;y5;x6;y6;x7;y7;x8;y8;x9;y9;x10;y10;x11;y11;x12;y12;x13;y13;x14;y14;x15;y15;x16;y16;x17;y17;x18;y18;x19;y19;x20;y20;x21;y21;x22;y22;x23;y23;x24;y24;x25;y25],mDot,m)
+
+let mkSynDotBrackSlice26Get  m mDot arr (x1,y1) (x2,y2) (x3,y3) (x4,y4) (x5,y5) (x6,y6) (x7,y7) (x8,y8) (x9,y9) (x10,y10) (x11,y11) (x12,y12) (x13,y13) (x14,y14) (x15,y15) (x16,y16) (x17,y17) (x18,y18) (x19,y19) (x20,y20) (x21,y21) (x22,y22) (x23,y23) (x24,y24) (x25,y25) (x26,y26) = 
+    SynExpr.DotIndexedGet(arr,[x1;y1;x2;y2;x3;y3;x4;y4;x5;y5;x6;y6;x7;y7;x8;y8;x9;y9;x10;y10;x11;y11;x12;y12;x13;y13;x14;y14;x15;y15;x16;y16;x17;y17;x18;y18;x19;y19;x20;y20;x21;y21;x22;y22;x23;y23;x24;y24;x25;y25;x26;y26],mDot,m)
+
+let mkSynDotBrackSlice27Get  m mDot arr (x1,y1) (x2,y2) (x3,y3) (x4,y4) (x5,y5) (x6,y6) (x7,y7) (x8,y8) (x9,y9) (x10,y10) (x11,y11) (x12,y12) (x13,y13) (x14,y14) (x15,y15) (x16,y16) (x17,y17) (x18,y18) (x19,y19) (x20,y20) (x21,y21) (x22,y22) (x23,y23) (x24,y24) (x25,y25) (x26,y26) (x27,y27) = 
+    SynExpr.DotIndexedGet(arr,[x1;y1;x2;y2;x3;y3;x4;y4;x5;y5;x6;y6;x7;y7;x8;y8;x9;y9;x10;y10;x11;y11;x12;y12;x13;y13;x14;y14;x15;y15;x16;y16;x17;y17;x18;y18;x19;y19;x20;y20;x21;y21;x22;y22;x23;y23;x24;y24;x25;y25;x26;y26;x27;y27],mDot,m)
+
+let mkSynDotBrackSlice28Get  m mDot arr (x1,y1) (x2,y2) (x3,y3) (x4,y4) (x5,y5) (x6,y6) (x7,y7) (x8,y8) (x9,y9) (x10,y10) (x11,y11) (x12,y12) (x13,y13) (x14,y14) (x15,y15) (x16,y16) (x17,y17) (x18,y18) (x19,y19) (x20,y20) (x21,y21) (x22,y22) (x23,y23) (x24,y24) (x25,y25) (x26,y26) (x27,y27) (x28,y28) = 
+    SynExpr.DotIndexedGet(arr,[x1;y1;x2;y2;x3;y3;x4;y4;x5;y5;x6;y6;x7;y7;x8;y8;x9;y9;x10;y10;x11;y11;x12;y12;x13;y13;x14;y14;x15;y15;x16;y16;x17;y17;x18;y18;x19;y19;x20;y20;x21;y21;x22;y22;x23;y23;x24;y24;x25;y25;x26;y26;x27;y27;x28;y28],mDot,m)
+
+let mkSynDotBrackSlice29Get  m mDot arr (x1,y1) (x2,y2) (x3,y3) (x4,y4) (x5,y5) (x6,y6) (x7,y7) (x8,y8) (x9,y9) (x10,y10) (x11,y11) (x12,y12) (x13,y13) (x14,y14) (x15,y15) (x16,y16) (x17,y17) (x18,y18) (x19,y19) (x20,y20) (x21,y21) (x22,y22) (x23,y23) (x24,y24) (x25,y25) (x26,y26) (x27,y27) (x28,y28) (x29,y29) = 
+    SynExpr.DotIndexedGet(arr,[x1;y1;x2;y2;x3;y3;x4;y4;x5;y5;x6;y6;x7;y7;x8;y8;x9;y9;x10;y10;x11;y11;x12;y12;x13;y13;x14;y14;x15;y15;x16;y16;x17;y17;x18;y18;x19;y19;x20;y20;x21;y21;x22;y22;x23;y23;x24;y24;x25;y25;x26;y26;x27;y27;x28;y28;x29;y29],mDot,m)
+
+let mkSynDotBrackSlice30Get  m mDot arr (x1,y1) (x2,y2) (x3,y3) (x4,y4) (x5,y5) (x6,y6) (x7,y7) (x8,y8) (x9,y9) (x10,y10) (x11,y11) (x12,y12) (x13,y13) (x14,y14) (x15,y15) (x16,y16) (x17,y17) (x18,y18) (x19,y19) (x20,y20) (x21,y21) (x22,y22) (x23,y23) (x24,y24) (x25,y25) (x26,y26) (x27,y27) (x28,y28) (x29,y29) (x30,y30) = 
+    SynExpr.DotIndexedGet(arr,[x1;y1;x2;y2;x3;y3;x4;y4;x5;y5;x6;y6;x7;y7;x8;y8;x9;y9;x10;y10;x11;y11;x12;y12;x13;y13;x14;y14;x15;y15;x16;y16;x17;y17;x18;y18;x19;y19;x20;y20;x21;y21;x22;y22;x23;y23;x24;y24;x25;y25;x26;y26;x27;y27;x28;y28;x29;y29;x30;y30],mDot,m)
+
+let mkSynDotBrackSlice31Get  m mDot arr (x1,y1) (x2,y2) (x3,y3) (x4,y4) (x5,y5) (x6,y6) (x7,y7) (x8,y8) (x9,y9) (x10,y10) (x11,y11) (x12,y12) (x13,y13) (x14,y14) (x15,y15) (x16,y16) (x17,y17) (x18,y18) (x19,y19) (x20,y20) (x21,y21) (x22,y22) (x23,y23) (x24,y24) (x25,y25) (x26,y26) (x27,y27) (x28,y28) (x29,y29) (x30,y30) (x31,y31) = 
+    SynExpr.DotIndexedGet(arr,[x1;y1;x2;y2;x3;y3;x4;y4;x5;y5;x6;y6;x7;y7;x8;y8;x9;y9;x10;y10;x11;y11;x12;y12;x13;y13;x14;y14;x15;y15;x16;y16;x17;y17;x18;y18;x19;y19;x20;y20;x21;y21;x22;y22;x23;y23;x24;y24;x25;y25;x26;y26;x27;y27;x28;y28;x29;y29;x30;y30;x31;y31],mDot,m)
+
+let mkSynDotBrackSlice32Get  m mDot arr (x1,y1) (x2,y2) (x3,y3) (x4,y4) (x5,y5) (x6,y6) (x7,y7) (x8,y8) (x9,y9) (x10,y10) (x11,y11) (x12,y12) (x13,y13) (x14,y14) (x15,y15) (x16,y16) (x17,y17) (x18,y18) (x19,y19) (x20,y20) (x21,y21) (x22,y22) (x23,y23) (x24,y24) (x25,y25) (x26,y26) (x27,y27) (x28,y28) (x29,y29) (x30,y30) (x31,y31) (x32,y32) = 
+    SynExpr.DotIndexedGet(arr,[x1;y1;x2;y2;x3;y3;x4;y4;x5;y5;x6;y6;x7;y7;x8;y8;x9;y9;x10;y10;x11;y11;x12;y12;x13;y13;x14;y14;x15;y15;x16;y16;x17;y17;x18;y18;x19;y19;x20;y20;x21;y21;x22;y22;x23;y23;x24;y24;x25;y25;x26;y26;x27;y27;x28;y28;x29;y29;x30;y30;x31;y31;x32;y32],mDot,m)
+
 let mkSynDotParenGet lhsm dotm a b   = 
     match b with
     | SynExpr.Tuple ([_;_],_,_)   -> errorR(Deprecated(FSComp.SR.astDeprecatedIndexerNotation(),lhsm)) ; SynExpr.Const(SynConst.Unit,lhsm)
