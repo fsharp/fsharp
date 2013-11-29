@@ -204,7 +204,15 @@ lib\debug\4.0\fsc.exe hello.fs
 hello.exe
 ```
 
-### Running Compiler tests (on Windows)
+### Running Compiler and Library tests (on OSX and Linux)
+
+Use the following script:
+```
+cd ..\tests\fsharp\core
+./run-all.sh
+```
+
+### Running Compiler and Library tests (on Windows)
 
 There are language tests under `tests\fsharp\core`. The test apparatus is primitive and unfortunately uses batch files. You can run these on Windows using:
 
