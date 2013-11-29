@@ -2070,8 +2070,11 @@ let RunAll() =
     OnCancelTests.Run()
     GenerateTests.Run()
     ParallelTests.Run()
+#if Portable
+#else
     AsyncWaitOneTest1.Run()
     AsyncGenerateTests.Run()
+#endif
 
 #if ALL_IN_ONE
 let RUN() = RunAll(); failures

@@ -24,7 +24,7 @@
     <Optimize>false</Optimize>
     <Tailcalls>false</Tailcalls>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;Portable;NetCore;COMPILED</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;Portable;NetCore;COMPILED;ALL_IN_ONE</DefineConstants>
     <WarningLevel>3</WarningLevel>
     <DocumentationFile>bin\Debug\NetCoreLibrary1.XML</DocumentationFile>
   </PropertyGroup>
@@ -33,7 +33,7 @@
     <Optimize>true</Optimize>
     <Tailcalls>true</Tailcalls>
     <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE;Portable;NetCore</DefineConstants>
+    <DefineConstants>TRACE;Portable;NetCore;ALL_IN_ONE</DefineConstants>
     <WarningLevel>3</WarningLevel>
     <DocumentationFile>bin\Release\NetCoreLibrary1.XML</DocumentationFile>
   </PropertyGroup>
