@@ -154,6 +154,8 @@ Open `all-vs2012.sln`, and edit in modes Debug or Release. The compiler takes a 
 can be a bit invasive to the work flow, so it's normally better to do the actual compilation from 
 the command line, see above.
 
+Historically it is difficult to edit the compiler with Xamarin Studio or MonoDevelop because of bugs in loading the hand-edited project files and targets used in the F# compiler build. These are generally in the process of being fixed, your mileage will vary.
+
 ### Running Compiler and Library tests 
 
 #### On Linux
