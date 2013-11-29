@@ -37,7 +37,7 @@ sudo make install
 By default that makes optimized binaries. To make debug, use ```make CONFIG=debug```
 
 ### On Windows, using msbuild (e.g.. if .NET is installed) 
-If you have only VS2012 or VS2013 installed, and not VS2010, you'll need to install the F# 2.0 Runtime (http://www.microsoft.com/en-us/download/details.aspx?id=13450)´.
+If you have only VS2012 or VS2013 installed, and not VS2010, you'll need to install the F# 2.0 Runtime (http://www.microsoft.com/en-us/download/details.aspx?id=13450)ï¿½.
 ```
 build.bat
 ```
@@ -154,12 +154,21 @@ Open `all-vs2012.sln`, and edit in modes Debug or Release. The compiler takes a 
 can be a bit invasive to the work flow, so it's normally better to do the actual compilation from 
 the command line, see above.
 
-The F# support in MonoDevelop uses an in-process background compiler. On the Mac this causes pausing garbage
-collections to kick in which makes editing the compiler in MonoDevelop awkward.
+### Running Compiler and Library tests 
 
-### Running tests (on Windows)
+#### On Linux
 
+Only a subset of the tests are currently enabled.
 
+After building and installing, run
+```
+cd tests/fsharp/core
+./run-all.sh
+```
+
+#### On Windows
+
+There are language tests under `tests\fsharp\core`. The test apparatus is primitive and unfortunately uses batch 
 Set up a shell (release mode)
 
 ```
@@ -172,7 +181,25 @@ Run the tests:
 ```
 .\build-and-run.bat
 ```
-Look in build-and-run.log.
+Look in build-and-run.log. The results file will contain one entry for each test directory, plus any reported errors.
+
+```
+tests\fsharp\core
+tests\fsharp\core\queriesCustomQueryOps
+tests\fsharp\core\queriesLeafExpressionConvert
+tests\fsharp\core\queriesNullableOperators
+tests\fsharp\core\queriesOverIEnumerable
+...
+```
+
+Some tests for LINQ queries require SQL Server be installed. A failing test will look like this:
+
+```
+ERRORLEVEL=1: in tests\fsharp\core\csfromfs\build.bat
+```
+
+You can then go to the relevant directory and run `build.bat` and `run.bat`.
+
 
 
 
@@ -204,46 +231,6 @@ lib\debug\4.0\fsc.exe hello.fs
 hello.exe
 ```
 
-### Running Compiler and Library tests 
-
-#### On Linux
-
-Only a subset of the tests are currently enabled.
-
-After building and installing, run
-```
-cd tests/fsharp/core
-./run-all.sh
-```
-
-#### On Windows
-
-There are language tests under `tests\fsharp\core`. The test apparatus is primitive and unfortunately uses batch files. You can run these on Windows using:
-
-```
-cd ..\tests\fsharp\core
-..\..\build-and-run-all-installed-ilx-configs.bat results.log
-```
-
-The results file will contain one entry for each test directory, plus any reported errors.
-
-```
-tests\fsharp\core
-tests\fsharp\core\queriesCustomQueryOps
-tests\fsharp\core\queriesLeafExpressionConvert
-tests\fsharp\core\queriesNullableOperators
-tests\fsharp\core\queriesOverIEnumerable
-...
-```
-
-Some tests for LINQ queries require SQL Server be installed. A failing test will look like this:
-
-```
-ERRORLEVEL=1: in tests\fsharp\core\csfromfs\build.bat
-```
-
-You can then go to the relevant directory and run `build.bat` and `run.bat`.
-
 
 ## History 
 
@@ -258,7 +245,6 @@ vagrant up
 vagrant ssh
 cd /vagrant
 sudo apt-get install dos2unix autoconf
-dos2unix ./autogen.sh launcher.in Makefile.in config.make.in configure.ac
 ./autogen.sh --prefix=/usr
 make
 sudo make install
