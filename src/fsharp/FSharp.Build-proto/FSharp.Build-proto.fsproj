@@ -45,7 +45,6 @@
     <Reference Include="mscorlib" />
     <Reference Include="FSharp.Core" />
     <Reference Include="System" />
-    <Reference Include="System.Numerics" Condition="'$(TargetFramework)'=='net40'" />
     <Reference Include="System.Numerics" Condition="'$(TargetFramework)' == 'net40'" />
     <Reference Include="Microsoft.Build.Engine" />
     <Reference Include="Microsoft.Build" Condition="'$(TargetFramework)'=='net40'" />
