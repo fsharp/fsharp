@@ -17,22 +17,32 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' " />
   <ItemGroup>
     <FsSrGen Include="FSBuild.txt">
-      <Link>FSBuild.txt</Link>
+      <Link>Utilities/FSBuild.txt</Link>
     </FsSrGen>
     <Compile Include="..\..\assemblyinfo\assemblyinfo.FSharp.Build.dll.fs">
-      <Link>assemblyinfo.FSharp.Build.dll.fs</Link>
+      <Link>Utilities/assemblyinfo.FSharp.Build.dll.fs</Link>
     </Compile>
     <Compile Include="..\..\utils\CompilerLocationUtils.fs">
-      <Link>CompilerLocationUtils.fs</Link>
+      <Link>Utilities/CompilerLocationUtils.fs</Link>
     </Compile>
-    <Compile Include="Fsc.fsi" />
-    <Compile Include="Fsc.fs" />
-    <Compile Include="CreateFSharpManifestResourceName.fsi" />
-    <Compile Include="CreateFSharpManifestResourceName.fs" />
+    <Compile Include="Fsc.fsi" >
+      <Link>BuildTasks/Fsc.fsi</Link>
+    </Compile>
+    <Compile Include="Fsc.fs" >
+      <Link>BuildTasks/Fsc.fs</Link>
+    </Compile>
+    <Compile Include="CreateFSharpManifestResourceName.fsi" >
+      <Link>BuildTasks/CreateFSharpManifestResourceName.fsi</Link>
+    </Compile>
+    <Compile Include="CreateFSharpManifestResourceName.fs" >
+      <Link>BuildTasks/CreateFSharpManifestResourceName.fs</Link>
+    </Compile>
     <None Include="Microsoft.FSharp.Targets">
+      <Link>Microsoft.FSharp.Targets</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Microsoft.Portable.FSharp.Targets">
+      <Link>Microsoft.Portable.FSharp.Targets</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
