@@ -1,12 +1,12 @@
-This is the F# compiler, core library and core tools (open source edition). It uses the Apache 2.0 license.
+This is the F# compiler, core library and core tools (open edition). It uses the Apache 2.0 license.
 
-The `master` branch is for the latest version of F# (currently F# 3.0).
+The `master` branch is for the latest version of F# (currently F# 3.1).
 
 To bootstrap the compiler, binaries built from an earlier version of this project are used.
 
 ## Requirements
 
-Requires mono 2.9 or higher.  Prefer Mono 3.0.
+Requires mono 3.0 or higher.
 
 On OSX, requires automake 2.69. To install from [homebrew](http://mxcl.github.com/homebrew):
 ```
@@ -36,20 +36,23 @@ sudo make install
 ```
 By default that makes optimized binaries. To make debug, use ```make CONFIG=debug```
 
-### On Windows, using msbuild (e.g.. if .NET is installed) 
-If you have only VS2012 or VS2013 installed, and not VS2010, you'll need to install the F# 2.0 Runtime (http://www.microsoft.com/en-us/download/details.aspx?id=13450)�.
+### On Windows, using msbuild
+
+If you have only VS2012 or VS2013 installed, and not VS2010, you'll need to install the F# 2.0 Runtime (http://www.microsoft.com/en-us/download/details.aspx?id=13450).
+
+Build using:
 ```
 build.bat
 ```
 This build the proto compiler, then the library, then the final compiler.
-You can also build these independently using
+
+You can also build these independently using:
 ```
+cd src
 msbuild fsharp-proto-build.proj
 msbuild fsharp-library-build.proj /p:TargetFramework=net40 /p:Configuration=Release
 msbuild fsharp-compiler-build.proj /p:TargetFramework=net40 /p:Configuration=Release
-
 ```
-
 
 You can also build the FSharp.Core for .NET 2.0, Xamarin Android, Xamarin iOS, 
 Portable Profile47 (net45+sl5+win8), Portable Profile88 (net4+sl4+wp71+win8), XNA 4.0 for Xbox 360, 

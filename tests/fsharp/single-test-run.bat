@@ -88,16 +88,19 @@ goto :ERROR
 
 :Ok
 echo Ran fsharp %~f0 ok.
+endlocal
 exit /b 0
 goto :EOF
 
 :Skip
 echo Skipped %~f0
+endlocal
 exit /b 0
 goto :EOF
 
 :Error
 call %SCRIPT_ROOT%\ChompErr.bat %ERRORLEVEL% %~f0  "%ERRORMSG%"
+endlocal
 exit /b %ERRORLEVEL% 
 goto :EOF
 
@@ -113,6 +116,7 @@ if NOT EXIST dont.pipe.to.stdin (
   dir test.ok > NUL 2>&1 ) || (
   @echo FSI_STDIN failed;
   set ERRORMSG=%ERRORMSG% FSI_STDIN failed;
+  goto Error
   )
 )
 goto :EOF
@@ -125,6 +129,7 @@ if NOT EXIST dont.pipe.to.stdin (
   dir test.ok > NUL 2>&1 ) || (
   @echo FSI_STDIN_OPT failed
   set ERRORMSG=%ERRORMSG% FSI_STDIN_OPT failed;
+  goto Error
   )
 )
 goto :EOF
@@ -137,6 +142,7 @@ if NOT EXIST dont.pipe.to.stdin (
   dir test.ok > NUL 2>&1 ) || (
   @echo FSI_STDIN_GUI failed;
   set ERRORMSG=%ERRORMSG% FSI_STDIN_GUI failed;
+  goto Error
   )
 )
 goto :EOF
@@ -149,6 +155,7 @@ if NOT EXIST dont.run.as.script (
   dir test.ok > NUL 2>&1 ) || (
   @echo FSI_FILE failed
   set ERRORMSG=%ERRORMSG% FSI_FILE failed;
+  goto Error
   )
 )
 goto :EOF
@@ -160,6 +167,7 @@ goto :EOF
   dir test.ok > NUL 2>&1 ) || (
   @echo :FSC_BASIC failed
   set ERRORMSG=%ERRORMSG% FSC_BASIC failed;
+  goto Error
   )
 goto :EOF
 
@@ -170,6 +178,7 @@ goto :EOF
   dir test.ok > NUL 2>&1 ) || (
   @echo :FSC_BASIC_64 failed
   set ERRORMSG=%ERRORMSG% FSC_BASIC_64 failed;
+  goto Error
   )
 goto :EOF
 
@@ -181,6 +190,7 @@ if exist test-hw.* (
   dir test.ok > NUL 2>&1 ) || (
   @echo  :FSC_HW failed
   set ERRORMSG=%ERRORMSG% FSC_HW failed;
+  goto Error
   )
 )
 goto :EOF
@@ -192,6 +202,7 @@ goto :EOF
   dir test.ok > NUL 2>&1 ) || (
   @echo :FSC_O3 failed
   set ERRORMSG=%ERRORMSG% FSC_03 failed;
+  goto Error
   )
 goto :EOF
 
@@ -202,6 +213,7 @@ goto :EOF
   dir test.ok > NUL 2>&1 ) || (
   @echo :FSC_OPT_MINUS_DEBUG failed
   set ERRORMSG=%ERRORMSG% FSC_OPT_MINUS_DEBUG failed;
+  goto Error
   )
 goto :EOF
 
@@ -212,6 +224,7 @@ goto :EOF
   dir test.ok > NUL 2>&1 ) || (
   @echo :FSC_OPT_PLUS_DEBUG failed
   set ERRORMSG=%ERRORMSG% FSC_OPT_PLUS_DEBUG failed;
+  goto Error
   )
 goto :EOF
 
@@ -224,6 +237,7 @@ if NOT EXIST dont.use.generated.signature (
     dir test.ok > NUL 2>&1 ) || (
     @echo :GENERATED_SIGNATURE failed
     set ERRORMSG=%ERRORMSG% FSC_GENERATED_SIGNATURE failed;
+    goto Error
     )
   )
 )
@@ -238,6 +252,7 @@ if NOT EXIST dont.use.empty.signature (
     dir test.ok > NUL 2>&1 ) || (
     @echo :EMPTY_SIGNATURE failed
     set ERRORMSG=%ERRORMSG% FSC_EMPTY_SIGNATURE failed;
+    goto Error
     )
   )
 )
@@ -252,6 +267,7 @@ if NOT EXIST dont.use.empty.signature (
       dir test.ok > NUL 2>&1 ) || (
       @echo :EMPTY_SIGNATURE_OPT --optimize failed
       set ERRORMSG=%ERRORMSG% EMPTY_SIGNATURE_OPT --optimize failed;
+      goto Error
     )
   )
 )
@@ -264,6 +280,7 @@ goto :EOF
   dir test.ok > NUL 2>&1 ) || (
   @echo :FRENCH failed
   set ERRORMSG=%ERRORMSG% FRENCH failed;
+  goto Error
   )
 goto :EOF
 
@@ -274,6 +291,7 @@ goto :EOF
   dir test.ok > NUL 2>&1 ) || (
   @echo :SPANISH failed
   set ERRORMSG=%ERRORMSG% SPANISH failed;
+  goto Error
   )
 goto :EOF
 
@@ -285,6 +303,7 @@ if NOT EXIST dont.compile.test.as.dll (
   dir test.ok > NUL 2>&1 ) || (
   @echo :AS_DLL failed
   set ERRORMSG=%ERRORMSG% AS_DLL failed;
+  goto Error
   )
 )
 goto :EOF
@@ -298,6 +317,7 @@ if NOT EXIST dont.use.wrapper.namespace (
     dir test.ok > NUL 2>&1 ) || (
     @echo :WRAPPER_NAMESPACE failed
     set ERRORMSG=%ERRORMSG% WRAPPER_NAMESPACE failed;
+    goto Error
     )
   )
 )
@@ -312,6 +332,7 @@ if NOT EXIST dont.use.wrapper.namespace (
     dir test.ok > NUL 2>&1 ) || (
     @echo :WRAPPER_NAMESPACE_OPT failed
     set ERRORMSG=%ERRORMSG% WRAPPER_NAMESPACE_OPT failed;
+    goto Error
     )
   )
 )
