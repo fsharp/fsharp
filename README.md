@@ -41,6 +41,16 @@ If you have only VS2012 or VS2013 installed, and not VS2010, you'll need to inst
 ```
 build.bat
 ```
+This build the proto compiler, then the library, then the final compiler.
+You can also build these independently using
+```
+msbuild fsharp-proto-build.proj
+msbuild fsharp-library-build.proj /p:TargetFramework=net40 /p:Configuration=Release
+msbuild fsharp-compiler-build.proj /p:TargetFramework=net40 /p:Configuration=Release
+
+```
+
+
 You can also build the FSharp.Core for .NET 2.0, Xamarin Android, Xamarin iOS, 
 Portable Profile47 (net45+sl5+win8), Portable Profile88 (net4+sl4+wp71+win8), XNA 4.0 for Xbox 360, 
 Silverlight 5.0 and Windows Phone 7.1,  profiles:
