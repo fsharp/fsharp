@@ -1,3 +1,6 @@
+srcdir := @abs_srcdir@/
+
+include @abs_top_builddir@/config.make
 
 # Make the proto using the bootstrap, then make the final compiler using the proto
 # We call MAKE sequentially because we don't want build-final to explicitly depend on build-proto,
@@ -7,7 +10,12 @@ all:
 	$(MAKE) build-proto
 	$(MAKE) build
 
-build-proto:
+# We need the bootstrap's FSharp.Core to run the proto
+build-proto: $(bootstrapdir)FSharp.Core.dll $(bootstrapdir)FSharp.Core.sigdata $(bootstrapdir)FSharp.Core.optdata
+	@-mkdir $(protodir)
+	cp -p $(bootstrapdir)FSharp.Core.dll $(protodir)FSharp.Core.dll
+	cp -p $(bootstrapdir)FSharp.Core.sigdata $(protodir)FSharp.Core.sigdata
+	cp -p $(bootstrapdir)FSharp.Core.optdata $(protodir)FSharp.Core.optdata
 	$(MAKE) -C FSharp.Build-proto Configuration=proto $@
 	$(MAKE) -C FSharp.Compiler-proto Configuration=proto $@
 	$(MAKE) -C Fsc-proto Configuration=proto $@

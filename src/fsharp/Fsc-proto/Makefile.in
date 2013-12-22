@@ -5,12 +5,8 @@ srcdir := @abs_srcdir@/
 
 include @abs_top_builddir@/config.make
 
-build-proto: $(protodir)FSharp.Core.dll
+build-proto:
 	MONO_ENV_OPTIONS=$(monoopts) xbuild /p:Configuration=Proto
+	chmod +x $(protodir)fsc-proto.exe
 
 include $(topdir)/src/fsharp/targets.make
-
-# We need the bootstrap's FSharp.Core to run the proto
-$(protodir)FSharp.Core.dll: $(bootstrapdir)FSharp.Core.dll
-	@-mkdir $(protodir)
-	cp -p $(bootstrapdir)FSharp.Core.dll $(protodir)FSharp.Core.dll
