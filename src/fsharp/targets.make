@@ -37,7 +37,7 @@ install-lib:
 	    $(INSTALL_LIB) $(outdir)Microsoft.FSharp.Targets $(DESTDIR)$(gacdir)/$(TARGET)/; \
 	    mkdir -p $(tmpdir); \
 	    echo '<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">' > $(tmpdir)Microsoft.FSharp.Targets; \
-	    echo '    <Import Project="$(DESTDIR)$(gacdir)/$(TARGET)/Microsoft.FSharp.Targets" />' >> $(tmpdir)Microsoft.FSharp.Targets; \
+	    echo '    <Import Project="$(gacdir)/$(TARGET)/Microsoft.FSharp.Targets" />' >> $(tmpdir)Microsoft.FSharp.Targets; \
 	    echo '</Project>' >> $(tmpdir)Microsoft.FSharp.Targets; \
 	    mkdir -p $(DESTDIR)$(gacdir)/Microsoft\ F#/v$(TARGET)/; \
 	    mkdir -p $(DESTDIR)$(gacdir)/Microsoft\ SDKs/F#/3.0/Framework/v$(TARGET)/; \
@@ -53,7 +53,7 @@ install-lib:
 	@if test -e $(outdir)Microsoft.Portable.FSharp.Targets; then \
 	    $(INSTALL_LIB) $(outdir)Microsoft.Portable.FSharp.Targets $(DESTDIR)$(gacdir)/$(TARGET)/; \
 	    echo '<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">' > $(tmpdir)Microsoft.Portable.FSharp.Targets; \
-	    echo '    <Import Project="$(DESTDIR)$(gacdir)/$(TARGET)/Microsoft.Portable.FSharp.Targets" />' >> $(tmpdir)Microsoft.Portable.FSharp.Targets; \
+	    echo '    <Import Project="$(gacdir)/$(TARGET)/Microsoft.Portable.FSharp.Targets" />' >> $(tmpdir)Microsoft.Portable.FSharp.Targets; \
 		echo '</Project>' >> $(tmpdir)Microsoft.Portable.FSharp.Targets; \
 	    mkdir -p $(DESTDIR)$(gacdir)/Microsoft\ F#/v$(TARGET)/; \
 	    mkdir -p $(DESTDIR)$(gacdir)/Microsoft\ SDKs/F#/3.0/Framework/v$(TARGET)/; \
@@ -102,11 +102,12 @@ install-lib-net45:
 # The binaries fsc.exe and fsi.exe only get installed for Mono 4.0 profile
 # This also installs 'fsharpc' and 'fsharpi'
 install-bin:
+	chmod +x $(outdir)$(ASSEMBLY)
 	sed -e 's,[@]DIR[@],$(gacdir)/$(TARGET),g' -e 's,[@]TOOL[@],$(ASSEMBLY),g' < $(topdir)launcher > $(outdir)$(subst fs,fsharp,$(NAME))$(VERSION)
 	chmod +x $(outdir)$(subst fs,fsharp,$(NAME))$(VERSION)
 	@mkdir -p $(DESTDIR)$(gacdir)/$(TARGET)
 	@mkdir -p $(DESTDIR)$(bindir)
-	$(INSTALL_LIB) $(outdir)$(ASSEMBLY) $(DESTDIR)$(gacdir)/$(TARGET)
+	$(INSTALL_BIN) $(outdir)$(ASSEMBLY) $(DESTDIR)$(gacdir)/$(TARGET)
 	$(INSTALL_BIN) $(outdir)$(subst fs,fsharp,$(NAME))$(VERSION) $(DESTDIR)$(bindir)
 
 
