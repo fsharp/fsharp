@@ -103,11 +103,11 @@ install-lib-net45:
 # This also installs 'fsharpc' and 'fsharpi'
 install-bin:
 	chmod +x $(outdir)$(ASSEMBLY)
-	sed -e 's,[@]DIR[@],$(gacdir)/$(TARGET),g' -e 's,[@]TOOL[@],$(ASSEMBLY),g' < $(topdir)launcher > $(outdir)$(subst fs,fsharp,$(NAME))$(VERSION)
-	chmod +x $(outdir)$(subst fs,fsharp,$(NAME))$(VERSION)
+	sed -e 's,[@]DIR[@],$(gacdir)/$(TARGET),g' -e 's,[@]TOOL[@],$(ASSEMBLY),g' < $(topdir)launcher > $(outdir)$(subst fs,fsharp,$(NAME))
+	chmod +x $(outdir)$(subst fs,fsharp,$(NAME))
 	@mkdir -p $(DESTDIR)$(gacdir)/$(TARGET)
 	@mkdir -p $(DESTDIR)$(bindir)
 	$(INSTALL_BIN) $(outdir)$(ASSEMBLY) $(DESTDIR)$(gacdir)/$(TARGET)
-	$(INSTALL_BIN) $(outdir)$(subst fs,fsharp,$(NAME))$(VERSION) $(DESTDIR)$(bindir)
+	$(INSTALL_BIN) $(outdir)$(subst fs,fsharp,$(NAME)) $(DESTDIR)$(bindir)
 
 
