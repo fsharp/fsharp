@@ -222,11 +222,12 @@ install-lib-4-5: install-lib-4
 # The binaries fsc.exe and fsi.exe only get installed for Mono 4.0 profile
 # This also installs 'fsharpc' and 'fsharpi'
 install-bin-4:
+	chmod +x $(outdir)$(ASSEMBLY)
 	sed -e 's,[@]DIR[@],$(gacdir)/$(TARGET),g' -e 's,[@]TOOL[@],$(ASSEMBLY),g' < $(topdir)launcher > $(outdir)$(subst fs,fsharp,$(NAME))$(VERSION)
 	chmod +x $(outdir)$(subst fs,fsharp,$(NAME))$(VERSION)
 	@mkdir -p $(DESTDIR)$(gacdir)/$(TARGET)
 	@mkdir -p $(DESTDIR)$(bindir)
-	$(INSTALL_LIB) $(outdir)$(ASSEMBLY) $(DESTDIR)$(gacdir)/$(TARGET)
+	$(INSTALL_BIN) $(outdir)$(ASSEMBLY) $(DESTDIR)$(gacdir)/$(TARGET)
 	$(INSTALL_BIN) $(outdir)$(subst fs,fsharp,$(NAME))$(VERSION) $(DESTDIR)$(bindir)
 
 
