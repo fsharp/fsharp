@@ -997,7 +997,10 @@ do test "vliwe94"   (f -2L = - 2L)
 do test "vliwe95"   (f -2n = - 2n)
 do test "vliwe96"   (f -2.0 = - 2.0)
 do test "vliwe97"   (f -2.0f = - 2.0f)
+#if Portable
+#else
 do test "vliwe99"   (f -2I = - 2I)
+#endif
 
 do test "vliwe9q"   ((function -2y -> true | _ -> false) (- 2y))
 do test "vliwe9w"   ((function -2s -> true | _ -> false) (- 2s))

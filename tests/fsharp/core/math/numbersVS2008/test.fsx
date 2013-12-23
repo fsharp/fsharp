@@ -252,7 +252,8 @@ let negative64s =
          (999L                  , -9223372036854775808L , -9223372036854775807L); (* MinValue is -2^63 *)
 #endif
          (999L                  , 999L                  , 999L)]
-
+#if Portable
+#else
 // Regression 3481: ToInt32
 let triple k n project =
   let x = k * BigInteger.Pow(2I,n) in project (x - 1I),project x,project (x + 1I)
@@ -271,7 +272,7 @@ for (a,b) in List.zip negative64s (List.map (triple64 -1I) [0 .. 64]) do
 
 
 (* END *)  
-
+#endif
 
 #if ALL_IN_ONE
 let RUN() = !failures

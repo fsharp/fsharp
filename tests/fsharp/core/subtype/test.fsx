@@ -262,7 +262,10 @@ module SomeRandomOperatorConstraints = begin
 
     let sum64 seq : int64 = Seq.reduce (+) seq
     let sum32 seq : int64 = Seq.reduce (+) seq
+#if Portable
+#else
     let sumBigInt seq : BigInteger = Seq.reduce (+) seq
+#endif
     let sumDateTime (dt : DateTime) (seq : #seq<TimeSpan>) : DateTime = Seq.fold (+) dt seq
 end
 

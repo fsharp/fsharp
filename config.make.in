@@ -58,7 +58,7 @@ SIGN_TOKEN = f536804aa0eb945b
 bootstrapdir = $(bootstrap)/4.0/
 tmpdir = .libs/$(CONFIG)/
 objdir = $(tmpdir)$(TARGET)/
-protodir = $(builddir)/lib/proto
+protodir = $(builddir)/lib/proto/
 outdir = $(builddir)lib/$(CONFIG)/$(outsuffix)/
 
 INSTALL = $(SHELL) $(topdir)install-sh
