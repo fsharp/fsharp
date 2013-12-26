@@ -624,7 +624,10 @@ let mkTcGlobals (compilingFslib,sysCcu,ilg,fslibCcu,directoryToResolveRelativePa
 
   let il_arr_tcr_map =
       Array.init 32 (fun idx ->
-          let type_sig = "[" + (String.replicate (idx - 1) ",") + "]`1"
+          let type_sig =
+            let rank = idx + 1
+            if rank = 1 then "[]`1"
+            else "[" + (String.replicate (rank - 1) ",") + "]`1"
           mk_MFCore_tcref fslibCcu type_sig)
   
   let bool_ty         = mkNonGenericTy bool_tcr   
