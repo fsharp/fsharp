@@ -13,6 +13,9 @@ On OSX, requires automake 2.69. To install from [homebrew](http://mxcl.github.co
 brew install automake
 ```
 
+## Build status
+
+Mono 3.x [![Build Status](https://travis-ci.org/enricosada/fsharp.png?branch=fsharp_31)](https://travis-ci.org/fsharp/fsharp)
 
 ## Building
 
