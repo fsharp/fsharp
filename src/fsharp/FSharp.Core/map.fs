@@ -1,25 +1,13 @@
-﻿(*
-
-Copyright 2002-2012 Microsoft Corporation
-Copyright 2013 Jack Pappas
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
-*)
-
-(* NOTE :   This file has been heavily modified from the original version which
-            shipped in the F# 3.0 code drop. However, it is still a drop-in replacement
-            for that code. *)
+﻿//----------------------------------------------------------------------------
+// Copyright (c) 2002-2012 Microsoft Corporation. 
+//
+// This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
+// copy of the license can be found in the License.html file at the root of this distribution. 
+// By using this source code in any fashion, you are agreeing to be bound 
+// by the terms of the Apache License, Version 2.0.
+//
+// You must not remove this notice, or any other, from this software.
+//----------------------------------------------------------------------------
 
 namespace Microsoft.FSharp.Collections
 
