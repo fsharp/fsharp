@@ -15,7 +15,8 @@ brew install automake
 
 ## Build status
 
-Mono 3.x [![Build Status](https://travis-ci.org/enricosada/fsharp.png?branch=fsharp_31)](https://travis-ci.org/fsharp/fsharp)
+
+Mono 3.x, OSX + some unit tests (Travis) [![Build Status](https://travis-ci.org/enricosada/fsharp.png?branch=fsharp_31)](https://travis-ci.org/fsharp/fsharp)
 
 ## Building
 
