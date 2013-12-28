@@ -15,11 +15,12 @@ brew install automake
 
 ## Build status
 
-Mono 3.x [![Mono][teamcity mono icon]][teamcity mono url]
+Mono 3.x (TeamCity) [![Build Status (Mono, TeamCity)][teamcity mono icon]][teamcity mono url]  
+Mono 3.x (Travis) [![Build Status (Mono, Travis)](https://travis-ci.org/fsharp/fsharp.png)](https://travis-ci.org/fsharp/fsharp)
 
-.NET 4.0 [![Windows .net 4.0][teamcity net40 icon]][teamcity net40 url]
+.NET 4.0 (TeamCity) [![Windows .net 4.0 (TeamCity)][teamcity net40 icon]][teamcity net40 url]
 
-.NET 2.0, Silverlight 5 [![Windows .net 2.0, silverlight 5][teamcity net20 icon]][teamcity net20 url]
+.NET 2.0 etc. (TeamCity) [![Windows .net 2.0 etc.][teamcity net20 icon]][teamcity net20 url]
 
 
 ## Building
