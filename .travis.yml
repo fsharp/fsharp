@@ -1,0 +1,17 @@
+language: objective-c
+
+env:
+  matrix:
+    - MONO_VERSION="3.2.5"
+
+install:
+  - wget "http://download.xamarin.com/MonoFrameworkMDK/Macx86/MonoFramework-MDK-${MONO_VERSION}.macos10.xamarin.x86.pkg"
+  - sudo installer -pkg "MonoFramework-MDK-${MONO_VERSION}.macos10.xamarin.x86.pkg" -target /
+
+script: 
+  - xbuild ./src/fsharp-proto-build.proj
+  - xbuild ./src/fsharp-library-build.proj
+  - xbuild ./src/fsharp-compiler-build.proj
+  - xbuild ./src/fsharp-library-unittests-build.proj /p:TargetFramework=net40
+  - /Library/Frameworks/Mono.framework/Versions/${MONO_VERSION}/bin/nunit-console4 ./lib/debug/FSharp.Core.Unittests.dll
+
