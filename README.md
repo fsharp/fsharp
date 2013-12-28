@@ -13,6 +13,14 @@ On OSX, requires automake 2.69. To install from [homebrew](http://mxcl.github.co
 brew install automake
 ```
 
+## Build status
+
+Mono 3.x [![Mono][teamcity mono icon]][teamcity mono url]
+
+.NET 4.0 [![Windows .net 4.0][teamcity net40 icon]][teamcity net40 url]
+
+.NET 2.0, Silverlight 5 [![Windows .net 2.0, silverlight 5][teamcity net20 icon]][teamcity net20 url]
+
 
 ## Building
 
@@ -204,3 +212,9 @@ F# compiler sources dropped by Microsoft are available from [fsharppowerpack.cod
 Uses bootstrapping libraries, tools and F# compiler. The `lib/bootstrap/X.0` directories contain mono-built libraries, compiler and tools that can be used to bootstrap a build. You can also supply your own via the `--with-bootstrap` option.
 
 
+[teamcity mono icon]: http://teamcity.codebetter.com/app/rest/builds/buildType:(id:bt814)/statusIcon
+[teamcity mono url]: http://teamcity.codebetter.com/viewType.html?buildTypeId=bt814&guest=1
+[teamcity net40 icon]: http://teamcity.codebetter.com/app/rest/builds/buildType:(id:bt817)/statusIcon
+[teamcity net40 url]: http://teamcity.codebetter.com/viewType.html?buildTypeId=bt817&guest=1
+[teamcity net20 icon]: http://teamcity.codebetter.com/app/rest/builds/buildType:(id:bt827)/statusIcon
+[teamcity net20 url]: http://teamcity.codebetter.com/viewType.html?buildTypeId=bt827&guest=1
