@@ -27,10 +27,10 @@
       <Link>Resources/assemblyinfo.fsc.exe.fs</Link>
     </Compile>
     <Compile Include="..\fscmain.fs">
-      <Link>Driver/fscmain.fs</Link>
+      <Link>fscmain.fs</Link>
     </Compile>
     <None Include="fsc.exe.config">
-      <Link>Driver/fsc.exe.config</Link>
+      <Link>fsc.exe.config</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

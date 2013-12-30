@@ -54,8 +54,9 @@ You can also build these independently using:
 ```
 cd src
 msbuild fsharp-proto-build.proj
-msbuild fsharp-library-build.proj /p:TargetFramework=net40 /p:Configuration=Release
-msbuild fsharp-compiler-build.proj /p:TargetFramework=net40 /p:Configuration=Release
+ngen install ..\lib\proto\fsc-proto.exe 
+msbuild fsharp-library-build.proj /p:Configuration=Release
+msbuild fsharp-compiler-build.proj /p:Configuration=Release
 ```
 
 You can also build the FSharp.Core for .NET 2.0, Xamarin Android, Xamarin iOS, 
