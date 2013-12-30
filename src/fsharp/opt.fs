@@ -1803,6 +1803,24 @@ and OptimizeExprOp cenv env (op,tyargs,args,m) =
             HasEffect = true;  
             MightMakeCriticalTailcall=false;
             Info=UnknownValue }
+    (* Handle addresses *)
+    | TOp.LValueOp (LGetAddr,lv),_,_ ->
+        let valInfoForVal = GetInfoForVal cenv env m lv
+        let op' =
+            match TryOptimizeVal cenv env (lv.MustInline,valInfoForVal.ValExprInfo,m) with
+            | Some e -> 
+               match e with
+               // Make sure this is a local ref. 
+               | Expr.Val (v,_,_) when v.IsLocalRef -> TOp.LValueOp (LGetAddr,v)
+               | _ -> op
+            | None -> op
+
+        Expr.Op (op',tyargs,args,m),
+        { TotalSize = 1;
+          FunctionSize = 1;
+          HasEffect = OpHasEffect cenv.g op';
+          MightMakeCriticalTailcall = false;
+          Info = UnknownValue }
     (* Handle these as special cases since mutables are allowed inside their bodies *)
     | TOp.While (spWhile,marker),_,[Expr.Lambda(_,_,_,[_],e1,_,_);Expr.Lambda(_,_,_,[_],e2,_,_)]  -> OptimizeWhileLoop cenv env (spWhile,marker,e1,e2,m) 
     | TOp.For(spStart,dir),_,[Expr.Lambda(_,_,_,[_],e1,_,_);Expr.Lambda(_,_,_,[_],e2,_,_);Expr.Lambda(_,_,_,[v],e3,_,_)]  -> OptimizeFastIntegerForLoop cenv env (spStart,v,e1,dir,e2,e3,m) 
