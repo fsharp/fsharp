@@ -15,17 +15,17 @@ brew install automake
 
 ## Build status
 
-F# 3.0 (branch ``master``), Mono 3.x, OSX + some unit tests (Travis) [![Build Status](https://travis-ci.org/fsharp/fsharp.png?branch=master)](https://travis-ci.org/fsharp/fsharp/branches)
-
-F# 3.0 (branch ``fsharp_30``), Mono 3.x, OSX + some unit tests (Travis) [![Build Status](https://travis-ci.org/fsharp/fsharp.png?branch=fsharp_30)](https://travis-ci.org/fsharp/fsharp/branches)
+Head (branch ``master``), Mono 3.x, OSX + some unit tests (Travis) [![Build Status](https://travis-ci.org/fsharp/fsharp.png?branch=master)](https://travis-ci.org/fsharp/fsharp/branches)
 
 F# 3.1 (branch ``fsharp_31``, Mono 3.x, OSX + some unit tests (Travis) [![Build Status](https://travis-ci.org/fsharp/fsharp.png?branch=fsharp_31)](https://travis-ci.org/fsharp/fsharp/branches)
 
-Mono 3.x (TeamCity) [![Build Status (Mono, TeamCity)][teamcity mono icon]][teamcity mono url]  
+F# 3.0 (branch ``fsharp_30``), Mono 3.x, OSX + some unit tests (Travis) [![Build Status](https://travis-ci.org/fsharp/fsharp.png?branch=fsharp_30)](https://travis-ci.org/fsharp/fsharp/branches)
 
-.NET 4.0, Windows (TeamCity) [![Windows .net 4.0 (TeamCity)][teamcity net40 icon]][teamcity net40 url]
+F# 3.1, Mono 3.x (TeamCity) [![Build Status (Mono, TeamCity)][teamcity mono icon]][teamcity mono url]  
 
-.NET 2.0 etc., Windows (TeamCity) [![Windows .net 2.0 etc.][teamcity net20 icon]][teamcity net20 url]
+F# 3.1, .NET 4.0, Windows (TeamCity) [![Windows .net 4.0 (TeamCity)][teamcity net40 icon]][teamcity net40 url]
+
+F# 3.1, .NET 2.0 etc., Windows (TeamCity) [![Windows .net 2.0 etc.][teamcity net20 icon]][teamcity net20 url]
 
 
 ## Building
