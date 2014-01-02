@@ -226,8 +226,8 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <DefineConstants>$(DefineConstants);DONT_INCLUDE_DEPRECATED</DefineConstants>
     <DefineConstants>$(DefineConstants);PUT_TYPE_PROVIDERS_IN_FSCORE</DefineConstants>
 
-    <AssemblySearchPaths>$(MSBuildExtensionsPath32)\..\Reference Assemblies\Microsoft\Framework\.NETPortable\v4.0\Profile\$(TargetFrameworkProfile)</AssemblySearchPaths>    
-    <OtherFlags>$(OtherFlags) --simpleresolution -r:"$(MSBuildExtensionsPath32)\..\Reference Assemblies\Microsoft\Framework\.NETPortable\v4.0\Profile\$(TargetFrameworkProfile)\mscorlib.dll" -r:"$(MSBuildExtensionsPath32)\..\Reference Assemblies\Microsoft\Framework\.NETPortable\v4.0\Profile\$(TargetFrameworkProfile)\System.dll" -r:"$(MSBuildExtensionsPath32)\..\Reference Assemblies\Microsoft\Framework\.NETPortable\v4.0\Profile\$(TargetFrameworkProfile)\System.Core.dll"</OtherFlags>
+    <AssemblySearchPaths>$(MSBuildExtensionsPath32)\..\xbuild-frameworks\.NETPortable\v4.0\Profile\$(TargetFrameworkProfile)</AssemblySearchPaths>    
+    <OtherFlags>$(OtherFlags) --simpleresolution</OtherFlags>
 
   </PropertyGroup>
 
@@ -703,8 +703,22 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
 
   <!-- Include the portable targets file when building the portable FSharp.Core -->
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\v4.0\Microsoft.Portable.Common.targets"
-          Condition="('$(TargetFramework)'=='portable-net4+sl4+wp71+win8' OR
-                      '$(TargetFramework)'=='portable-net45+sl5+win8')"></Import>
+          Condition=" '$(TargetFramework)'=='portable-net45+sl5+win8' OR 
+                      '$(TargetFramework)'=='portable-net4+sl4+wp71+win8' AND 
+                      Exists('$(MSBuildExtensionsPath32)\Microsoft\Portable\v4.0\Microsoft.Portable.Common.targets')" />
+
+  <!-- If the Microsoft.Portable.Common.targets file does not exist when building the portable FSharp.Core, include the following ProperyGroup -->
+ <PropertyGroup Condition=" '$(TargetFramework)'=='portable-net45+sl5+win8' OR 
+                            '$(TargetFramework)'=='portable-net4+sl4+wp71+win8' AND 
+                            !Exists('$(MSBuildExtensionsPath32)\Microsoft\Portable\v4.0\Microsoft.Portable.Common.targets')">
+   <AvailablePlatforms>Any CPU</AvailablePlatforms>
+   <TargetPlatformIdentifier>Portable</TargetPlatformIdentifier>
+   <TargetFrameworkIdentifier>.NETPortable</TargetFrameworkIdentifier>
+   <TargetFrameworkMonikerDisplayName>.NET Portable Subset</TargetFrameworkMonikerDisplayName>
+   <AddAdditionalExplicitAssemblyReferences>false</AddAdditionalExplicitAssemblyReferences>
+   <NoStdLib>true</NoStdLib>
+   <ImplicitlyExpandTargetFramework Condition="'$(ImplicitlyExpandTargetFramework)' == '' ">true</ImplicitlyExpandTargetFramework> 
+ </PropertyGroup>
 
   <!-- Include the Silverlight targets file if needed -->
   <Import Project="Silverlight\$(SilverlightVersion)\FSharpSource.Silverlight.Common.targets"
