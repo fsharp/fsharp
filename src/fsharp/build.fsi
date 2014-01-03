@@ -317,7 +317,8 @@ type TcConfigBuilder =
       mutable sqmSessionGuid : System.Guid option
       mutable sqmNumOfSourceFiles : int
       sqmSessionStartedTime : int64
-      mutable emitDebugInfoInQuotations : bool }
+      mutable emitDebugInfoInQuotations : bool
+      mutable exename : string option }
 
     static member CreateNew : 
         defaultFSharpBinariesDir: string * 

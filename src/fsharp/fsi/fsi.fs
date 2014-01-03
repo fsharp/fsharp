@@ -479,8 +479,10 @@ type internal FsiCommandLineOptions(argv: string[], tcConfigB, fsiConsoleOutput:
 #if SILVERLIGHT
             "fsi.exe"
 #else
-            let currentProcess = System.Diagnostics.Process.GetCurrentProcess()
-            Path.GetFileName(currentProcess.MainModule.FileName)
+            match tcConfigB.exename with
+            |Some(s) -> s
+            |None -> let currentProcess = System.Diagnostics.Process.GetCurrentProcess()
+                     Path.GetFileName(currentProcess.MainModule.FileName)
 #endif
 
 
