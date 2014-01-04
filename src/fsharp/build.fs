@@ -1965,6 +1965,8 @@ type TcConfigBuilder =
 
       /// if true - every expression in quotations will be augmented with full debug info (filename, location in file)
       mutable emitDebugInfoInQuotations : bool
+
+      mutable exename : string option
       }
 
 
@@ -2109,6 +2111,7 @@ type TcConfigBuilder =
           sqmNumOfSourceFiles = 0
           sqmSessionStartedTime = System.DateTime.Now.Ticks
           emitDebugInfoInQuotations = false
+          exename = None
         }
 
     member tcConfigB.ResolveSourceFile(m,nm,pathLoadedFrom) = 
