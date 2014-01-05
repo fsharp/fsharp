@@ -1316,6 +1316,7 @@ and OpHasEffect g op =
     | TOp.RefAddrGet -> false
     | TOp.ValFieldGet rfref  -> rfref.RecdField.IsMutable
     | TOp.ValFieldGetAddr _rfref  -> true (* check *)
+    | TOp.LValueOp (LGetAddr,lv) -> lv.IsMutable
     | TOp.UnionCaseFieldSet _
     | TOp.ExnFieldSet _
     | TOp.Coerce
@@ -1805,17 +1806,13 @@ and OptimizeExprOp cenv env (op,tyargs,args,m) =
             Info=UnknownValue }
     (* Handle addresses *)
     | TOp.LValueOp (LGetAddr,lv),_,_ ->
-        let valInfoForVal = GetInfoForVal cenv env m lv
+        let e,_ = OptimizeExpr cenv env (exprForValRef m lv)
         let op' =
-            match TryOptimizeVal cenv env (lv.MustInline,valInfoForVal.ValExprInfo,m) with
-            | Some e -> 
-               match e with
-               // Make sure this is a local ref. 
-               | Expr.Val (v,_,_) when v.IsLocalRef -> TOp.LValueOp (LGetAddr,v)
-               | _ -> op
-            | None -> op
-
-        Expr.Op (op',tyargs,args,m),
+            match e with
+            // We are only able to get the address of local refs.
+            | Expr.Val (v,_,_) when v.IsLocalRef -> TOp.LValueOp (LGetAddr,v)
+            | _ -> op
+        Expr.Op (op',[],[],m),
         { TotalSize = 1;
           FunctionSize = 1;
           HasEffect = OpHasEffect cenv.g op';
