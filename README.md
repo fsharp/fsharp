@@ -271,6 +271,7 @@ Uses bootstrapping libraries, tools and F# compiler. The `lib/bootstrap/X.0` dir
 
 ### Wheezy build
 
+```
 vagrant up
 vagrant ssh
 cd /vagrant
@@ -278,7 +279,7 @@ sudo apt-get install dos2unix autoconf
 ./autogen.sh --prefix=/usr
 make
 sudo make install
-
+```
 
 [teamcity mono icon]: http://teamcity.codebetter.com/app/rest/builds/buildType:(id:bt814)/statusIcon
 [teamcity mono url]: http://teamcity.codebetter.com/viewType.html?buildTypeId=bt814&guest=1
