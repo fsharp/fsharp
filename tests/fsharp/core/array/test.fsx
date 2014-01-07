@@ -829,6 +829,7 @@ module Array2DSlicingTests =
     test "a2slice192c" (m1.[*,5..] = array2d [| [| 6.0 |];
                                                 [| 60.0 |]  
                                             |])
+#if FSHARP_31 
     test "a2slice1930" (m1.[*, 0] = [| 1.0; 10.0 |])
     test "a2slice1931" (m1.[1.., 3] = [| 40.0 |])
     test "a2slice1932" (m1.[1, *] = [| 10.0;20.0;30.0;40.0;50.0;60.0 |])
@@ -844,6 +845,7 @@ module Array2DSlicingTests =
     test "a2slice1936" (arr2D1.[*,*] = array2d [| [| 0.; 100.; 0.; 0. |];
                                                   [| 5.; 100.; 7.; 8. |];
                                                   [| 9.; 100.; 11.; 12. |] |])
+#endif
 
 module Array3DSlicingTests = 
 
