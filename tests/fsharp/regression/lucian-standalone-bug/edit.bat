@@ -1,0 +1,15 @@
+sd edit checkmri.fs
+sd edit ast.fs
+sd edit pars.fsy
+sd edit utils.fs
+sd edit analysis.fs
+sd edit states.fs
+sd edit test.fs
+sd edit eg1.viper
+sd edit eg2.viper
+sd edit eg3.viper
+sd edit eg4.viper
+sd edit eg5.viper
+sd edit eg6.viper
+sd edit eg7.viper
+sd edit checkmri.exe

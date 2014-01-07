@@ -1,0 +1,122 @@
+"General"
+{
+"ProjectIdGuid" = "{52A4D03F-6242-4951-A460-2A59A3A0F8D3}"
+}
+"Configurations"
+{
+    "Debug|Win32"
+    {
+    "ProjectType" = "EXE"
+    "OptLevel" = "Off"
+    "StrongNamingLevel" = "None"
+    "LanguageRestriction" = "None"
+    "OutputPath" = ""
+    "SearchPath" = "-r Microsoft.GLEE.dll -r Microsoft.GLEE.Drawing.dll -r Microsoft.GLEE.GraphViewerGDI.dll -r Microsoft.GLEE.IGraphViewer.dll -r Microsoft.GLEE.Splines.dll -r AsmL.Tools.Algos.SimplexMethod.dll -r AsmL.Tools.Algos.SimplexMethodOpt.Tableu.dll"
+    "StrongNameFile" = ""
+    "OutputBase" = ""
+    "CustomCommandLine" = ""
+    "CustomCompiler" = ""
+    "DebugCheck" = "TRUE"
+    "CustomCompilationCheck" = "FALSE"
+    "DebugStartMode" = "0"
+    "StartApp" = ""
+    "StartAppPath" = ""
+    "CustomStartupArguments" = "eg1.viper"
+    }
+    "Release|Win32"
+    {
+    "ProjectType" = "EXE"
+    "OptLevel" = "3"
+    "StrongNamingLevel" = "None"
+    "LanguageRestriction" = "Fast F#"
+    "OutputPath" = ""
+    "SearchPath" = ""
+    "StrongNameFile" = ""
+    "OutputBase" = ""
+    "CustomCommandLine" = ""
+    "CustomCompiler" = ""
+    "DebugCheck" = "FALSE"
+    "CustomCompilationCheck" = "FALSE"
+    "DebugStartMode" = "0"
+    "StartApp" = ""
+    "StartAppPath" = ""
+    "CustomStartupArguments" = ""
+    }
+}
+"Files"
+{
+    "pars.fsy"
+    {
+    "ProjRelPath" = "T"
+    }
+    "lex.fsl"
+    {
+    "ProjRelPath" = "T"
+    }
+    "utils.fs"
+    {
+    "ProjRelPath" = "T"
+    }
+    "ast.fs"
+    {
+    "ProjRelPath" = "T"
+    }
+    "pars.fs"
+    {
+    "ProjRelPath" = "T"
+    }
+    "lex.fs"
+    {
+    "ProjRelPath" = "T"
+    }
+    "states.fs"
+    {
+    "ProjRelPath" = "T"
+    }
+    "analysis.fs"
+    {
+    "ProjRelPath" = "T"
+    }
+    "test.fs"
+    {
+    "ProjRelPath" = "T"
+    }
+    "checkmri.fs"
+    {
+    "ProjRelPath" = "T"
+    }
+    "eg1.viper"
+    {
+    "ProjRelPath" = "T"
+    }
+    "eg2.viper"
+    {
+    "ProjRelPath" = "T"
+    }
+    "eg3.viper"
+    {
+    "ProjRelPath" = "T"
+    }
+    "eg4.viper"
+    {
+    "ProjRelPath" = "T"
+    }
+    "eg5.viper"
+    {
+    "ProjRelPath" = "T"
+    }
+    "eg6.viper"
+    {
+    "ProjRelPath" = "T"
+    }
+    "eg7.viper"
+    {
+    "ProjRelPath" = "T"
+    }
+}
+"ProjStartupServices"
+{
+}
+"Globals"
+{
+}
