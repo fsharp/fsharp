@@ -21,9 +21,6 @@ gacdir := ${libdir}mono
 
 tooldir := $(topdir)lib/bootstrap/4.0/
 
-monoopts = @mono_gc_options@
-MONO_OPTIONS += @mono_gc_options@
-
 TargetFramework = net40
 CONFIG = release
 Configuration = Release
