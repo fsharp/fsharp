@@ -38,7 +38,9 @@ check "tlr" Core_tlr.RUN
 check "unicode" Core_unicode.RUN
 
 #load "quotes/test.fsx"
+#if FSHARP_31
 #load "quotesDebugInfo/test.fsx"
+#endif
 #load "seq/test.fsx"
 #load "nested/test.fsx"
 #load "patterns/test.fsx"

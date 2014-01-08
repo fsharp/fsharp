@@ -2287,6 +2287,7 @@ module QuotationOfBitmapDIsposal =
          |    _ -> false)
 #endif
 
+#if FSHARP_31
 module ReflectedDefinitionAndSelfIdentifier = 
     [<ReflectedDefinition>]
     type T() as _selfReference = 
@@ -2387,6 +2388,7 @@ module LoopsOverArraysInQuotations =
                 ) -> arr = arr2 && idx1 = idx2
             | _ -> false        
         )
+#endif
 
 module QuotationOfResizeArrayIteration = 
     // Quotation of an iteration which implictly does a "use" on a value of struct type
