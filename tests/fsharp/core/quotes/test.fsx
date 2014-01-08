@@ -2155,6 +2155,7 @@ module QuotationsOfLocalFunctions_FSharp_1_0_6403 =
         printfn "C.SRD2 = %A" C.SRD2
     *)
 
+#if FSHARP_31
 module OverloadsInTypeExtensions =
     module A = 
         type X = X
@@ -2197,6 +2198,7 @@ module OverloadsInTypeExtensions =
     open Overloads
 
     check "OverloadsInTypeExtensions" (try A.X.TestOverloads() with _ -> false) true
+#endif
 
 module ArrayQuoteTests = 
     check "cenwkjen" (match <@ [| 2.0;3.0;4.0 |] @> with NewArray (ty, [Double 2.0; Double 3.0; Double 4.0]) -> true  | _ -> false) true
