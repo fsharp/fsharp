@@ -46,7 +46,9 @@ check "unicode" Core_unicode.RUN
 #load "patterns/test.fsx"
 
 check "quotes/test.fsx" Core_quotes.RUN
+#if FSHARP_31
 check "quotesDebugInfo/test.fsx" (fun () -> match Test.RUN() with 0 -> [] | n -> [sprintf "%d failures" n])
+#endif
 check "seq/test.fsx" Core_seq.RUN
 check "nested/test.fsx" Core_nested.RUN
 check "patterns/test.fsx" Core_patterns.RUN
