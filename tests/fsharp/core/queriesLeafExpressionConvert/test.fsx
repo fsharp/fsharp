@@ -241,6 +241,7 @@ module LeafExpressionEvaluationTests =
     checkEval "2ver9ewrre" (let v2 = (3,4) in <@ match v2 with (x,y) -> x + y @>) 7
     checkEval "2ver9ewrn" (<@ "1" = "2" @>) false
     
+#if FSHARP_31
     module Bug617196 =
         type T = static member Run (e : System.Linq.Expressions.Expression<System.Action>) = ()
         let f = ResizeArray<int>()
@@ -291,6 +292,7 @@ module LeafExpressionEvaluationTests =
                         expr.Body :? ParameterExpression // no Convert node
                     with _ -> false
                 )                
+#endif
         
     module NonGenericRecdTests = 
         type Customer = { mutable Name:string; Data: int }
