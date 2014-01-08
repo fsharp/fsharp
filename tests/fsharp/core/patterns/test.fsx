@@ -1023,6 +1023,7 @@ module BigIntAndBigNumPatternMatching = begin
 end
 *)
 
+#if FSHARP_31
 module ActivePatternsWithIndeterminateReturnType = 
 
     let (|Cast|_|) (x:obj) : 'T option = match x with | :? 'T as t ->  Some t | _ -> None
@@ -1047,6 +1048,7 @@ module ActivePatternsWithIndeterminateReturnType =
     check "ckwenwe0" (test2 (box 1)) 1
     check "ckwenwe0" ((try test2 (box "1") |> ignore; 1 with Failure _ -> 2)) 2
     check "ckwenwe0" ((try test2 (box 1.0) |> ignore; 1 with Failure _ -> 2)) 2
+#endif
 
 module TypecheckingBug_FSharp_1_0_6389 = 
     type Nullary<'T> = | Nullary 
