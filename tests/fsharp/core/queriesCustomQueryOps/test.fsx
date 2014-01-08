@@ -260,6 +260,7 @@ module QuerySyntaxForEnumerableForAnFSharpType =
                       select (x,beep) }
         ()
 
+#if FSharp_31
 module LessRestrictionsForCustomOperators_Bug475766 =
     type DoNothingBuilder() = 
         member this.Yield(v) = [v]
@@ -305,6 +306,7 @@ module LessRestrictionsForCustomOperators_Bug475766 =
                 compensation := true
         }
     check "LessRestrictionsForCustomOperators_Bug475766_3" (q3, !compensation) ([1], true)
+#endif
 
 module ProbabilityWorkflow = 
     
