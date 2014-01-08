@@ -54,9 +54,10 @@ check "nested/test.fsx" Core_nested.RUN
 check "patterns/test.fsx" Core_patterns.RUN
 
 // PASSED, but slow
-// #load "printf/test.fsx"
-// check "printf/test.fsx" Core_printf.RUN
-
+#if fsharp_31
+#load "printf/test.fsx"
+check "printf/test.fsx" Core_printf.RUN
+#endif
 
 #load "lift/test.fsx"
 check "lift" Core_lift.RUN
