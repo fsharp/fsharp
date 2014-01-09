@@ -1981,8 +1981,9 @@ module Bug850869 =
   let f2() = 
     async
       { use! A = Unchecked.defaultof<Async<System.IDisposable>>
-        return true }         
-
+        return true }
+         
+#if FSHARP_31
 module ExceptionInAsyncParallelOrHowToInvokeContinuationTwice = 
     
     let test() = 
@@ -2015,7 +2016,7 @@ module ExceptionInAsyncParallelOrHowToInvokeContinuationTwice =
             _ -> false
 
     check "ExceptionInAsyncParallelOrHowToInvokeContinuationTwice" (Seq.init 30 (ignore >> test) |> Seq.forall id) true
-    
+#endif    
 
 
 // [Asyncs] Cancellation inside Async.AwaitWaitHandle may release source WaitHandle
