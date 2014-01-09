@@ -164,6 +164,8 @@ check "controlMailbox/test.fsx" Core_controlMailBox.RUN
 // #load "queriesOverOData/test.fsx"
 // check "queriesOverOData/test.fsx" Core_queriesOverOData.RUN
 
+#load "csext/test.fsx"
+check "csext/test.fsx" Core_csext.RUN
 
 match allErrors with 
 | [] -> 
@@ -178,7 +180,6 @@ match allErrors with
 // ----------------------------------
 
 (*
-#load "csext/test.fsx"
 #load "fsfromfsviacs/test.fsx"
 #load "fsiAndModifiers/test.fsx"
 #load "load-script/test.fsx"
