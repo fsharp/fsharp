@@ -103,12 +103,16 @@ check "comprehensions" Core_comprehensions.RUN
 
 #load "math/numbers/test.fsx"
 #load "math/numbersVS2008/test.fsx"
+#if FSHARP_31
 #load "measures/test.fsx"
+#endif
 #load "genericmeasures/test.fsx"
 
 check "math/numbers/test.fsx" Core_math_numbers.RUN
 check "math/numbersVS2008/test.fsx" Core_math_numbersVS2008.RUN
+#if FSHARP_31
 check "measures/test.fsx" Core_measures.RUN
+#endif
 check "measures/test.fsx" Core_genericMeasures.RUN
 
 
