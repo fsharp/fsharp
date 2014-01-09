@@ -108,8 +108,8 @@ check "comprehensions" Core_comprehensions.RUN
 
 check "math/numbers/test.fsx" Core_math_numbers.RUN
 check "math/numbersVS2008/test.fsx" Core_math_numbersVS2008.RUN
-check "math/measures/test.fsx" Core_measures.RUN
-check "math/measures/test.fsx" Core_genericMeasures.RUN
+check "measures/test.fsx" Core_measures.RUN
+check "measures/test.fsx" Core_genericMeasures.RUN
 
 
 #load "control/test.fsx"
