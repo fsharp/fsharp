@@ -1,0 +1,446 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Microsoft.GLEE.GraphViewerGDI</name>
+    </assembly>
+    <members>
+        <member name="T:Microsoft.GLEE.GraphViewerGDI.SpatialAlgorithm">
+            <summary>
+            Build a spatial hierarchy
+            </summary>
+        </member>
+        <member name="T:Microsoft.GLEE.GraphViewerGDI.Geometry">
+            <summary>
+            Summary description for Geometry.
+            </summary>
+        </member>
+        <member name="T:Microsoft.GLEE.GraphViewerGDI.Tessellator">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="P:Microsoft.GLEE.GraphViewerGDI.Tessellator.Epsilon">
+            <summary>
+            is used to determine the tessellation tolerance as diagonal
+            length divided by fractionOfPicture
+            </summary>
+        </member>
+        <member name="T:Microsoft.GLEE.GraphViewerGDI.Line">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="T:Microsoft.GLEE.GraphViewerGDI.DrawingPanel">
+            <summary>
+            this class serves as a drawing panel for GViewer
+            </summary>
+        </member>
+        <member name="M:Microsoft.GLEE.GraphViewerGDI.DrawingPanel.GetHitSlack">
+            <summary>
+            It should be physically on the screen be one tenth of an inch
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="T:Microsoft.GLEE.GraphViewerGDI.LabelGeometry">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="T:Microsoft.GLEE.GraphViewerGDI.DEdge">
+            <summary>
+            it is class holding Microsoft.GLEE.Drawing.Edge and Microsoft.GLEE.Edge
+            </summary>
+        </member>
+        <member name="P:Microsoft.GLEE.GraphViewerGDI.DEdge.GraphicsPath">
+            <summary>
+            Can be set to GraphicsPath of GDI (
+            </summary>
+        </member>
+        <member name="T:Microsoft.GLEE.GraphViewerGDI.GViewer">
+            <summary>
+            Summary description for DOTViewer.
+            </summary>
+        </member>
+        <member name="M:Microsoft.GLEE.GraphViewerGDI.GViewer.RemoveToolbar">
+            <summary>
+            This function removes the toolbar from the control
+            </summary>
+        </member>
+        <member name="M:Microsoft.GLEE.GraphViewerGDI.GViewer.OnPaint(System.Windows.Forms.PaintEventArgs)">
+            <summary>
+            The ViewInfo gives all info needed for setting the view
+            </summary>
+        </member>
+        <member name="F:Microsoft.GLEE.GraphViewerGDI.GViewer.xLong">
+            <summary>
+            
+            xLong = GrapWidth/ClientRect.Width>GraphHeight/ClientRect.Height
+            </summary>
+        </member>
+        <member name="F:Microsoft.GLEE.GraphViewerGDI.GViewer.scaledDown">
+            <summary>
+            if scaledDown is true - take the scale from the zoomCoeff 
+            </summary>
+        </member>
+        <member name="M:Microsoft.GLEE.GraphViewerGDI.GViewer.#ctor">
+            <summary>
+            Default constructor
+            </summary>
+        </member>
+        <member name="M:Microsoft.GLEE.GraphViewerGDI.GViewer.Dispose(System.Boolean)">
+            <summary> 
+            Clean up any resources being used.
+            </summary>
+        </member>
+        <member name="M:Microsoft.GLEE.GraphViewerGDI.GViewer.InitializeComponent">
+            <summary> 
+            Required method for Designer support - do not modify 
+            the contents of this method with the code editor.
+            </summary>
+        </member>
+        <member name="F:Microsoft.GLEE.GraphViewerGDI.GViewer.scale">
+            <summary>
+            this varaible, scale, is fixed for a given window size and used as a constant multiplier to ZoomF value
+            </summary>
+        </member>
+        <member name="M:Microsoft.GLEE.GraphViewerGDI.GViewer.OnResize(System.EventArgs)">
+            <summary>
+            Handle Resize event
+            </summary>
+            <param name="e"></param>
+        </member>
+        <member name="M:Microsoft.GLEE.GraphViewerGDI.GViewer.ShowGroup(System.Object[])">
+            <summary>
+            Brings in to the view the object of the group
+            </summary>
+            <param name="objs"></param>
+        </member>
+        <member name="M:Microsoft.GLEE.GraphViewerGDI.GViewer.CenterToGroup(System.Object[])">
+            <summary>
+            Changes the view in a way that the group is at the center
+            </summary>
+            <param name="objs"></param>
+        </member>
+        <member name="M:Microsoft.GLEE.GraphViewerGDI.GViewer.ShowBBox(Microsoft.GLEE.Drawing.Rectangle)">
+            <summary>
+            Make the bounding box fully visible
+            </summary>
+            <param name="bb"></param>
+        </member>
+        <member name="M:Microsoft.GLEE.GraphViewerGDI.GViewer.Pan(System.Double,System.Double)">
+            <summary>
+            Pans the view by vector (x,y)
+            </summary>
+            <param name="x"></param>
+            <param name="y"></param>
+        </member>
+        <member name="M:Microsoft.GLEE.GraphViewerGDI.GViewer.Pan(Microsoft.GLEE.Splines.Point)">
+            <summary>
+            Pans the view by vector p
+            </summary>
+            <param name="p"></param>
+        </member>
+        <member name="M:Microsoft.GLEE.GraphViewerGDI.GViewer.CenterToPoint(System.Double,System.Double)">
+            <summary>
+            centers the view to the point (x,y)
+            </summary>
+            <param name="x"></param>
+            <param name="y"></param>
+        </member>
+        <member name="M:Microsoft.GLEE.GraphViewerGDI.GViewer.CenterToPoint(Microsoft.GLEE.Splines.Point)">
+            <summary>
+            Centers the view to the point p
+            </summary>
+            <param name="p"></param>
+        </member>
+        <member name="M:Microsoft.GLEE.GraphViewerGDI.GViewer.GetObjectAt(System.Int32,System.Int32)">
+            <summary>
+            Finds the object under point (x,y) where x,y are given in the window coordinates
+            </summary>
+            <param name="x"></param>
+            <param name="y"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Microsoft.GLEE.GraphViewerGDI.GViewer.GetObjectAt(System.Drawing.Point)">
+            <summary>
+            Finds the object under point p where p is given in the window coordinates
+            </summary>
+            <param name="p"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Microsoft.GLEE.GraphViewerGDI.GViewer.ZoomInPressed">
+            <summary>
+            Zooms in
+            </summary>
+        </member>
+        <member name="M:Microsoft.GLEE.GraphViewerGDI.GViewer.ZoomOutPressed">
+            <summary>
+            Zooms out
+            </summary>
+        </member>
+        <member name="M:Microsoft.GLEE.GraphViewerGDI.GViewer.SaveButtonPressed">
+            <summary>
+            Raises a dialog of saving the drawing image to a file
+            </summary>
+        </member>
+        <member name="M:Microsoft.GLEE.GraphViewerGDI.GViewer.ForwardButtonPressed">
+            <summary>
+            Navigates forward in the view history
+            </summary>
+        </member>
+        <member name="M:Microsoft.GLEE.GraphViewerGDI.GViewer.BackwardButtonPressed">
+            <summary>
+            Navigates backward in the view history
+            </summary>
+        </member>
+        <member name="M:Microsoft.GLEE.GraphViewerGDI.GViewer.OnKey(System.Windows.Forms.KeyEventArgs)">
+            <summary>
+            Reacts on some pressed keys
+            </summary>
+            <param name="e"></param>
+        </member>
+        <member name="M:Microsoft.GLEE.GraphViewerGDI.GViewer.CalculateLayout(Microsoft.GLEE.IGraphViewer.IGraph)">
+            <summary>
+            calcualates the layout and returns the object ready to be drawn
+            </summary>
+            <param name="graph"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Microsoft.GLEE.GraphViewerGDI.GViewer.SetToolTip(System.Windows.Forms.ToolTip,System.String)">
+            <summary>
+            sets a tool tip
+            </summary>
+            <param name="toolTip"></param>
+            <param name="tip"></param>
+        </member>
+        <member name="M:Microsoft.GLEE.GraphViewerGDI.GViewer.SetObjectWithCalculatedLayout(System.Object)">
+            <summary>
+            Just uses the passed object to draw the graph. The method expects DGraph as the argument
+            </summary>
+            <param name="objectContainingLayout"></param>
+        </member>
+        <member name="M:Microsoft.GLEE.GraphViewerGDI.GViewer.ScreenToSource(System.Single,System.Single,System.Single@,System.Single@)">
+            <summary>
+            maps screen coordinates to viewer coordinates
+            </summary>
+            <param name="screenX"></param>
+            <param name="screenY"></param>
+            <param name="viewerX"></param>
+            <param name="viewerY"></param>
+        </member>
+        <member name="M:Microsoft.GLEE.GraphViewerGDI.GViewer.Pan(System.Single,System.Single)">
+            <summary>
+            pans the drawing on deltaX, deltaY in the drawing coords
+            </summary>
+            <param name="deltaX"></param>
+            <param name="deltaY"></param>
+        </member>
+        <member name="M:Microsoft.GLEE.GraphViewerGDI.GViewer.CreateGraph(System.String)">
+            <summary>
+            creates an empty graph with the label
+            </summary>
+            <param name="label"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Microsoft.GLEE.GraphViewerGDI.GViewer.CreateGraph(System.String,System.String)">
+            <summary>
+            creates an empty graph with the label
+            </summary>
+            <param name="id"></param>
+            <param name="label"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Microsoft.GLEE.GraphViewerGDI.GViewer.Microsoft#GLEE#IGraphViewer#IGraphViewer#Select">
+            <summary>
+            Summary description for DOTViewer.
+            </summary>
+        </member>
+        <member name="M:Microsoft.GLEE.GraphViewerGDI.GViewer.Microsoft#GLEE#IGraphViewer#IGraphViewer#Invalidate">
+            <summary>
+            Summary description for DOTViewer.
+            </summary>
+        </member>
+        <member name="M:Microsoft.GLEE.GraphViewerGDI.GViewer.Microsoft#GLEE#IGraphViewer#IGraphViewer#add_MouseWheel(System.Windows.Forms.MouseEventHandler)">
+            <summary>
+            Summary description for DOTViewer.
+            </summary>
+        </member>
+        <member name="M:Microsoft.GLEE.GraphViewerGDI.GViewer.Microsoft#GLEE#IGraphViewer#IGraphViewer#remove_MouseWheel(System.Windows.Forms.MouseEventHandler)">
+            <summary>
+            Summary description for DOTViewer.
+            </summary>
+        </member>
+        <member name="M:Microsoft.GLEE.GraphViewerGDI.GViewer.Microsoft#GLEE#IGraphViewer#IGraphViewer#add_Click(System.EventHandler)">
+            <summary>
+            Summary description for DOTViewer.
+            </summary>
+        </member>
+        <member name="M:Microsoft.GLEE.GraphViewerGDI.GViewer.Microsoft#GLEE#IGraphViewer#IGraphViewer#remove_Click(System.EventHandler)">
+            <summary>
+            Summary description for DOTViewer.
+            </summary>
+        </member>
+        <member name="P:Microsoft.GLEE.GraphViewerGDI.GViewer.DrawingPanel">
+            <summary>
+            The panel containing GViewer object
+            </summary>
+        </member>
+        <member name="P:Microsoft.GLEE.GraphViewerGDI.GViewer.NavigationVisible">
+            <summary>
+            Gets or sets the forward and backward buttons visibility
+            </summary>
+        </member>
+        <member name="P:Microsoft.GLEE.GraphViewerGDI.GViewer.SaveButtonVizible">
+            <summary>
+            Gets or sets the save button visibility
+            </summary>
+        </member>
+        <member name="E:Microsoft.GLEE.GraphViewerGDI.GViewer.SelectionChanged">
+            <summary>
+            The event raised every time when the mouse cursor is hovered on a new object graphic object or nowhere
+            </summary>
+        </member>
+        <member name="P:Microsoft.GLEE.GraphViewerGDI.GViewer.SrcRect">
+            <summary>
+            debug properties
+            </summary>
+            
+        </member>
+        <member name="P:Microsoft.GLEE.GraphViewerGDI.GViewer.DestRect">
+            <summary>
+            The rectangle for drawing
+            </summary>
+        </member>
+        <member name="P:Microsoft.GLEE.GraphViewerGDI.GViewer.SelectedObject">
+            <summary>
+            The object which is currently located under the mouse cursor
+            </summary>
+        </member>
+        <member name="P:Microsoft.GLEE.GraphViewerGDI.GViewer.ZoomFraction">
+            <summary>
+            Sets or gets the fraction on which the zoom value chandes in every zoom out ot zoom in
+            </summary>
+        </member>
+        <member name="P:Microsoft.GLEE.GraphViewerGDI.GViewer.ForwardEnabled">
+            <summary>
+            Enables or disables the forward button
+            </summary>
+        </member>
+        <member name="P:Microsoft.GLEE.GraphViewerGDI.GViewer.BackwardEnabled">
+            <summary>
+            Enables or disables the backward button
+            </summary>
+        </member>
+        <member name="P:Microsoft.GLEE.GraphViewerGDI.GViewer.hVal">
+            <summary>
+            positions and largeValue of scroll bars define srcRect in the graph coordinates
+            </summary>		
+        </member>
+        <member name="P:Microsoft.GLEE.GraphViewerGDI.GViewer.vVal">
+            <summary>
+            positions and largeValue of scroll bars define srcRect in the graph coordinates
+            </summary>
+        </member>
+        <member name="P:Microsoft.GLEE.GraphViewerGDI.GViewer.GraphWidth">
+            <summary>
+            The width of the current graph
+            </summary>
+        </member>
+        <member name="P:Microsoft.GLEE.GraphViewerGDI.GViewer.GraphHeight">
+            <summary>
+            The height of the current graph
+            </summary>
+        </member>
+        <member name="P:Microsoft.GLEE.GraphViewerGDI.GViewer.ZoomF">
+            <summary>
+            Gets or sets the zoom factor
+            </summary>
+        </member>
+        <member name="P:Microsoft.GLEE.GraphViewerGDI.GViewer.Graph">
+            <summary>
+            Setting the Graph property shows the graph in the control
+            </summary>
+            
+        </member>
+        <member name="P:Microsoft.GLEE.GraphViewerGDI.GViewer.MouseHitDistance">
+            <summary>
+            SelectedObject can be detected if the distance in inches between it and 
+            the cursor is less than MouseHitDistance
+            </summary>
+        </member>
+        <member name="P:Microsoft.GLEE.GraphViewerGDI.GViewer.GraphWithLayout">
+            <summary>
+            Returns layouted Microsoft.GLEE.DrawingDefs.Graph
+            </summary>
+        </member>
+        <member name="P:Microsoft.GLEE.GraphViewerGDI.GViewer.Microsoft#GLEE#IGraphViewer#IGraphViewer#Graph">
+            <summary>
+            Returns layouted Microsoft.GLEE.DrawingDefs.Graph
+            </summary>
+        </member>
+        <member name="T:Microsoft.GLEE.GraphViewerGDI.DGraph">
+            <summary>
+            This yet another graph is needed to hold additional GDI specific data for drawing.
+            It has a pointer to Microsoft.GLEE.Drawing.Graph and Microsoft.GLEE.Graph.
+            It is passed to the drawing routine
+            </summary>
+        </member>
+        <member name="T:Microsoft.GLEE.GraphViewerGDI.BezierCurve">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="F:Microsoft.GLEE.GraphViewerGDI.BezierCurve.par0">
+            <summary>
+            the parameter interval
+            </summary>
+        </member>
+        <member name="F:Microsoft.GLEE.GraphViewerGDI.BezierCurve.par1">
+            <summary>
+            the parameter interval
+            </summary>
+        </member>
+        <member name="P:Microsoft.GLEE.GraphViewerGDI.BezierCurve.Par0">
+            <summary>
+            start of the parameter interval
+            </summary>
+        </member>
+        <member name="P:Microsoft.GLEE.GraphViewerGDI.BezierCurve.Par1">
+            <summary>
+            end of the parameter interval
+            </summary>
+        </member>
+        <member name="P:Microsoft.GLEE.GraphViewerGDI.BezierCurve.Item(System.Double)">
+            <summary>
+            //value at t
+            </summary>
+        </member>
+        <member name="T:Microsoft.GLEE.GraphViewerGDI.Printing">
+            <summary>
+            Summary description for Printing.
+            </summary>
+        </member>
+        <member name="M:Microsoft.GLEE.GraphViewerGDI.Printing.#ctor(Microsoft.GLEE.GraphViewerGDI.GViewer)">
+            <summary>
+            Constructor
+            </summary>
+            <param name="dv"></param>
+        </member>
+        <member name="M:Microsoft.GLEE.GraphViewerGDI.Printing.OnPrintPage(System.Drawing.Printing.PrintPageEventArgs)">
+            <summary>
+            This methods "draws" to the printer
+            </summary>
+            <param name="e"></param>
+        </member>
+        <member name="T:Microsoft.GLEE.GraphViewerGDI.BBNode">
+            <summary>
+            Summary description for BBNode.
+            </summary>
+        </member>
+        <member name="T:Microsoft.GLEE.GraphViewerGDI.DNode">
+            <summary>
+            it is a class holding Microsoft.GLEE.Drawing.Node and Microsoft.GLEE.Node
+            </summary>
+        </member>
+    </members>
+</doc>

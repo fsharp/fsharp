@@ -1,0 +1,181 @@
+%{
+
+open Ast
+
+type StringOrList = {asstring:string; aslist:string list}
+
+%}
+
+%token <string> ID
+%token <System.Int32> INT
+%token <System.Double> FLOAT
+%token <string> STRING
+%token <bool> BOOL
+%token ACTIVITY IF CALL EXTERNAL TYPE CLASS ENUM IMPORTANT UNIMPORTANT NEW SIGNAL THEN ELSE ON FIRST RETURN EXTERN BEGINREAD ENDREAD BEGINWRITE ENDWRITE
+%token PLUS MINUS DIV EQUALS EQEQUALS NOTEQUALS AND OR ABOVEEQUALS BELOWEQUALS COLONEQUALS PLING
+%token LBRACE RBRACE SEMI LPAREN RPAREN COLON DOT LANGLE RANGLE COMMA STAR PAR
+%token EOF
+%nonassoc IMPORTANT UNIMPORTANT /* lowest precedence */
+%left AND OR          
+%left NOTEQUALS ABOVEEQUALS BELOWEQUALS EQEQUALS /* next lowest */
+%left LANGLE RANGLE 
+%left PLUS MINUS 
+%left STAR DIV  
+%left COLON PLING
+%nonassoc UMINUS /* highest precedence */
+%type < Ast.Expr > Expr
+%type < Ast.Node > Node
+%type < AtomicMode > Atomic
+%type < (string*Expr)list * (string*Handler)list > StateOrHandler
+%type < string*Importance > ImpId
+%type < StringOrList > IdPath
+%type < TDefPrim list * TDefChoice list * ExternFun list * Activity list > start
+%type < IfDat list > IfList
+%type < IfDat > Consequence
+%type < IfDat > CondAndConsequence
+%start start Expr
+
+%%
+
+start: TypeOrActivityList EOF { $1 }
+
+
+TypeOrActivityList: { ([("void",TVoid);("int",TInt);("bool",TBool);("string",TString);("readwrite",TRecord[("rcount","int");("wcount","int")])],[],[],[]) }
+  | TypeOrActivity TypeOrActivityList { match ($1,$2) with ((tp1,tc1,ef1,a1),(tp2,tc2,ef2,a2)) -> (tp1@tp2, tc1@tc2, ef1@ef2, a1@a2) }
+TypeOrActivity: CLASS ID LBRACE FieldList RBRACE { let tp=($2,TRecord($4)) in ([tp],[],[],[]) }
+  |   ENUM ID LBRACE EnumList RBRACE { let tp=($2,TEnum($4)) in ([tp],[],[],[]) }
+  |   TYPE ID EQUALS TypeList { let tc=($2,$4) in ([],[tc],[],[]) }
+  |   EXTERN ID ID LPAREN ArgList RPAREN SEMI  { let ef=($3, {new ExternFunDat with ats=$5 and rt=$2}) in ([],[],[ef],[]) }
+  |   ACTIVITY ID LBRACE StateOrHandlerList RBRACE { let a = match $4 with (state,h) -> {new Ast.Activity with s=$2 and state=state and signal=[] and h=h and ext=false} in ([],[],[],[a]) }
+  |   ACTIVITY ID COLON TypeList LBRACE StateOrHandlerList RBRACE { let a = match $6 with (state,h) -> {new Ast.Activity with s=$2 and state=state and signal=$4 and h=h and ext=false} in ([],[],[],[a]) }
+  |   EXTERN ACTIVITY ID LBRACE StateOrHandlerList RBRACE { let a = match $5 with (state,h) -> {new Ast.Activity with s=$3 and state=state and signal=[] and h=h and ext=true} in ([],[],[],[a]) }
+  |   EXTERN ACTIVITY ID COLON TypeList LBRACE StateOrHandlerList RBRACE { let a = match $7 with (state,h) -> {new Ast.Activity with s=$3 and state=state and signal=$5 and h=h and ext=true} in ([],[],[],[a]) }
+
+FieldList: { [] }
+  |  Field FieldList { $1 :: $2 }
+Field: ID ID SEMI { ($2,$1) } // fieldname * TName
+EnumList: ID { [$1] }
+  | EnumList COMMA ID { $1 @ [$3] }
+TypeList: ImpId { [$1] }
+  | ImpId PLUS TypeList { $1 :: $3 }
+  | LPAREN TypeList RPAREN { $2 }
+ImpId: IMPORTANT ID { ($2,Important) }
+  | ID { ($1,Unimportant) }
+
+StateOrHandlerList: { ([],[]) }
+  | StateOrHandler StateOrHandlerList { match ($1,$2) with ((st1,h1),(st2,h2)) -> (st1@st2,h1@h2) }
+StateOrHandler: TypeList ID EQUALS Expr SEMI { let st=($2, {$4 with t=$1}) in ([st],[]) }
+  | ON ID LPAREN ImpId Wire RPAREN COLON TypeList LBRACE NodeList RBRACE { match $5 with (a,q) -> let h=($2,{new Handler with a=a and aq=q and at=$4 and outWires=[] and rt=$8 and n=$10}) in ([],[h]) }
+  | ON ID LPAREN ImpId Wire RPAREN LBRACE NodeList RBRACE { match $5 with (a,q) -> let h=($2,{new Handler with a=a and aq=q and at=$4 and outWires=[] and rt=[] and n=$8}) in ([],[h]) }
+
+NodeList: { [] }
+ | PAR { [] }
+ | Node { [$1] }
+ | Node PAR NodeList { $1 :: $3 }
+Node: ExprNode { $1 } | OtherNode { $1 }
+ExprNode:
+ | TypeList ID EQUALS Wires Expr 
+       { let src = (Parsing.set_parse_state parseState; (Parsing.rhs_start_pos 1).pos_lnum+1) in {new Node with s=$2 and t=$1 and d=NExpr($5) and inWires=$4 and outWires=[] and src=src} }
+ | ID EQUALS Wires Expr 
+       { let src = (Parsing.set_parse_state parseState; (Parsing.rhs_start_pos 1).pos_lnum+1) in {new Node with s=$1 and t=TUnk and d=NExpr($4) and inWires=$3 and outWires=[] and src=src} }
+OtherNode:
+ | TypeList ID EQUALS Wires Atomic LPAREN ID RPAREN
+       { let src = (Parsing.set_parse_state parseState; (Parsing.rhs_start_pos 1).pos_lnum+1) in {new Node with s=$2 and t=$1 and d=NAtomic {new AtomicDat with m=$5 and rw=$7} and inWires=$4 and outWires=[] and src=src} } 
+ | ID EQUALS Wires Atomic LPAREN ID RPAREN
+       { let src = (Parsing.set_parse_state parseState; (Parsing.rhs_start_pos 1).pos_lnum+1) in {new Node with s=$1 and t=TUnk and d=NAtomic {new AtomicDat with m=$4 and rw=$6} and inWires=$3 and outWires=[] and src=src} } 
+ | TypeList ID EQUALS Wires IdPath COLONEQUALS Expr
+       { let src = (Parsing.set_parse_state parseState; (Parsing.rhs_start_pos 1).pos_lnum+1) in {new Node with s=$2 and t=$1 and d=NSet($5.aslist,TUnk,$7) and inWires=$4 and outWires=[] and src=src} } 
+ | ID EQUALS Wires IdPath COLONEQUALS Expr
+       { let src = (Parsing.set_parse_state parseState; (Parsing.rhs_start_pos 1).pos_lnum+1) in {new Node with s=$1 and t=TUnk and d=NSet($4.aslist,TUnk,$6) and inWires=$3 and outWires=[] and src=src} } 
+ | TypeList ID EQUALS Wires CALL ID DOT ID LPAREN Expr RPAREN
+       { let src = (Parsing.set_parse_state parseState; (Parsing.rhs_start_pos 1).pos_lnum+1) in {new Node with s=$2 and t=$1 and d=NCall($6,$8,NUnbounded,$10) and inWires=$4 and outWires=[] and src=src} }
+ | ID EQUALS Wires CALL ID DOT ID LPAREN Expr RPAREN
+       { let src = (Parsing.set_parse_state parseState; (Parsing.rhs_start_pos 1).pos_lnum+1) in {new Node with s=$1 and t=TUnk and d=NCall($5,$7,NUnbounded,$9) and inWires=$3 and outWires=[] and src=src} }
+ | Wires CALL ID DOT ID LPAREN Expr RPAREN
+       { let src = (Parsing.set_parse_state parseState; (Parsing.rhs_start_pos 1).pos_lnum+1) in {new Node with s="_t"^string(src) and t=TUnk and d=NCall($3,$5,NUnbounded,$7) and inWires=$1 and outWires=[] and src=src} }
+ | SIGNAL Wires Expr
+       { let src = (Parsing.set_parse_state parseState; (Parsing.rhs_start_pos 1).pos_lnum+1) in {new Node with s="_t"^string(src) and t=[] and d=NSignal($3) and inWires=$2 and outWires=[] and src=src} }
+ | RETURN Wires Expr
+       { let src = (Parsing.set_parse_state parseState; (Parsing.rhs_start_pos 1).pos_lnum+1) in {new Node with s="_t"^string(src) and t=[] and d=NReturn($3) and inWires=$2 and outWires=[] and src=src} }
+ | TypeList ID EQUALS Wires FIRST LPAREN IdList RPAREN
+       { let src = (Parsing.set_parse_state parseState; (Parsing.rhs_start_pos 1).pos_lnum+1) in {new Node with s=$2 and t=$1 and d=NFirst($7) and inWires=$4 and outWires=[] and src=src} }
+ | ID EQUALS Wires FIRST LPAREN IdList RPAREN
+       { let src = (Parsing.set_parse_state parseState; (Parsing.rhs_start_pos 1).pos_lnum+1) in {new Node with s=$1 and t=TUnk and d=NFirst($6) and inWires=$3 and outWires=[] and src=src} }
+ | IF Wires IfList
+       { let src = (Parsing.set_parse_state parseState; (Parsing.rhs_start_pos 1).pos_lnum+1) in {new Node with s="_t"^string(src) and t=[] and d=NIf($3) and inWires=$2 and outWires=[] and src=src} }
+ | IF Wires IfTypeList
+       { let src = (Parsing.set_parse_state parseState; (Parsing.rhs_start_pos 1).pos_lnum+1) in {new Node with s="_t"^string(src) and t=[] and d=NIfType($3) and inWires=$2 and outWires=[] and src=src} }
+
+
+IdList: ID { [($1,TUnk)] }
+ | IdList COMMA ID { $1 @ [($3,TUnk)] }
+ArgList: { [] }
+ | Arg { [$1] }
+ | Arg COMMA ArgList { $1 :: $3 }
+Arg: ID { ("_",$1) }
+ | ID ID { ($2,$1) }
+IdPath: ID { {new StringOrList with asstring=$1 and aslist=[$1]} }
+ |  IdPath DOT ID { {new StringOrList with asstring=$1.asstring^"."^$3 and aslist=$1.aslist @ [$3]} }
+
+Atomic : BEGINREAD { BeginRead }
+ | ENDREAD { EndRead }
+ | BEGINWRITE { BeginWrite }
+ | ENDWRITE { EndWrite }
+
+Wires: { [] }
+ |  LBRACE WireList RBRACE { $2 }
+WireList: { [] }
+ |  Wire { [$1] }
+ |  Wire COMMA WireList { $1 :: $3 }
+Wire: ID { ($1,NBounded(1)) }
+ |  STAR ID { ($2,NUnbounded) }
+
+IfList: CondAndConsequence { [$1] }
+ |  CondAndConsequence ELSE IF IfList { $1 :: $4 }
+ |  CondAndConsequence ELSE Consequence { [$1; $3] }
+CondAndConsequence: LPAREN Expr RPAREN THEN Consequence
+  { let ifdat = $5 in {ifdat with ife=$2} }
+Consequence: ExprNode
+  { let n=$1 in match n.d with NExpr(e) -> {new IfDat with ife={new Expr with t=[("bool",Unimportant)] and e=EBool(true)} and thens=n.s and thent=n.t and thene=e and thenOutWires=n.outWires} | _ -> raise(new System.Exception("ERROR: then not an expr")) }
+
+IfTypeList: TypeCondAndConsequence { [$1] }
+ |  TypeCondAndConsequence ELSE IF IfTypeList { $1 :: $4 }
+ |  TypeCondAndConsequence ELSE TypeConsequence { [$1; $3] }
+TypeCondAndConsequence: LPAREN ID COLON IdList RPAREN THEN TypeConsequence
+  { let (ift:TypeList) = List.map (fun (id,t) -> (id,Unimportant)) $4 in
+    let (ifdat:IfTypeDat) = $7 in
+    {ifdat with ifv=$2; ift=ift} }
+TypeConsequence: ExprNode
+  { let n=$1 in match n.d with NExpr(e) -> {new IfTypeDat with ifv="" and ift=[] and tthens=n.s and tthent=n.t and tthene=e and tthenOutWires=n.outWires} | _ -> raise(new System.Exception("ERROR: then not an expr")) }
+
+
+
+Expr: LPAREN Expr RPAREN { $2 }
+ |  Expr PLUS Expr { {new Expr with t=TUnk and e=EFun("+",[$1;$3])} }
+ |  Expr MINUS Expr { {new Expr with t=TUnk and e=EFun("-",[$1;$3])} }
+ |  Expr STAR Expr { {new Expr with t=TUnk and e=EFun("*",[$1;$3])} }
+ |  Expr DIV Expr { {new Expr with t=TUnk and e=EFun("/",[$1;$3])} }
+ |  Expr LANGLE Expr { {new Expr with t=TUnk and e=EFun("<",[$1;$3])} }
+ |  Expr RANGLE Expr { {new Expr with t=TUnk and e=EFun(">",[$1;$3])} }
+ |  Expr EQEQUALS Expr { {new Expr with t=TUnk and e=EFun("==",[$1;$3])} }
+ |  Expr NOTEQUALS Expr { {new Expr with t=TUnk and e=EFun("!=",[$1;$3])} }
+ |  Expr ABOVEEQUALS Expr { {new Expr with t=TUnk and e=EFun(">=",[$1;$3])} }
+ |  Expr BELOWEQUALS Expr { {new Expr with t=TUnk and e=EFun("<=",[$1;$3])} }
+ |  Expr AND Expr { {new Expr with t=TUnk and e=EFun("&&",[$1;$3])} }
+ |  Expr OR Expr { {new Expr with t=TUnk and e=EFun("||",[$1;$3])} }
+ |  PLING Expr { {new Expr with t=TUnk and e=EFun("!",[$2])} }
+ |  EXTERNAL IdPath LPAREN ExprList RPAREN { {new Expr with t=TUnk and e=EExternal($2.asstring,$4)} }
+ |  MINUS Expr %prec UMINUS { {new Expr with t=TUnk and e=EFun("-",[{new Expr with t=TUnk and e=EInt(0)};$2])} }
+ |  INT { {new Expr with t=TUnk and e=EInt($1)} }
+ |  BOOL { {new Expr with t=TUnk and e=EBool($1)} }
+ |  STRING { {new Expr with t=TUnk and e=EString($1)} }
+ |  IdPath { {new Expr with t=TUnk and e=if $1.asstring="void" then EVoid else EIdPath($1.aslist)} }
+ |  NEW ID LPAREN AssignList RPAREN { {new Expr with t=TUnk and e=EConstructor($2,$4)} }
+ |  IMPORTANT Expr { {new Expr with t=TUnk and e=EImportance(Important,$2)} }
+ |  UNIMPORTANT Expr { {new Expr with t=TUnk and e=EImportance(Unimportant,$2)} }
+ExprList: { [] }
+ |  Expr { [$1] }
+ |  Expr COMMA ExprList { $1 :: $3 }
+AssignList: { [] }
+ |  ID EQUALS Expr { [($1,$3)] }
+ |  ID EQUALS Expr COMMA AssignList { ($1,$3)::$5 }
