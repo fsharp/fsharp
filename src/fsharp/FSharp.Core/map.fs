@@ -26,8 +26,6 @@ open Microsoft.FSharp.Core.OptimizedClosures
 [<AutoOpen>]
 module private MapConstants =
     //
-    let [<Literal>] defaultStackCapacity = 16
-    //
     let [<Literal>] debugViewMaxElementCount = 1000
 
 
@@ -406,43 +404,12 @@ type internal MapTree<'Key, 'Value when 'Key : comparison> =
         | Empty -> 0u
         | Node (Empty, Empty, _, _) -> 1u
         | Node (l, r, _, _) ->
-            /// Mutable stack. Holds the trees which still need to be traversed.
-            let stack = Stack (defaultStackCapacity)
+            // Count the number of elements in the left and right children.
+            let leftCount = MapTree<_,_>.Count l
+            let rightCount = MapTree<_,_>.Count r
 
-            /// The number of elements discovered in the tree so far.
-            let mutable count = 1u   // Start at one (1) to include this root node.
-
-            // Traverse the tree using the mutable stack, incrementing the counter at each node.
-            stack.Push r
-            stack.Push l
-
-            while stack.Count > 0 do
-                match stack.Pop () with
-                | Empty -> ()
-                (* OPTIMIZATION: Handle a few of the cases specially here to avoid pushing empty
-                   nodes on the stack. *)
-                | Node (Empty, Empty, _, _) ->
-                    // Increment the element count.
-                    count <- count + 1u
-
-                | Node (Empty, z, _, _)
-                | Node (z, Empty, _, _) ->
-                    // Increment the element count.
-                    count <- count + 1u
-
-                    // Push the non-empty child onto the stack.
-                    stack.Push z
-
-                | Node (l, r, _, _) ->
-                    // Increment the element count.
-                    count <- count + 1u
-
-                    // Push the children onto the stack.
-                    stack.Push r
-                    stack.Push l
-
-            // Return the element count.
-            count
+            // Return the sum of the counts of the children, plus one for this node.
+            leftCount + rightCount + 1u
 
     //
     static member Iter (action : 'Key -> 'Value -> unit) (tree : MapTree<'Key, 'Value>) : unit =
@@ -452,39 +419,14 @@ type internal MapTree<'Key, 'Value when 'Key : comparison> =
             // Invoke the action with this single element.
             action kvp.Key kvp.Value
         | Node (l, r, kvp, _) ->
-            // Adapt the action function since we'll always supply all of the arguments at once.
-            let action = FSharpFunc<_,_,_>.Adapt action
+            // Iterate over the elements in the left subtree.
+            MapTree<_,_>.Iter action l
 
-            /// Mutable stack. Holds the trees which still need to be traversed.
-            let stack = Stack (defaultStackCapacity)
+            // Apply the action to the key-value pair stored in this node.
+            action kvp.Key kvp.Value
 
-            // Traverse the tree using the mutable stack, applying the folder function to
-            // each value to update the state value.
-            stack.Push r
-            stack.Push <| MapTree.Singleton kvp
-            stack.Push l
-
-            while stack.Count > 0 do
-                match stack.Pop () with
-                | Empty -> ()
-                | Node (Empty, Empty, kvp, _) ->
-                    // Apply this value to the action function.
-                    action.Invoke (kvp.Key, kvp.Value)
-
-                | Node (Empty, z, kvp, _) ->
-                    // Apply this value to the action function.
-                    action.Invoke (kvp.Key, kvp.Value)
-
-                    // Push the non-empty child onto the stack.
-                    stack.Push z
-
-                | Node (l, r, kvp, _) ->
-                    // Push the children onto the stack.
-                    // Also push a new Node onto the stack which contains the value from
-                    // this Node, so it'll be processed in the correct order.
-                    stack.Push r
-                    stack.Push <| MapTree.Singleton kvp
-                    stack.Push l
+            // Iterate over the elements in the right subtree.
+            MapTree<_,_>.Iter action r
 
     //
     static member IterKvp (action : KeyValuePair<'Key, 'Value> -> unit) (tree : MapTree<'Key, 'Value>) : unit =
@@ -494,36 +436,14 @@ type internal MapTree<'Key, 'Value when 'Key : comparison> =
             // Invoke the action with this single element.
             action kvp
         | Node (l, r, kvp, _) ->
-            /// Mutable stack. Holds the trees which still need to be traversed.
-            let stack = Stack (defaultStackCapacity)
+            // Iterate over the elements in the left subtree.
+            MapTree<_,_>.IterKvp action l
 
-            // Traverse the tree using the mutable stack, applying the folder function to
-            // each value to update the state value.
-            stack.Push r
-            stack.Push <| MapTree.Singleton kvp
-            stack.Push l
+            // Apply the action to the key-value pair stored in this node.
+            action kvp
 
-            while stack.Count > 0 do
-                match stack.Pop () with
-                | Empty -> ()
-                | Node (Empty, Empty, kvp, _) ->
-                    // Apply this value to the action function.
-                    action kvp
-
-                | Node (Empty, z, kvp, _) ->
-                    // Apply this value to the action function.
-                    action kvp
-
-                    // Push the non-empty child onto the stack.
-                    stack.Push z
-
-                | Node (l, r, kvp, _) ->
-                    // Push the children onto the stack.
-                    // Also push a new Node onto the stack which contains the value from
-                    // this Node, so it'll be processed in the correct order.
-                    stack.Push r
-                    stack.Push <| MapTree.Singleton kvp
-                    stack.Push l
+            // Iterate over the elements in the right subtree.
+            MapTree<_,_>.IterKvp action r
 
     /// Applies the given accumulating function to all elements in a MapTree.
     static member Fold (folder : 'State -> 'Key -> 'Value -> 'State) (state : 'State) (tree : MapTree<'Key, 'Value>) =
@@ -533,93 +453,31 @@ type internal MapTree<'Key, 'Value when 'Key : comparison> =
             // Invoke the folder function on this single element and return the result.
             folder state kvp.Key kvp.Value
         | Node (l, r, kvp, _) ->
-            // Adapt the folder function since we'll always supply all of the arguments at once.
-            let folder = FSharpFunc<_,_,_,_>.Adapt folder
+            // Fold over the elements in the left subtree.
+            let state = MapTree<_,_>.Fold folder state l
 
-            /// Mutable stack. Holds the trees which still need to be traversed.
-            let stack = Stack (defaultStackCapacity)
+            // Apply the folder function to the key-value pair stored in this node.
+            let state = folder state kvp.Key kvp.Value
 
-            /// The current state value.
-            let mutable state = state
-
-            // Traverse the tree using the mutable stack, applying the folder function to
-            // each value to update the state value.
-            stack.Push r
-            stack.Push <| MapTree.Singleton kvp
-            stack.Push l
-
-            while stack.Count > 0 do
-                match stack.Pop () with
-                | Empty -> ()
-                | Node (Empty, Empty, kvp, _) ->
-                    // Apply this value to the folder function.
-                    state <- folder.Invoke (state, kvp.Key, kvp.Value)
-
-                | Node (Empty, z, kvp, _) ->
-                    // Apply this value to the folder function.
-                    state <- folder.Invoke (state, kvp.Key, kvp.Value)
-
-                    // Push the non-empty child onto the stack.
-                    stack.Push z
-
-                | Node (l, r, kvp, _) ->
-                    // Push the children onto the stack.
-                    // Also push a new Node onto the stack which contains the value from
-                    // this Node, so it'll be processed in the correct order.
-                    stack.Push r
-                    stack.Push <| MapTree.Singleton kvp
-                    stack.Push l
-
-            // Return the final state value.
-            state
+            // Fold over the elements in the right subtree.
+            MapTree<_,_>.Fold folder state r
 
     /// Applies the given accumulating function to all elements in a MapTree.
-    static member FoldBack (folder : 'Key -> 'Value -> 'State -> 'State) (state : 'State) (tree : MapTree<'Key, 'Value>) =
+    static member FoldBack (folder : 'Key -> 'Value -> 'State -> 'State) (tree : MapTree<'Key, 'Value>) (state : 'State) =
         match tree with
         | Empty -> state
         | Node (Empty, Empty, kvp, _) ->
             // Invoke the folder function on this single element and return the result.
             folder kvp.Key kvp.Value state
         | Node (l, r, kvp, _) ->
-            // Adapt the folder function since we'll always supply all of the arguments at once.
-            let folder = FSharpFunc<_,_,_,_>.Adapt folder
+            // Fold over the elements in the right subtree.
+            let state = MapTree<_,_>.FoldBack folder r state
 
-            /// Mutable stack. Holds the trees which still need to be traversed.
-            let stack = Stack (defaultStackCapacity)
+            // Apply the folder function to the key-value pair stored in this node.
+            let state = folder kvp.Key kvp.Value state
 
-            /// The current state value.
-            let mutable state = state
-
-            // Traverse the tree using the mutable stack, applying the folder function to
-            // each value to update the state value.
-            stack.Push l
-            stack.Push <| MapTree.Singleton kvp
-            stack.Push r
-
-            while stack.Count > 0 do
-                match stack.Pop () with
-                | Empty -> ()
-                | Node (Empty, Empty, kvp, _) ->
-                    // Apply this value to the folder function.
-                    state <- folder.Invoke (kvp.Key, kvp.Value, state)
-
-                | Node (z, Empty, kvp, _) ->
-                    // Apply this value to the folder function.
-                    state <- folder.Invoke (kvp.Key, kvp.Value, state)
-
-                    // Push the non-empty child onto the stack.
-                    stack.Push z
-
-                | Node (l, r, kvp, _) ->
-                    // Push the children onto the stack.
-                    // Also push a new Node onto the stack which contains the value from
-                    // this Node, so it'll be processed in the correct order.
-                    stack.Push l
-                    stack.Push <| MapTree.Singleton kvp
-                    stack.Push r
-
-            // Return the final state value.
-            state
+            // Fold over the elements in the left subtree.
+            MapTree<_,_>.FoldBack folder l state
 
     //
     static member TryPick (picker : 'Key -> 'Value -> 'T option) (tree : MapTree<'Key, 'Value>) : 'T option =
@@ -629,45 +487,18 @@ type internal MapTree<'Key, 'Value when 'Key : comparison> =
             // Apply the predicate function to this element and return the result.
             picker kvp.Key kvp.Value
         | Node (l, r, kvp, _) ->
-            // Adapt the picker function since we'll always supply all of the arguments at once.
-            let picker = FSharpFunc<_,_,_>.Adapt picker
-
-            /// Mutable stack. Holds the trees which still need to be traversed.
-            let stack = Stack (defaultStackCapacity)
-
-            /// The picked value, if one has been picked.
-            let mutable pickedValue = None
-
-            // Traverse the tree using the mutable stack, applying the picker function to
-            // each value to update 'pickedValue'.
-            stack.Push r
-            stack.Push <| MapTree.Singleton kvp
-            stack.Push l
-
-            while stack.Count > 0 && Option.isNone pickedValue do
-                match stack.Pop () with
-                | Empty -> ()
-                | Node (Empty, Empty, kvp, _) ->
-                    // Apply the picker to this element.
-                    pickedValue <- picker.Invoke (kvp.Key, kvp.Value)
-
-                | Node (Empty, z, kvp, _) ->
-                    // Apply the picker to this element.
-                    pickedValue <- picker.Invoke (kvp.Key, kvp.Value)
-
-                    // Push the non-empty child onto the stack.
-                    stack.Push z
-
-                | Node (l, r, kvp, _) ->
-                    // Push the children onto the stack.
-                    // Also push a new Node onto the stack which contains the value from
-                    // this Node, so it'll be processed in the correct order.
-                    stack.Push r
-                    stack.Push <| MapTree.Singleton kvp
-                    stack.Push l
-
-            // Return the picked value, if any.
-            pickedValue
+            // Try to pick a result from the elements of the left subtree.
+            match MapTree.TryPick picker l with
+            | Some _ as result ->
+                result
+            | None ->
+                // Try to pick a result from the key-value pair stored in the current node.
+                match picker kvp.Key kvp.Value with
+                | Some _ as result ->
+                    result
+                | None ->
+                    // Try to pick a result from the elements of the right subtree.
+                    MapTree<_,_>.TryPick picker r
 
     /// Tests if any element of the collection satisfies the given predicate.
     static member Exists (predicate : 'Key -> 'Value -> bool) (tree : MapTree<'Key, 'Value>) : bool =
@@ -677,45 +508,12 @@ type internal MapTree<'Key, 'Value when 'Key : comparison> =
             // Apply the predicate function to this element and return the result.
             predicate kvp.Key kvp.Value
         | Node (l, r, kvp, _) ->
-            // Adapt the predicate since we'll always supply all of the arguments at once.
-            let predicate = FSharpFunc<_,_,_>.Adapt predicate
-
-            /// Mutable stack. Holds the trees which still need to be traversed.
-            let stack = Stack (defaultStackCapacity)
-
-            /// Have we found a matching element?
-            let mutable foundMatch = false
-
-            // Traverse the tree using the mutable stack, applying the predicate function to
-            // each value to update 'foundMatch'.
-            stack.Push r
-            stack.Push <| MapTree.Singleton kvp
-            stack.Push l
-
-            while stack.Count > 0 && not foundMatch do
-                match stack.Pop () with
-                | Empty -> ()
-                | Node (Empty, Empty, kvp, _) ->
-                    // Apply the predicate to this element.
-                    foundMatch <- predicate.Invoke (kvp.Key, kvp.Value)
-
-                | Node (Empty, z, kvp, _) ->
-                    // Apply the predicate to this element.
-                    foundMatch <- predicate.Invoke (kvp.Key, kvp.Value)
-
-                    // Push the non-empty child onto the stack.
-                    stack.Push z
-
-                | Node (l, r, kvp, _) ->
-                    // Push the children onto the stack.
-                    // Also push a new Node onto the stack which contains the value from
-                    // this Node, so it'll be processed in the correct order.
-                    stack.Push r
-                    stack.Push <| MapTree.Singleton kvp
-                    stack.Push l
-
-            // Return the value indicating whether or not a matching element was found.
-            foundMatch
+            // Try to find a matching element in the left subtree.
+            MapTree<_,_>.Exists predicate l
+            // Does the key-value pair stored in this node match the predicate?
+            || predicate kvp.Key kvp.Value
+            // Try to find a matching element in the right subtree.
+            || MapTree<_,_>.Exists predicate r
 
     /// Tests if all elements of the collection satisfy the given predicate.
     static member Forall (predicate : 'Key -> 'Value -> bool) (tree : MapTree<'Key, 'Value>) : bool =
@@ -725,45 +523,12 @@ type internal MapTree<'Key, 'Value when 'Key : comparison> =
             // Apply the predicate function to this element and return the result.
             predicate kvp.Key kvp.Value
         | Node (l, r, kvp, _) ->
-            // Adapt the predicate since we'll always supply all of the arguments at once.
-            let predicate = FSharpFunc<_,_,_>.Adapt predicate
-
-            /// Mutable stack. Holds the trees which still need to be traversed.
-            let stack = Stack (defaultStackCapacity)
-
-            /// Have all of the elements we've seen so far matched the predicate?
-            let mutable allElementsMatch = true
-
-            // Traverse the tree using the mutable stack, applying the predicate function to
-            // each value to update 'allElementsMatch'.
-            stack.Push r
-            stack.Push <| MapTree.Singleton kvp
-            stack.Push l
-
-            while stack.Count > 0 && allElementsMatch do
-                match stack.Pop () with
-                | Empty -> ()
-                | Node (Empty, Empty, kvp, _) ->
-                    // Apply the predicate to this element.
-                    allElementsMatch <- predicate.Invoke (kvp.Key, kvp.Value)
-
-                | Node (Empty, z, kvp, _) ->
-                    // Apply the predicate to this element.
-                    allElementsMatch <- predicate.Invoke (kvp.Key, kvp.Value)
-
-                    // Push the non-empty child onto the stack.
-                    stack.Push z
-
-                | Node (l, r, kvp, _) ->
-                    // Push the children onto the stack.
-                    // Also push a new Node onto the stack which contains the value from
-                    // this Node, so it'll be processed in the correct order.
-                    stack.Push r
-                    stack.Push <| MapTree.Singleton kvp
-                    stack.Push l
-
-            // Return the value indicating if all elements matched the predicate.
-            allElementsMatch
+            // Try to find a non-matching element in the left subtree.
+            MapTree<_,_>.Forall predicate l
+            // Does the key-value pair stored in this node match the predicate?
+            && predicate kvp.Key kvp.Value
+            // Try to find a non-matching element in the right subtree.
+            && MapTree<_,_>.Forall predicate r
 
     /// Builds a new MapTree from the elements of a sequence.
     static member OfSeq (comparer : IComparer<'Key>, sequence : seq<'Key * 'Value>) : MapTree<'Key, 'Value> =
@@ -808,7 +573,7 @@ type internal MapTree<'Key, 'Value when 'Key : comparison> =
     /// Returns a list containing the elements stored in
     /// a MapTree, ordered from least to greatest. 
     static member ToList (tree : MapTree<'Key, 'Value>) =
-        ([], tree)
+        (tree, [])
         ||> MapTree.FoldBack (fun key value lst ->
             (key, value) :: lst)
 
@@ -1085,7 +850,7 @@ type Map<[<EqualityConditionalOn>] 'Key, [<EqualityConditionalOn;ComparisonCondi
 
     //
     member internal __.FoldBack (folder : 'Key -> 'Value -> 'State -> 'State) (state : 'State) : 'State =
-        MapTree.FoldBack folder state tree
+        MapTree.FoldBack folder tree state
 
     //
     member internal __.Map (mapping : 'Key -> 'Value -> 'U) : Map<'Key, 'U> =

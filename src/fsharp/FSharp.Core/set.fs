@@ -25,8 +25,6 @@ open Microsoft.FSharp.Core.OptimizedClosures
 [<AutoOpen>]
 module private SetConstants =
     //
-    let [<Literal>] defaultStackCapacity = 16
-    //
     let [<Literal>] debugViewMaxElementCount = 1000
 
 
@@ -390,43 +388,12 @@ type internal SetTree<'T when 'T : comparison> =
         | Empty -> 0u
         | Node (Empty, Empty, _, _) -> 1u
         | Node (l, r, _, _) ->
-            /// Mutable stack. Holds the trees which still need to be traversed.
-            let stack = Stack<SetTree<'T>> (defaultStackCapacity)
+            // Count the number of elements in the left and right children.
+            let leftCount = SetTree<_>.Count l
+            let rightCount = SetTree<_>.Count r
 
-            /// The number of elements discovered in the tree so far.
-            let mutable count = 1u   // Start at one (1) to include this root node.
-
-            // Traverse the tree using the mutable stack, incrementing the counter at each node.
-            stack.Push r
-            stack.Push l
-
-            while stack.Count > 0 do
-                match stack.Pop () with
-                | Empty -> ()
-                (* OPTIMIZATION: Handle a few of the cases specially here to avoid pushing empty
-                   nodes on the stack. *)
-                | Node (Empty, Empty, _, _) ->
-                    // Increment the element count.
-                    count <- count + 1u
-
-                | Node (Empty, z, _, _)
-                | Node (z, Empty, _, _) ->
-                    // Increment the element count.
-                    count <- count + 1u
-
-                    // Push the non-empty child onto the stack.
-                    stack.Push z
-
-                | Node (l, r, _, _) ->
-                    // Increment the element count.
-                    count <- count + 1u
-
-                    // Push the children onto the stack.
-                    stack.Push r
-                    stack.Push l
-
-            // Return the element count.
-            count
+            // Return the sum of the counts of the children, plus one for this node.
+            leftCount + rightCount + 1u
 
     //
     static member Iter (action : 'T -> unit) (tree : SetTree<'T>) : unit =
@@ -436,36 +403,14 @@ type internal SetTree<'T when 'T : comparison> =
             // Invoke the action with this single element.
             action x
         | Node (l, r, x, _) ->
-            /// Mutable stack. Holds the trees which still need to be traversed.
-            let stack = Stack<SetTree<'T>> (defaultStackCapacity)
+            // Iterate over the elements in the left subtree.
+            SetTree<_>.Iter action l
 
-            // Traverse the tree using the mutable stack, applying the folder function to
-            // each value to update the state value.
-            stack.Push r
-            stack.Push <| SetTree.Singleton x
-            stack.Push l
+            // Apply the action to the element stored in this node.
+            action x
 
-            while stack.Count > 0 do
-                match stack.Pop () with
-                | Empty -> ()
-                | Node (Empty, Empty, x, _) ->
-                    // Apply this value to the action function.
-                    action x
-
-                | Node (Empty, z, x, _) ->
-                    // Apply this value to the action function.
-                    action x
-
-                    // Push the non-empty child onto the stack.
-                    stack.Push z
-
-                | Node (l, r, x, _) ->
-                    // Push the children onto the stack.
-                    // Also push a new Node onto the stack which contains the value from
-                    // this Node, so it'll be processed in the correct order.
-                    stack.Push r
-                    stack.Push <| SetTree.Singleton x
-                    stack.Push l
+            // Iterate over the elements in the right subtree.
+            SetTree<_>.Iter action r
 
     /// Applies the given accumulating function to all elements in a SetTree.
     static member Fold (folder : 'State -> 'T -> 'State) (state : 'State) (tree : SetTree<'T>) =
@@ -475,93 +420,31 @@ type internal SetTree<'T when 'T : comparison> =
             // Invoke the folder function on this single element and return the result.
             folder state x
         | Node (l, r, x, _) ->
-            // Adapt the folder function since we'll always supply all of the arguments at once.
-            let folder = FSharpFunc<_,_,_>.Adapt folder
+            // Fold over the elements in the left subtree.
+            let state = SetTree<_>.Fold folder state l
 
-            /// Mutable stack. Holds the trees which still need to be traversed.
-            let stack = Stack<SetTree<'T>> (defaultStackCapacity)
+            // Apply the folder function to the element stored in this node.
+            let state = folder state x
 
-            /// The current state value.
-            let mutable state = state
-
-            // Traverse the tree using the mutable stack, applying the folder function to
-            // each value to update the state value.
-            stack.Push r
-            stack.Push <| SetTree.Singleton x
-            stack.Push l
-
-            while stack.Count > 0 do
-                match stack.Pop () with
-                | Empty -> ()
-                | Node (Empty, Empty, x, _) ->
-                    // Apply this value to the folder function.
-                    state <- folder.Invoke (state, x)
-
-                | Node (Empty, z, x, _) ->
-                    // Apply this value to the folder function.
-                    state <- folder.Invoke (state, x)
-
-                    // Push the non-empty child onto the stack.
-                    stack.Push z
-
-                | Node (l, r, x, _) ->
-                    // Push the children onto the stack.
-                    // Also push a new Node onto the stack which contains the value from
-                    // this Node, so it'll be processed in the correct order.
-                    stack.Push r
-                    stack.Push <| SetTree.Singleton x
-                    stack.Push l
-
-            // Return the final state value.
-            state
+            // Fold over the elements in the right subtree.
+            SetTree<_>.Fold folder state r
 
     /// Applies the given accumulating function to all elements in a SetTree.
-    static member FoldBack (folder : 'T -> 'State -> 'State) (state : 'State) (tree : SetTree<'T>) =
+    static member FoldBack (folder : 'T -> 'State -> 'State) (tree : SetTree<'T>) (state : 'State) =
         match tree with
         | Empty -> state
         | Node (Empty, Empty, x, _) ->
             // Invoke the folder function on this single element and return the result.
             folder x state
         | Node (l, r, x, _) ->
-            // Adapt the folder function since we'll always supply all of the arguments at once.
-            let folder = FSharpFunc<_,_,_>.Adapt folder
+            // Fold over the elements in the right subtree.
+            let state = SetTree<_>.FoldBack folder r state
 
-            /// Mutable stack. Holds the trees which still need to be traversed.
-            let stack = Stack<SetTree<'T>> (defaultStackCapacity)
+            // Apply the folder function to the element stored in this node.
+            let state = folder x state
 
-            /// The current state value.
-            let mutable state = state
-
-            // Traverse the tree using the mutable stack, applying the folder function to
-            // each value to update the state value.
-            stack.Push l
-            stack.Push <| SetTree.Singleton x
-            stack.Push r
-
-            while stack.Count > 0 do
-                match stack.Pop () with
-                | Empty -> ()
-                | Node (Empty, Empty, x, _) ->
-                    // Apply this value to the folder function.
-                    state <- folder.Invoke (x, state)
-
-                | Node (z, Empty, x, _) ->
-                    // Apply this value to the folder function.
-                    state <- folder.Invoke (x, state)
-
-                    // Push the non-empty child onto the stack.
-                    stack.Push z
-
-                | Node (l, r, x, _) ->
-                    // Push the children onto the stack.
-                    // Also push a new Node onto the stack which contains the value from
-                    // this Node, so it'll be processed in the correct order.
-                    stack.Push l
-                    stack.Push <| SetTree.Singleton x
-                    stack.Push r
-
-            // Return the final state value.
-            state
+            // Fold over the elements in the left subtree.
+            SetTree<_>.FoldBack folder l state
 
     /// Tests if any element of the collection satisfies the given predicate.
     static member Exists (predicate : 'T -> bool) (tree : SetTree<'T>) : bool =
@@ -571,42 +454,12 @@ type internal SetTree<'T when 'T : comparison> =
             // Apply the predicate function to this element and return the result.
             predicate x
         | Node (l, r, x, _) ->
-            /// Mutable stack. Holds the trees which still need to be traversed.
-            let stack = Stack<SetTree<'T>> (defaultStackCapacity)
-
-            /// Have we found a matching element?
-            let mutable foundMatch = false
-
-            // Traverse the tree using the mutable stack, applying the folder function to
-            // each value to update the state value.
-            stack.Push r
-            stack.Push <| SetTree.Singleton x
-            stack.Push l
-
-            while stack.Count > 0 && not foundMatch do
-                match stack.Pop () with
-                | Empty -> ()
-                | Node (Empty, Empty, x, _) ->
-                    // Apply the predicate to this element.
-                    foundMatch <- predicate x
-
-                | Node (Empty, z, x, _) ->
-                    // Apply the predicate to this element.
-                    foundMatch <- predicate x
-
-                    // Push the non-empty child onto the stack.
-                    stack.Push z
-
-                | Node (l, r, x, _) ->
-                    // Push the children onto the stack.
-                    // Also push a new Node onto the stack which contains the value from
-                    // this Node, so it'll be processed in the correct order.
-                    stack.Push r
-                    stack.Push <| SetTree.Singleton x
-                    stack.Push l
-
-            // Return the value indicating whether or not a matching element was found.
-            foundMatch
+            // Try to find a matching element in the left subtree.
+            SetTree<_>.Exists predicate l
+            // Does the element stored in this node match the predicate?
+            || predicate x
+            // Try to find a matching element in the right subtree.
+            || SetTree<_>.Exists predicate r
 
     /// Tests if all elements of the collection satisfy the given predicate.
     static member Forall (predicate : 'T -> bool) (tree : SetTree<'T>) : bool =
@@ -616,42 +469,12 @@ type internal SetTree<'T when 'T : comparison> =
             // Apply the predicate function to this element and return the result.
             predicate x
         | Node (l, r, x, _) ->
-            /// Mutable stack. Holds the trees which still need to be traversed.
-            let stack = Stack<SetTree<'T>> (defaultStackCapacity)
-
-            /// Have all of the elements we've seen so far matched the predicate?
-            let mutable allElementsMatch = true
-
-            // Traverse the tree using the mutable stack, applying the folder function to
-            // each value to update the state value.
-            stack.Push r
-            stack.Push <| SetTree.Singleton x
-            stack.Push l
-
-            while stack.Count > 0 && allElementsMatch do
-                match stack.Pop () with
-                | Empty -> ()
-                | Node (Empty, Empty, x, _) ->
-                    // Apply the predicate to this element.
-                    allElementsMatch <- predicate x
-
-                | Node (Empty, z, x, _) ->
-                    // Apply the predicate to this element.
-                    allElementsMatch <- predicate x
-
-                    // Push the non-empty child onto the stack.
-                    stack.Push z
-
-                | Node (l, r, x, _) ->
-                    // Push the children onto the stack.
-                    // Also push a new Node onto the stack which contains the value from
-                    // this Node, so it'll be processed in the correct order.
-                    stack.Push r
-                    stack.Push <| SetTree.Singleton x
-                    stack.Push l
-
-            // Return the value indicating if all elements matched the predicate.
-            allElementsMatch
+            // Try to find a non-matching element in the left subtree.
+            SetTree<_>.Forall predicate l
+            // Does the element stored in this node match the predicate?
+            && predicate x
+            // Try to find a non-matching element in the right subtree.
+            && SetTree<_>.Forall predicate r
 
     /// Builds a new SetTree from the elements of a sequence.
     static member OfSeq (comparer : IComparer<'T>, sequence : seq<'T>) : SetTree<'T> =
@@ -688,9 +511,9 @@ type internal SetTree<'T when 'T : comparison> =
 //        }
 
     /// Returns a list containing the elements stored in
-    /// a SetTree, ordered from least to greatest. 
+    /// a SetTree, ordered from least to greatest.
     static member ToList (tree : SetTree<'T>) =
-        ([], tree)
+        (tree, [])
         ||> SetTree.FoldBack (fun el lst ->
             el :: lst)
 
@@ -1226,7 +1049,7 @@ type Set<[<EqualityConditionalOn>] 'T when 'T : comparison> private (tree : SetT
 
     //
     member internal __.FoldBack (folder : 'T -> 'State -> 'State) (state : 'State) : 'State =
-        SetTree.FoldBack folder state tree
+        SetTree.FoldBack folder tree state
 
     //
     member internal __.Map (mapping : 'T -> 'U) : Set<'U> =
