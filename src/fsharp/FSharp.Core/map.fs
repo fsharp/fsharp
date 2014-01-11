@@ -731,20 +731,17 @@ type Map<[<EqualityConditionalOn>] 'Key, [<EqualityConditionalOn;ComparisonCondi
         Map (MapTree.OfSeq (comparer, elements))
 
     //
-    member private __.Tree
-        with get () = tree
+    member private __.Tree = tree
 
     //
-    member __.Count
-        with get () =
-            int <| MapTree.Count tree
+    member __.Count =
+        int <| MapTree.Count tree
 
     //
-    member __.IsEmpty
-        with get () =
-            match tree with
-            | Empty -> true
-            | Node (_,_,_,_) -> false
+    member __.IsEmpty =
+        match tree with
+        | Empty -> true
+        | Node (_,_,_,_) -> false
 
     //
     member __.Item

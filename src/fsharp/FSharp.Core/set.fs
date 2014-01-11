@@ -880,38 +880,33 @@ type Set<[<EqualityConditionalOn>] 'T when 'T : comparison> private (tree : SetT
 #else
     [<DebuggerBrowsable(DebuggerBrowsableState.Never)>]
 #endif
-    member private __.Tree
-        with get () = tree
+    member private __.Tree = tree
 
     //
-    member __.Count
-        with get () =
-            int <| SetTree.Count tree
+    member __.Count =
+        int <| SetTree.Count tree
 
     //
-    member __.IsEmpty
-        with get () =
-            match tree with
-            | Empty -> true
-            | Node (_,_,_,_) -> false
+    member __.IsEmpty =
+        match tree with
+        | Empty -> true
+        | Node (_,_,_,_) -> false
 
     //
 #if FX_NO_DEBUG_DISPLAYS
 #else
     [<DebuggerBrowsable(DebuggerBrowsableState.Never)>]
 #endif
-    member __.MinimumElement
-        with get () =
-            SetTree.MinElement tree
+    member __.MinimumElement =
+        SetTree.MinElement tree
 
     //
 #if FX_NO_DEBUG_DISPLAYS
 #else
     [<DebuggerBrowsable(DebuggerBrowsableState.Never)>]
 #endif
-    member __.MaximumElement
-        with get () =
-            SetTree.MaxElement tree
+    member __.MaximumElement =
+        SetTree.MaxElement tree
 
     //
     member __.Contains (value : 'T) : bool =
@@ -939,8 +934,6 @@ type Set<[<EqualityConditionalOn>] 'T when 'T : comparison> private (tree : SetT
 
     //
     static member internal Union (set1 : Set<'T>, set2 : Set<'T>) : Set<'T> =
-
-
         // Compute the union of the trees.
         // If the result is the same as either tree (i.e., one set was a subset of the other)
         // return that tree's corresponding set instead of creating a new one.
