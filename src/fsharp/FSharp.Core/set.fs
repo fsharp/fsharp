@@ -635,7 +635,10 @@ type internal SetTree<'T when 'T : comparison> =
 
     /// Computes the union of two SetTrees.
     static member Union (comparer : IComparer<'T>, t1 : SetTree<'T>, t2 : SetTree<'T>) : SetTree<'T> =
-        // Perf: tried bruteForce for low heights, but nothing significant 
+        // If the two trees are identical (physical equality), there's no need to do any work.
+        if System.Object.ReferenceEquals (t1, t2) then t1 else
+        
+        // Perf: tried bruteForce for low heights, but nothing significant
         match t1, t2 with
         | Empty, t -> t
         | t, Empty -> t
@@ -652,9 +655,6 @@ type internal SetTree<'T when 'T : comparison> =
             if h1 > h2 then
                 let lo, _, hi = SetTree.Split (comparer, t2, k1)
 
-                // OPTIMIZE : It might not hurt to add a reference-equality check here to determine
-                // if t11 = lo or t12 = hi -- if we know they're the same, there's no need to perform
-                // the union operation on them.
                 let lo' = SetTree.Union (comparer, t11, lo)
                 let hi' = SetTree.Union (comparer, t12, hi)
 
@@ -665,9 +665,6 @@ type internal SetTree<'T when 'T : comparison> =
             else
                 let lo, _, hi = SetTree.Split (comparer, t1, k2)
 
-                // OPTIMIZE : It might not hurt to add a reference-equality check here to determine
-                // if t11 = lo or t12 = hi -- if we know they're the same, there's no need to perform
-                // the union operation on them.
                 let lo' = SetTree.Union (comparer, t21, lo)
                 let hi' = SetTree.Union (comparer, t22, hi)
 
@@ -680,33 +677,52 @@ type internal SetTree<'T when 'T : comparison> =
     static member private IntersectionAux (comparer : IComparer<'T>, b, m, acc) : SetTree<'T> =
         match m with
         | Empty -> acc
-        | Node (Empty, Empty, k, _) ->
-            if SetTree.Contains (comparer, b, k) then
-                SetTree.Insert (comparer, acc, k)
+        | Node (Empty, Empty, x, _) ->
+            if SetTree.Contains (comparer, b, x) then
+                SetTree.Insert (comparer, acc, x)
             else acc
-        | Node (l, r, k, _) ->
+        | Node (l, r, x, _) ->
             let acc =
                 let acc = SetTree.IntersectionAux (comparer, b, r, acc)
-                if SetTree.Contains (comparer, b, k) then
-                    SetTree.Insert (comparer, acc, k)
+                if SetTree.Contains (comparer, b, x) then
+                    SetTree.Insert (comparer, acc, x)
                 else acc 
             SetTree.IntersectionAux (comparer, b, l, acc)
 
     /// Computes the intersection of two SetTrees.
     static member Intersection (comparer : IComparer<'T>, tree1 : SetTree<'T>, tree2 : SetTree<'T>) : SetTree<'T> =
-        SetTree.IntersectionAux (comparer, tree2, tree1, Empty)
+        // If the two trees are identical (physical equality), there's no need to do any work.
+        if System.Object.ReferenceEquals (tree1, tree2) then tree1
+        else
+            // If either of the two trees are empty, the intersection is empty.
+            match tree1, tree2 with
+            | Empty, _
+            | _, Empty ->
+                Empty
+            | _, _ ->
+                SetTree.IntersectionAux (comparer, tree2, tree1, Empty)
 
-    /// Returns a new SetTree created by removing the elements of the
-    /// second SetTree from the first.
+    /// Returns a new SetTree created by removing the elements of the second SetTree from the first.
     static member Difference (comparer : IComparer<'T>, tree1 : SetTree<'T>, tree2 : SetTree<'T>) : SetTree<'T> =
-        (* OPTIMIZE :   This function should be re-implemented to use the linear-time
-                        algorithm which traverses both trees simultaneously and merges
-                        them in a single pass. *)
+        // If the two trees are identical (physical equality), there's no need to do any work.
+        if System.Object.ReferenceEquals (tree1, tree2) then SetTree.Empty
+        else
+            // If the first tree is empty, the result is empty;
+            // If the second tree is empty, the result is the first tree.
+            match tree1, tree2 with
+            | Empty, _ ->
+                Empty
+            | _, Empty ->
+                tree1
+            | _, _ ->
+                (* OPTIMIZE :   This function should be re-implemented to use the linear-time
+                                algorithm which traverses both trees simultaneously and merges
+                                them in a single pass. *)
 
-        // Fold over tree2, removing it's elements from tree1
-        (tree1, tree2)
-        ||> SetTree.Fold (fun tree el ->
-            SetTree.Delete (comparer, tree, el))
+                // Fold over tree2, removing it's elements from tree1
+                (tree1, tree2)
+                ||> SetTree.Fold (fun tree el ->
+                    SetTree.Delete (comparer, tree, el))
 
     //
     static member IsSubset (comparer : IComparer<'T>, set1 : SetTree<'T>, set2 : SetTree<'T>) : bool =
@@ -923,6 +939,8 @@ type Set<[<EqualityConditionalOn>] 'T when 'T : comparison> private (tree : SetT
 
     //
     static member internal Union (set1 : Set<'T>, set2 : Set<'T>) : Set<'T> =
+
+
         // Compute the union of the trees.
         // If the result is the same as either tree (i.e., one set was a subset of the other)
         // return that tree's corresponding set instead of creating a new one.
@@ -964,7 +982,7 @@ type Set<[<EqualityConditionalOn>] 'T when 'T : comparison> private (tree : SetT
 
     //
     static member internal IntersectMany (sets : seq<Set<'T>>) : Set<'T> =
-        Seq.reduce (fun s1 s2 -> Set<_>.Intersection(s1,s2)) sets
+        Seq.reduce (fun s1 s2 -> Set<_>.Intersection (s1, s2)) sets
 
     //
     static member internal FromSeq (sequence : seq<'T>) : Set<'T> =
