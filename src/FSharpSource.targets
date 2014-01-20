@@ -703,8 +703,8 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
 
   <!-- Include the portable targets file when building the portable FSharp.Core -->
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\v4.0\Microsoft.Portable.Common.targets"
-          Condition=" '$(TargetFramework)'=='portable-net45+sl5+win8' OR 
-                      '$(TargetFramework)'=='portable-net4+sl4+wp71+win8' AND 
+          Condition=" ('$(TargetFramework)'=='portable-net45+sl5+win8' OR 
+                       '$(TargetFramework)'=='portable-net4+sl4+wp71+win8') AND 
                       Exists('$(MSBuildExtensionsPath32)\Microsoft\Portable\v4.0\Microsoft.Portable.Common.targets')" />
 
   <!-- If the Microsoft.Portable.Common.targets file does not exist when building the portable FSharp.Core, include the following ProperyGroup -->
