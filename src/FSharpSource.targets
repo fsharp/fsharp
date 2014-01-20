@@ -708,8 +708,8 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
                       Exists('$(MSBuildExtensionsPath32)\Microsoft\Portable\v4.0\Microsoft.Portable.Common.targets')" />
 
   <!-- If the Microsoft.Portable.Common.targets file does not exist when building the portable FSharp.Core, include the following ProperyGroup -->
- <PropertyGroup Condition=" '$(TargetFramework)'=='portable-net45+sl5+win8' OR 
-                            '$(TargetFramework)'=='portable-net4+sl4+wp71+win8' AND 
+ <PropertyGroup Condition=" ('$(TargetFramework)'=='portable-net45+sl5+win8' OR 
+                             '$(TargetFramework)'=='portable-net4+sl4+wp71+win8') AND 
                             !Exists('$(MSBuildExtensionsPath32)\Microsoft\Portable\v4.0\Microsoft.Portable.Common.targets')">
    <AvailablePlatforms>Any CPU</AvailablePlatforms>
    <TargetPlatformIdentifier>Portable</TargetPlatformIdentifier>
