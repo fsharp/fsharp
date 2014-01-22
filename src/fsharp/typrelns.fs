@@ -2523,9 +2523,47 @@ module ProvidedMethodCalls =
             match ea.PApplyOption((function ProvidedNewObjectExpr c -> Some c | _ -> None), m) with 
             | Some info -> 
                 None, ctorCallToExpr info
+            | None ->
+            match ea.PApplyOption((function ProvidedFieldGetExpr c -> Some c | _ -> None), m) with
+            | Some info ->
+                let (instOpt, f) = info.PApply2(id, m)
+                let fieldSpec, fieldType, isValueType = providedFieldToFieldSpec f
+                let expr = 
+                    match instOpt.PApplyOption(id, m) with
+                    | Some objExpr -> 
+                        let objExpr = exprToExpr objExpr
+                        let wrap,objExpr = mkExprAddrOfExpr g isValueType false NeverMutates objExpr None m
+                        wrap (mkAsmExpr ([ mkNormalLdfld fieldSpec ], [],[objExpr],[fieldType], m)) 
+                    | None -> 
+                        mkAsmExpr([mkNormalLdsfld fieldSpec], [], [], [fieldType], m)
+                None, (expr, fieldType)
+            | None ->
+            match ea.PApplyOption((function ProvidedFieldSetExpr c -> Some c | _ -> None), m) with
+            | Some info -> 
+                let (instOpt, f, value) = info.PApply3(id, m)
+                let fieldSpec, _, isValueType = providedFieldToFieldSpec f
+                let value = exprToExpr value
+                let expr = 
+                    match instOpt.PApplyOption(id, m) with
+                    | Some objExpr -> 
+                        let objExpr = exprToExpr objExpr
+                        let wrap,objExpr = mkExprAddrOfExpr g isValueType false DefinitelyMutates objExpr None m
+                        wrap (mkAsmExpr ([ mkNormalStfld fieldSpec ], [],[objExpr; value],[], m)) 
+                    | None ->
+                        mkAsmExpr([mkNormalStsfld fieldSpec], [], [value], [], m)
+
+                None, (expr, amap.g.unit_ty)
             | None -> 
                 fail()
 
+        and providedFieldToFieldSpec (f : Tainted<ProvidedFieldInfo>) =
+            let declaringType = Import.ImportProvidedTypeAsILType amap m (f.PApply((fun field -> field.DeclaringType),m))
+            let isValueType = f.PUntaint((fun f -> f.DeclaringType.IsValueType), m)
+            let fieldSpec = 
+                let fieldRef = Import.ImportProvidedFieldAsILFieldRef amap m f
+                mkILFieldSpec(fieldRef, declaringType)
+            let fieldType = Import.ImportProvidedType amap m (f.PApply((fun field -> field.FieldType),m))
+            fieldSpec, fieldType, isValueType
 
         and ctorCallToExpr (ne:Tainted<_>) =    
             let (ctor,args) = ne.PApply2(id,m)

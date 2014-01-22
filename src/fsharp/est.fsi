@@ -316,6 +316,8 @@ module internal ExtensionTyping =
     val (|ProvidedVarSetExpr|_|)      : ProvidedExpr -> (ProvidedVar * ProvidedExpr) option
     val (|ProvidedIfThenElseExpr|_|) : ProvidedExpr -> (ProvidedExpr * ProvidedExpr * ProvidedExpr) option
     val (|ProvidedVarExpr|_|)  : ProvidedExpr -> ProvidedVar option
+    val (|ProvidedFieldGetExpr|_|)  : ProvidedExpr -> (ProvidedExpr option * ProvidedFieldInfo) option
+    val (|ProvidedFieldSetExpr|_|)  : ProvidedExpr -> (ProvidedExpr option * ProvidedFieldInfo * ProvidedExpr) option
 
     val GetInvokerExpression : ITypeProvider * ProvidedMethodBase * ProvidedVar[] ->  ProvidedExpr
 

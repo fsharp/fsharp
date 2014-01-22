@@ -256,6 +256,11 @@ let rec ImportProvidedType (env:ImportMap) (m:range) (* (tinst:TypeInst) *) (st:
 
         ImportTyconRefApp env tcref genericArgs
 
+let ImportProvidedFieldAsILFieldRef (env:ImportMap) (m:range) (field: Tainted<ProvidedFieldInfo>) = 
+    let declaringILTypeRef= ExtensionTyping.GetILTypeRefOfProvidedType (field.PApply((fun field-> field.DeclaringType), m),  m)
+    let fieldILType = ImportProvidedTypeAsILType env m (field.PApply((fun field-> field.FieldType), m))
+    let fieldName = field.PUntaint((fun field -> field.Name), m)
+    mkILFieldRef(declaringILTypeRef, fieldName, fieldILType)
 
 let ImportProvidedMethodBaseAsILMethodRef (env:ImportMap) (m:range) (mbase: Tainted<ProvidedMethodBase>) = 
      let tref = ExtensionTyping.GetILTypeRefOfProvidedType (mbase.PApply((fun mbase -> mbase.DeclaringType),m), m)
