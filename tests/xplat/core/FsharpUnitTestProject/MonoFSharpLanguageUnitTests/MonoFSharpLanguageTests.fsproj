@@ -1,0 +1,170 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>12.0.0</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{07E182C3-993F-4D21-BF67-6144B0B43B9A}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <RootNamespace>MonoFSharpLanguageUnitTests</RootNamespace>
+    <AssemblyName>MonoFSharpLanguageUnitTests</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <OutputPath>bin\Debug</OutputPath>
+    <DefineConstants>DEBUG;MONO;UNIX;ALL_IN_ONE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <PlatformTarget>
+    </PlatformTarget>
+    <ConsolePause>false</ConsolePause>
+    <CustomCommands>
+      <CustomCommands>
+        <Command type="Execute" />
+      </CustomCommands>
+    </CustomCommands>
+    <OtherFlags>--quotations-debug+</OtherFlags>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release</OutputPath>
+    <ErrorReport>prompt</ErrorReport>
+    <PlatformTarget>
+    </PlatformTarget>
+    <ConsolePause>false</ConsolePause>
+    <Tailcalls>true</Tailcalls>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="nunit.framework" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Numerics" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="cslib">
+      <HintPath>..\..\..\..\fsharp\core\quotes\cslib.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft F#\v4.0\Microsoft.FSharp.Targets" />
+  <ItemGroup>
+    <None Include="Test.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\SharedTests\acess.fs">
+      <Link>acess.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\apporder.fs">
+      <Link>apporder.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\array.fs">
+      <Link>array.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\comprehensions.fs">
+      <Link>comprehensions.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\control-mailbox.fs">
+      <Link>control-mailbox.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\control-stackoverflow.fs">
+      <Link>control-stackoverflow.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\control.fs">
+      <Link>control.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\controlChamenos.fs">
+      <Link>controlChamenos.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\innerpoly.fs">
+      <Link>innerpoly.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\lazy.fs">
+      <Link>lazy.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\letrec.fs">
+      <Link>letrec.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\lift.fs">
+      <Link>lift.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\longnames.fs">
+      <Link>longnames.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\map.fs">
+      <Link>map.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\math-generic-measures.fs">
+      <Link>math-generic-measures.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\math-measures.fs">
+      <Link>math-measures.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\math-numbers.fs">
+      <Link>math-numbers.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\math-numbersVS2008.fs">
+      <Link>math-numbersVS2008.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\member-ops.fs">
+      <Link>member-ops.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\members-ctree.fs">
+      <Link>members-ctree.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\members-factors.fs">
+      <Link>members-factors.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\members-incremental-test-hw.fs">
+      <Link>members-incremental-test-hw.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\members-incremental-test.fs">
+      <Link>members-incremental-test.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\nested.fs">
+      <Link>nested.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\patterns.fs">
+      <Link>patterns.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\queries-over-ienumerable.fs">
+      <Link>queries-over-ienumerable.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\queries-over-iqueryable.fs">
+      <Link>queries-over-iqueryable.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\quotes.fs">
+      <Link>quotes.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\quotesDebugInfo.fs">
+      <Link>quotesDebugInfo.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\seq.fs">
+      <Link>seq.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\subtype.fs">
+      <Link>subtype.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\syntax.fs">
+      <Link>syntax.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\tlr.fs">
+      <Link>tlr.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\unicode.fs">
+      <Link>unicode.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\UnitTestRunner.fs">
+      <Link>UnitTestRunner.fs</Link>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="..\..\..\..\fsharp\core\unicode\out.bsl">
+      <Link>out.bsl</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+</Project>

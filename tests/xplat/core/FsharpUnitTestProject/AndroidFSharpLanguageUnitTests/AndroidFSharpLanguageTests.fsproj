@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>12.0.0</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{3280F23A-A2E6-44B9-A21F-599089D09467}</ProjectGuid>
+    <ProjectTypeGuids>{EFBA0AD7-5A72-4C68-AF49-83D382785DCF};{F278D4AB-4730-4720-B08E-FE5E31564D9E};{4925A630-B079-445D-BCD4-3A9C94FE9307}</ProjectTypeGuids>
+    <OutputType>Library</OutputType>
+    <RootNamespace>AndroidFSharpLanguageUnitTests</RootNamespace>
+    <AndroidApplication>True</AndroidApplication>
+    <AndroidResgenFile>Resources\Resource.designer.fs</AndroidResgenFile>
+    <AndroidResgenClass>Resource</AndroidResgenClass>
+    <MonoAndroidResourcePrefix>Resources</MonoAndroidResourcePrefix>
+    <MonoAndroidAssetsPrefix>Assets</MonoAndroidAssetsPrefix>
+    <AndroidUseLatestPlatformSdk>True</AndroidUseLatestPlatformSdk>
+    <AssemblyName>AndroidFSharpLanguageUnitTests</AssemblyName>
+    <AndroidManifest>Properties\AndroidManifest.xml</AndroidManifest>
+    <TargetFrameworkVersion>v4.2</TargetFrameworkVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <OutputPath>bin\Debug</OutputPath>
+    <DefineConstants>DEBUG;__MOBILE__;__ANDROID__;MONO;UNIX;ALL_IN_ONE;Portable;NetCore</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <PlatformTarget>
+    </PlatformTarget>
+    <ConsolePause>false</ConsolePause>
+    <AndroidLinkMode>None</AndroidLinkMode>
+    <EmbedAssembliesIntoApk>True</EmbedAssembliesIntoApk>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release</OutputPath>
+    <DefineConstants>__MOBILE__;__ANDROID__</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <AndroidUseSharedRuntime>false</AndroidUseSharedRuntime>
+    <ConsolePause>false</ConsolePause>
+    <Tailcalls>true</Tailcalls>
+    <PlatformTarget>
+    </PlatformTarget>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="mscorlib" />
+    <Reference Include="System" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Core" />
+    <Reference Include="FSharp.Core" />
+    <Reference Include="Mono.Android" />
+    <Reference Include="Xamarin.Android.NUnitLite" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Properties\AssemblyInfo.fs" />
+    <Compile Include="Resources\Resource.designer.fs" />
+    <Compile Include="..\SharedTests\acess.fs">
+      <Link>acess.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\apporder.fs">
+      <Link>apporder.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\array.fs">
+      <Link>array.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\comprehensions.fs">
+      <Link>comprehensions.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\control-mailbox.fs">
+      <Link>control-mailbox.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\control-stackoverflow.fs">
+      <Link>control-stackoverflow.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\control.fs">
+      <Link>control.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\controlChamenos.fs">
+      <Link>controlChamenos.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\innerpoly.fs">
+      <Link>innerpoly.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\lazy.fs">
+      <Link>lazy.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\letrec.fs">
+      <Link>letrec.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\lift.fs">
+      <Link>lift.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\longnames.fs">
+      <Link>longnames.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\map.fs">
+      <Link>map.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\math-generic-measures.fs">
+      <Link>math-generic-measures.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\math-measures.fs">
+      <Link>math-measures.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\math-numbers.fs">
+      <Link>math-numbers.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\math-numbersVS2008.fs">
+      <Link>math-numbersVS2008.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\member-ops.fs">
+      <Link>member-ops.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\members-ctree.fs">
+      <Link>members-ctree.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\members-factors.fs">
+      <Link>members-factors.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\members-incremental-test-hw.fs">
+      <Link>members-incremental-test-hw.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\members-incremental-test.fs">
+      <Link>members-incremental-test.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\nested.fs">
+      <Link>nested.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\patterns.fs">
+      <Link>patterns.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\queries-over-ienumerable.fs">
+      <Link>queries-over-ienumerable.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\queries-over-iqueryable.fs">
+      <Link>queries-over-iqueryable.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\quotes.fs">
+      <Link>quotes.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\quotesDebugInfo.fs">
+      <Link>quotesDebugInfo.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\seq.fs">
+      <Link>seq.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\subtype.fs">
+      <Link>subtype.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\syntax.fs">
+      <Link>syntax.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\tlr.fs">
+      <Link>tlr.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\unicode.fs">
+      <Link>unicode.fs</Link>
+    </Compile>
+    <Compile Include="MainActivity.fs" />
+    <Compile Include="..\SharedTests\UnitTestRunner.fs">
+      <Link>UnitTestRunner.fs</Link>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\AboutResources.txt" />
+    <None Include="Assets\AboutAssets.txt" />
+    <None Include="Properties\AndroidManifest.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\drawable\Icon.png" />
+  </ItemGroup>
+  <Import Project="$(MSBuildExtensionsPath)\Xamarin\Android\Xamarin.Android.FSharp.targets" />
+</Project>

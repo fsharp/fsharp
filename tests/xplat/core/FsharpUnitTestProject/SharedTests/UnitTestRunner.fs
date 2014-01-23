@@ -205,7 +205,7 @@ type ``math generic measures tests``() =
 #else
 [<TestFixture; Description("#Regression #Conformance #ComputationExpressions #Async #Regression #Events #Stress")>]
 type ``control tests``() =
-    [<Test>]
+    [<Test;Ignore "Long running">]
     member x.``control Tests``() =
         let failures = Core_control.RUN()
         Assert.IsTrue(failures.IsEmpty)
