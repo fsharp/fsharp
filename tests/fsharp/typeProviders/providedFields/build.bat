@@ -15,10 +15,10 @@ if ERRORLEVEL 1 goto :Error
 "%FSC%" /target:library /out:provider.dll /debug+ /r:provider-base.dll /optimize- ProvidedTypes-head.fsi ProvidedTypes-head.fs FieldAccess.fs
 if ERRORLEVEL 1 goto Error
 
-"%FSC%" %fsc_flags% /debug+ /r:provider.dll /r:provider-base.dll /optimize- test.fs
+"%FSC%" %fsc_flags% /debug+ /r:provider.dll /r:provider-base.dll /optimize- client.fs
 if ERRORLEVEL 1 goto Error
 
-%PEVERIFY% test.exe
+%PEVERIFY% client.exe
 if ERRORLEVEL 1 goto Error
 
 :Ok
