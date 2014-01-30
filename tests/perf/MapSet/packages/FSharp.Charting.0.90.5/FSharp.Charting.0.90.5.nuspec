@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
+  <metadata>
+    <id>FSharp.Charting</id>
+    <version>0.90.5</version>
+    <authors>Carl Nolan,  Don Syme,  Tomas Petricek</authors>
+    <owners>Carl Nolan,  Don Syme,  Tomas Petricek</owners>
+    <licenseUrl>http://github.com/fsharp/FSharp.Charting/blob/master/LICENSE.md</licenseUrl>
+    <projectUrl>http://fsharp.github.com/FSharp.Charting</projectUrl>
+    <iconUrl>https://raw.github.com/fsharp/FSharp.Charting/master/misc/logo.png</iconUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>The F# Charting library (FSharp.Charting.dll) is a compositional library for creating charts from F#. It is designed to be a great fit for data scripting in F# Interactive, but  charts can also be embedded in Windows applications. The library is a wrapper for .NET Chart Controls, which are only supported on Windows.</description>
+    <summary>A Charting Library for F#</summary>
+    <releaseNotes>Fix load on OSX</releaseNotes>
+    <copyright>Copyright 2013</copyright>
+    <tags>F# FSharpChart charting plotting visualization</tags>
+  </metadata>
+</package>
