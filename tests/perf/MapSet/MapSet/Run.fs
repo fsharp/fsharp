@@ -6,7 +6,7 @@ open Types
 // Example Set and Map optimizations:
 // Interestingly, adding extra check slows down the int * int sets and maps
 // because comparison is so slow.
-
+(*
 module Map =
   let remove key map =
     if Map.containsKey key map then Map.remove key map else
@@ -28,7 +28,7 @@ module Set =
   let intersect s1 s2 =
     if Set.maxElement s1 < Set.minElement s2 then Set.empty else
       Set.intersect s1 s2
-
+*)
 
 /// Samples are taken for this many seconds in order to obtain statistically-meaningful
 /// results.
@@ -65,20 +65,6 @@ let temper y =
   let y = y ^^^ ((y <<< 7) &&& 0x9d2c5680)
   let y = y ^^^ ((y <<< 15) &&& 0xefc60000)
   y ^^^ (y >>> 18)
-*)
-
-(*
-let generateMaps() =
-  Seq.unfold (fun (size, intMap, stringMap, pairMap) ->
-    let intMap = Map.add size size intMap
-    let stringMap = Map.add strings.[size] size stringMap
-    let pairMap = Map.add pairs.[size] size pairMap
-    let accu = size+1, intMap, stringMap, pairMap
-    Some(accu, accu))
-  |> Seq.filter (fun (size, _, _, _) -> sizes.Contains size)
-  |> Seq.map (fun (size, intMap, stringMap, pairMap) ->
-    (size, intMap), (size, stringMap), (size, pairMap))
-  |> Array.ofSeq
 *)
 
 /// Generate Maps of different sizes that the synthetic
@@ -188,38 +174,7 @@ let allBenchmarks() =
       "Map.toList", once (fun _ map -> Map.toList map) // O(n)
       "Map.tryFindKey", forEachIn (fun _ _ map -> Map.tryFindKey (fun _ _ -> true) map) // O(1) in this case
       "Map.tryPick", once (fun _ map -> Map.tryPick (fun key value -> None) map) ] // O(1) in this case
-(*
-      [ for size, map in maps ->
-          let test () =
-            for i=0 to size-1 do
-              ignore(Map.tryFind (proj i) map)
-          size, float size * perSec test ]
-      "Map.find",
-      [ for size, map in maps ->
-          let test () =
-            for i=0 to size-1 do
-              ignore(Map.tryFind (proj i) map)
-          size, float size * perSec test ]
-      "Map.containsKey",
-      [ for size, map in maps ->
-          let test () =
-            for i=0 to size-1 do
-              ignore(Map.containsKey (proj i) map)
-          size, float size * perSec test ]
-      "Map.exists",
-      [ for size, map in maps ->
-          let test () =
-            for i=0 to size-1 do
-              ignore(Map.exists (fun key _ -> key = proj i) map)
-          size, float size * perSec test ]
-      "Map.ofArray",
-      [ for size, _ in maps ->
-          let arr = Array.init size (fun i -> proj i, i) // FIXME: Could preallocate this.
-          size, float size * perSec (fun () -> Map.ofArray arr) ]
-      "Map.fold",
-      [ for size, map in maps ->
-          size, float size * perSec (fun () -> Map.fold (fun () _ _ -> ()) () map) ] ]
-*)
+
   printfn "Generating Maps..."
   let intMaps, stringMaps, pairMaps = generateMaps()
   printfn "Running Map<int, int> benchmarks..."
@@ -287,45 +242,7 @@ let allBenchmarks() =
       "Set.partition", once (fun size set -> Set.partition (fun elt -> elt < proj(size/2)) set)
       "Set.toArray", once (fun _ set -> Set.toArray set)
       "Set.toList", once (fun _ set -> Set.toList set) ]
-(*
-    [ "Set.add new",
-      [ for size, set in sets ->
-          let test () =
-            for i=0 to size-1 do
-              ignore(Set.add (proj(i+size)) set)
-          size, float size * perSec test ]
-      "Set.add existing",
-      [ for size, set in sets ->
-          let test () =
-            for i=0 to size-1 do
-              ignore(Set.add (proj i) set)
-          size, float size * perSec test ]
-      "Set.remove existing",
-      [ for size, set in sets ->
-          let test () =
-            for i=0 to size-1 do
-              ignore(Set.remove (proj i) set)
-          size, float size * perSec test ]
-      "Set.remove absent",
-      [ for size, set in sets ->
-          let test () =
-            for i=0 to size-1 do
-              ignore(Set.remove (proj(i+size)) set)
-          size, float size * perSec test ]
-      "Set.contains",
-      [ for size, set in sets ->
-          let test () =
-            for i=0 to size-1 do
-              ignore(Set.contains (proj i) set)
-          size, float size * perSec test ]
-      "Set.ofArray",
-      [ for size, set in sets ->
-          let arr = Array.init size (fun i -> proj i) // FIXME: Could preallocate this.
-          size, float size * perSec (fun () -> Set.ofArray arr) ]
-      "Set.fold",
-      [ for size, set in sets ->
-          size, float size * perSec (fun () -> Set.fold (fun () _ -> ()) () set) ] ]
-*)
+
   printfn "Generating Sets..."
   let intSets, stringSets, pairSets = generateSets()
   printfn "Running Set<int> benchmarks..."

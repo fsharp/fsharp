@@ -42,7 +42,6 @@
     <Reference Include="System.Numerics" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="OCamlMapSet.fs" />
     <Compile Include="NeighborShells.fs" />
     <Compile Include="PrimsMinimumSpanningTree.fs" />
     <Compile Include="SlidingMedian.fs" />
