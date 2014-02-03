@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">iPhoneSimulator</Platform>
+    <ProductVersion>12.0.0</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{E464C71A-E641-404B-99CB-A642DB7F8211}</ProjectGuid>
+    <ProjectTypeGuids>{6BC8ED88-2882-458C-8E55-DFD12B67127B};{4925A630-B079-445D-BCD4-3A9C94FE9307}</ProjectTypeGuids>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>iOSFSharpLanguageTests</RootNamespace>
+    <IPhoneResourcePrefix>Resources</IPhoneResourcePrefix>
+    <AssemblyName>iOSFSharpLanguageTests</AssemblyName>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|iPhoneSimulator' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <OutputPath>bin\iPhoneSimulator\Debug</OutputPath>
+    <DefineConstants>DEBUG;__MOBILE__;__IOS__;MONO;UNIX;ALL_IN_ONE;Portable;NetCore</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <MtouchDebug>true</MtouchDebug>
+    <MtouchLink>None</MtouchLink>
+    <PlatformTarget>
+    </PlatformTarget>
+    <ConsolePause>false</ConsolePause>
+    <CodesignEntitlements>Entitlements.plist</CodesignEntitlements>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|iPhoneSimulator' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\iPhoneSimulator\Release</OutputPath>
+    <DefineConstants>__MOBILE__;__IOS__</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <PlatformTarget>
+    </PlatformTarget>
+    <CodesignEntitlements>Entitlements.plist</CodesignEntitlements>
+    <ConsolePause>false</ConsolePause>
+    <Tailcalls>true</Tailcalls>
+    <MtouchLink>None</MtouchLink>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|iPhone' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <OutputPath>bin\iPhone\Debug</OutputPath>
+    <DefineConstants>DEBUG;__MOBILE__;__IOS__</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <CodesignKey>iPhone Developer</CodesignKey>
+    <CodesignEntitlements>Entitlements.plist</CodesignEntitlements>
+    <PlatformTarget>
+    </PlatformTarget>
+    <ConsolePause>false</ConsolePause>
+    <MtouchDebug>true</MtouchDebug>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|iPhone' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\iPhone\Release</OutputPath>
+    <DefineConstants>__MOBILE__;__IOS__</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <PlatformTarget>
+    </PlatformTarget>
+    <CodesignKey>iPhone Developer</CodesignKey>
+    <ConsolePause>false</ConsolePause>
+    <Tailcalls>true</Tailcalls>
+    <CodesignEntitlements>Entitlements.plist</CodesignEntitlements>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Ad-Hoc|iPhone' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\iPhone\Ad-Hoc</OutputPath>
+    <DefineConstants>__MOBILE__;__IOS__</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <Tailcalls>true</Tailcalls>
+    <ConsolePause>false</ConsolePause>
+    <CodesignKey>iPhone Distribution</CodesignKey>
+    <PlatformTarget>
+    </PlatformTarget>
+    <CodesignEntitlements>Entitlements.plist</CodesignEntitlements>
+    <CodesignProvision>Automatic:AdHoc</CodesignProvision>
+    <BuildIpa>true</BuildIpa>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'AppStore|iPhone' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\iPhone\AppStore</OutputPath>
+    <DefineConstants>__MOBILE__;__IOS__</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <Tailcalls>true</Tailcalls>
+    <ConsolePause>false</ConsolePause>
+    <CodesignKey>iPhone Distribution</CodesignKey>
+    <PlatformTarget>
+    </PlatformTarget>
+    <CodesignProvision>Automatic:AppStore</CodesignProvision>
+    <CodesignEntitlements>Entitlements.plist</CodesignEntitlements>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Core" />
+    <Reference Include="monotouch" />
+    <Reference Include="MonoTouch.NUnitLite" />
+    <Reference Include="mscorlib">
+      <HintPath>..\..\..\..\..\Developer\MonoTouch\usr\lib\mono\2.1\mscorlib.dll</HintPath>
+    </Reference>
+    <Reference Include="FSharp.Core">
+      <HintPath>..\..\..\..\..\Developer\MonoTouch\usr\lib\mono\2.1\FSharp.Core.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Resources\" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Info.plist" />
+    <None Include="Entitlements.plist" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\SharedTests\acess.fs">
+      <Link>acess.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\apporder.fs">
+      <Link>apporder.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\array.fs">
+      <Link>array.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\comprehensions.fs">
+      <Link>comprehensions.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\control-mailbox.fs">
+      <Link>control-mailbox.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\control-stackoverflow.fs">
+      <Link>control-stackoverflow.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\control.fs">
+      <Link>control.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\controlChamenos.fs">
+      <Link>controlChamenos.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\innerpoly.fs">
+      <Link>innerpoly.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\lazy.fs">
+      <Link>lazy.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\letrec.fs">
+      <Link>letrec.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\lift.fs">
+      <Link>lift.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\longnames.fs">
+      <Link>longnames.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\map.fs">
+      <Link>map.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\math-generic-measures.fs">
+      <Link>math-generic-measures.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\math-measures.fs">
+      <Link>math-measures.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\math-numbers.fs">
+      <Link>math-numbers.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\math-numbersVS2008.fs">
+      <Link>math-numbersVS2008.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\member-ops.fs">
+      <Link>member-ops.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\members-ctree.fs">
+      <Link>members-ctree.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\members-factors.fs">
+      <Link>members-factors.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\members-incremental-test-hw.fs">
+      <Link>members-incremental-test-hw.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\members-incremental-test.fs">
+      <Link>members-incremental-test.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\nested.fs">
+      <Link>nested.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\patterns.fs">
+      <Link>patterns.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\queries-over-ienumerable.fs">
+      <Link>queries-over-ienumerable.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\queries-over-iqueryable.fs">
+      <Link>queries-over-iqueryable.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\quotes.fs">
+      <Link>quotes.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\quotesDebugInfo.fs">
+      <Link>quotesDebugInfo.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\seq.fs">
+      <Link>seq.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\subtype.fs">
+      <Link>subtype.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\syntax.fs">
+      <Link>syntax.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\tlr.fs">
+      <Link>tlr.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\unicode.fs">
+      <Link>unicode.fs</Link>
+    </Compile>
+    <Compile Include="..\SharedTests\UnitTestRunner.fs">
+      <Link>UnitTestRunner.fs</Link>
+    </Compile>
+    <Compile Include="iOSFSharpLanguageTestsViewController.fs" />
+    <Compile Include="AppDelegate.fs" />
+  </ItemGroup>
+  <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft F#\v4.0\Microsoft.FSharp.Targets" />
+</Project>

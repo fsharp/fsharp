@@ -1,0 +1,126 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{4925A630-B079-445d-BCD4-3A9C94FE9307}") = "MonoFSharpLanguageTests", "MonoFSharpLanguageUnitTests\MonoFSharpLanguageTests.fsproj", "{07E182C3-993F-4D21-BF67-6144B0B43B9A}"
+EndProject
+Project("{4925A630-B079-445d-BCD4-3A9C94FE9307}") = "AndroidFSharpLanguageTests", "AndroidFSharpLanguageUnitTests\AndroidFSharpLanguageTests.fsproj", "{3280F23A-A2E6-44B9-A21F-599089D09467}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SharedTests", "SharedTests", "{509BB834-C508-4889-8265-DC0D1822F550}"
+	ProjectSection(SolutionItems) = preProject
+		SharedTests\acess.fs = SharedTests\acess.fs
+		SharedTests\apporder.fs = SharedTests\apporder.fs
+		SharedTests\array.fs = SharedTests\array.fs
+		SharedTests\comprehensions.fs = SharedTests\comprehensions.fs
+		SharedTests\control-mailbox.fs = SharedTests\control-mailbox.fs
+		SharedTests\control-stackoverflow.fs = SharedTests\control-stackoverflow.fs
+		SharedTests\control.fs = SharedTests\control.fs
+		SharedTests\controlChamenos.fs = SharedTests\controlChamenos.fs
+		SharedTests\innerpoly.fs = SharedTests\innerpoly.fs
+		SharedTests\lazy.fs = SharedTests\lazy.fs
+		SharedTests\letrec.fs = SharedTests\letrec.fs
+		SharedTests\lift.fs = SharedTests\lift.fs
+		SharedTests\longnames.fs = SharedTests\longnames.fs
+		SharedTests\map.fs = SharedTests\map.fs
+		SharedTests\math-generic-measures.fs = SharedTests\math-generic-measures.fs
+		SharedTests\math-measures.fs = SharedTests\math-measures.fs
+		SharedTests\math-numbers.fs = SharedTests\math-numbers.fs
+		SharedTests\math-numbersVS2008.fs = SharedTests\math-numbersVS2008.fs
+		SharedTests\member-ops.fs = SharedTests\member-ops.fs
+		SharedTests\members-ctree.fs = SharedTests\members-ctree.fs
+		SharedTests\members-factors.fs = SharedTests\members-factors.fs
+		SharedTests\members-incremental-test-hw.fs = SharedTests\members-incremental-test-hw.fs
+		SharedTests\members-incremental-test.fs = SharedTests\members-incremental-test.fs
+		SharedTests\nested.fs = SharedTests\nested.fs
+		SharedTests\patterns.fs = SharedTests\patterns.fs
+		SharedTests\queries-over-ienumerable.fs = SharedTests\queries-over-ienumerable.fs
+		SharedTests\queries-over-iqueryable.fs = SharedTests\queries-over-iqueryable.fs
+		SharedTests\quotes.fs = SharedTests\quotes.fs
+		SharedTests\quotesDebugInfo.fs = SharedTests\quotesDebugInfo.fs
+		SharedTests\seq.fs = SharedTests\seq.fs
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AndroidWrapper", "AndroidWrapper\AndroidWrapper.csproj", "{F47D5334-3C54-4DF0-93C4-1281B1E315F1}"
+EndProject
+Project("{4925A630-B079-445d-BCD4-3A9C94FE9307}") = "iOSFSharpLanguageTests", "iOSFSharpLanguageTests\iOSFSharpLanguageTests.fsproj", "{E464C71A-E641-404B-99CB-A642DB7F8211}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|iPhoneSimulator = Debug|iPhoneSimulator
+		Release|iPhoneSimulator = Release|iPhoneSimulator
+		Debug|iPhone = Debug|iPhone
+		Release|iPhone = Release|iPhone
+		Ad-Hoc|iPhone = Ad-Hoc|iPhone
+		AppStore|iPhone = AppStore|iPhone
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{07E182C3-993F-4D21-BF67-6144B0B43B9A}.Ad-Hoc|iPhone.ActiveCfg = Release|Any CPU
+		{07E182C3-993F-4D21-BF67-6144B0B43B9A}.Ad-Hoc|iPhone.Build.0 = Release|Any CPU
+		{07E182C3-993F-4D21-BF67-6144B0B43B9A}.AppStore|iPhone.ActiveCfg = Release|Any CPU
+		{07E182C3-993F-4D21-BF67-6144B0B43B9A}.AppStore|iPhone.Build.0 = Release|Any CPU
+		{07E182C3-993F-4D21-BF67-6144B0B43B9A}.Debug|iPhone.ActiveCfg = Debug|Any CPU
+		{07E182C3-993F-4D21-BF67-6144B0B43B9A}.Debug|iPhone.Build.0 = Debug|Any CPU
+		{07E182C3-993F-4D21-BF67-6144B0B43B9A}.Debug|iPhoneSimulator.ActiveCfg = Debug|Any CPU
+		{07E182C3-993F-4D21-BF67-6144B0B43B9A}.Debug|iPhoneSimulator.Build.0 = Debug|Any CPU
+		{07E182C3-993F-4D21-BF67-6144B0B43B9A}.Release|iPhone.ActiveCfg = Release|Any CPU
+		{07E182C3-993F-4D21-BF67-6144B0B43B9A}.Release|iPhone.Build.0 = Release|Any CPU
+		{07E182C3-993F-4D21-BF67-6144B0B43B9A}.Release|iPhoneSimulator.ActiveCfg = Release|Any CPU
+		{07E182C3-993F-4D21-BF67-6144B0B43B9A}.Release|iPhoneSimulator.Build.0 = Release|Any CPU
+		{3280F23A-A2E6-44B9-A21F-599089D09467}.Ad-Hoc|iPhone.ActiveCfg = Release|Any CPU
+		{3280F23A-A2E6-44B9-A21F-599089D09467}.Ad-Hoc|iPhone.Build.0 = Release|Any CPU
+		{3280F23A-A2E6-44B9-A21F-599089D09467}.AppStore|iPhone.ActiveCfg = Release|Any CPU
+		{3280F23A-A2E6-44B9-A21F-599089D09467}.AppStore|iPhone.Build.0 = Release|Any CPU
+		{3280F23A-A2E6-44B9-A21F-599089D09467}.Debug|iPhone.ActiveCfg = Debug|Any CPU
+		{3280F23A-A2E6-44B9-A21F-599089D09467}.Debug|iPhone.Build.0 = Debug|Any CPU
+		{3280F23A-A2E6-44B9-A21F-599089D09467}.Debug|iPhoneSimulator.ActiveCfg = Debug|Any CPU
+		{3280F23A-A2E6-44B9-A21F-599089D09467}.Debug|iPhoneSimulator.Build.0 = Debug|Any CPU
+		{3280F23A-A2E6-44B9-A21F-599089D09467}.Release|iPhone.ActiveCfg = Release|Any CPU
+		{3280F23A-A2E6-44B9-A21F-599089D09467}.Release|iPhone.Build.0 = Release|Any CPU
+		{3280F23A-A2E6-44B9-A21F-599089D09467}.Release|iPhoneSimulator.ActiveCfg = Release|Any CPU
+		{3280F23A-A2E6-44B9-A21F-599089D09467}.Release|iPhoneSimulator.Build.0 = Release|Any CPU
+		{E464C71A-E641-404B-99CB-A642DB7F8211}.Ad-Hoc|iPhone.ActiveCfg = Ad-Hoc|iPhone
+		{E464C71A-E641-404B-99CB-A642DB7F8211}.Ad-Hoc|iPhone.Build.0 = Ad-Hoc|iPhone
+		{E464C71A-E641-404B-99CB-A642DB7F8211}.AppStore|iPhone.ActiveCfg = AppStore|iPhone
+		{E464C71A-E641-404B-99CB-A642DB7F8211}.AppStore|iPhone.Build.0 = AppStore|iPhone
+		{E464C71A-E641-404B-99CB-A642DB7F8211}.Debug|iPhone.ActiveCfg = Debug|iPhone
+		{E464C71A-E641-404B-99CB-A642DB7F8211}.Debug|iPhone.Build.0 = Debug|iPhone
+		{E464C71A-E641-404B-99CB-A642DB7F8211}.Debug|iPhoneSimulator.ActiveCfg = Debug|iPhoneSimulator
+		{E464C71A-E641-404B-99CB-A642DB7F8211}.Debug|iPhoneSimulator.Build.0 = Debug|iPhoneSimulator
+		{E464C71A-E641-404B-99CB-A642DB7F8211}.Release|iPhone.ActiveCfg = Release|iPhone
+		{E464C71A-E641-404B-99CB-A642DB7F8211}.Release|iPhone.Build.0 = Release|iPhone
+		{E464C71A-E641-404B-99CB-A642DB7F8211}.Release|iPhoneSimulator.ActiveCfg = Release|iPhoneSimulator
+		{E464C71A-E641-404B-99CB-A642DB7F8211}.Release|iPhoneSimulator.Build.0 = Release|iPhoneSimulator
+		{F47D5334-3C54-4DF0-93C4-1281B1E315F1}.Ad-Hoc|iPhone.ActiveCfg = Release|Any CPU
+		{F47D5334-3C54-4DF0-93C4-1281B1E315F1}.Ad-Hoc|iPhone.Build.0 = Release|Any CPU
+		{F47D5334-3C54-4DF0-93C4-1281B1E315F1}.AppStore|iPhone.ActiveCfg = Release|Any CPU
+		{F47D5334-3C54-4DF0-93C4-1281B1E315F1}.AppStore|iPhone.Build.0 = Release|Any CPU
+		{F47D5334-3C54-4DF0-93C4-1281B1E315F1}.Debug|iPhone.ActiveCfg = Debug|Any CPU
+		{F47D5334-3C54-4DF0-93C4-1281B1E315F1}.Debug|iPhone.Build.0 = Debug|Any CPU
+		{F47D5334-3C54-4DF0-93C4-1281B1E315F1}.Debug|iPhoneSimulator.ActiveCfg = Debug|Any CPU
+		{F47D5334-3C54-4DF0-93C4-1281B1E315F1}.Debug|iPhoneSimulator.Build.0 = Debug|Any CPU
+		{F47D5334-3C54-4DF0-93C4-1281B1E315F1}.Release|iPhone.ActiveCfg = Release|Any CPU
+		{F47D5334-3C54-4DF0-93C4-1281B1E315F1}.Release|iPhone.Build.0 = Release|Any CPU
+		{F47D5334-3C54-4DF0-93C4-1281B1E315F1}.Release|iPhoneSimulator.ActiveCfg = Release|Any CPU
+		{F47D5334-3C54-4DF0-93C4-1281B1E315F1}.Release|iPhoneSimulator.Build.0 = Release|Any CPU
+		{E01E69F9-F9D2-4474-8240-75FB2079B921}.Ad-Hoc|iPhone.ActiveCfg = Ad-Hoc|iPhone
+		{E01E69F9-F9D2-4474-8240-75FB2079B921}.Ad-Hoc|iPhone.Build.0 = Ad-Hoc|iPhone
+		{E01E69F9-F9D2-4474-8240-75FB2079B921}.AppStore|iPhone.ActiveCfg = AppStore|iPhone
+		{E01E69F9-F9D2-4474-8240-75FB2079B921}.AppStore|iPhone.Build.0 = AppStore|iPhone
+		{E01E69F9-F9D2-4474-8240-75FB2079B921}.Debug|iPhone.ActiveCfg = Debug|iPhone
+		{E01E69F9-F9D2-4474-8240-75FB2079B921}.Debug|iPhone.Build.0 = Debug|iPhone
+		{E01E69F9-F9D2-4474-8240-75FB2079B921}.Debug|iPhoneSimulator.ActiveCfg = Debug|iPhoneSimulator
+		{E01E69F9-F9D2-4474-8240-75FB2079B921}.Debug|iPhoneSimulator.Build.0 = Debug|iPhoneSimulator
+		{E01E69F9-F9D2-4474-8240-75FB2079B921}.Release|iPhone.ActiveCfg = Release|iPhone
+		{E01E69F9-F9D2-4474-8240-75FB2079B921}.Release|iPhone.Build.0 = Release|iPhone
+		{E01E69F9-F9D2-4474-8240-75FB2079B921}.Release|iPhoneSimulator.ActiveCfg = Release|iPhoneSimulator
+		{E01E69F9-F9D2-4474-8240-75FB2079B921}.Release|iPhoneSimulator.Build.0 = Release|iPhoneSimulator
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+	EndGlobalSection
+	GlobalSection(MonoDevelopProperties) = preSolution
+		StartupItem = MonoFSharpLanguageUnitTests\MonoFSharpLanguageTests.fsproj
+		Policies = $0
+		$0.DotNetNamingPolicy = $1
+		$1.DirectoryNamespaceAssociation = None
+		$1.ResourceNamePolicy = FileFormatDefault
+	EndGlobalSection
+EndGlobal
