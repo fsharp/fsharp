@@ -1,0 +1,20 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Express 2012 for Web
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "MapSet", "MapSet\MapSet.fsproj", "{0EBC2550-A239-4FA2-96B3-D32130224109}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0EBC2550-A239-4FA2-96B3-D32130224109}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0EBC2550-A239-4FA2-96B3-D32130224109}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0EBC2550-A239-4FA2-96B3-D32130224109}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0EBC2550-A239-4FA2-96B3-D32130224109}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
