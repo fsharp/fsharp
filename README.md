@@ -125,7 +125,7 @@ be used for private development rather than preparing distributions.
 The FSharp.Core.dll produced is only delay-signed (Mono does not require strong names). 
 If a strong-name signed FSharp.Core.dll is needed then use the one in 
 ```
-   lib\bootstrap\signed\3.0\v4.0\FSharp.Core.dll
+   lib\bootstrap\signed\.NETFramework\v4.0\4.3.1.0\FSharp.Core.dll
 ```
 
 
