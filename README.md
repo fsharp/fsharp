@@ -184,7 +184,7 @@ Historically it is difficult to edit the compiler with Xamarin Studio or MonoDev
 
 ## How to Test and Validate
 
-### Tests On Linux
+### Linux
 
 Only a subset of the tests are currently enabled.
 
@@ -194,10 +194,10 @@ cd tests/fsharp/core
 ./run-all.sh
 ```
 
-### Tests On Windows
+### Windows
 
-There are language tests under `tests\fsharp\core`. The test apparatus is primitive and unfortunately uses batch 
-Set up a shell (release mode)
+There are language tests under `tests\fsharp\core`. The test apparatus is primitive and unfortunately uses batch.
+Set up a shell (release mode):
 
 ```
 cd tests
@@ -209,7 +209,7 @@ Run the tests:
 ```
 .\build-and-run.bat
 ```
-Look in build-and-run.log. The results file will contain one entry for each test directory, plus any reported errors.
+Examine `build-and-run.log`. This will contain one entry for each test directory, plus any reported errors.
 
 ```
 tests\fsharp\core
@@ -236,7 +236,7 @@ This uses the proto compiler to build the unit tests that check some parts of `F
 msbuild fsharp-library-unittests-build.proj /p:TargetFramework=net40
 ```
 
-*Note: You must have NUnit installed to build the unit tests.*
+*Note: You must have (NUnit)[http://www.nunit.org/] installed to build the unit tests.*
 
 ### How to Validate
 
