@@ -236,7 +236,7 @@ This uses the proto compiler to build the unit tests that check some parts of `F
 msbuild fsharp-library-unittests-build.proj /p:TargetFramework=net40
 ```
 
-*Note: You must have (NUnit)[http://www.nunit.org/] installed to build the unit tests.*
+*Note: You must have [NUnit](http://www.nunit.org/) installed to build the unit tests.*
 
 ### How to Validate
 
