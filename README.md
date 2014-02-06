@@ -1,19 +1,12 @@
-This is the F# compiler, core library and core tools (open edition). It uses the Apache 2.0 license.
+## F# Compiler, Core Library & Tools (Open Edition)
 
 The `master` branch is for the latest version of F# (currently F# 3.1).
 
 To bootstrap the compiler, binaries built from an earlier version of this project are used.
 
-## Requirements
+This codebase uses the Apache 2.0 license.
 
-Requires mono 3.0 or higher.
-
-On OSX, requires automake 2.69. To install from [homebrew](http://mxcl.github.com/homebrew):
-```
-brew install automake
-```
-
-## Build status
+## Current Build Status
 
 Head (branch ``master``), Mono 3.x, OSX + some unit tests (Travis) [![Build Status](https://travis-ci.org/fsharp/fsharp.png?branch=master)](https://travis-ci.org/fsharp/fsharp/branches)
 
@@ -27,10 +20,18 @@ F# 3.1, .NET 4.0, Windows (TeamCity) [![Windows .net 4.0 (TeamCity)][teamcity ne
 
 F# 3.1, .NET 2.0 etc., Windows (TeamCity) [![Windows .net 2.0 etc.][teamcity net20 icon]][teamcity net20 url]
 
+## Build Requirements
 
-## Building
+Requires mono 3.0 or higher.
 
-### On Linux and other Unix systems:
+OS X requires automake 2.69. To install from [homebrew](http://mxcl.github.com/homebrew):
+```
+brew install automake
+```
+
+## How to Build
+
+### Linux and other Unix systems:
 The usual:
 ```
 ./autogen.sh --prefix=/usr
@@ -40,7 +41,7 @@ sudo make install
 By default that makes optimized binaries. To make debug, use ```make CONFIG=debug```
 
 
-### On MacOS (OSX)
+### OS X
 
 Use a prefix to your version of Mono:
 ```
@@ -50,7 +51,7 @@ sudo make install
 ```
 By default that makes optimized binaries. To make debug, use ```make CONFIG=debug```
 
-### On Windows, using msbuild
+### Windows, using msbuild
 
 If you have only VS2012 or VS2013 installed, and not VS2010, you'll need to install the F# 2.0 Runtime (http://www.microsoft.com/en-us/download/details.aspx?id=13450).
 
@@ -107,7 +108,7 @@ msbuild fsharp-library-build.proj /p:TargetFramework=wp7 /p:Configuration=Releas
 msbuild fsharp-library-build.proj /p:TargetFramework=net40-xna40-xbox360 /p:Configuration=Release /p:FSharpCoreBackVersion=3.0
 ```
 
-### On Windows, using xbuild (e.g. if no .NET is installed and only Mono 3.0 is installed):
+### Windows, using xbuild (e.g. if no .NET is installed and only Mono 3.0 is installed):
 
 ```
 cd src
@@ -119,8 +120,7 @@ xbuild fsharp-compiler-build.proj
 Building using xbuild does not yet lay down a Mono-ready distribution (see src/fsharp/targets.make), so should only
 be used for private development rather than preparing distributions. 
 
-
-## Strong Names
+## Build Note: Strong Names
 
 The FSharp.Core.dll produced is only delay-signed (Mono does not require strong names). 
 If a strong-name signed FSharp.Core.dll is needed then use the one in 
@@ -128,30 +128,29 @@ If a strong-name signed FSharp.Core.dll is needed then use the one in
    lib\bootstrap\signed\.NETFramework\v4.0\4.3.1.0\FSharp.Core.dll
 ```
 
+## How to Install 
 
-## What you get 
-
-Once built the main compiler binaries go in 
+Built main compiler binaries go to
     lib/release/4.0
 
-There are versions of FSharp.Core for .NET 2.0, MonoAndroid, MonoTouch (Mono profile 2.1) in 
+Additionally, versions of FSharp.Core for .NET 2.0, MonoAndroid, MonoTouch (Mono profile 2.1) go to 
      lib/release/2.0
      lib/release/2.1
      lib/release/2.1monotouch
 
-On 'make install' the binaries etc. go in the prefix, e.g. 
+`make install` sends the binaries to the `prefix` location, e.g.
 
-   /Library/Frameworks/Mono.framework/Versions/Current/lib/mono/2.0/FSharp.Core.dll
-   /Library/Frameworks/Mono.framework/Versions/Current/lib/mono/2.1/FSharp.Core.dll
-   /Library/Frameworks/Mono.framework/Versions/Current/lib/mono/4.0/fsc.exe
-   /Library/Frameworks/Mono.framework/Versions/Current/lib/mono/4.0/FSharp.Compiler.dll
-   ...
-   /Library/Frameworks/Mono.framework/Versions/Current/lib/mono/4.5/fsc.exe
-   /Library/Frameworks/Mono.framework/Versions/Current/lib/mono/4.5/FSharp.Compiler.dll
-   ...
-   /Library/Frameworks/Mono.framework/Versions/Current/lib/mono/gac/.../FSharp.Compiler.dll
-   /Library/Frameworks/Mono.framework/Versions/Current/lib/mono/gac/.../FSharp.Compiler.dll
-   ...
+    /Library/Frameworks/Mono.framework/Versions/Current/lib/mono/2.0/FSharp.Core.dll
+    /Library/Frameworks/Mono.framework/Versions/Current/lib/mono/2.1/FSharp.Core.dll
+    /Library/Frameworks/Mono.framework/Versions/Current/lib/mono/4.0/fsc.exe
+    /Library/Frameworks/Mono.framework/Versions/Current/lib/mono/4.0/FSharp.Compiler.dll
+    ...
+    /Library/Frameworks/Mono.framework/Versions/Current/lib/mono/4.5/fsc.exe
+    /Library/Frameworks/Mono.framework/Versions/Current/lib/mono/4.5/FSharp.Compiler.dll
+    ...
+    /Library/Frameworks/Mono.framework/Versions/Current/lib/mono/gac/.../FSharp.Compiler.dll
+    /Library/Frameworks/Mono.framework/Versions/Current/lib/mono/gac/.../FSharp.Compiler.dll
+    ...
 
 plus some files for xbuild support 
 
@@ -162,21 +161,20 @@ plus some files for xbuild support
 
 plus scripts
 
-   /usr/bin/fsharpc   (F# compiler)
-   /usr/bin/fsharpi   (F# Interactive)
+    /usr/bin/fsharpc   (F# compiler)
+    /usr/bin/fsharpi   (F# Interactive)
 
-## Development notes
+## Development Notes
 
-###Continuous Integration Build 
+### Continuous Integration Build 
 
-We have a CI build set up with the JetBrains/Teamcity server as part of the F# community projects there:
+A continuous integration build is set up with the JetBrains/Teamcity server as part of the F# community projects there:
 
 http://teamcity.codebetter.com/project.html?projectId=project61&tab=projectOverview
 
-@forki controls access. Right now this builds both a Mono 'make' install  and a Windows 'cd src; msbuild fsharp-build.proj' build.  No binaries are saved from  the build, it is just for sanity checking.
+[@forki](https://github.com/forki) controls access. Presently this builds both a Mono `make install`  and a Windows `cd src; msbuild fsharp-build.proj` build.  No binaries are saved from the build, it is just for sanity checking.
 
-
-###Editing the Compiler with Visual Studio or MonoDevelop
+### Editing the Compiler with Visual Studio or MonoDevelop
 
 Open `all-vs2012.sln`, and edit in modes Debug or Release. The compiler takes a good while to compile and that
 can be a bit invasive to the work flow, so it's normally better to do the actual compilation from 
@@ -184,9 +182,9 @@ the command line, see above.
 
 Historically it is difficult to edit the compiler with Xamarin Studio or MonoDevelop because of bugs in loading the hand-edited project files and targets used in the F# compiler build. These are generally in the process of being fixed, your mileage will vary.
 
-### Running Compiler and Library tests 
+## How to Test and Validate
 
-#### On Linux
+### Linux
 
 Only a subset of the tests are currently enabled.
 
@@ -196,10 +194,10 @@ cd tests/fsharp/core
 ./run-all.sh
 ```
 
-#### On Windows
+### Windows
 
-There are language tests under `tests\fsharp\core`. The test apparatus is primitive and unfortunately uses batch 
-Set up a shell (release mode)
+There are language tests under `tests\fsharp\core`. The test apparatus is primitive and unfortunately uses batch.
+Set up a shell (release mode):
 
 ```
 cd tests
@@ -211,7 +209,7 @@ Run the tests:
 ```
 .\build-and-run.bat
 ```
-Look in build-and-run.log. The results file will contain one entry for each test directory, plus any reported errors.
+Examine `build-and-run.log`. This will contain one entry for each test directory, plus any reported errors.
 
 ```
 tests\fsharp\core
@@ -230,11 +228,7 @@ ERRORLEVEL=1: in tests\fsharp\core\csfromfs\build.bat
 
 You can then go to the relevant directory and run `build.bat` and `run.bat`.
 
-
-
-
-
-### Building F# Core Unit Tests for .NET 4.x (optional)
+### F# Core Unit Tests for .NET 4.x (optional)
 
 This uses the proto compiler to build the unit tests that check some parts of `FSharp.Core.dll` and `FSharp.Compiler.dll`. There is also another set of tests under `tests\fsharp`.
 
@@ -242,11 +236,9 @@ This uses the proto compiler to build the unit tests that check some parts of `F
 msbuild fsharp-library-unittests-build.proj /p:TargetFramework=net40
 ```
 
-*Note: You must have NUnit installed to build the unit tests.*
+*Note: You must have [NUnit](http://www.nunit.org/) installed to build the unit tests.*
 
-
-
-### Validation and Use
+### How to Validate
 
 Here are some simple tests to validate what you have built by checking `fsi.exe` (F# Interactive) starts up:
 
@@ -261,13 +253,11 @@ lib\debug\4.0\fsc.exe hello.fs
 hello.exe
 ```
 
-
 ## History 
 
 F# compiler sources dropped by Microsoft are available from [fsharppowerpack.codeplex.com](http://fsharppowerpack.codeplex.com).
 
 Uses bootstrapping libraries, tools and F# compiler. The `lib/bootstrap/X.0` directories contain mono-built libraries, compiler and tools that can be used to bootstrap a build. You can also supply your own via the `--with-bootstrap` option.
-
 
 ### Wheezy build
 
