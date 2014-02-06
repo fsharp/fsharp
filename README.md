@@ -1,4 +1,4 @@
-## F# Compiler, Core Library and Tools (Open Edition)
+## F# Compiler, Core Library & Tools (Open Edition)
 
 The `master` branch is for the latest version of F# (currently F# 3.1).
 
@@ -6,7 +6,7 @@ To bootstrap the compiler, binaries built from an earlier version of this projec
 
 This codebase uses the Apache 2.0 license.
 
-## Current Build status
+## Current Build Status
 
 Head (branch ``master``), Mono 3.x, OSX + some unit tests (Travis) [![Build Status](https://travis-ci.org/fsharp/fsharp.png?branch=master)](https://travis-ci.org/fsharp/fsharp/branches)
 
