@@ -41,7 +41,7 @@ sudo make install
 By default that makes optimized binaries. To make debug, use ```make CONFIG=debug```
 
 
-### MacOS (OSX)
+### OS X
 
 Use a prefix to your version of Mono:
 ```
@@ -140,17 +140,17 @@ Additionally, versions of FSharp.Core for .NET 2.0, MonoAndroid, MonoTouch (Mono
 
 `make install` sends the binaries to the `prefix` location, e.g.
 
-   /Library/Frameworks/Mono.framework/Versions/Current/lib/mono/2.0/FSharp.Core.dll
-   /Library/Frameworks/Mono.framework/Versions/Current/lib/mono/2.1/FSharp.Core.dll
-   /Library/Frameworks/Mono.framework/Versions/Current/lib/mono/4.0/fsc.exe
-   /Library/Frameworks/Mono.framework/Versions/Current/lib/mono/4.0/FSharp.Compiler.dll
-   ...
-   /Library/Frameworks/Mono.framework/Versions/Current/lib/mono/4.5/fsc.exe
-   /Library/Frameworks/Mono.framework/Versions/Current/lib/mono/4.5/FSharp.Compiler.dll
-   ...
-   /Library/Frameworks/Mono.framework/Versions/Current/lib/mono/gac/.../FSharp.Compiler.dll
-   /Library/Frameworks/Mono.framework/Versions/Current/lib/mono/gac/.../FSharp.Compiler.dll
-   ...
+    /Library/Frameworks/Mono.framework/Versions/Current/lib/mono/2.0/FSharp.Core.dll
+    /Library/Frameworks/Mono.framework/Versions/Current/lib/mono/2.1/FSharp.Core.dll
+    /Library/Frameworks/Mono.framework/Versions/Current/lib/mono/4.0/fsc.exe
+    /Library/Frameworks/Mono.framework/Versions/Current/lib/mono/4.0/FSharp.Compiler.dll
+    ...
+    /Library/Frameworks/Mono.framework/Versions/Current/lib/mono/4.5/fsc.exe
+    /Library/Frameworks/Mono.framework/Versions/Current/lib/mono/4.5/FSharp.Compiler.dll
+    ...
+    /Library/Frameworks/Mono.framework/Versions/Current/lib/mono/gac/.../FSharp.Compiler.dll
+    /Library/Frameworks/Mono.framework/Versions/Current/lib/mono/gac/.../FSharp.Compiler.dll
+    ...
 
 plus some files for xbuild support 
 
@@ -161,8 +161,8 @@ plus some files for xbuild support
 
 plus scripts
 
-   /usr/bin/fsharpc   (F# compiler)
-   /usr/bin/fsharpi   (F# Interactive)
+    /usr/bin/fsharpc   (F# compiler)
+    /usr/bin/fsharpi   (F# Interactive)
 
 ## Development Notes
 
