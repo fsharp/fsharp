@@ -168,11 +168,11 @@ plus scripts
 
 ### Continuous Integration Build 
 
-We have a CI build set up with the JetBrains/Teamcity server as part of the F# community projects there:
+A continuous integration build is set up with the JetBrains/Teamcity server as part of the F# community projects there:
 
 http://teamcity.codebetter.com/project.html?projectId=project61&tab=projectOverview
 
-[@forki](https://github.com/forki) controls access. Right now this builds both a Mono 'make' install  and a Windows 'cd src; msbuild fsharp-build.proj' build.  No binaries are saved from the build, it is just for sanity checking.
+[@forki](https://github.com/forki) controls access. Presently this builds both a Mono `make install`  and a Windows `cd src; msbuild fsharp-build.proj` build.  No binaries are saved from the build, it is just for sanity checking.
 
 ### Editing the Compiler with Visual Studio or MonoDevelop
 
