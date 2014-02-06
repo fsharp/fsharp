@@ -24,14 +24,14 @@ F# 3.1, .NET 2.0 etc., Windows (TeamCity) [![Windows .net 2.0 etc.][teamcity net
 
 Requires mono 3.0 or higher.
 
-On OSX, requires automake 2.69. To install from [homebrew](http://mxcl.github.com/homebrew):
+OS X requires automake 2.69. To install from [homebrew](http://mxcl.github.com/homebrew):
 ```
 brew install automake
 ```
 
 ## How to Build
 
-### On Linux and other Unix systems:
+### Linux and other Unix systems:
 The usual:
 ```
 ./autogen.sh --prefix=/usr
