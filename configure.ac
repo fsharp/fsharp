@@ -17,20 +17,15 @@ elif test "x$PKG_CONFIG" = "xno"; then
         AC_MSG_ERROR([You need to install pkg-config])
 fi
 
-MONO_REQUIRED_VERSION=2.9
-MONO_RECOMMENDED_VERSION=3.0
+MONO_REQUIRED_VERSION=3.0
+MONO_RECOMMENDED_VERSION=3.2
 
 if ! $PKG_CONFIG --atleast-version=$MONO_REQUIRED_VERSION mono; then
 	AC_MSG_ERROR("You need mono $MONO_REQUIRED_VERSION")
 fi
 
-AC_PATH_PROG(MONO_SGEN, mono-sgen, no)
-
 if ! $PKG_CONFIG --atleast-version=$MONO_RECOMMENDED_VERSION mono; then
-	AC_MSG_WARN([Mono $MONO_RECOMMENDED_VERSION or higher is recommended, for better MSBuild (xbuild) compatibility])
-
-	# stability of Mono's SGEN GC is not so good in older versions than Mono v3.0
-	MONO_SGEN=no
+	AC_MSG_WARN([Mono $MONO_RECOMMENDED_VERSION or higher is recommended, for better GC performance])
 fi
 
 # Checks for libraries.
@@ -74,15 +69,6 @@ AC_SUBST(MONOGACDIR)
 AC_SUBST(MONOGACDIR20)
 AC_SUBST(MONOGACDIR35)
 AC_SUBST(MONOGACDIR40)
-
-if test "x$MONO_SGEN" = "xno"; then
-	mono_gc_options=
-else
-	mono_gc_options=--gc=sgen
-fi
-
-AC_SUBST(mono_gc_options)
-
 
 AC_CONFIG_FILES([
 launcher
