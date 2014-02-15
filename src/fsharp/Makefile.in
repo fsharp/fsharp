@@ -47,8 +47,6 @@ build clean install:
 # - Requires PCL assemblies
 
 #$(MAKE) -C FSharp.Core TargetFramework=portable-net45+sl5+win8 $@
-#$(MAKE) -C FSharp.Core TargetFramework=portable-net4+sl4+wp71+win8 $@
-
 
 
 
