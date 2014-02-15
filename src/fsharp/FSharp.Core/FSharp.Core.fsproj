@@ -215,9 +215,9 @@
     <Reference Include="mscorlib" Condition="'$(TargetFramework)' != 'wp7' " />
     <Reference Include="System" />
     <Reference Include="System.Numerics" Condition="'$(TargetFramework)' == 'net40'" />
-    <Reference Include="System.Net" Condition="'$(TargetFramework)' == 'sl5' OR '$(TargetFramework)' == 'sl5-compiler' OR '$(TargetFramework)' == 'XNA\5.0' OR '$(TargetFramework)' == 'wp7' OR '$(TargetFramework)' == 'portable-net4+sl4+wp71+win8' OR '$(TargetFramework)' == 'portable-net45+sl5+win8' OR '$(TargetFramework)' == 'net40-xna40-xbox360' " />
+    <Reference Include="System.Net" Condition="'$(TargetFramework)' == 'sl5' OR '$(TargetFramework)' == 'sl5-compiler' OR '$(TargetFramework)' == 'XNA\5.0' OR '$(TargetFramework)' == 'wp7' OR '$(TargetFramework)' == 'portable-net45+sl5+win8' OR '$(TargetFramework)' == 'net40-xna40-xbox360' " />
     <Reference Include="System.Observable" Condition="'$(TargetFramework)' == 'wp7' " />
-    <Reference Include="System.Core" Condition="'$(TargetFramework)' == 'sl5' OR '$(TargetFramework)' == 'sl5-compiler' OR '$(TargetFramework)' == 'XNA\5.0' OR '$(TargetFramework)' == 'wp7' OR '$(TargetFramework)' == 'portable-net4+sl4+wp71+win8' OR '$(TargetFramework)' == 'portable-net45+sl5+win8' OR '$(TargetFramework)' == 'net40-xna40-xbox360' " />
+    <Reference Include="System.Core" Condition="'$(TargetFramework)' == 'sl5' OR '$(TargetFramework)' == 'sl5-compiler' OR '$(TargetFramework)' == 'XNA\5.0' OR '$(TargetFramework)' == 'wp7' OR '$(TargetFramework)' == 'portable-net45+sl5+win8' OR '$(TargetFramework)' == 'net40-xna40-xbox360' " />
   </ItemGroup>
   <!-- References -->
   <Import Project="$(FSharpSourcesRoot)\FSharpSource.targets" />
