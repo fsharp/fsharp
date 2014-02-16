@@ -128,6 +128,8 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <DefineConstants>$(DefineConstants);FX_ATLEAST_35</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_ATLEAST_LINQ</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_BIGINT</DefineConstants>
+    <DefineConstants>$(DefineConstants);QUERIES_IN_FSLIB</DefineConstants>
+    <DefineConstants>$(DefineConstants);PUT_TYPE_PROVIDERS_IN_FSCORE;</DefineConstants>
     <AssemblySearchPaths>$(FSharpSourcesRoot)\..\dependencies\mono\2.1;$(AssemblySearchPaths)</AssemblySearchPaths>
   </PropertyGroup>
 
@@ -143,6 +145,8 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <DefineConstants>$(DefineConstants);FX_ATLEAST_LINQ</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_BIGINT</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_REFLECTION_EMIT</DefineConstants>
+    <DefineConstants>$(DefineConstants);QUERIES_IN_FSLIB</DefineConstants>
+    <DefineConstants>$(DefineConstants);PUT_TYPE_PROVIDERS_IN_FSCORE;</DefineConstants>
     <OtherFlags>$(OtherFlags) --simpleresolution -r:"$(FSharpSourcesRoot)\..\dependencies\mono\2.1\MonoTouch\mscorlib-runtime.dll"</OtherFlags>
     <AssemblySearchPaths>$(FSharpSourcesRoot)\..\dependencies\mono\2.1\MonoTouch;$(AssemblySearchPaths)</AssemblySearchPaths>
   </PropertyGroup>
