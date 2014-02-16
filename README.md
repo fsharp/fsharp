@@ -59,15 +59,13 @@ ngen install ..\lib\proto\4.0\fsc-proto.exe (optional)
 msbuild fsharp-library-build.proj /p:Configuration=Release
 msbuild fsharp-compiler-build.proj /p:Configuration=Release
 ```
-You can also build the FSharp.Core for .NET 2.0, Mono 2.1, MonoTouch, Silverlight 5.0, Windows Phone 7.1, Portable Profile47 (net45+sl5+win8), Portable Profile88 (net4+sl4+wp71+win8) and XNA 4.0 for Xbox 360 profiles:
+You can also build the FSharp.Core for .NET 2.0, Mono 2.1, MonoTouch, Silverlight 5.0, Portable Profile47 (net45+sl5+win8), and XNA 4.0 for Xbox 360 profiles:
 ```
 msbuild fsharp-library-build.proj /p:TargetFramework=net20 /p:Configuration=Release
 msbuild fsharp-library-build.proj /p:TargetFramework=mono21 /p:Configuration=Release
 msbuild fsharp-library-build.proj /p:TargetFramework=monotouch /p:Configuration=Release
 msbuild fsharp-library-build.proj /p:TargetFramework=portable-net45+sl5+win8 /p:Configuration=Release
-msbuild fsharp-library-build.proj /p:TargetFramework=portable-net4+sl4+wp71+win8 /p:Configuration=Release
 msbuild fsharp-library-build.proj /p:TargetFramework=sl5 /p:Configuration=Release
-msbuild fsharp-library-build.proj /p:TargetFramework=wp7 /p:Configuration=Release
 msbuild fsharp-library-build.proj /p:TargetFramework=net40-xna40-xbox360 /p:Configuration=Release
 ```
 You can also build the FSharp.Core and FSharp.Compiler.Silverlight.dll for Silverlight 5.0:
