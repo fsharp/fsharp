@@ -40,6 +40,7 @@ build clean install:
 	$(MAKE) -C FSharp.Core TargetFramework=net20 $@
 	$(MAKE) -C FSharp.Core TargetFramework=monodroid $@
 	$(MAKE) -C FSharp.Core TargetFramework=monotouch $@
+	$(MAKE) -C FSharp.Core TargetFramework=portable-net45+sl5+win8 $@
 
 # Add these to build portable FSharp.Core on Mac 
 # - Requires Mono 3.2.4 or greater

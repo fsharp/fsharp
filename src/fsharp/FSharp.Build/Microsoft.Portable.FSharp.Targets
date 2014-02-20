@@ -11,9 +11,18 @@ Copyright (C) Microsoft Corporation. All rights reserved.
 -->
 
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  
-  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\v4.0\Microsoft.Portable.Common.targets" />
-  <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.1\Framework\v4.0\Microsoft.FSharp.Targets" />
-  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\Microsoft.Portable.Core.targets" />
+    <!-- Try the Microsoft location for Microsoft.Portable.Common.targets -->
+	<Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\v4.0\Microsoft.Portable.Common.targets"
+			Condition="Exists('$(MSBuildExtensionsPath32)\Microsoft\Portable\v4.0\Microsoft.Portable.Common.targets')" />
+    
+	<!-- Next try the Mono equivelent for Microsoft.Portable.Common.targets which is Microsoft.Portable.Core.props -->
+	<Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\Microsoft.Portable.Core.props"
+			Condition="!Exists('$(MSBuildExtensionsPath32)\Microsoft\Portable\Microsoft.Portable.Common.targets') AND
+						Exists('$(MSBuildExtensionsPath32)\Microsoft\Portable\Microsoft.Portable.Core.props')" />
+
+	<Import Project="$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.1\Framework\v4.0\Microsoft.FSharp.Targets" />
+
+	<Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\Microsoft.Portable.Core.targets"
+			Condition="Exists('$(MSBuildExtensionsPath32)\Microsoft\Portable\Microsoft.Portable.Core.targets')" />
   
 </Project>
