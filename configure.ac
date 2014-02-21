@@ -17,6 +17,9 @@ elif test "x$PKG_CONFIG" = "xno"; then
         AC_MSG_ERROR([You need to install pkg-config])
 fi
 
+AC_MSG_NOTICE("pkg-config: $PKG_CONFIG")
+AC_MSG_NOTICE("PKG_CONFIG_LIBDIR: $PKG_CONFIG_LIBDIR")
+
 MONO_REQUIRED_VERSION=3.0
 MONO_RECOMMENDED_VERSION=3.2
 
