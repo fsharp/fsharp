@@ -35,8 +35,6 @@
     <AssemblyVersion Condition="'$(TargetFramework)' == 'portable-net45+sl5+win8' AND '$(FSharpCoreBackVersion)' == '3.0' ">2.3.5.0</AssemblyVersion>
     <AssemblyVersion Condition="'$(TargetFramework)' == 'monodroid' AND '$(FSharpCoreBackVersion)' == '3.0' ">2.3.98.0</AssemblyVersion>
     <AssemblyVersion Condition="'$(TargetFramework)' == 'monotouch' AND '$(FSharpCoreBackVersion)' == '3.0' ">2.3.99.0</AssemblyVersion>
-    <!-- FSharp.Core using System.Runtime -->
-    <OtherFlags>$(OtherFlags) --version:$(AssemblyVersion)</OtherFlags>
     <!--
 Some other NuGET monikers to support in the future, see http://docs.nuget.org/docs/creating-packages/creating-and-publishing-a-package#Package_Conventions
 

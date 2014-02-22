@@ -184,7 +184,6 @@ type ResolveAssemblyReferenceMode =
     | ReportErrors
 
 type VersionFlag = 
-    | VersionString of string
     | VersionFile of string
     | VersionNone
     member GetVersionInfo : (*implicitIncludeDir:*)string -> ILVersionInfo

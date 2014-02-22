@@ -569,7 +569,6 @@ let deprecatedFlagsFsc tcConfigB =
     (compilingFsLibFlag tcConfigB) ;
     (compilingFsLib20Flag tcConfigB) ;
     (compilingFsLib40Flag tcConfigB) ;
-    CompilerOption("version", tagString, OptionString (fun s -> tcConfigB.version <- VersionString s), Some(DeprecatedCommandLineOptionNoDescription("--version", rangeCmdArgs)), None);
 //  "--clr-mscorlib", OptionString (fun s -> warning(Some(DeprecatedCommandLineOptionNoDescription("--clr-mscorlib", rangeCmdArgs))) ;   tcConfigB.Build.mscorlib_assembly_name <- s), "\n\tThe name of mscorlib on the target CLR"; 
     CompilerOption("local-optimize", tagNone, OptionUnit (fun _ -> tcConfigB.optSettings <- { tcConfigB.optSettings with localOptUser = Some true }), Some(DeprecatedCommandLineOptionNoDescription("--local-optimize", rangeCmdArgs)), None);
     CompilerOption("no-local-optimize", tagNone, OptionUnit (fun _ -> tcConfigB.optSettings <- { tcConfigB.optSettings with localOptUser = Some false }), Some(DeprecatedCommandLineOptionNoDescription("--no-local-optimize", rangeCmdArgs)), None);
@@ -605,6 +604,16 @@ let displayHelpFsc tcConfigB (blocks:CompilerOptionBlock list) =
 #else        
     exit 0
 #endif
+
+let displayVersion cmd =
+    let core = typeof<SourceConstructFlags>.Assembly;
+    let fvi = System.Diagnostics.FileVersionInfo.GetVersionInfo(core.Location)
+    let version = fvi.ProductVersion
+    printfn "F# %s %s" cmd version
+#if SILVERLIGHT
+#else        
+    exit 0
+#endif
       
 let miscFlagsBoth tcConfigB = 
     [   CompilerOption("nologo", tagNone, OptionUnit (fun () -> tcConfigB.showBanner <- false), None, Some (FSComp.SR.optsNologo()));
@@ -612,9 +621,13 @@ let miscFlagsBoth tcConfigB =
       
 let miscFlagsFsc tcConfigB =
     miscFlagsBoth tcConfigB @
-    [   CompilerOption("help", tagNone, OptionHelp (fun blocks -> displayHelpFsc tcConfigB blocks), None, Some (FSComp.SR.optsHelp()))
+    [   CompilerOption("help", tagNone, OptionHelp (fun blocks -> displayHelpFsc tcConfigB blocks), None, Some (FSComp.SR.optsHelp()));
+        CompilerOption("version", tagNone, OptionUnit (fun () -> displayVersion "Compiler"), None, Some (FSComp.SR.optsVersion()));
     ]
-let miscFlagsFsi tcConfigB = miscFlagsBoth tcConfigB
+let miscFlagsFsi tcConfigB = 
+    miscFlagsBoth tcConfigB @
+    [   CompilerOption("version", tagNone, OptionUnit (fun () -> displayVersion "Interactive"), None, Some (FSComp.SR.optsVersion()));
+    ]
 
 
 // OptionBlock: Abbreviations of existing options

@@ -14,7 +14,7 @@ if NOT "%FSC:NOTAVAIL=X%" == "%FSC%" (
 
 REM Test internals visible
 echo == Compiling F# Library
-"%FSC%" %fsc_flags% --version:1.2.3 --keyfile:key.snk -a --optimize -o:library.dll library.fsi library.fs
+"%FSC%" %fsc_flags% --keyfile:key.snk -a --optimize -o:library.dll library.fsi library.fs
 @if ERRORLEVEL 1 goto Error
 
 echo == Verifying F# Library
@@ -30,7 +30,7 @@ echo == Verifying C# Library
 @if ERRORLEVEL 1 goto Error
 
 echo == Compiling F# main referencing C# and F# libraries
-"%FSC%" %fsc_flags% --version:1.2.3 --keyfile:key.snk --optimize -r:library.dll -r:librarycs.dll -o:main.exe main.fs
+"%FSC%" %fsc_flags% --keyfile:key.snk --optimize -r:library.dll -r:librarycs.dll -o:main.exe main.fs
 @if ERRORLEVEL 1 goto Error
 
 echo == Verifying F# main

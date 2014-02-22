@@ -1645,7 +1645,6 @@ type CompilerTarget =
 type ResolveAssemblyReferenceMode = Speculative | ReportErrors
 
 type VersionFlag = 
-    | VersionString of string
     | VersionFile of string
     | VersionNone
     member x.GetVersionInfo(implicitIncludeDir) =
@@ -1656,7 +1655,6 @@ type VersionFlag =
         
     member x.GetVersionString(implicitIncludeDir) = 
          match x with 
-         | VersionString s -> s
          | VersionFile s ->
              let s = if FileSystem.IsPathRootedShim(s) then s else Path.Combine(implicitIncludeDir,s)
              if not(FileSystem.SafeExists(s)) then 
