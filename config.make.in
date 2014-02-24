@@ -17,6 +17,8 @@ monogacdir21 := @abs_top_srcdir@/dependencies/mono/2.1
 monogacdir35 := @MONOGACDIR35@
 monogacdir40 := @MONOGACDIR40@
 
+pclenabled := @PCLENABLED@
+
 gacdir := ${libdir}mono
 
 tooldir := $(topdir)lib/bootstrap/4.0/
