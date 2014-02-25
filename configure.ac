@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.61])
-AC_INIT([fsharp], [0.1], [avidigal@novell.com])
+AC_INIT([fsharp], [3.1], [https://github.com/fsharp/fsharp/issues])
 
 # Checks for programs.
 AC_PROG_MAKE_SET
@@ -66,6 +66,14 @@ if ! test -e $MONOGACDIR20/mscorlib.dll; then
 	AC_ERROR(Couldn't find the mono gac directory or mscorlib.dll in the usual places. Set --with-gacdir=<path>)
 fi
 
+if test -e $MONOLIBDIR/mono/xbuild-frameworks/.NETPortable/v4.0/Profile/Profile47/mscorlib.dll; then
+   PCLENABLED=yes
+else
+   PCLENABLED=no
+fi
+AC_MSG_NOTICE(PCL Reference Assemblies found: $PCLENABLED)
+
+AC_SUBST(PCLENABLED)
 AC_SUBST(MONOLIBDIR)
 AC_SUBST(MONOGACDIR)
 
