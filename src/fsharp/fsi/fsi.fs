@@ -615,6 +615,10 @@ type internal FsiCommandLineOptions(argv: string[], tcConfigB, fsiConsoleOutput:
         fsiConsoleOutput.uprintfnn "%s" (FSComp.SR.optsCopyright())
         fsiConsoleOutput.uprintfn  "%s" (FSIstrings.SR.fsiBanner3())
      
+    member __.ShowHelpQuit() =
+        let quitShortcut = if runningOnMono then "Ctrl-D" else "Ctrl-Z"
+        fsiConsoleOutput.uprintfn  "%s" (FSIstrings.SR.fsiHelpQuit(quitShortcut))
+
     member __.ShowHelp() =
 #if SILVERLIGHT
         fsiConsoleOutput.uprintfnn "%s" (FSIstrings.SR.fsiIntroTextHeader1directives())
@@ -1707,6 +1711,15 @@ type internal FsiInteractionProcessor
             stopProcessingRecovery e range0;    
             None
 
+    let (|UserNeedHelp|_|) (expr: SynExpr) =
+        match expr with
+        | SynExpr.Ident i ->
+            match i.idText.ToLower() with
+            | "help" -> Some (fun () -> fsiOptions.ShowHelp())
+            | "exit" | "quit" -> Some (fun () -> fsiOptions.ShowHelpQuit())
+            | _ -> None
+        | _ -> None
+
     /// Execute a single parsed interaction. Called on the GUI/execute/main thread.
     let ExecInteraction (exitViaKillThread:bool, tcConfig:TcConfig, istate, action:ParsedFsiInteraction) =
         istate |> InteractiveCatch (fun istate -> 
@@ -1714,7 +1727,17 @@ type internal FsiInteractionProcessor
             | IDefns ([  ],_) ->
                 istate,Completed
             | IDefns ([  SynModuleDecl.DoExpr(_,expr,_)],_) ->
-                fsiDynamicCompiler.EvalParsedExpression  (istate, expr), Completed           
+                let helpUser = function
+                    | UserNeedHelp hint -> hint;
+                    | _ -> id
+
+                try
+                    let result = fsiDynamicCompiler.EvalParsedExpression  (istate, expr), Completed
+                    helpUser expr ()
+                    result
+                with _ ->
+                    helpUser expr ()
+                    reraise ()
             | IDefns (defs,_) -> 
                 fsiDynamicCompiler.EvalParsedDefinitions (istate, true, false, defs), Completed
 
@@ -1794,6 +1817,7 @@ type internal FsiInteractionProcessor
 
             | IHash (ParsedHashDirective(c,arg,_),_) -> 
                 fsiConsoleOutput.uprintfn "%s" (FSIstrings.SR.fsiInvalidDirective(c, String.concat " " arg));  // REVIEW: uprintnfnn - like other directives above
+                if c.ToLower() = "exit" then fsiOptions.ShowHelpQuit()
                 istate,Completed  (* REVIEW: cont = CompletedWithReportedError *)
         )
 
