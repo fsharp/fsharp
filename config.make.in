@@ -56,6 +56,11 @@ VERSION = 2.3.5.1
 TARGET = portable-net45+sl5+win8
 endif
 
+ifeq (x-$(TargetFramework),x-portable-windows8+net45)
+VERSION = 3.3.1.0
+TARGET = portable-windows8+net45
+endif
+
 DELAY_SIGN_TOKEN = b03f5f7f11d50a3a
 SIGN_TOKEN = f536804aa0eb945b
 

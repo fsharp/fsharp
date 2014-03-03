@@ -205,7 +205,7 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <DefineConstants>$(DefineConstants);FX_RESHAPED_REFLECTION</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_EXIT_CONTEXT_FLAGS</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_EVENTWAITHANDLE_NO_IDISPOSABLE</DefineConstants>
-    <AssemblySearchPaths>$(MSBuildExtensionsPath32)\..\xbuild-frameworks\.NETCore\v4.5</AssemblySearchPaths>
+    <AssemblySearchPaths>$(MSBuildExtensionsPath32)\..\xbuild-frameworks\.NETPortable\v4.5</AssemblySearchPaths>
     <AssemblySearchPaths>$(AssemblySearchPaths);$(MSBuildExtensionsPath32)\..\Reference Assemblies\Microsoft\Framework\.NETCore\v4.5</AssemblySearchPaths>
     <OtherFlags>$(OtherFlags) --targetprofile:netcore</OtherFlags>
   </PropertyGroup>
