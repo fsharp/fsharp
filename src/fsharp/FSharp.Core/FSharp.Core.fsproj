@@ -24,8 +24,8 @@
     <OtherFlags Condition=" '$(TargetFramework)'=='net40'">$(OtherFlags) --compiling-fslib-40</OtherFlags>	
   </PropertyGroup>
   <!-- MonoDevelop likes these here to recognise the configurations -->
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' " />
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' " />
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' " />
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' " />
   <ItemGroup>
     <EmbeddedResource Include="FSCore.resx">
       <Link>FSCore.resx</Link>

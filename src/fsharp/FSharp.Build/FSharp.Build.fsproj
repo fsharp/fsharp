@@ -13,8 +13,8 @@
     <ProjectGuid>{702A7979-BCF9-4C41-853E-3ADFC9897890}</ProjectGuid>
   </PropertyGroup>
   <!-- MonoDevelop likes these here to recognise the configurations -->
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' " />
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' " />
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' " />
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' " />
   <ItemGroup>
     <FsSrGen Include="FSBuild.txt">
       <Link>FSBuild.txt</Link>

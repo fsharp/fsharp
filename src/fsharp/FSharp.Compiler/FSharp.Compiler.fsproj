@@ -18,8 +18,12 @@
     <OtherFlags>$(OtherFlags) /warnon:1182</OtherFlags>
   </PropertyGroup>
   <!-- MonoDevelop likes these here to recognise the configurations -->
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' " />
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' " />
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <OutputPath>bin\Debug</OutputPath>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <OutputPath>bin\Release</OutputPath>
+  </PropertyGroup>
   <ItemGroup>
     <Compile Include="..\..\assemblyinfo\assemblyinfo.FSharp.Compiler.dll.fs">
       <Link>assemblyinfo.FSharp.Compiler.dll.fs</Link>
@@ -31,464 +35,464 @@
       <Link>FSStrings.resx</Link>
     </EmbeddedResource>
     <Compile Include="..\..\utils\sformat.fsi">
-      <Link>ErrorText/sformat.fsi</Link>
+      <Link>ErrorText\sformat.fsi</Link>
     </Compile>
     <Compile Include="..\..\utils\sformat.fs">
-      <Link>ErrorText/sformat.fs</Link>
+      <Link>ErrorText\sformat.fs</Link>
     </Compile>
     <Compile Include="..\sr.fsi">
-      <Link>ErrorText/sr.fsi</Link>
+      <Link>ErrorText\sr.fsi</Link>
     </Compile>
     <Compile Include="..\sr.fs">
-      <Link>ErrorText/sr.fs</Link>
+      <Link>ErrorText\sr.fs</Link>
     </Compile>
     <Compile Include="..\..\utils\prim-lexing.fsi">
-      <Link>LexYaccRuntime/prim-lexing.fsi</Link>
+      <Link>LexYaccRuntime\prim-lexing.fsi</Link>
     </Compile>
     <Compile Include="..\..\utils\prim-lexing.fs">
-      <Link>LexYaccRuntime/prim-lexing.fs</Link>
+      <Link>LexYaccRuntime\prim-lexing.fs</Link>
     </Compile>
     <Compile Include="..\..\utils\prim-parsing.fsi">
-      <Link>LexYaccRuntime/prim-parsing.fsi</Link>
+      <Link>LexYaccRuntime\prim-parsing.fsi</Link>
     </Compile>
     <Compile Include="..\..\utils\prim-parsing.fs">
-      <Link>LexYaccRuntime/prim-parsing.fs</Link>
+      <Link>LexYaccRuntime\prim-parsing.fs</Link>
     </Compile>
     <Compile Include="..\ExtensibleDumper.fsi">
-      <Link>Utilities/ExtensibleDumper.fsi</Link>
+      <Link>Utilities\ExtensibleDumper.fsi</Link>
     </Compile>
     <Compile Include="..\ExtensibleDumper.fs">
-      <Link>Utilities/ExtensibleDumper.fs</Link>
+      <Link>Utilities\ExtensibleDumper.fs</Link>
     </Compile>
     <Compile Include="..\..\utils\resizearray.fsi">
-      <Link>Utilities/resizearray.fsi</Link>
+      <Link>Utilities\resizearray.fsi</Link>
     </Compile>
     <Compile Include="..\..\utils\resizearray.fs">
-      <Link>Utilities/resizearray.fs</Link>
+      <Link>Utilities\resizearray.fs</Link>
     </Compile>
     <Compile Include="..\..\utils\HashMultiMap.fsi">
-      <Link>Utilities/HashMultiMap.fsi</Link>
+      <Link>Utilities\HashMultiMap.fsi</Link>
     </Compile>
     <Compile Include="..\..\utils\HashMultiMap.fs">
-      <Link>Utilities/HashMultiMap.fs</Link>
+      <Link>Utilities\HashMultiMap.fs</Link>
     </Compile>
     <Compile Include="..\..\utils\TaggedCollections.fsi">
-      <Link>Utilities/TaggedCollections.fsi</Link>
+      <Link>Utilities\TaggedCollections.fsi</Link>
     </Compile>
     <Compile Include="..\..\utils\TaggedCollections.fs">
-      <Link>Utilities/TaggedCollections.fs</Link>
+      <Link>Utilities\TaggedCollections.fs</Link>
     </Compile>
     <Compile Include="..\FlatList.fs">
-      <Link>Utilities/FlatList.fs</Link>
+      <Link>Utilities\FlatList.fs</Link>
     </Compile>
     <Compile Include="..\..\absil\illib.fs">
-      <Link>Utilities/illib.fs</Link>
+      <Link>Utilities\illib.fs</Link>
     </Compile>
     <Compile Include="..\..\utils\filename.fsi">
-      <Link>Utilities/filename.fsi</Link>
+      <Link>Utilities\filename.fsi</Link>
     </Compile>
     <Compile Include="..\..\utils\filename.fs">
-      <Link>Utilities/filename.fs</Link>
+      <Link>Utilities\filename.fs</Link>
     </Compile>
     <Compile Include="..\..\absil\zmap.fsi">
-      <Link>Utilities/zmap.fsi</Link>
+      <Link>Utilities\zmap.fsi</Link>
     </Compile>
     <Compile Include="..\..\absil\zmap.fs">
-      <Link>Utilities/zmap.fs</Link>
+      <Link>Utilities\zmap.fs</Link>
     </Compile>
     <Compile Include="..\..\absil\zset.fsi">
-      <Link>Utilities/zset.fsi</Link>
+      <Link>Utilities\zset.fsi</Link>
     </Compile>
     <Compile Include="..\..\absil\zset.fs">
-      <Link>Utilities/zset.fs</Link>
+      <Link>Utilities\zset.fs</Link>
     </Compile>
     <Compile Include="..\..\absil\bytes.fsi">
-      <Link>Utilities/bytes.fsi</Link>
+      <Link>Utilities\bytes.fsi</Link>
     </Compile>
     <Compile Include="..\..\absil\bytes.fs">
-      <Link>Utilities/bytes.fs</Link>
+      <Link>Utilities\bytes.fs</Link>
     </Compile>
     <Compile Include="..\..\absil\ildiag.fsi">
-      <Link>Utilities/ildiag.fsi</Link>
+      <Link>Utilities\ildiag.fsi</Link>
     </Compile>
     <Compile Include="..\..\absil\ildiag.fs">
-      <Link>Utilities/ildiag.fs</Link>
+      <Link>Utilities\ildiag.fs</Link>
     </Compile>
     <Compile Include="..\InternalCollections.fsi">
-      <Link>Utilities/InternalCollections.fsi</Link>
+      <Link>Utilities\InternalCollections.fsi</Link>
     </Compile>
     <Compile Include="..\InternalCollections.fs">
-      <Link>Utilities/InternalCollections.fs</Link>
+      <Link>Utilities\InternalCollections.fs</Link>
     </Compile>
     <Compile Include="..\QueueList.fs">
-      <Link>Utilities/QueueList.fs</Link>
+      <Link>Utilities\QueueList.fs</Link>
     </Compile>
     <Compile Include="..\lib.fs">
-      <Link>Utilities/lib.fs</Link>
+      <Link>Utilities\lib.fs</Link>
     </Compile>
     <Compile Include="..\InternalFileSystemUtils.fsi">
-      <Link>Utilities/InternalFileSystemUtils.fsi</Link>
+      <Link>Utilities\InternalFileSystemUtils.fsi</Link>
     </Compile>
     <Compile Include="..\InternalFileSystemUtils.fs">
-      <Link>Utilities/InternalFileSystemUtils.fs</Link>
+      <Link>Utilities\InternalFileSystemUtils.fs</Link>
     </Compile>
     <Compile Include="..\TraceCall.fsi">
-      <Link>Utilities/TraceCall.fsi</Link>
+      <Link>Utilities\TraceCall.fsi</Link>
     </Compile>
     <Compile Include="..\TraceCall.fs">
-      <Link>Utilities/TraceCall.fs</Link>
+      <Link>Utilities\TraceCall.fs</Link>
     </Compile>
     <Compile Include="..\range.fsi">
-      <Link>ErrorLogging/range.fsi</Link>
+      <Link>ErrorLogging\range.fsi</Link>
     </Compile>
     <Compile Include="..\range.fs">
-      <Link>ErrorLogging/range.fs</Link>
+      <Link>ErrorLogging\range.fs</Link>
     </Compile>
     <Compile Include="..\ErrorLogger.fs">
-      <Link>ErrorLogging/ErrorLogger.fs</Link>
+      <Link>ErrorLogging\ErrorLogger.fs</Link>
     </Compile>
     <Compile Include="..\ReferenceResolution.fs">
-      <Link>ReferenceResolution.fs</Link>
+      <Link>ReferenceResolution\ReferenceResolution.fs</Link>
     </Compile>
     <FsLex Include="..\..\absil\illex.fsl">
       <OtherFlags>--lexlib Internal.Utilities.Text.Lexing</OtherFlags>
-      <Link>AbsIL/illex.fsl</Link>
+      <Link>AbsIL\illex.fsl</Link>
     </FsLex>
     <FsYacc Include="..\..\absil\ilpars.fsy">
       <Module>Microsoft.FSharp.Compiler.AbstractIL.Internal.AsciiParser</Module>
       <Open>Microsoft.FSharp.Compiler.AbstractIL</Open>
       <OtherFlags>--internal --lexlib Internal.Utilities.Text.Lexing --parslib Internal.Utilities.Text.Parsing</OtherFlags>
-      <Link>AbsIL/ilpars.fsy</Link>
+      <Link>AbsIL\ilpars.fsy</Link>
     </FsYacc>
     <Compile Include="..\..\absil\il.fsi">
-      <Link>AbsIL/il.fsi</Link>
+      <Link>AbsIL\il.fsi</Link>
     </Compile>
     <Compile Include="..\..\absil\il.fs">
-      <Link>AbsIL/il.fs</Link>
+      <Link>AbsIL\il.fs</Link>
     </Compile>
     <Compile Include="..\..\absil\ilx.fsi">
-      <Link>AbsIL/ilx.fsi</Link>
+      <Link>AbsIL\ilx.fsi</Link>
     </Compile>
     <Compile Include="..\..\absil\ilx.fs">
-      <Link>AbsIL/ilx.fs</Link>
+      <Link>AbsIL\ilx.fs</Link>
     </Compile>
     <Compile Include="..\..\absil\ilascii.fsi">
-      <Link>AbsIL/ilascii.fsi</Link>
+      <Link>AbsIL\ilascii.fsi</Link>
     </Compile>
     <Compile Include="..\..\absil\ilascii.fs">
-      <Link>AbsIL/ilascii.fs</Link>
+      <Link>AbsIL\ilascii.fs</Link>
     </Compile>
     <Compile Include="..\..\absil\ilprint.fsi">
-      <Link>AbsIL/ilprint.fsi</Link>
+      <Link>AbsIL\ilprint.fsi</Link>
     </Compile>
     <Compile Include="..\..\absil\ilprint.fs">
-      <Link>AbsIL/ilprint.fs</Link>
+      <Link>AbsIL\ilprint.fs</Link>
     </Compile>
     <Compile Include="..\..\absil\ilmorph.fsi">
-      <Link>AbsIL/ilmorph.fsi</Link>
+      <Link>AbsIL\ilmorph.fsi</Link>
     </Compile>
     <Compile Include="..\..\absil\ilmorph.fs">
-      <Link>AbsIL/ilmorph.fs</Link>
+      <Link>AbsIL\ilmorph.fs</Link>
     </Compile>
     <Compile Include="..\..\absil\ilsupp.fsi">
-      <Link>AbsIL/ilsupp.fsi</Link>
+      <Link>AbsIL\ilsupp.fsi</Link>
     </Compile>
     <Compile Include="..\..\absil\ilsupp.fs">
-      <Link>AbsIL/ilsupp.fs</Link>
+      <Link>AbsIL\ilsupp.fs</Link>
     </Compile>
-    <Compile Include="ilpars.fs" >
-      <Link>AbsIL/ilpars.fs</Link>
+    <Compile Include="ilpars.fs">
+      <Link>AbsIL\ilpars.fs</Link>
     </Compile>
-    <Compile Include="illex.fs" >
-      <Link>AbsIL/illex.fs</Link>
+    <Compile Include="illex.fs">
+      <Link>AbsIL\illex.fs</Link>
     </Compile>
     <Compile Include="..\..\absil\ilbinary.fsi">
-      <Link>AbsIL/ilbinary.fsi</Link>
+      <Link>AbsIL\ilbinary.fsi</Link>
     </Compile>
     <Compile Include="..\..\absil\ilbinary.fs">
-      <Link>AbsIL/ilbinary.fs</Link>
+      <Link>AbsIL\ilbinary.fs</Link>
     </Compile>
     <Compile Include="..\..\absil\ilread.fsi">
-      <Link>AbsIL/ilread.fsi</Link>
+      <Link>AbsIL\ilread.fsi</Link>
     </Compile>
     <Compile Include="..\..\absil\ilread.fs">
-      <Link>AbsIL/ilread.fs</Link>
+      <Link>AbsIL\ilread.fs</Link>
     </Compile>
     <Compile Include="..\..\absil\ilwrite.fsi">
-      <Link>AbsIL/ilwrite.fsi</Link>
+      <Link>AbsIL\ilwrite.fsi</Link>
     </Compile>
     <Compile Include="..\..\absil\ilwrite.fs">
-      <Link>AbsIL/ilwrite.fs</Link>
+      <Link>AbsIL\ilwrite.fs</Link>
     </Compile>
     <Compile Include="..\..\absil\ilreflect.fs">
-      <Link>AbsIL/ilreflect.fs</Link>
+      <Link>AbsIL\ilreflect.fs</Link>
     </Compile>
     <Compile Include="..\..\utils\CompilerLocationUtils.fs">
-      <Link>CompilerLocationUtils.fs</Link>
+      <Link>CompilerLocation\CompilerLocationUtils.fs</Link>
     </Compile>
     <Compile Include="..\PrettyNaming.fs">
-      <Link>PrettyNaming.fs</Link>
+      <Link>PrettyNaming\PrettyNaming.fs</Link>
     </Compile>
     <Compile Include="..\..\ilx\ilxsettings.fs">
-      <Link>ILXErase/ilxsettings.fs</Link>
+      <Link>ILXErase\ilxsettings.fs</Link>
     </Compile>
     <Compile Include="..\..\ilx\pubclo.fsi">
-      <Link>ILXErase/pubclo.fsi</Link>
+      <Link>ILXErase\pubclo.fsi</Link>
     </Compile>
     <Compile Include="..\..\ilx\pubclo.fs">
-      <Link>ILXErase/pubclo.fs</Link>
+      <Link>ILXErase\pubclo.fs</Link>
     </Compile>
     <Compile Include="..\..\ilx\cu_erase.fsi">
-      <Link>ILXErase/cu_erase.fsi</Link>
+      <Link>ILXErase\cu_erase.fsi</Link>
     </Compile>
     <Compile Include="..\..\ilx\cu_erase.fs">
-      <Link>ILXErase/cu_erase.fs</Link>
+      <Link>ILXErase\cu_erase.fs</Link>
     </Compile>
     <FsLex Include="..\lex.fsl">
       <OtherFlags>--lexlib Internal.Utilities.Text.Lexing</OtherFlags>
-      <Link>ParserAndUntypedAST/lex.fsl</Link>
+      <Link>ParserAndUntypedAST\lex.fsl</Link>
     </FsLex>
     <FsYacc Include="..\pars.fsy">
       <Module>Microsoft.FSharp.Compiler.Parser</Module>
       <Open>Microsoft.FSharp.Compiler</Open>
       <OtherFlags>--internal --lexlib Internal.Utilities.Text.Lexing --parslib Internal.Utilities.Text.Parsing</OtherFlags>
-      <Link>ParserAndUntypedAST/pars.fsy</Link>
+      <Link>ParserAndUntypedAST\pars.fsy</Link>
     </FsYacc>
     <Compile Include="..\unilex.fsi">
-      <Link>ParserAndUntypedAST/unilex.fsi</Link>
+      <Link>ParserAndUntypedAST\unilex.fsi</Link>
     </Compile>
     <Compile Include="..\unilex.fs">
-      <Link>ParserAndUntypedAST/unilex.fs</Link>
+      <Link>ParserAndUntypedAST\unilex.fs</Link>
     </Compile>
     <Compile Include="..\layout.fsi">
-      <Link>ParserAndUntypedAST/layout.fsi</Link>
+      <Link>ParserAndUntypedAST\layout.fsi</Link>
     </Compile>
     <Compile Include="..\layout.fs">
-      <Link>ParserAndUntypedAST/layout.fs</Link>
+      <Link>ParserAndUntypedAST\layout.fs</Link>
     </Compile>
     <Compile Include="..\ast.fs">
-      <Link>ParserAndUntypedAST/ast.fs</Link>
+      <Link>ParserAndUntypedAST\ast.fs</Link>
     </Compile>
-    <Compile Include="pars.fs" >
-      <Link>ParserAndUntypedAST/pars.fs</Link>
+    <Compile Include="pars.fs">
+      <Link>ParserAndUntypedAST\pars.fs</Link>
     </Compile>
     <Compile Include="..\lexhelp.fsi">
-      <Link>ParserAndUntypedAST/lexhelp.fsi</Link>
+      <Link>ParserAndUntypedAST\lexhelp.fsi</Link>
     </Compile>
     <Compile Include="..\lexhelp.fs">
-      <Link>ParserAndUntypedAST/lexhelp.fs</Link>
+      <Link>ParserAndUntypedAST\lexhelp.fs</Link>
     </Compile>
-    <Compile Include="lex.fs" >
-      <Link>ParserAndUntypedAST/lex.fs</Link>
+    <Compile Include="lex.fs">
+      <Link>ParserAndUntypedAST\lex.fs</Link>
     </Compile>
     <Compile Include="..\lexfilter.fs">
-      <Link>ParserAndUntypedAST/lexfilter.fs</Link>
+      <Link>ParserAndUntypedAST\lexfilter.fs</Link>
     </Compile>
     <Compile Include="..\tainted.fsi">
-      <Link>TypedAST/tainted.fsi</Link>
+      <Link>TypedAST\tainted.fsi</Link>
     </Compile>
     <Compile Include="..\tainted.fs">
-      <Link>TypedAST/tainted.fs</Link>
+      <Link>TypedAST\tainted.fs</Link>
     </Compile>
     <Compile Include="..\est.fsi">
-      <Link>TypedAST/est.fsi</Link>
+      <Link>TypedAST\est.fsi</Link>
     </Compile>
     <Compile Include="..\est.fs">
-      <Link>TypedAST/est.fs</Link>
+      <Link>TypedAST\est.fs</Link>
     </Compile>
     <Compile Include="..\sreflect.fsi">
-      <Link>TypedAST/sreflect.fsi</Link>
+      <Link>TypedAST\sreflect.fsi</Link>
     </Compile>
     <Compile Include="..\sreflect.fs">
-      <Link>TypedAST/sreflect.fs</Link>
+      <Link>TypedAST\sreflect.fs</Link>
     </Compile>
     <Compile Include="..\tast.fs">
-      <Link>TypedAST/tast.fs</Link>
+      <Link>TypedAST\tast.fs</Link>
     </Compile>
     <Compile Include="..\env.fs">
-      <Link>TypedAST/env.fs</Link>
+      <Link>TypedAST\env.fs</Link>
     </Compile>
     <Compile Include="..\tastops.fsi">
-      <Link>TypedAST/tastops.fsi</Link>
+      <Link>TypedAST\tastops.fsi</Link>
     </Compile>
     <Compile Include="..\tastops.fs">
-      <Link>TypedAST/tastops.fs</Link>
+      <Link>TypedAST\tastops.fs</Link>
     </Compile>
     <Compile Include="..\pickle.fsi">
-      <Link>TypedAST/pickle.fsi</Link>
+      <Link>TypedAST\pickle.fsi</Link>
     </Compile>
     <Compile Include="..\pickle.fs">
-      <Link>TypedAST/pickle.fs</Link>
+      <Link>TypedAST\pickle.fs</Link>
     </Compile>
     <Compile Include="..\import.fsi">
-      <Link>Logic/import.fsi</Link>
+      <Link>Logic\import.fsi</Link>
     </Compile>
     <Compile Include="..\import.fs">
-      <Link>Logic/import.fs</Link>
+      <Link>Logic\import.fs</Link>
     </Compile>
     <Compile Include="..\infos.fs">
-      <Link>Logic/infos.fs</Link>
+      <Link>Logic\infos.fs</Link>
     </Compile>
     <Compile Include="..\NicePrint.fs">
-      <Link>Logic/NicePrint.fs</Link>
+      <Link>Logic\NicePrint.fs</Link>
     </Compile>
     <Compile Include="..\augment.fsi">
-      <Link>Logic/augment.fsi</Link>
+      <Link>Logic\augment.fsi</Link>
     </Compile>
     <Compile Include="..\augment.fs">
-      <Link>Logic/augment.fs</Link>
+      <Link>Logic\augment.fs</Link>
     </Compile>
     <Compile Include="..\outcome.fsi">
-      <Link>Logic/outcome.fsi</Link>
+      <Link>Logic\outcome.fsi</Link>
     </Compile>
     <Compile Include="..\outcome.fs">
-      <Link>Logic/outcome.fs</Link>
+      <Link>Logic\outcome.fs</Link>
     </Compile>
     <Compile Include="..\nameres.fsi">
-      <Link>Logic/nameres.fsi</Link>
+      <Link>Logic\nameres.fsi</Link>
     </Compile>
     <Compile Include="..\nameres.fs">
-      <Link>Logic/nameres.fs</Link>
+      <Link>Logic\nameres.fs</Link>
     </Compile>
     <Compile Include="..\typrelns.fs">
-      <Link>Logic/typrelns.fs</Link>
+      <Link>Logic\typrelns.fs</Link>
     </Compile>
     <Compile Include="..\patcompile.fsi">
-      <Link>Logic/patcompile.fsi</Link>
+      <Link>Logic\patcompile.fsi</Link>
     </Compile>
     <Compile Include="..\patcompile.fs">
-      <Link>Logic/patcompile.fs</Link>
+      <Link>Logic\patcompile.fs</Link>
     </Compile>
     <Compile Include="..\csolve.fsi">
-      <Link>Logic/csolve.fsi</Link>
+      <Link>Logic\csolve.fsi</Link>
     </Compile>
     <Compile Include="..\csolve.fs">
-      <Link>Logic/csolve.fs</Link>
+      <Link>Logic\csolve.fs</Link>
     </Compile>
     <Compile Include="..\formats.fsi">
-      <Link>Logic/formats.fsi</Link>
+      <Link>Logic\formats.fsi</Link>
     </Compile>
     <Compile Include="..\formats.fs">
-      <Link>Logic/formats.fs</Link>
+      <Link>Logic\formats.fs</Link>
     </Compile>
     <Compile Include="..\unsolved.fs">
-      <Link>Logic/unsolved.fs</Link>
+      <Link>Logic\unsolved.fs</Link>
     </Compile>
     <Compile Include="..\creflect.fsi">
-      <Link>Logic/creflect.fsi</Link>
+      <Link>Logic\creflect.fsi</Link>
     </Compile>
     <Compile Include="..\creflect.fs">
-      <Link>Logic/creflect.fs</Link>
+      <Link>Logic\creflect.fs</Link>
     </Compile>
     <Compile Include="..\check.fsi">
-      <Link>Logic/check.fsi</Link>
+      <Link>Logic\check.fsi</Link>
     </Compile>
     <Compile Include="..\check.fs">
-      <Link>Logic/check.fs</Link>
+      <Link>Logic\check.fs</Link>
     </Compile>
     <Compile Include="..\tc.fsi">
-      <Link>Logic/tc.fsi</Link>
+      <Link>Logic\tc.fsi</Link>
     </Compile>
     <Compile Include="..\tc.fs">
-      <Link>Logic/tc.fs</Link>
+      <Link>Logic\tc.fs</Link>
     </Compile>
     <Compile Include="..\opt.fsi">
-      <Link>Optimize/opt.fsi</Link>
+      <Link>Optimize\opt.fsi</Link>
     </Compile>
     <Compile Include="..\opt.fs">
-      <Link>Optimize/opt.fs</Link>
+      <Link>Optimize\opt.fs</Link>
     </Compile>
     <Compile Include="..\detuple.fsi">
-      <Link>Optimize/detuple.fsi</Link>
+      <Link>Optimize\detuple.fsi</Link>
     </Compile>
     <Compile Include="..\detuple.fs">
-      <Link>Optimize/detuple.fs</Link>
+      <Link>Optimize\detuple.fs</Link>
     </Compile>
     <Compile Include="..\tlr.fsi">
-      <Link>Optimize/tlr.fsi</Link>
+      <Link>Optimize\tlr.fsi</Link>
     </Compile>
     <Compile Include="..\tlr.fs">
-      <Link>Optimize/tlr.fs</Link>
+      <Link>Optimize\tlr.fs</Link>
     </Compile>
     <Compile Include="..\lowertop.fs">
-      <Link>Optimize/lowertop.fs</Link>
+      <Link>Optimize\lowertop.fs</Link>
     </Compile>
     <Compile Include="..\ilxgen.fsi">
-      <Link>CodeGen/ilxgen.fsi</Link>
+      <Link>CodeGen\ilxgen.fsi</Link>
     </Compile>
     <Compile Include="..\ilxgen.fs">
-      <Link>CodeGen/ilxgen.fs</Link>
+      <Link>CodeGen\ilxgen.fs</Link>
     </Compile>
     <Compile Include="..\build.fsi">
-      <Link>Driver/build.fsi</Link>
+      <Link>Driver\build.fsi</Link>
     </Compile>
     <Compile Include="..\build.fs">
-      <Link>Driver/build.fs</Link>
+      <Link>Driver\build.fs</Link>
     </Compile>
     <Compile Include="..\fscopts.fsi">
-      <Link>Driver/fscopts.fsi</Link>
+      <Link>Driver\fscopts.fsi</Link>
     </Compile>
     <Compile Include="..\fscopts.fs">
-      <Link>Driver/fscopts.fs</Link>
+      <Link>Driver\fscopts.fs</Link>
     </Compile>
     <Compile Include="..\vs\IncrementalBuild.fsi">
-      <Link>Driver/IncrementalBuild.fsi</Link>
+      <Link>Driver\IncrementalBuild.fsi</Link>
     </Compile>
     <Compile Include="..\vs\IncrementalBuild.fs">
-      <Link>Driver/IncrementalBuild.fs</Link>
+      <Link>Driver\IncrementalBuild.fs</Link>
     </Compile>
     <Compile Include="..\fsc.fs">
-      <Link>Driver/fsc.fs</Link>
+      <Link>Driver\fsc.fs</Link>
     </Compile>
     <Compile Include="..\vs\Reactor.fsi">
-      <Link>Service/Reactor.fsi</Link>
+      <Link>Service\Reactor.fsi</Link>
     </Compile>
     <Compile Include="..\vs\Reactor.fs">
-      <Link>Service/Reactor.fs</Link>
+      <Link>Service\Reactor.fs</Link>
     </Compile>
     <Compile Include="..\vs\ServiceLexing.fsi">
-      <Link>Service/ServiceLexing.fsi</Link>
+      <Link>Service\ServiceLexing.fsi</Link>
     </Compile>
     <Compile Include="..\vs\ServiceLexing.fs">
-      <Link>Service/ServiceLexing.fs</Link>
+      <Link>Service\ServiceLexing.fs</Link>
     </Compile>
     <Compile Include="..\vs\ServiceConstants.fs">
-      <Link>Service/ServiceConstants.fs</Link>
+      <Link>Service\ServiceConstants.fs</Link>
     </Compile>
     <Compile Include="..\vs\ServiceParseTreeWalk.fs">
-      <Link>Service/ServiceParseTreeWalk.fs</Link>
+      <Link>Service\ServiceParseTreeWalk.fs</Link>
     </Compile>
     <Compile Include="..\vs\ServiceNavigation.fsi">
-      <Link>Service/ServiceNavigation.fsi</Link>
+      <Link>Service\ServiceNavigation.fsi</Link>
     </Compile>
     <Compile Include="..\vs\ServiceNavigation.fs">
-      <Link>Service/ServiceNavigation.fs</Link>
+      <Link>Service\ServiceNavigation.fs</Link>
     </Compile>
     <Compile Include="..\vs\ServiceParamInfoLocations.fsi">
-      <Link>Service/ServiceParamInfoLocations.fsi</Link>
+      <Link>Service\ServiceParamInfoLocations.fsi</Link>
     </Compile>
     <Compile Include="..\vs\ServiceParamInfoLocations.fs">
-      <Link>Service/ServiceParamInfoLocations.fs</Link>
+      <Link>Service\ServiceParamInfoLocations.fs</Link>
     </Compile>
     <Compile Include="..\vs\ServiceUntypedParse.fsi">
-      <Link>Service/ServiceUntypedParse.fsi</Link>
+      <Link>Service\ServiceUntypedParse.fsi</Link>
     </Compile>
     <Compile Include="..\vs\ServiceUntypedParse.fs">
-      <Link>Service/ServiceUntypedParse.fs</Link>
+      <Link>Service\ServiceUntypedParse.fs</Link>
     </Compile>
     <Compile Include="..\vs\ServiceDeclarations.fsi">
-      <Link>Service/ServiceDeclarations.fsi</Link>
+      <Link>Service\ServiceDeclarations.fsi</Link>
     </Compile>
     <Compile Include="..\vs\ServiceDeclarations.fs">
-      <Link>Service/ServiceDeclarations.fs</Link>
+      <Link>Service\ServiceDeclarations.fs</Link>
     </Compile>
     <Compile Include="..\vs\service.fsi">
-      <Link>Service/service.fsi</Link>
+      <Link>Service\service.fsi</Link>
     </Compile>
     <Compile Include="..\vs\service.fs">
-      <Link>Service/service.fs</Link>
+      <Link>Service\service.fs</Link>
     </Compile>
-<!--
+    <!--
     <Compile Include="..\vs\SimpleServices.fs">
       <Link>SimpleServices.fs</Link>
     </Compile>
@@ -503,17 +507,14 @@
     <Reference Include="System.Runtime.Remoting" />
     <Reference Include="Microsoft.Build.Framework" />
     <Reference Include="Microsoft.Build.Engine" />
-
-    <Reference Include="ISymWrapper, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
     <Reference Include="Microsoft.Build" />
     <Reference Include="Microsoft.Build.Utilities.v4.0" />
     <Reference Include="Microsoft.Build.Tasks.v4.0" />
-
-
     <ProjectReference Include="..\FSharp.Core\FSharp.Core.fsproj">
       <Project>{DED3BBD7-53F4-428A-8C9F-27968E768605}</Project>
       <Name>FSharp.Core</Name>
     </ProjectReference>
+    <Reference Include="ISymWrapper" />
   </ItemGroup>
   <Import Project="$(FSharpSourcesRoot)\FSharpSource.targets" />
   <Import Project="$(LkgPath)\..\2.0\FSharp.PowerPack.targets" />

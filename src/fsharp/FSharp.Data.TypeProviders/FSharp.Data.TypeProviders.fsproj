@@ -14,6 +14,8 @@
     <ProjectGuid>{cb7d20c4-6506-406d-9144-5342c3595f03}</ProjectGuid>
     <DefineConstants>TPEMIT_INTERNAL_AND_MINIMAL_FOR_TYPE_CONTAINERS;$(DefineConstants)</DefineConstants>
    </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' " />
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' " />
   <ItemGroup>                             
     <!--This is used for compiling the run2ype provider DLL for WP7, Silverlight etc. -->
     <!--This is the only file used. -->

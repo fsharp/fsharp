@@ -19,6 +19,8 @@
     <NoWarn>$(NoWarn);45;47;52;58;75</NoWarn>
     <OtherFlags>--maxerrors:100</OtherFlags>
   </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' " />
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' " />
   <ItemGroup>
     <Compile Include="..\..\assemblyinfo\assemblyinfo.Salsa.dll.fs">
       <Link>assemblyinfo.Salsa.dll.fs</Link>

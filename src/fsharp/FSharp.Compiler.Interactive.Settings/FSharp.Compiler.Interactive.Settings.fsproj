@@ -15,8 +15,8 @@
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
   <!-- MonoDevelop likes these here to recognise the configurations -->
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' " />
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' " />
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' " />
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' " />
   <ItemGroup>
     <FsSrGen Include="..\FSInteractiveSettings.txt">
       <Link>FSInteractiveSettings.txt</Link>

@@ -20,6 +20,8 @@
     <OtherFlags>$(OtherFlags) --optimize- --maxerrors:100</OtherFlags>
     <DefineConstants>EXTENSIONTYPING;$(DefineConstants)</DefineConstants>
   </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' " />
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' " />
   <ItemGroup>
     <Compile Include="..\InternalCollections.fsi">
       <Link>Internal.Utilities.Collections.fsi</Link>

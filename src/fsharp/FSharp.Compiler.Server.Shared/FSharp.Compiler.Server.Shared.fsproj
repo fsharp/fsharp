@@ -12,8 +12,8 @@
     <AssemblyName>FSharp.Compiler.Server.Shared</AssemblyName>
   </PropertyGroup>
   <!-- MonoDevelop likes these here to recognise the configurations -->
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' " />
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' " />
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' " />
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' " />
   <ItemGroup>
     <FsSrGen Include="..\fsiserver\FSServerShared.txt">
       <Link>FSServerShared.txt</Link>
