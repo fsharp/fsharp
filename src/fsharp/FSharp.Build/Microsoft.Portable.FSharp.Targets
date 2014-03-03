@@ -20,9 +20,59 @@ Copyright (C) Microsoft Corporation. All rights reserved.
 			Condition="!Exists('$(MSBuildExtensionsPath32)\Microsoft\Portable\Microsoft.Portable.Common.targets') AND
 						Exists('$(MSBuildExtensionsPath32)\Microsoft\Portable\Microsoft.Portable.Core.props')" />
 
+        <!-- BEGIN MONO 3.2.7 WORKAROUND: Explicitly include contents of Mono's Microsoft.Portable.Core.props if neither of the above are satisfied -->
+        <PropertyGroup Condition="!Exists('$(MSBuildExtensionsPath32)\Microsoft\Portable\Microsoft.Portable.Common.targets') AND
+                                  !Exists('$(MSBuildExtensionsPath32)\Microsoft\Portable\Microsoft.Portable.Core.props')">
+		<AvailablePlatforms>Any CPU</AvailablePlatforms>
+
+		<TargetPlatformIdentifier>Portable</TargetPlatformIdentifier>
+		<TargetFrameworkIdentifier>.NETPortable</TargetFrameworkIdentifier>
+		<TargetFrameworkMonikerDisplayName>.NET Portable Subset</TargetFrameworkMonikerDisplayName>
+
+		<AddAdditionalExplicitAssemblyReferences>false</AddAdditionalExplicitAssemblyReferences>
+		<NoStdLib>true</NoStdLib>
+
+		<ImplicitlyExpandTargetFramework Condition="'$(ImplicitlyExpandTargetFramework)' == '' ">true</ImplicitlyExpandTargetFramework>
+	</PropertyGroup>
+        <!-- END MONO 3.2.7 WORKAROUND -->
+
+
 	<Import Project="$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.1\Framework\v4.0\Microsoft.FSharp.Targets" />
 
 	<Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\Microsoft.Portable.Core.targets"
 			Condition="Exists('$(MSBuildExtensionsPath32)\Microsoft\Portable\Microsoft.Portable.Core.targets')" />
+
+
+        <!-- BEGIN MONO 3.2.7 WORKAROUND: Explicitly include contents of Mono's Microsoft.Portable.Core.targets if neither of the above are satisfied -->
+	<PropertyGroup 
+                Condition="!Exists('$(MSBuildExtensionsPath32)\Microsoft\Portable\Microsoft.Portable.Common.targets') AND
+                           !Exists('$(MSBuildExtensionsPath32)\Microsoft\Portable\Microsoft.Portable.Core.targets')" >
+		<ResolveReferencesDependsOn>
+			$(ResolveReferencesDependsOn);
+			ImplicitlyExpandTargetFramework;
+		</ResolveReferencesDependsOn>
+
+		<ImplicitlyExpandTargetFrameworkDependsOn>
+			$(ImplicitlyExpandTargetFrameworkDependsOn);
+			GetReferenceAssemblyPaths
+		</ImplicitlyExpandTargetFrameworkDependsOn>
+	</PropertyGroup>
+
+	<Target Name="ImplicitlyExpandTargetFramework"
+		DependsOnTargets="$(ImplicitlyExpandTargetFrameworkDependsOn)"
+                Condition="!Exists('$(MSBuildExtensionsPath32)\Microsoft\Portable\Microsoft.Portable.Common.targets') AND
+                           !Exists('$(MSBuildExtensionsPath32)\Microsoft\Portable\Microsoft.Portable.Core.targets')" >
+
+		<ItemGroup>
+			<ReferenceAssemblyPaths Include="$(_TargetFrameworkDirectories)"/>
+			<ReferencePath Include="%(ReferenceAssemblyPaths.Identity)\*.dll">
+				<CopyLocal>false</CopyLocal>
+				<ResolvedFrom>ImplicitlyExpandTargetFramework</ResolvedFrom>
+				<IsSystemReference>True</IsSystemReference>
+			</ReferencePath>
+		</ItemGroup>
+	</Target>
+        <!-- END MONO 3.2.7 WORKAROUND -->
+
   
 </Project>
