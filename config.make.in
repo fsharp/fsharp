@@ -29,39 +29,65 @@ Configuration = Release
 DISTVERSION = 201011
 outsuffix = $(TargetFramework)
 
-ifeq (x-$(TargetFramework),x-net20)
+# Version number mappings for various versions of FSharp.Core
+
+
+ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-net20-)
 VERSION = 2.3.1.0
 TARGET = 2.0
 endif
 
-ifeq (x-$(TargetFramework),x-net40)
+ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-net40-)
 VERSION = 4.3.1.0
 TARGET = 4.0
 outsuffix = .
 endif
 
-ifeq (x-$(TargetFramework),x-monodroid)
+ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-monodroid-)
 VERSION = 2.3.98.1
 TARGET = monodroid
 endif
 
 
-ifeq (x-$(TargetFramework),x-monotouch)
+ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-monotouch-)
 VERSION = 2.3.99.1
 TARGET = monotouch
 endif
 
-ifeq (x-$(TargetFramework),x-portable-net45+sl5+win8)
+ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-portable-net45+sl5+win8-)
 VERSION = 2.3.5.1
 TARGET = portable-net45+sl5+win8
 PCLPATH = .NETPortable
 endif
 
-ifeq (x-$(TargetFramework),x-portable-windows8+net45)
+ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-portable-windows8+net45-)
 VERSION = 3.3.1.0
 TARGET = portable-windows8+net45
 PCLPATH = .NETCore
 endif
+
+# Version number mappings for various versions of FSharp.Core (F# 3.0 versions of FSharp.Core)
+
+ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-net20-3.0)
+VERSION = 2.3.0.0
+TARGET = 2.0
+outsuffix = fsharp30/$(TargetFramework)
+endif
+
+
+ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-net40-3.0)
+VERSION = 4.3.0.0
+TARGET = 4.0
+outsuffix = fsharp30/$(TargetFramework)
+endif
+
+ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-portable-net45+sl5+win8-3.0)
+VERSION = 2.3.5.0
+TARGET = portable-net45+sl5+win8
+PCLPATH = .NETPortable
+outsuffix = fsharp30/$(TargetFramework)
+endif
+
 
 DELAY_SIGN_TOKEN = b03f5f7f11d50a3a
 SIGN_TOKEN = f536804aa0eb945b

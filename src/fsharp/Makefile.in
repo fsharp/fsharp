@@ -43,6 +43,7 @@ build clean install:
 ifeq ("$(pclenabled)", "yes")
 	$(MAKE) -C FSharp.Core TargetFramework=portable-net45+sl5+win8 $@
 	$(MAKE) -C FSharp.Core TargetFramework=portable-windows8+net45 $@
+	$(MAKE) -C FSharp.Core FSharpCoreBackVersion=3.0 TargetFramework=portable-net45+sl5+win8 $@
 endif
 
 
