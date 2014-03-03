@@ -171,6 +171,114 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
   </PropertyGroup>
 
   <!-- Target Portable -->
+  <PropertyGroup Condition="'$(TargetFramework)'=='portable-windows8+net45'">
+
+    <TargetFrameworkProfile>Profile7</TargetFrameworkProfile>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkOutputDirectory>$(TargetFramework)</TargetFrameworkOutputDirectory>
+    <DefineConstants>$(DefineConstants);FSHARP_CORE_NETCORE_PORTABLE</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_ATLEAST_PORTABLE</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_ARRAY_LONG_LENGTH</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_EXIT</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_CHAR_PARSE</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_DEFAULT_DEPENDENCY_TYPE</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_SIMPLE_SECURITY_PERMISSIONS</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_REFLECTION_MODULES</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_REFLECTION_METADATA_TOKENS</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_EXIT_CONTEXT_FLAGS</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_BASED_ARRAYS</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_BINARY_SERIALIZATION</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_WEB_CLIENT</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_CONVERTER</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_ICLONEABLE</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_SECURITY_PERMISSIONS</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_SYSTEM_CONSOLE</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_ARRAY_KEY_SORT</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_REFLECTION_EMIT</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_PARAMETERIZED_THREAD_START</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_REGISTERED_WAIT_HANDLES</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_ATLEAST_LINQ</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_THREAD</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_THREADPOOL</DefineConstants>
+    <DefineConstants>$(DefineConstants);PUT_TYPE_PROVIDERS_IN_FSCORE</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_CUSTOMATTRIBUTEDATA</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_RESHAPED_REFLECTION</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_EXIT_CONTEXT_FLAGS</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_EVENTWAITHANDLE_NO_IDISPOSABLE</DefineConstants>
+    <AssemblySearchPaths>$(MSBuildExtensionsPath32)\..\xbuild-frameworks\.NETCore\v4.5</AssemblySearchPaths>
+    <AssemblySearchPaths>$(AssemblySearchPaths);$(MSBuildExtensionsPath32)\..\Reference Assemblies\Microsoft\Framework\.NETCore\v4.5</AssemblySearchPaths>
+    <OtherFlags>$(OtherFlags) --targetprofile:netcore</OtherFlags>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)'=='portable-windows8+net45'">
+    <Reference Include="Microsoft.CSharp.dll" />
+    <Reference Include="Microsoft.VisualBasic.dll" />
+    <Reference Include="mscorlib.dll" />
+    <Reference Include="System.Collections.Concurrent.dll" />
+    <Reference Include="System.Collections.dll" />
+    <Reference Include="System.ComponentModel.Annotations.dll" />
+    <Reference Include="System.ComponentModel.DataAnnotations.dll" />
+    <Reference Include="System.ComponentModel.dll" />
+    <Reference Include="System.ComponentModel.EventBasedAsync.dll" />
+    <Reference Include="System.Core.dll" />
+    <Reference Include="System.Diagnostics.Contracts.dll" />
+    <Reference Include="System.Diagnostics.Debug.dll" />
+    <Reference Include="System.Diagnostics.Tools.dll" />
+    <Reference Include="System.Diagnostics.Tracing.dll" />
+    <Reference Include="System.dll" />
+    <Reference Include="System.Dynamic.Runtime.dll" />
+    <Reference Include="System.Globalization.dll" />
+    <Reference Include="System.IO.Compression.dll" />
+    <Reference Include="System.IO.dll" />
+    <Reference Include="System.Linq.dll" />
+    <Reference Include="System.Linq.Expressions.dll" />
+    <Reference Include="System.Linq.Parallel.dll" />
+    <Reference Include="System.Linq.Queryable.dll" />
+    <Reference Include="System.Net.dll" />
+    <Reference Include="System.Net.Http.dll" />
+    <Reference Include="System.Net.NetworkInformation.dll" />
+    <Reference Include="System.Net.Primitives.dll" />
+    <Reference Include="System.Net.Requests.dll" />
+    <Reference Include="System.Numerics.dll" />
+    <Reference Include="System.ObjectModel.dll" />
+    <Reference Include="System.Reflection.Context.dll" />
+    <Reference Include="System.Reflection.dll" />
+    <Reference Include="System.Reflection.Extensions.dll" />
+    <Reference Include="System.Reflection.Primitives.dll" />
+    <Reference Include="System.Resources.ResourceManager.dll" />
+    <Reference Include="System.Runtime.dll" />
+    <Reference Include="System.Runtime.Extensions.dll" />
+    <Reference Include="System.Runtime.InteropServices.dll" />
+    <Reference Include="System.Runtime.InteropServices.WindowsRuntime.dll" />
+    <Reference Include="System.Runtime.Numerics.dll" />
+    <Reference Include="System.Runtime.Serialization.dll" />
+    <Reference Include="System.Runtime.Serialization.Json.dll" />
+    <Reference Include="System.Runtime.Serialization.Primitives.dll" />
+    <Reference Include="System.Runtime.Serialization.Xml.dll" />
+    <Reference Include="System.Security.Principal.dll" />
+    <Reference Include="System.ServiceModel.dll" />
+    <Reference Include="System.ServiceModel.Duplex.dll" />
+    <Reference Include="System.ServiceModel.Http.dll" />
+    <Reference Include="System.ServiceModel.NetTcp.dll" />
+    <Reference Include="System.ServiceModel.Primitives.dll" />
+    <Reference Include="System.ServiceModel.Security.dll" />
+    <Reference Include="System.ServiceModel.Web.dll" />
+    <Reference Include="System.Text.Encoding.dll" />
+    <Reference Include="System.Text.Encoding.Extensions.dll" />
+    <Reference Include="System.Text.RegularExpressions.dll" />
+    <Reference Include="System.Threading.dll" />
+    <Reference Include="System.Threading.Tasks.dll" />
+    <Reference Include="System.Threading.Tasks.Parallel.dll" />
+    <Reference Include="System.Windows.dll" />
+    <Reference Include="System.Xml.dll" />
+    <Reference Include="System.Xml.Linq.dll" />
+    <Reference Include="System.Xml.ReaderWriter.dll" />
+    <Reference Include="System.Xml.Serialization.dll" />
+    <Reference Include="System.Xml.XDocument.dll" />
+    <Reference Include="System.Xml.XmlSerializer.dll" />
+  </ItemGroup>
+
+  <!-- Target Portable -->
   <PropertyGroup Condition="'$(TargetFramework)'=='portable-net45+sl5+win8'">
 
     <TargetFrameworkProfile>Profile47</TargetFrameworkProfile>
@@ -228,8 +336,8 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <DefineConstants>$(DefineConstants);DONT_INCLUDE_DEPRECATED</DefineConstants>
     <DefineConstants>$(DefineConstants);PUT_TYPE_PROVIDERS_IN_FSCORE</DefineConstants>
 
-    <AssemblySearchPaths>$(MSBuildExtensionsPath32)\..\xbuild-frameworks\.NETPortable\v4.0\Profile\$(TargetFrameworkProfile)</AssemblySearchPaths>    
-    <OtherFlags>$(OtherFlags) --simpleresolution</OtherFlags>
+    <AssemblySearchPaths>$(MSBuildExtensionsPath32)\..\xbuild-frameworks\.NETPortable\v4.0\Profile\$(TargetFrameworkProfile)</AssemblySearchPaths>
+    <AssemblySearchPaths>$(AssemblySearchPaths);$(MSBuildExtensionsPath32)\..\Reference Assemblies\Microsoft\Framework\.NETPortable\v4.0\Profile\$(TargetFrameworkProfile)</AssemblySearchPaths>
 
   </PropertyGroup>
 
@@ -683,9 +791,6 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <Error
             Text="Configuration '$(Configuration)' is not one of the supported configurations: Debug, Release, Proto"
             Condition="'$(Configuration)'!='Release' and '$(Configuration)'!='Debug' and '$(Configuration)'!='Proto'"/>
-    <Error
-            Text="Portable profile '$(TargetFramework)' is not yet supported"
-            Condition="'$(TargetFramework)' == 'portable-windows8+net45'"/>
 
   </Target>
 

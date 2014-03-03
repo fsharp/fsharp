@@ -42,14 +42,9 @@ build clean install:
 	$(MAKE) -C FSharp.Core TargetFramework=monotouch $@
 ifeq ("$(pclenabled)", "yes")
 	$(MAKE) -C FSharp.Core TargetFramework=portable-net45+sl5+win8 $@
+	$(MAKE) -C FSharp.Core TargetFramework=portable-windows8+net45 $@
 endif
 
-# Add these to build portable FSharp.Core on Mac 
-# - Requires Mono 3.2.4 or greater
-# - Requires $(MSBuildExtensionsPath32)\Microsoft\Portable\v4.0\Microsoft.Portable.Common.targets
-# - Requires PCL assemblies
-
-#$(MAKE) -C FSharp.Core TargetFramework=portable-net45+sl5+win8 $@
 
 
 
