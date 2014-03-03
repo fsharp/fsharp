@@ -1023,36 +1023,48 @@ module TestTypeInstantiationsInAttributes =
     let attrs1 = typeof<C1>.GetCustomAttributes(typeof<System.Diagnostics.DebuggerDisplayAttribute>,false) ;
     match attrs1 with 
       | [| (:? System.Diagnostics.DebuggerDisplayAttribute as ca)  |]  -> 
-          check "test423cwo3nh01" ca.Value "{Length}"
-          check "test423cwo3nh02" ca.Target typeof<List<int>>
+          check "test423cwo3nh01a" ca.Value "{Length}"
+          check "test423cwo3nh02a" ca.Target typeof<List<int>>
       | _ -> check "no attribute found" true false
 
     let attrs2 = typeof<C2>.GetCustomAttributes(typeof<System.Diagnostics.DebuggerTypeProxyAttribute>,false) ;
     match attrs2 with 
       | [| (:? System.Diagnostics.DebuggerTypeProxyAttribute as ca)  |]  -> 
-          check "test423cwo3nq01" ca.ProxyTypeName (typeof<ListProxy<int>>).AssemblyQualifiedName
-          check "test423cwo3nq02" ca.Target typeof<List<C1>>
+#if MONO
+#else
+          check "test423cwo3nq01b" ca.ProxyTypeName (typeof<ListProxy<int>>).AssemblyQualifiedName
+#endif
+          check "test423cwo3nq02b" ca.Target typeof<List<C1>>
       | _ -> check "no attribute found" true false
 
     let attrs3 = typeof<C3>.GetCustomAttributes(typeof<System.Diagnostics.DebuggerTypeProxyAttribute>,false) ;
     match attrs3 with 
       | [| (:? System.Diagnostics.DebuggerTypeProxyAttribute as ca)  |]  -> 
-          check "test423cwo3nw01" ca.ProxyTypeName (typeof<ListProxy<int>>).AssemblyQualifiedName
-          check "test423cwo3nw02" ca.Target typeof<List<C1[]>>
+#if MONO
+#else
+          check "test423cwo3nw01c" ca.ProxyTypeName (typeof<ListProxy<int>>).AssemblyQualifiedName
+#endif
+          check "test423cwo3nw02c" ca.Target typeof<List<C1[]>>
       | _ -> check "no attribute found" true false
 
     let attrs4 = typeof<C4>.GetCustomAttributes(typeof<System.Diagnostics.DebuggerTypeProxyAttribute>,false) ;
     match attrs4 with 
       | [| (:? System.Diagnostics.DebuggerTypeProxyAttribute as ca)  |]  -> 
-          check "test423cwo3nd01" ca.ProxyTypeName (typeof<ListProxy<int>>).AssemblyQualifiedName
-          check "test423cwo3nd02" ca.Target typeof<List<C1>[,]>
+#if MONO
+#else
+          check "test423cwo3nd01d" ca.ProxyTypeName (typeof<ListProxy<int>>).AssemblyQualifiedName
+#endif
+          check "test423cwo3nd02d" ca.Target typeof<List<C1>[,]>
       | _ -> check "no attribute found" true false
 
     let attrs5 = typeof<C5>.GetCustomAttributes(typeof<System.Diagnostics.DebuggerTypeProxyAttribute>,false) ;
     match attrs5 with 
       | [| (:? System.Diagnostics.DebuggerTypeProxyAttribute as ca)  |]  -> 
-          check "test423cwo3ng01" ca.ProxyTypeName (typedefof<ListProxy<_>>).AssemblyQualifiedName
-          check "test423cwo3ng02" ca.Target typedefof<List<_>>
+#if MONO
+#else
+          check "test423cwo3ng01e" ca.ProxyTypeName (typedefof<ListProxy<_>>).AssemblyQualifiedName
+#endif
+          check "test423cwo3ng02e" ca.Target typedefof<List<_>>
       | _ -> check "no attribute found" true false
 
 module NullsInAttributes = 

@@ -19,6 +19,7 @@ let check (dir:string) f =
         System.Console.WriteLine "" 
 
 
+
 #load "queriesCustomQueryOps/test.fsx"
 #load "queriesLeafExpressionConvert/test.fsx"
 #load "queriesNullableOperators/test.fsx"
@@ -121,32 +122,26 @@ check "controlMailbox/test.fsx" Core_controlMailBox.RUN
 // check "controlStackOverflow/test.fsx" Core_controlStackOverflow.RUN
 
 
-// FAILED: https://github.com/fsharp/fsharp/issues/183
-// #load "queriesOverIEnumerable/test.fsx"
-// #load "queriesOverIQueryable/test.fsx"
-// 
-// check "queriesOverIEnumerable/test.fsx" Core_queriesOverIEnumerable.RUN
-// check "queriesOverIQueryable/test.fsx" Core_queriesOverIQueryable.RUN
+#load "queriesOverIEnumerable/test.fsx"
+#load "queriesOverIQueryable/test.fsx"
+ 
+check "queriesOverIEnumerable/test.fsx" Core_queriesOverIEnumerable.RUN
+check "queriesOverIQueryable/test.fsx" Core_queriesOverIQueryable.RUN
 
 // FAILED (repro1, repro2)
 //
 // #load "members/basics/test-hw.fsx"
 // check "members/basics/test.fsx" Core_members_basics.RUN
 
-// FAILED - https://github.com/fsharp/fsharp/issues/188
-//
-// #load "libtest/test.fsx"
-// check "libtest" Core_libtest.RUN
 
-// FAILED - https://github.com/fsharp/fsharp/issues/186
-//
-// #load "int32/test.fsx" 
-// check "int32" Core_int32.RUN
+#load "libtest/test.fsx"
+check "libtest" Core_libtest.RUN
 
-// FAILED (repro6, https://github.com/fsharp/fsharp/issues/187)
-//
-// #load "attributes/test.fsx"
-// check "attributes" Core_attributes.RUN
+#load "int32/test.fsx" 
+check "int32" Core_int32.RUN
+
+#load "attributes/test.fsx"
+check "attributes" Core_attributes.RUN
 
 // FAILS - takes too long
 //
