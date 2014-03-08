@@ -66,7 +66,7 @@ TARGET = portable-windows8+net45
 PCLPATH = .NETCore
 endif
 
-# Version number mappings for various versions of FSharp.Core (F# 3.0 versions of FSharp.Core)
+# Version number mappings for various back versions of FSharp.Core (F# 3.0 versions of FSharp.Core)
 
 ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-net20-3.0)
 VERSION = 2.3.0.0
