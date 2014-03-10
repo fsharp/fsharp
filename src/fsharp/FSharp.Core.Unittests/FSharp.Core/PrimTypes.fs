@@ -549,6 +549,15 @@ type MiscStuff() =
         decr x
         Assert.IsTrue( 1 = !x )
         
-        
-     
-     
+type 'a MyOption = | MyNone | MySome of 'a
+
+[<TestFixture>]
+type GenericType() =
+    [<Test>]
+    member this.GenericType() =
+        Assert.AreEqual( "MyNone", (sprintf "%A" MyNone) )
+        Assert.AreEqual( "MySome \"a\"", (sprintf "%A" (MySome "a")) )
+        Assert.AreEqual( "MySome 123", (sprintf "%A" (MySome 123)) )
+        StringAssert.EndsWith("MyOption`1+_MyNone[System.Object]", MyNone.ToString())
+        StringAssert.EndsWith("MyOption`1+MySome[System.String]", (MySome "b").ToString())
+        StringAssert.EndsWith("MyOption`1+MySome[System.Int32]", (MySome 4).ToString())
