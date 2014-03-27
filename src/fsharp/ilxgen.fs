@@ -6295,7 +6295,10 @@ and GenTypeDef cenv mgbuf lazyInitInfo eenv m (tycon:Tycon) =
                | TTyconInterface  -> ILTypeDefKind.Interface
                | TTyconEnum       -> ILTypeDefKind.Enum 
                | TTyconDelegate _ -> ILTypeDefKind.Delegate 
-
+           | TRecdRepr {recd_kind=kind} -> 
+               match kind with
+               | TyconRecdKind.TyconClass   -> ILTypeDefKind.Class
+               | TyconRecdKind.TyconStruct  -> ILTypeDefKind.ValueType
            | _ -> ILTypeDefKind.Class
 
         let requiresExtraField = 
