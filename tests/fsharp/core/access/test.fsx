@@ -116,6 +116,10 @@ type recordRepInternal = internal { rfA1 : int }
 type recordRepPrivate  = private  { rfA2 : int }
 type recordRepPublic   = public   { rfA3 : int }
 
+[<Struct>] type structRecordRepInternal = internal { rfA1 : int }
+[<Struct>] type structRecordRepPrivate  = private  { rfA2 : int }
+[<Struct>] type structRecordRepPublic   = public   { rfA3 : int }
+
 type dtypeRepInternal = internal | AA1 | BB1
 type dtypeRepPrivate  = private  | AA2 | BB2
 type dtypeRepPublic   = public   | AA3 | BB3

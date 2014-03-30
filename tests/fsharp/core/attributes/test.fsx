@@ -79,6 +79,15 @@ type record =
 
 let recordf x = x.myField2
 
+(* attribute on a field *)
+[<Struct>]
+type structRecord = 
+    { myField1: int;
+      [<Obsolete("ABBA")>] myField2: int;
+      [<Obsolete("DEBUG")>] myDebugField3: string }
+
+let structRecordf (x: structRecord) = x.myField2
+
 (*
 #r "System.Security.dll";;
 #r "System.Configuration.dll";;
