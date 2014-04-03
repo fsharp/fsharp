@@ -1812,7 +1812,7 @@ and OptimizeExprOp cenv env (op,tyargs,args,m) =
             // We are only able to get the address of local refs.
             | Expr.Val (v,_,_) when v.IsLocalRef -> TOp.LValueOp (LGetAddr,v)
             | _ -> op
-        Expr.Op (op',[],[],m),
+        Expr.Op (op',tyargs,args,m),
         { TotalSize = 1;
           FunctionSize = 1;
           HasEffect = OpHasEffect cenv.g op';
