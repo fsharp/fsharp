@@ -2503,6 +2503,10 @@ module AttributeChecking =
 #endif
 
     let TryBindMethInfoAttribute g m (AttribInfo(atref,_) as attribSpec) minfo f1 f2 f3 = 
+#if EXTENSIONTYPING
+#else
+        ignore f3
+#endif
         BindMethInfoAttributes m minfo 
             (fun ilAttribs -> TryDecodeILAttribute g atref (Some(atref.Scope)) ilAttribs |> Option.bind f1)
             (fun fsAttribs -> TryFindFSharpAttribute g attribSpec fsAttribs |> Option.bind f2)

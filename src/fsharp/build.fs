@@ -3946,6 +3946,8 @@ type TcImports(tcConfigP:TcConfigProvider, initialResolutions:TcAssemblyResoluti
         let phase2 () = 
 #if EXTENSIONTYPING
             ccuinfo.TypeProviders <- tcImports.ImportTypeProviderExtensions (tpApprovalsRef, displayPSTypeProviderSecurityDialogBlockingUI, tcConfig, filename, ilScopeRef, ilModule.ManifestOfAssembly.CustomAttrs.AsList, ccu.Contents, invalidateCcu, m)
+#else
+            ignore tpApprovalsRef; ignore displayPSTypeProviderSecurityDialogBlockingUI
 #endif
             [ResolvedImportedAssembly(ccuinfo)]
         phase2
@@ -4072,6 +4074,7 @@ type TcImports(tcConfigP:TcConfigProvider, initialResolutions:TcAssemblyResoluti
 #if EXTENSIONTYPING
                      ccuinfo.TypeProviders <- tcImports.ImportTypeProviderExtensions (tpApprovalsRef, displayPSTypeProviderSecurityDialogBlockingUI, tcConfig, filename, ilScopeRef, ilModule.ManifestOfAssembly.CustomAttrs.AsList, ccu.Contents, invalidateCcu, m)
 #else
+                     ignore tpApprovalsRef; ignore displayPSTypeProviderSecurityDialogBlockingUI
                      ()
 #endif
                 data,ccuinfo,phase2)

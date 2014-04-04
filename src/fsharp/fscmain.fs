@@ -31,6 +31,11 @@ type OutputCollector() =
                   lock output (fun () -> 
                   output.Add (isOut, (try Some System.Console.ForegroundColor with _ -> None) ,c)) 
               member x.Encoding = Encoding.UTF8 }
+
+    do ignore outWriter
+    do System.Console.SetOut (outWriter true)
+    do System.Console.SetError (outWriter false)
+
     member x.GetTextAndClear() = lock output (fun () -> let res = output.ToArray() in output.Clear(); res)
 
 /// Implement the optional resident compilation service

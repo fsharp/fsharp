@@ -1258,6 +1258,10 @@ and RecordMemberConstraintSolution css m trace traitInfo res =
 
 /// Convert a MethInfo into the data we save in the TAST
 and MemberConstraintSolutionOfMethInfo css m minfo minst = 
+#if EXTENSIONTYPING
+#else
+    ignore css
+#endif
     match minfo with 
     | ILMeth(_,ilMeth,_) ->
        let mref = IL.mkRefToILMethod (ilMeth.DeclaringTyconRef.CompiledRepresentationForNamedType,ilMeth.RawMetadata)

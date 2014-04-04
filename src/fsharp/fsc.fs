@@ -149,7 +149,7 @@ type DelayAndForwardErrorLogger(exiter : Exiter) =
         let errorLogger = ErrorLoggerInitial(tcConfigB, exiter)
         x.ForwardDelayedErrorsAndWarnings(errorLogger)
     member x.FullErrorCount = !errors
-    override x.ErrorOrWarningNumbers = delayed |> Seq.map (fun (err,_) -> GetErrorNumber err) |> Seq.toList
+    override x.ErrorOrWarningNumbers = delayed |> mapToErrorNumber
 
 /// Check for .fsx and, if present, compute the load closure for of #loaded files.
 let AdjustForScriptCompile(tcConfigB:TcConfigBuilder,commandLineSourceFiles,lexResourceManager) =

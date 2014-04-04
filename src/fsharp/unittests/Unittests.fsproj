@@ -19,6 +19,8 @@
     <!-- always disable optimizations for this DLL for better debugging in the unit tests themselves -->
     <OtherFlags>$(OtherFlags) --optimize- --maxerrors:100</OtherFlags>
     <DefineConstants>EXTENSIONTYPING;$(DefineConstants)</DefineConstants>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningsAsErrors />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' " />
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' " />

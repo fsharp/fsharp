@@ -11,6 +11,8 @@
     <ProjectGuid>{d5870cf0-ed51-4cbc-b3d7-6f56da84ac06}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AssemblyName>FSharp.Compiler.Server.Shared</AssemblyName>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningsAsErrors />
   </PropertyGroup>
   <!-- MonoDevelop likes these here to recognise the configurations -->
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' " />

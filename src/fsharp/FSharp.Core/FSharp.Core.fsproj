@@ -18,6 +18,8 @@
     <BaseAddress>0x05000000</BaseAddress>
     <CompilingFsLib>true</CompilingFsLib>
     <AllowCrossTargeting>true</AllowCrossTargeting>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningsAsErrors />
     <TargetFrameworkVersion Condition=" '$(TargetFramework)'=='net20'">v2.0</TargetFrameworkVersion>
     <OtherFlags>$(OtherFlags) --warnon:1182 --compiling-fslib --optimize --maxerrors:20 --extraoptimizationloops:1 </OtherFlags>
     <OtherFlags Condition=" '$(TargetFramework)'=='net20' AND EXISTS('$(SystemRoot)\Microsoft.NET\Framework\v4.0.30319\mscorlib.dll')">$(OtherFlags) --compiling-fslib-20:"$(SystemRoot)\Microsoft.NET\Framework\v4.0.30319\mscorlib.dll" </OtherFlags>
