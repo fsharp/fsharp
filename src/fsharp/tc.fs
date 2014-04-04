@@ -13196,7 +13196,7 @@ module EstablishTypeDefinitionCores = begin
             if hasClassAttr && not (match k with TyconClass -> true | _ -> false) || 
                hasMeasureAttr && not (match k with TyconClass | TyconAbbrev | TyconHiddenRepr -> true | _ -> false)  || 
                hasInterfaceAttr && not (match k with TyconInterface -> true | _ -> false) || 
-               hasStructAttr && not (match k with TyconStruct -> true | _ -> false) then 
+               hasStructAttr && not (match k with TyconStruct | TyconRecord -> true | _ -> false) then 
                 error(Error(FSComp.SR.tcKindOfTypeSpecifiedDoesNotMatchDefinition(),m))
             k
 
@@ -13358,8 +13358,13 @@ module EstablishTypeDefinitionCores = begin
             | SynTypeDefnSimpleRepr.Record (_,_,m) -> 
                 // Run InferTyconKind to raise errors on inconsistent attribute sets
                 InferTyconKind cenv.g (TyconRecord,attrs,[],[],inSig,true,m) |> ignore
+                let kind =
+                    let hasStructAttr = HasFSharpAttribute cenv.g cenv.g.attrib_StructAttribute attrs
+                    match hasStructAttr with
+                    | true -> TyconRecdKind.TyconStruct
+                    | _ -> TyconRecdKind.TyconClass
                 // Note: the table of record fields is initially empty
-                TRecdRepr (MakeRecdFieldsTable  [])
+                TRecdRepr { recd_kind = kind; recd_fields = MakeRecdFieldsTable  [] }
 
             | SynTypeDefnSimpleRepr.General (kind,_,slotsigs,fields,isConcrete,_,_,_) ->
                 let kind = InferTyconKind cenv.g (kind,attrs,slotsigs,fields,inSig,isConcrete,m)
@@ -13726,7 +13731,11 @@ module EstablishTypeDefinitionCores = begin
                   | SynTypeDefnSimpleRepr.TypeAbbrev _ -> None
                   | SynTypeDefnSimpleRepr.Union _ -> None
                   | SynTypeDefnSimpleRepr.LibraryOnlyILAssembly _ -> None
-                  | SynTypeDefnSimpleRepr.Record _ -> None
+                  | SynTypeDefnSimpleRepr.Record _ ->
+                      let hasStructAttr = HasFSharpAttribute cenv.g cenv.g.attrib_StructAttribute attrs
+                      match hasStructAttr with
+                      | true -> Some cenv.g.system_Value_typ
+                      | _ -> None
                   | SynTypeDefnSimpleRepr.General (kind,_,slotsigs,fields,isConcrete,_,_,_) ->
                       let kind = InferTyconKind cenv.g (kind,attrs,slotsigs,fields,inSig,isConcrete,m)
                                            
@@ -13930,7 +13939,14 @@ module EstablishTypeDefinitionCores = begin
                     let recdFields = TcRecdUnionAndEnumDeclarations.TcNamedFieldDecls cenv envinner innerParent false tpenv fields
                     recdFields |> CheckDuplicates (fun f -> f.Id) "field"  |> ignore
                     writeFakeRecordFieldsToSink recdFields
-                    TRecdRepr (MakeRecdFieldsTable recdFields), None, NoSafeInitInfo
+
+                    let kind =
+                        let hasStructAttr = HasFSharpAttribute cenv.g cenv.g.attrib_StructAttribute attrs
+                        match hasStructAttr with
+                        | true -> TyconRecdKind.TyconStruct
+                        | _ -> TyconRecdKind.TyconClass
+                    let fields = MakeRecdFieldsTable recdFields
+                    TRecdRepr { recd_kind = kind; recd_fields = fields }, None, NoSafeInitInfo
 
                 | SynTypeDefnSimpleRepr.LibraryOnlyILAssembly (s,_) -> 
                     noCLIMutableAttributeCheck()

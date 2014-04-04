@@ -6284,7 +6284,10 @@ and GenTypeDef cenv mgbuf lazyInitInfo eenv m (tycon:Tycon) =
                | TTyconInterface  -> ILTypeDefKind.Interface
                | TTyconEnum       -> ILTypeDefKind.Enum 
                | TTyconDelegate _ -> ILTypeDefKind.Delegate 
-
+           | TRecdRepr {recd_kind=kind} -> 
+               match kind with
+               | TyconRecdKind.TyconClass   -> ILTypeDefKind.Class
+               | TyconRecdKind.TyconStruct  -> ILTypeDefKind.ValueType
            | _ -> ILTypeDefKind.Class
 
         let requiresExtraField = 
@@ -6475,7 +6478,7 @@ and GenTypeDef cenv mgbuf lazyInitInfo eenv m (tycon:Tycon) =
               // Build record constructors and the funky methods that go with records and delegate types. 
               // Constructors and delegate methods have the same access as the representation 
               match tyconRepr with 
-              | TRecdRepr _ when not (tycon.IsEnumTycon) ->
+              | TRecdRepr {recd_kind=kind} when not (tycon.IsEnumTycon) ->
                  // No constructor for enum types 
                  // Otherwise find all the non-static, non zero-init fields and build a constructor 
                  let relevantFields = 
@@ -6486,7 +6489,10 @@ and GenTypeDef cenv mgbuf lazyInitInfo eenv m (tycon:Tycon) =
                      relevantFields
                      |> List.map (fun (_,ilFieldName,_,_,_,ilPropType,_,fspec) -> (fspec.Name,ilFieldName,ilPropType))
 
-                 let ilMethodDef = mkILSimpleStorageCtorWithParamNames(None, Some cenv.g.ilg.tspec_Object, ilThisTy, ChooseParamNames fieldNamesAndTypes, reprAccess)
+                 // No type spec if the record is a value type
+                 let spec = if kind.IsValueType then None else Some cenv.g.ilg.tspec_Object
+
+                 let ilMethodDef = mkILSimpleStorageCtorWithParamNames(None, spec, ilThisTy, ChooseParamNames fieldNamesAndTypes, reprAccess)
 
                  yield ilMethodDef 
                  // FSharp 1.0 bug 1988: Explicitly setting the ComVisible(true)  attribute on an F# type causes an F# record to be emitted in a way that enables mutation for COM interop scenarios

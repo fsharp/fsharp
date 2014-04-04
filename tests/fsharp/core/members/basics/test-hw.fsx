@@ -54,6 +54,37 @@ test "fweoew092" ((f(1)).b = 2)
 (f(1)).b <- 3
 test "fweoew093" ((f(1)).b = 2)
 
+//--------------------------------------------------------------
+// Test defining a struct record using object-expression syntax
+[<Struct>] type StructRecordType = { a: int; mutable b: int }
+
+let mutable srval = { new StructRecordType with a = 1 and b = 2 }
+let srvalaaa2 = { new StructRecordType 
+                        with a = 1 
+                        and b = 2 }
+
+test "fweoew091" (srval.a = 1)
+test "fweoew092" (srval.b = 2)
+srval.b <- 3
+test "fweoew093" (srval.b = 3)
+
+[<Struct>] type StructRecordType2<'a,'b> = { a: 'a; mutable b: 'b }
+
+let mutable srval2 = { new StructRecordType2<int,int> with a = 1 and b = 2 }
+
+test "fweoew091" (srval2.a = 1)
+test "fweoew092" (srval2.b = 2)
+srval2.b <- 3
+test "fweoew093" (srval2.b = 3)
+
+let sf(x) = 
+  { new StructRecordType2<'a,int> with a = x and b = 2 }
+
+test "fweoew091" ((sf(1)).a = 1)
+test "fweoew092" ((sf(1)).b = 2)
+let mutable sfret = sf(1)
+sfret.b <- 3
+test "fweoew093" ((sf(1)).b = 2)
 
 open System
 open System.Collections
