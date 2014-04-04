@@ -935,6 +935,17 @@ module internal ExtensionTyping =
         |  Quotations.Patterns.Var v  -> Some (ProvidedVar.Create x.Context v)
         | _ -> None
 
+    let (|ProvidedFieldGetExpr|_|) (x: ProvidedExpr) = 
+        match x.Handle with
+        | Quotations.Patterns.FieldGet(instance, field) -> Some(Option.map (ProvidedExpr.Create x.Context) instance, ProvidedFieldInfo.Create x.Context field)
+        | _ -> None
+
+    let (|ProvidedFieldSetExpr|_|) (x: ProvidedExpr) = 
+        match x.Handle with
+        | Quotations.Patterns.FieldSet(instance, field, value) -> 
+            Some(Option.map (ProvidedExpr.Create x.Context) instance, ProvidedFieldInfo.Create x.Context field, ProvidedExpr.Create x.Context value)
+        | _ -> None
+
     let GetInvokerExpression (provider: ITypeProvider, methodBase: ProvidedMethodBase, paramExprs: ProvidedVar[]) = 
         provider.GetInvokerExpression(methodBase.Handle,[| for p in paramExprs -> Quotations.Expr.Var(p.Handle) |]) |> ProvidedExpr.Create methodBase.Context
 
