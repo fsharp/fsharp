@@ -1,9 +1,4 @@
-// ----------------------------------------------------------------------------
-// Copyright (c) Microsoft Corporation 2005-2011.
-// This sample code is provided "as is" without warranty of any kind. 
-// We disclaim all warranties, either express or implied, including the 
-// warranties of merchantability and fitness for a particular purpose. 
-// ----------------------------------------------------------------------------
+// Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
 namespace Microsoft.FSharp.Linq.RuntimeHelpers
 

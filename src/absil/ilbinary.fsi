@@ -1,4 +1,4 @@
-(* (c) Microsoft Corporation. Apache 2.0 License  *)
+// Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
 /// Internal use only.  Code and constants shared between binary reader/writer.
 module internal Microsoft.FSharp.Compiler.AbstractIL.Internal.BinaryConstants 
