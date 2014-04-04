@@ -1,4 +1,28 @@
-## F# Compiler, Core Library & Tools (Open Edition)
+## The F# Software Foundation Packaging Repository for the Open Edition of the F# Compiler, Core Library & Tools
+
+The purpose of this repository is to package the open editions of the F# compiler, core library 
+and core tools for use across multiple platforms.  
+
+Most contributions to the F# compiler/library/tools are currently facilitated via the  
+repository at http://visualfsharp.codeplex.com.  This arrangement helps ensure that the major
+commercial packaging of F# (the Visual F# Tools) also includes any contributions that are made.
+
+Contributions in the following categories are strongly encouraged but should be made via http://visualfsharp.codeplex.com:
+
+◦ compiler optimizations
+◦ code generation improvements
+◦ bug fixes
+◦ library improvements
+◦ improvements related to FSharp.Data.TypeProviders.dll
+◦ improvements to allow additional targets for the F# compiler
+
+Contributions specifically related to the packaging of the Open Edition should be made here.
+
+
+
+
+## Status
+
 
 The `master` branch is for the latest version of F# (currently F# 3.1).
 
@@ -250,9 +274,12 @@ hello.exe
 
 ## History 
 
-F# compiler sources dropped by Microsoft are available from [fsharppowerpack.codeplex.com](http://fsharppowerpack.codeplex.com).
+F# compiler sources as initially dropped are available from [fsharppowerpack.codeplex.com](http://fsharppowerpack.codeplex.com).
 
-Uses bootstrapping libraries, tools and F# compiler. The `lib/bootstrap/X.0` directories contain mono-built libraries, compiler and tools that can be used to bootstrap a build. You can also supply your own via the `--with-bootstrap` option.
+On 4 April 2014, Microsoft Open Tech published the F# compiler sources  at http://visualfsharp.codeplex.com and began
+accepting contributions to the F# compiler/library and tools.  This repository is a modified version of that.
+
+This repository uses bootstrapping libraries, tools and F# compiler. The `lib/bootstrap/X.0` directories contain mono-built libraries, compiler and tools that can be used to bootstrap a build. You can also supply your own via the `--with-bootstrap` option.
 
 ### Wheezy build
 
