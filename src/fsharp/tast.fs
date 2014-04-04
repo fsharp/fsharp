@@ -3953,6 +3953,23 @@ let rescopePubPathToParent viewedCcu (PubPath(p)) = NonLocalEntityRef(viewedCcu,
 /// From Ref_private to Ref_nonlocal when exporting data.
 let rescopePubPath viewedCcu (PubPath(p)) = NonLocalEntityRef(viewedCcu,p)
 
+//--------------------------------------------------------------------------
+// One equality
+//--------------------------------------------------------------------------
+
+let equalsValueOne = function
+    | Const.Byte    1uy
+    | Const.UInt16  1us
+    | Const.UInt32  1u
+    | Const.UInt64  1UL
+    | Const.SByte   1y
+    | Const.Int16   1s
+    | Const.Int32   1
+    | Const.Int64   1L
+    | Const.Single  1.f
+    | Const.Double  1.0 -> true
+    | _ -> false
+
 //---------------------------------------------------------------------------
 // Equality between TAST items.
 //---------------------------------------------------------------------------
@@ -4398,33 +4415,3 @@ and combineModuleOrNamespaceTypeList path m l =
 
 let FSharpOptimizationDataResourceName = "FSharpOptimizationData"
 let FSharpSignatureDataResourceName = "FSharpSignatureData"
-
-//--------------------------------------------------------------------------
-// One and zero equality
-//--------------------------------------------------------------------------
-
-let equalsValueOne = function
-    | Const.Byte    1uy
-    | Const.UInt16  1us
-    | Const.UInt32  1u
-    | Const.UInt64  1UL
-    | Const.SByte   1y
-    | Const.Int16   1s
-    | Const.Int32   1
-    | Const.Int64   1L
-    | Const.Single  1.f
-    | Const.Double  1.0 -> true
-    | _ -> false
-
-let equalsValueZero = function
-    | Const.Byte    0uy
-    | Const.UInt16  0us
-    | Const.UInt32  0u
-    | Const.UInt64  0UL
-    | Const.SByte   0y
-    | Const.Int16   0s
-    | Const.Int32   0
-    | Const.Int64   0L
-    | Const.Single  0.f
-    | Const.Double  0.0 -> true
-    | _ -> false

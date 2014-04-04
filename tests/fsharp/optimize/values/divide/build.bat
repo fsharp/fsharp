@@ -2,7 +2,7 @@
 
 setlocal
 if EXIST build.ok DEL /f /q build.ok
-call %~d0%~p0..\..\..\config.bat
+call %~d0%~p0..\..\..\..\config.bat
 
 if NOT "%FSC:NOTAVAIL=X%" == "%FSC%" ( 
   REM Skipping test for FSI.EXE

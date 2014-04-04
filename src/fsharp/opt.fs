@@ -1826,13 +1826,11 @@ and OptimizeExprOp cenv env (op,tyargs,args,m) =
     // if the types match up. 
     | TOp.ILAsm([],[ty]),_,[a] when typeEquiv cenv.g (tyOfExpr cenv.g a) ty -> OptimizeExpr cenv env a
 
-    // Handle multiplication and division with one and zero values.
+    // Handle multiplication and division with one values.
     | TOp.ILAsm([AI_mul],_),_,[a;Expr.Const(c,_,_)]
     | TOp.ILAsm([AI_mul],_),_,[Expr.Const(c,_,_);a]
-    | TOp.ILAsm([AI_div],_),_,[a;Expr.Const(c,_,_)] when equalsValueOne c -> OptimizeExpr cenv env a
-    | TOp.ILAsm([AI_mul],_),_,[_;Expr.Const(c,_,_)] when equalsValueZero c -> OptimizeExpr cenv env args.[1]
-    | TOp.ILAsm([AI_mul],_),_,[Expr.Const(c,_,_);_]
-    | TOp.ILAsm([AI_div],_),_,[Expr.Const(c,_,_);_] when equalsValueZero c -> OptimizeExpr cenv env args.[0]
+    | TOp.ILAsm([AI_div],_),_,[a;Expr.Const(c,_,_)]
+    | TOp.ILAsm([AI_div_un],_),_,[a;Expr.Const(c,_,_)] when equalsValueOne c -> OptimizeExpr cenv env a
 
     | _ -> 
     (* Reductions *)

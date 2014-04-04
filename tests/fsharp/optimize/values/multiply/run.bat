@@ -6,7 +6,7 @@ dir build.ok > NUL ) || (
   goto :ERROR
 )
 
-call %~d0%~p0..\..\..\config.bat
+call %~d0%~p0..\..\..\..\config.bat
 if ERRORLEVEL 1 goto Error
 
 if not exist "%ILDASM%" (
@@ -18,11 +18,11 @@ if not exist "%ILDASM%" (
 
 "%ILDASM%" /nobar /out=test--optimize.il test--optimize.exe
 
-type test--optimize.il | find /C "stloc.s    x" > count--optimize
-type test.il | find /C "stloc.s    x" > count
+type test--optimize.il | find /C " mul" > count--optimize
+type test.il | find /C " mul" > count
 for /f %%c IN (count--optimize) do (if NOT "%%c"=="0" (
    echo Error: optimizations not removed.  Relevant lines from IL file follow:
-   type test--optimize.il | find "stloc.s    x"
+   type test--optimize.il | find " mul"
    goto SetError)
 )
 for /f %%c IN (count) do (
