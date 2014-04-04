@@ -17,12 +17,24 @@ open Microsoft.FSharp.Compiler.AbstractIL.Internal.Library
 
 exception IllegalFileNameChar of string * char
 
-let illegalPathChars = Path.GetInvalidPathChars()
+let illegalPathChars = 
+    /// The set of characters which may not be used in a path.
+    let illegalPathChars = Path.GetInvalidPathChars ()
 
-let checkPathForIllegalChars (path:string) = 
-    for c in path do
-        if illegalPathChars |> Array.exists(fun c1->c1=c) then 
-            raise(IllegalFileNameChar(path,c))
+    // Sort the array (in-place).
+    Array.sortInPlace illegalPathChars
+
+    // Return the sorted array.
+    illegalPathChars
+
+let checkPathForIllegalChars (path:string) =
+    let len = String.length path
+    for i = 0 to len - 1 do
+        // Determine if this character is disallowed within a path by
+        // attempting to find it in the array of illegal path characters.
+        if System.Array.BinarySearch (illegalPathChars, path.[i]) >= 0 then
+            // The character is not allowed to be used within a path, raise an exception.
+            raise(IllegalFileNameChar(path, path.[i]))
 
 // Case sensitive (original behaviour preserved).
 let checkSuffix (x:string) (y:string) = x.EndsWith(y,System.StringComparison.Ordinal) 
@@ -33,16 +45,16 @@ let hasExtension (s:string) =
     || Path.HasExtension(s)
 
 let chopExtension (s:string) =
-    checkPathForIllegalChars s
     if s = "." then "" else // for OCaml compatibility
+    checkPathForIllegalChars s
     if not (hasExtension s) then 
         raise (System.ArgumentException("chopExtension")) // message has to be precisely this, for OCaml compatibility, and no argument name can be set
     Path.Combine (Path.GetDirectoryName s,Path.GetFileNameWithoutExtension(s))
 
-let directoryName (s:string) = 
-    checkPathForIllegalChars s
+let directoryName (s:string) =
     if s = "" then "."
-    else 
+    else
+      checkPathForIllegalChars s
       match Path.GetDirectoryName(s) with 
       | null -> if FileSystem.IsPathRootedShim(s) then s else "."
       | res -> if res = "" then "." else res
