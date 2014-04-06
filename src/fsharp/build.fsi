@@ -83,6 +83,34 @@ val SanitizeFileName : filename:string -> implicitIncludeDir:string -> string
 val OutputErrorOrWarning : implicitIncludeDir:string * showFullPaths: bool * flattenErrors: bool * errorStyle: ErrorStyle *  warning:bool -> StringBuilder -> PhasedError -> unit
 val OutputErrorOrWarningContext : prefix:string -> fileLineFunction:(string -> int -> string) -> StringBuilder -> PhasedError -> unit
 
+type ErrorLocation =
+    {
+        Range : range
+        File : string
+        TextRepresentation : string
+        IsEmpty : bool
+    }
+
+type CanonicalInformation = 
+    {
+        ErrorNumber : int
+        Subcategory : string
+        TextRepresentation : string
+    }
+
+type DetailedIssueInfo = 
+    {
+        Location : ErrorLocation option
+        Canonical : CanonicalInformation
+        Message : string
+    }
+
+type ErrorOrWarning = 
+    | Short of bool * string
+    | Long of bool * DetailedIssueInfo
+
+val CollectErrorOrWarning : implicitIncludeDir:string * showFullPaths: bool * flattenErrors: bool * errorStyle: ErrorStyle *  warning:bool * PhasedError -> seq<ErrorOrWarning>
+
 //----------------------------------------------------------------------------
 // Options and configuration
 //--------------------------------------------------------------------------

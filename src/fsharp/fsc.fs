@@ -66,26 +66,95 @@ open Microsoft.FSharp.Compiler.ExtensionTyping
 // Reporting - warnings, errors
 //----------------------------------------------------------------------------
 
-/// Create an error logger that counts and prints errors
-let ErrorLoggerThatQuitsAfterMaxErrors (tcConfigB:TcConfigBuilder, exiter : Exiter) = 
+type ErrorLoggerThatAccumulatesErrors private (implicitIncludeDir, showFullPaths, flatErrors, errorStyle, globalWarnLevel, specificWarnOn, specificWarnOff, specificWarnAsError, specificWarnAsWarn, globalWarnAsError) = 
+    inherit ErrorLogger("ErrorLoggerThatAccumulatesErrors")
+    let messages = ResizeArray()
+    let mutable errorsCount = 0
+    new(tcConfigB : TcConfigBuilder) = 
+        ErrorLoggerThatAccumulatesErrors(
+            tcConfigB.implicitIncludeDir, 
+            tcConfigB.showFullPaths, 
+            tcConfigB.flatErrors, 
+            tcConfigB.errorStyle, 
+            tcConfigB.globalWarnLevel, 
+            tcConfigB.specificWarnOn, 
+            tcConfigB.specificWarnOff,
+            tcConfigB.specificWarnAsError,
+            tcConfigB.specificWarnAsWarn,
+            tcConfigB.globalWarnAsError
+            )
+    new(tcConfig : TcConfig) = 
+        ErrorLoggerThatAccumulatesErrors(
+            tcConfig.implicitIncludeDir, 
+            tcConfig.showFullPaths, 
+            tcConfig.flatErrors, 
+            tcConfig.errorStyle, 
+            tcConfig.globalWarnLevel, 
+            tcConfig.specificWarnOn, 
+            tcConfig.specificWarnOff,
+            tcConfig.specificWarnAsError,
+            tcConfig.specificWarnAsWarn,
+            tcConfig.globalWarnAsError
+            )
+    member this.ProcessMessage(err, isError) = 
+        let writer = new System.IO.StringWriter()
+
+        let writeError err = 
+            writeViaBufferWithEnvironmentNewLines writer (OutputErrorOrWarning (implicitIncludeDir, showFullPaths, flatErrors, errorStyle, false)) err
+
+        let isError = 
+            if isError then
+                writeError err
+                true
+            else
+                if (ReportWarningAsError globalWarnLevel specificWarnOff specificWarnOn specificWarnAsError specificWarnAsWarn globalWarnAsError err) then 
+                    writeError err
+                    true
+                elif ReportWarning globalWarnLevel specificWarnOff specificWarnOn err then 
+                    writeViaBufferWithEnvironmentNewLines writer (OutputErrorOrWarning (implicitIncludeDir, showFullPaths, flatErrors, errorStyle, true)) err
+                    false
+                else 
+                    false // will not be used        
+        let text = writer.ToString()
+        if text.Length <> 0 then Some (isError, text) else None
+        
+    member this.GetMessages() = List.ofSeq messages
+    override this.ErrorSinkImpl(err) = 
+        errorsCount <- errorsCount + 1
+        messages.Add(this.ProcessMessage(err, true).Value)
+    override this.WarnSinkImpl(warn) = 
+        match this.ProcessMessage (warn, false) with
+        | Some ((isError, _) as res) -> 
+            if isError then errorsCount <- errorsCount + 1
+            messages.Add(res)
+        | _ -> ()
+
+    override this.ErrorCount = errorsCount
+
+[<AbstractClass>]
+type ErrorLoggerThatQuitsAfterMaxErrors(tcConfigB:TcConfigBuilder, exiter : Exiter, caption) = 
+    inherit ErrorLogger(caption)
 
     let errors = ref 0
-    let errorOrWarnings = ref []
+    let errorNumbers = ref []
+    let warningNumbers = ref []
 
-    { new ErrorLogger("ErrorLoggerThatQuitsAfterMaxErrors") with 
-            member x.ErrorSinkImpl(err) = 
+    abstract HandleIssue : tcConfigB : TcConfigBuilder * error : PhasedError * isWarning : bool -> unit
+    abstract HandleTooManyErrors : text : string -> unit
+
+    override x.ErrorCount = !errors
+    override x.ErrorSinkImpl(err) = 
                 if !errors >= tcConfigB.maxErrors then 
-                    DoWithErrorColor true (fun () -> Printf.eprintfn "%s" (FSComp.SR.fscTooManyErrors()))
+                    x.HandleTooManyErrors(FSComp.SR.fscTooManyErrors())
 #if SQM_SUPPORT
-                    SqmLoggerWithConfigBuilder tcConfigB !errorOrWarnings
+                    SqmLoggerWithConfigBuilder tcConfigB !errorNumbers !warningNumbers
 #endif
                     exiter.Exit 1
 
-                DoWithErrorColor false (fun () -> 
-                    (writeViaBufferWithEnvironmentNewLines stderr (OutputErrorOrWarning (tcConfigB.implicitIncludeDir,tcConfigB.showFullPaths,tcConfigB.flatErrors,tcConfigB.errorStyle,false)) err;  stderr.WriteLine()));
+                x.HandleIssue(tcConfigB, err, false)
 
                 incr errors
-                errorOrWarnings := (GetErrorNumber err) :: !errorOrWarnings
+                errorNumbers := (GetErrorNumber err) :: !errorNumbers
 
                 match err.Exception with 
                 | InternalError _ 
@@ -96,18 +165,33 @@ let ErrorLoggerThatQuitsAfterMaxErrors (tcConfigB:TcConfigBuilder, exiter : Exit
                     | None -> System.Diagnostics.Debug.Assert(false,sprintf "Bug seen in compiler: %s" (err.ToString()))
                 | _ -> 
                     ()
-            member x.WarnSinkImpl(err) =  
-                DoWithErrorColor true (fun () -> 
-                    if (ReportWarningAsError tcConfigB.globalWarnLevel tcConfigB.specificWarnOff tcConfigB.specificWarnOn tcConfigB.specificWarnAsError tcConfigB.specificWarnAsWarn tcConfigB.globalWarnAsError err) then 
-                        x.ErrorSink(err)
-                    elif ReportWarning tcConfigB.globalWarnLevel tcConfigB.specificWarnOff tcConfigB.specificWarnOn err then 
-                        writeViaBufferWithEnvironmentNewLines stderr (OutputErrorOrWarning (tcConfigB.implicitIncludeDir,tcConfigB.showFullPaths,tcConfigB.flatErrors,tcConfigB.errorStyle,true)) err;  
-                        errorOrWarnings := (GetErrorNumber err) :: !errorOrWarnings
-                        stderr.WriteLine())
-            override x.ErrorOrWarningNumbers = !errorOrWarnings
-            member x.ErrorCount = !errors  }
 
-let ErrorLoggerInitial (tcConfigB:TcConfigBuilder, exiter : Exiter) = ErrorLoggerThatQuitsAfterMaxErrors(tcConfigB, exiter)
+    override x.WarnSinkImpl(err) =  
+        if (ReportWarningAsError tcConfigB.globalWarnLevel tcConfigB.specificWarnOff tcConfigB.specificWarnOn tcConfigB.specificWarnAsError tcConfigB.specificWarnAsWarn tcConfigB.globalWarnAsError err) then
+            x.ErrorSink(err)
+        elif ReportWarning tcConfigB.globalWarnLevel tcConfigB.specificWarnOff tcConfigB.specificWarnOn err then
+            x.HandleIssue(tcConfigB, err, true)
+            warningNumbers :=  (GetErrorNumber err) :: !warningNumbers
+    
+    override x.WarningNumbers = !warningNumbers
+    override x.ErrorNumbers = !errorNumbers
+
+/// Create an error logger that counts and prints errors 
+let ConsoleErrorLoggerThatQuitsAfterMaxErrors (tcConfigB:TcConfigBuilder, exiter : Exiter) : ErrorLogger = 
+    upcast {
+        new ErrorLoggerThatQuitsAfterMaxErrors(tcConfigB, exiter, "ConsoleErrorLoggerThatQuitsAfterMaxErrors") with
+            
+            member this.HandleTooManyErrors(text : string) = 
+                DoWithErrorColor true (fun () -> Printf.eprintfn "%s" text)
+
+            member this.HandleIssue(tcConfigB, err, isWarning) =
+                DoWithErrorColor isWarning (fun () -> 
+                    (writeViaBufferWithEnvironmentNewLines stderr (OutputErrorOrWarning (tcConfigB.implicitIncludeDir,tcConfigB.showFullPaths,tcConfigB.flatErrors,tcConfigB.errorStyle,isWarning)) err;
+                    stderr.WriteLine())
+                    );
+    }
+
+let ErrorLoggerInitial (tcConfigB:TcConfigBuilder, exiter : Exiter) = ConsoleErrorLoggerThatQuitsAfterMaxErrors(tcConfigB, exiter)
 
 //    val TypeCheck : TcConfig * TcImports * TcGlobals * ErrorLogger * string * NiceNameGenerator * TypeChecker.TcEnv * Input list * Exiter -> 
 //              TcState * TypeChecker.TopAttribs * Tast.TypedAssembly * TypeChecker.TcEnv
@@ -120,13 +204,13 @@ let TypeCheck (tcConfig,tcImports,tcGlobals,errorLogger:ErrorLogger,assemblyName
     with e -> 
         errorRecovery e rangeStartup
 #if SQM_SUPPORT
-        SqmLoggerWithConfig tcConfig errorLogger.ErrorOrWarningNumbers
+        SqmLoggerWithConfig tcConfig errorLogger.ErrorNumbers errorLogger.WarningNumbers
 #endif
         exiter.Exit 1
 
 /// This error logger delays the messages it recieves. At the end, call ForwardDelayedErrorsAndWarnings
 /// to send the held messages.     
-type DelayAndForwardErrorLogger(exiter : Exiter) =
+type DelayAndForwardErrorLogger(exiter : Exiter, errorLoggerProvider : ErrorLoggerProvider) =
     inherit ErrorLogger("DelayAndForwardErrorLogger")
     let mapToErrorNumber items = 
         items |> Seq.map (fun (err,_) -> GetErrorNumber err) |> Seq.toList
@@ -146,10 +230,16 @@ type DelayAndForwardErrorLogger(exiter : Exiter) =
         // Clear errors just reported. Keep errors count.
         delayed.Clear()
     member x.ForwardDelayedErrorsAndWarnings(tcConfigB:TcConfigBuilder) = 
-        let errorLogger = ErrorLoggerInitial(tcConfigB, exiter)
+        let errorLogger =  errorLoggerProvider.CreateErrorLoggerThatQuitsAfterMaxErrors(tcConfigB, exiter)
         x.ForwardDelayedErrorsAndWarnings(errorLogger)
     member x.FullErrorCount = !errors
-    override x.ErrorOrWarningNumbers = delayed |> Seq.map (fun (err,_) -> GetErrorNumber err) |> Seq.toList
+    override x.WarningNumbers = delayed |> Seq.filter(fun (_, flag) -> flag = false) |> mapToErrorNumber
+    override x.ErrorNumbers = delayed |> Seq.filter(fun (_, flag) -> flag = true) |> mapToErrorNumber
+
+and [<AbstractClass>]
+    ErrorLoggerProvider() =
+    member this.CreateDelayAndForwardLogger(exiter) = DelayAndForwardErrorLogger(exiter, this)
+    abstract CreateErrorLoggerThatQuitsAfterMaxErrors : tcConfigBuilder : TcConfigBuilder * exiter : Exiter -> ErrorLogger
 
 /// Check for .fsx and, if present, compute the load closure for of #loaded files.
 let AdjustForScriptCompile(tcConfigB:TcConfigBuilder,commandLineSourceFiles,lexResourceManager) =
@@ -195,9 +285,23 @@ let AdjustForScriptCompile(tcConfigB:TcConfigBuilder,commandLineSourceFiles,lexR
 let abortOnError (errorLogger:ErrorLogger, _tcConfig:TcConfig, exiter : Exiter) = 
     if errorLogger.ErrorCount > 0 then
 #if SQM_SUPPORT
-        SqmLoggerWithConfig _tcConfig errorLogger.ErrorOrWarningNumbers
+        SqmLoggerWithConfig _tcConfig errorLogger.ErrorNumbers errorLogger.WarningNumbers
 #endif
-        exiter.Exit 1 
+        exiter.Exit 1
+
+type DelayedDisposables() = 
+    let items = Stack<System.IDisposable>()
+    member this.Register(i) = items.Push i
+    interface System.IDisposable with
+        member this.Dispose() = 
+            let l = List.ofSeq items
+            items.Clear()
+            for i in l do 
+                try i.Dispose() with _ -> ()
+
+type DefaultLoggerProvider() = 
+    inherit ErrorLoggerProvider()
+    override this.CreateErrorLoggerThatQuitsAfterMaxErrors(tcConfigBuilder, exiter) = ConsoleErrorLoggerThatQuitsAfterMaxErrors(tcConfigBuilder, exiter)
 
 // The project system needs to be able to somehow crack open assemblies to look for type providers in order to pop up the security dialog when necessary when a user does 'Build'.
 // Rather than have the PS re-code that logic, it re-uses the existing code in the very front end of the compiler that parses the command-line and imports the referenced assemblies.
@@ -211,7 +315,9 @@ let getTcImportsFromCommandLine(displayPSTypeProviderSecurityDialogBlockingUI : 
                                 setProcessThreadLocals : TcConfigBuilder -> unit, 
                                 displayBannerIfNeeded : TcConfigBuilder -> unit, 
                                 optimizeForMemory : bool,
-                                exiter : Exiter) 
+                                exiter : Exiter,
+                                errorLoggerProvider : ErrorLoggerProvider,
+                                disposables : DelayedDisposables) 
                                     : TcGlobals * TcImports * TcImports * Tast.CcuThunk * Tast.TypedAssembly * TypeChecker.TopAttribs * TcConfig * string * string option * string * ErrorLogger
                                     =
     
@@ -223,7 +329,7 @@ let getTcImportsFromCommandLine(displayPSTypeProviderSecurityDialogBlockingUI : 
     SetTailcallSwitch tcConfigB On    
 
     // Now install a delayed logger to hold all errors from flags until after all flags have been parsed (for example, --vserrors)
-    let delayForFlagsLogger = DelayAndForwardErrorLogger(exiter)
+    let delayForFlagsLogger =  errorLoggerProvider.CreateDelayAndForwardLogger(exiter)// DelayAndForwardErrorLogger(exiter)
     let _unwindEL_1 = PushErrorLoggerPhaseUntilUnwind (fun _ -> delayForFlagsLogger)          
     
     // Share intern'd strings across all lexing/parsing
@@ -274,7 +380,7 @@ let getTcImportsFromCommandLine(displayPSTypeProviderSecurityDialogBlockingUI : 
             e -> 
             errorRecovery e rangeStartup
 #if SQM_SUPPORT
-            SqmLoggerWithConfigBuilder tcConfigB delayForFlagsLogger.ErrorOrWarningNumbers
+            SqmLoggerWithConfigBuilder tcConfigB delayForFlagsLogger.ErrorNumbers delayForFlagsLogger.WarningNumbers
 #endif
             delayForFlagsLogger.ForwardDelayedErrorsAndWarnings(tcConfigB)
             exiter.Exit 1 
@@ -290,7 +396,7 @@ let getTcImportsFromCommandLine(displayPSTypeProviderSecurityDialogBlockingUI : 
         with e ->
             errorRecovery e rangeStartup
 #if SQM_SUPPORT
-            SqmLoggerWithConfigBuilder tcConfigB delayForFlagsLogger.ErrorOrWarningNumbers
+            SqmLoggerWithConfigBuilder tcConfigB delayForFlagsLogger.ErrorNumbers delayForFlagsLogger.WarningNumbers
 #endif
             delayForFlagsLogger.ForwardDelayedErrorsAndWarnings(tcConfigB)
             exiter.Exit 1 
@@ -298,7 +404,7 @@ let getTcImportsFromCommandLine(displayPSTypeProviderSecurityDialogBlockingUI : 
     // DecideNames may give "no inputs" error. Abort on error at this point. bug://3911
     if not tcConfigB.continueAfterParseFailure && delayForFlagsLogger.FullErrorCount > 0 then
 #if SQM_SUPPORT
-        SqmLoggerWithConfigBuilder tcConfigB delayForFlagsLogger.ErrorOrWarningNumbers
+        SqmLoggerWithConfigBuilder tcConfigB delayForFlagsLogger.ErrorNumbers delayForFlagsLogger.WarningNumbers
 #endif
         delayForFlagsLogger.ForwardDelayedErrorsAndWarnings(tcConfigB)
         exiter.Exit 1
@@ -309,12 +415,12 @@ let getTcImportsFromCommandLine(displayPSTypeProviderSecurityDialogBlockingUI : 
             TcConfig.Create(tcConfigB,validate=false)
         with e ->
 #if SQM_SUPPORT
-            SqmLoggerWithConfigBuilder tcConfigB delayForFlagsLogger.ErrorOrWarningNumbers
+            SqmLoggerWithConfigBuilder tcConfigB delayForFlagsLogger.ErrorNumbers delayForFlagsLogger.WarningNumbers
 #endif
             delayForFlagsLogger.ForwardDelayedErrorsAndWarnings(tcConfigB)
             exiter.Exit 1
     
-    let errorLogger = ErrorLoggerThatQuitsAfterMaxErrors(tcConfigB, exiter)
+    let errorLogger =  errorLoggerProvider.CreateErrorLoggerThatQuitsAfterMaxErrors(tcConfigB, exiter)
 
     // Install the global error logger and never remove it. This logger does have all command-line flags considered.
     let _unwindEL_2 = PushErrorLoggerPhaseUntilUnwind (fun _ -> errorLogger)
@@ -337,7 +443,7 @@ let getTcImportsFromCommandLine(displayPSTypeProviderSecurityDialogBlockingUI : 
                                                                 ensureReactive=false, 
                                                                 errorLogger=errorLogger,
                                                                 keepGeneratedTypedAssembly=true)
-            let tcState,topAttribs,typedAssembly,_tcEnv,tcImports,tcGlobals,tcConfig = builder.TypeCheck() 
+            let tcState,topAttribs,typedAssembly,_tcEnv,tcImports,tcGlobals,tcConfig = builder.TypeCheck()
             tcGlobals,tcImports,tcImports,tcState.Ccu,typedAssembly,topAttribs,tcConfig
         else
         
@@ -346,6 +452,9 @@ let getTcImportsFromCommandLine(displayPSTypeProviderSecurityDialogBlockingUI : 
             let foundationalTcConfigP = TcConfigProvider.Constant(tcConfig)
             let sysRes,otherRes,knownUnresolved = TcAssemblyResolutions.SplitNonFoundationalResolutions(tcConfig)
             let tcGlobals,frameworkTcImports = TcImports.BuildFrameworkTcImports (foundationalTcConfigP, sysRes, otherRes)
+
+            // register framework tcImports to be disposed in future
+            disposables.Register frameworkTcImports
 
             // step - parse sourceFiles 
             ReportTime tcConfig "Parse inputs"
@@ -365,7 +474,7 @@ let getTcImportsFromCommandLine(displayPSTypeProviderSecurityDialogBlockingUI : 
                 with e -> 
                     errorRecoveryNoRange e
 #if SQM_SUPPORT
-                    SqmLoggerWithConfig tcConfig errorLogger.ErrorOrWarningNumbers
+                    SqmLoggerWithConfig tcConfig errorLogger.ErrorNumbers errorLogger.WarningNumbers
 #endif
                     exiter.Exit 1
 
@@ -383,6 +492,9 @@ let getTcImportsFromCommandLine(displayPSTypeProviderSecurityDialogBlockingUI : 
             let tcGlobals,tcImports =  
                 let tcImports = TcImports.BuildNonFrameworkTcImports(displayPSTypeProviderSecurityDialogBlockingUI,tcConfigP,tcGlobals,frameworkTcImports,otherRes,knownUnresolved)
                 tcGlobals,tcImports
+
+            // register tcImports to be disposed in future
+            disposables.Register tcImports
 
             if not tcConfig.continueAfterParseFailure then 
                 abortOnError(errorLogger, tcConfig, exiter)
@@ -413,6 +525,8 @@ let runFromCommandLineToImportingAssemblies(displayPSTypeProviderSecurityDialogB
                                             directoryBuildingFrom : string, 
                                             exiter : Exiter) =
 
+    use d = new DelayedDisposables() // ensure that any resources that can be allocated in getTcImportsFromCommandLine will be correctly disposed
+
     let tcGlobals,tcImports,frameworkTcImports,generatedCcu,typedAssembly,topAttrs,tcConfig,outfile,pdbfile,assemblyName,errorLogger = 
             getTcImportsFromCommandLine(Some displayPSTypeProviderSecurityDialogBlockingUI, argv, defaultFSharpBinariesDir, directoryBuildingFrom, None, (fun _ -> ()), 
                     (fun tcConfigB -> 
@@ -426,7 +540,9 @@ let runFromCommandLineToImportingAssemblies(displayPSTypeProviderSecurityDialogB
                             tcConfigB.framework<-false
                         ),   
                     true, // optimizeForMemory - want small memory footprint in VS
-                    exiter)
+                    exiter, 
+                    DefaultLoggerProvider(), // this function always use default set of loggers
+                    d)
 
     // we don't care about the result, we just called 'getTcImportsFromCommandLine' to have the effect of popping up the dialog if the TP is unknown
     ignore(tcGlobals,tcImports,frameworkTcImports,generatedCcu,typedAssembly,topAttrs,tcConfig,outfile,pdbfile,assemblyName,errorLogger)
@@ -631,7 +747,7 @@ let EncodeInterfaceData(tcConfig:TcConfig,tcGlobals,exportRemapping,_errorLogger
     with e -> 
         errorRecoveryNoRange e
 #if SQM_SUPPORT
-        SqmLoggerWithConfig tcConfig _errorLogger.ErrorOrWarningNumbers
+        SqmLoggerWithConfig tcConfig _errorLogger.ErrorNumbers _errorLogger.WarningNumbers
 #endif
         exiter.Exit 1
 
@@ -1707,7 +1823,7 @@ module FileWriter =
         with e -> 
             errorRecoveryNoRange e
 #if SQM_SUPPORT
-            SqmLoggerWithConfig tcConfig _errorLogger.ErrorOrWarningNumbers
+            SqmLoggerWithConfig tcConfig _errorLogger.ErrorNumbers _errorLogger.WarningNumbers
 #endif             
             exiter.Exit 1 
 
@@ -1766,7 +1882,13 @@ let ValidateKeySigningAttributes (tcConfig : TcConfig) tcGlobals topAttrs =
         | None -> tcConfig.container
     
     SigningInfo (delaysign,signer,container)
-    
+ 
+/// Checks if specified file name is absolute path. If yes - returns the name as is, otherwise makes full path using tcConfig.implicitIncludeDir as base.
+let expandFileNameIfNeeded (tcConfig : TcConfig) name = 
+    if System.IO.Path.IsPathRooted name then name 
+    else 
+    System.IO.Path.Combine(tcConfig.implicitIncludeDir, name)
+   
 //----------------------------------------------------------------------------
 // main - split up to make sure that we can GC the
 // dead data at the end of each phase.  We explicitly communicate arguments
@@ -1776,7 +1898,7 @@ let ValidateKeySigningAttributes (tcConfig : TcConfig) tcGlobals topAttrs =
 [<NoEquality; NoComparison>]
 type Args<'a> = Args  of 'a
 
-let main1(argv,bannerAlreadyPrinted,exiter:Exiter) =
+let main0(argv,bannerAlreadyPrinted,exiter:Exiter, errorLoggerProvider : ErrorLoggerProvider, disposables : DelayedDisposables) = 
 
     // See Bug 735819 
     let lcidFromCodePage = 
@@ -1817,8 +1939,17 @@ let main1(argv,bannerAlreadyPrinted,exiter:Exiter) =
                             Microsoft.FSharp.Compiler.Fscopts.DisplayBannerText tcConfigB
                     ), 
                         false, // optimizeForMemory - fsc.exe can use as much memory as it likes to try to compile as fast as possible
-                        exiter
+                        exiter,
+                        errorLoggerProvider,
+                        disposables
+
     )
+
+    tcGlobals,tcImports,frameworkTcImports,generatedCcu,typedAssembly,topAttrs,tcConfig,outfile,pdbfile,assemblyName,errorLogger, exiter
+
+// TcGlobals * TcImports * TcImports * CcuThunk * TypedAssembly * TopAttribs * TcConfig * string * string * string* ErrorLogger* Exiter
+let main1(tcGlobals,tcImports : TcImports,frameworkTcImports,generatedCcu,typedAssembly,topAttrs,tcConfig : TcConfig, outfile,pdbfile,assemblyName,errorLogger, exiter : Exiter) =
+
 
     if tcConfig.typeCheckOnly then exiter.Exit 0
     
@@ -1856,7 +1987,10 @@ let main1(argv,bannerAlreadyPrinted,exiter:Exiter) =
       if tcConfig.xmlDocOutputFile.IsSome then 
           XmlDocWriter.computeXmlDocSigs (tcGlobals,generatedCcu) 
       ReportTime tcConfig ("Write XML docs");
-      tcConfig.xmlDocOutputFile |> Option.iter (fun xmlFile -> XmlDocWriter.writeXmlDoc (assemblyName,generatedCcu,xmlFile))
+      tcConfig.xmlDocOutputFile |> Option.iter ( fun xmlFile -> 
+          let xmlFile = expandFileNameIfNeeded tcConfig xmlFile
+          XmlDocWriter.writeXmlDoc (assemblyName,generatedCcu,xmlFile)
+        )
       ReportTime tcConfig ("Write HTML docs");
     end;
 
@@ -1992,7 +2126,7 @@ let main3(Args(tcConfig,errorLogger:ErrorLogger,staticLinker,ilGlobals,ilxMainMo
         with e -> 
             errorRecoveryNoRange e
 #if SQM_SUPPORT
-            SqmLoggerWithConfig tcConfig errorLogger.ErrorOrWarningNumbers
+            SqmLoggerWithConfig tcConfig errorLogger.ErrorNumbers errorLogger.WarningNumbers
 #endif
             exiter.Exit 1
 
@@ -2003,7 +2137,9 @@ let main3(Args(tcConfig,errorLogger:ErrorLogger,staticLinker,ilGlobals,ilxMainMo
 let main4(Args(tcConfig,errorLogger:ErrorLogger,ilGlobals,ilxMainModule,outfile,pdbfile,signingInfo,exiter)) = 
     ReportTime tcConfig "Write .NET Binary"
     use unwindBuildPhase = PushThreadBuildPhaseUntilUnwind (BuildPhase.Output)    
-    let pdbfile = pdbfile |> Option.map Path.GetFullPath
+    let outfile = expandFileNameIfNeeded tcConfig outfile
+
+    let pdbfile = pdbfile |> Option.map ((expandFileNameIfNeeded tcConfig) >> Path.GetFullPath)
     match dynamicAssemblyCreator with 
     | None -> FileWriter.EmitIL (tcConfig,ilGlobals,errorLogger,outfile,pdbfile,ilxMainModule,signingInfo,exiter)
     | Some da -> da (tcConfig,ilGlobals,errorLogger,outfile,pdbfile,ilxMainModule,signingInfo); 
@@ -2019,20 +2155,63 @@ let main4(Args(tcConfig,errorLogger:ErrorLogger,ilGlobals,ilxMainModule,outfile,
             dprintfn "%s" a.FullName
 
 #if SQM_SUPPORT
-    SqmLoggerWithConfig tcConfig errorLogger.ErrorOrWarningNumbers
+    SqmLoggerWithConfig tcConfig errorLogger.ErrorNumbers errorLogger.WarningNumbers
 #endif
 #endif
 
     ReportTime tcConfig "Exiting"
 
-
-let mainCompile (argv,bannerAlreadyPrinted,exiter:Exiter) = 
+let typecheckAndCompile(argv,bannerAlreadyPrinted,exiter:Exiter, errorLoggerProvider) =
     // Don's note: "GC of intermediate data is really, really important here"
-    main1 (argv,bannerAlreadyPrinted,exiter) 
+    use d = new DelayedDisposables()
+    main0(argv,bannerAlreadyPrinted,exiter, errorLoggerProvider, d)
+    |> main1
     |> main2
     |> main2b
     |> main2c
     |> main3 
     |> main4
 
+let mainCompile (argv,bannerAlreadyPrinted,exiter:Exiter) = 
+    typecheckAndCompile(argv, bannerAlreadyPrinted, exiter, DefaultLoggerProvider())
+
+type CompilationOutput = 
+    {
+        Errors : seq<ErrorOrWarning>
+        Warnings : seq<ErrorOrWarning>
+    }
+
+type InProcCompiler() = 
+    member this.Compile(argv) = 
+
+        let errors = ResizeArray()
+        let warnings = ResizeArray()
+
+        let rec loggerProvider = {
+            new ErrorLoggerProvider() with
+                member log.CreateErrorLoggerThatQuitsAfterMaxErrors(tcConfigBuilder, exiter) = 
+                    upcast {
+                        new ErrorLoggerThatQuitsAfterMaxErrors(tcConfigBuilder, exiter, "InProcCompilerErrorLoggerThatQuitsAfterMaxErrors") with
+                            member this.HandleTooManyErrors(text) = warnings.Add(ErrorOrWarning.Short(false, text))
+                            member this.HandleIssue(tcConfigBuilder, err, isWarning) = 
+                                let errs = CollectErrorOrWarning(tcConfigBuilder.implicitIncludeDir, tcConfigBuilder.showFullPaths, tcConfigBuilder.flatErrors, tcConfigBuilder.errorStyle, isWarning, err)
+                                let container = if isWarning then warnings else errors
+                                container.AddRange(errs)
+                    }
+        }
+        let exitCode = ref 0
+        let exiter = {
+            new Exiter with
+                member this.Exit n = exitCode := n; raise StopProcessing
+            }
+        try 
+            typecheckAndCompile(argv, false, exiter, loggerProvider)
+        with 
+            | StopProcessing -> ()
+            | ReportedError _  | WrappedError(ReportedError _,_)  ->
+                exitCode := 1
+                ()
+
+        let output = { Warnings = warnings; Errors = errors}
+        !exitCode = 0, output
 #endif // NO_COMPILER_BACKEND

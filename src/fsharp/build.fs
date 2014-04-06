@@ -1371,64 +1371,131 @@ let SanitizeFileName fileName implicitIncludeDir =
     with _ ->
         fileName
 
-(* used by fsc.exe and fsi.exe, but not by VS *)
-let rec OutputErrorOrWarning (implicitIncludeDir,showFullPaths,flattenErrors,errorStyle,warn) os (err:PhasedError) = 
-    let outputWhere (showFullPaths,errorStyle) os m = 
-        if m = rangeStartup || m = rangeCmdArgs then () 
+type ErrorLocation =
+    {
+        Range : range
+        File : string
+        TextRepresentation : string
+        IsEmpty : bool
+    }
+
+type CanonicalInformation = 
+    {
+        ErrorNumber : int
+        Subcategory : string
+        TextRepresentation : string
+    }
+
+type DetailedIssueInfo = 
+    {
+        Location : ErrorLocation option
+        Canonical : CanonicalInformation
+        Message : string
+    }
+
+type ErrorOrWarning = 
+    | Short of bool * string
+    | Long of bool * DetailedIssueInfo
+
+/// returns sequence that contains ErrorOrWarning for the given error + ErrorOrWarning for all related errors
+let CollectErrorOrWarning (implicitIncludeDir,showFullPaths,flattenErrors,errorStyle,warn, err:PhasedError) = 
+    let outputWhere (showFullPaths,errorStyle) m = 
+        if m = rangeStartup || m = rangeCmdArgs then 
+            { Range = m; TextRepresentation = ""; IsEmpty = true; File = "" }
         else
             let file = m.FileName
             let file = if showFullPaths then 
                             Filename.fullpath implicitIncludeDir file
                        else 
                             SanitizeFileName file implicitIncludeDir
-            match errorStyle with
-              | ErrorStyle.EmacsErrors   -> Printf.bprintf os "File \"%s\", line %d, characters %d-%d: " (file.Replace("\\","/")) m.StartLine m.StartColumn m.EndColumn
-              // We're adjusting the columns here to be 1-based - both for parity with C# and for MSBuild, which assumes 1-based columns for error output
-              | ErrorStyle.DefaultErrors -> Printf.bprintf os "%s(%d,%d): " (file.Replace('/',System.IO.Path.DirectorySeparatorChar)) m.StartLine (m.StartColumn + 1)
-              // We may also want to change TestErrors to be 1-based
-              | ErrorStyle.TestErrors    -> Printf.bprintf os "%s(%d,%d-%d,%d): " (file.Replace("/","\\")) m.StartLine (m.StartColumn + 1) m.EndLine (m.EndColumn + 1) 
-              | ErrorStyle.GccErrors     -> Printf.bprintf os "%s:%d:%d: " (file.Replace('/',System.IO.Path.DirectorySeparatorChar)) m.StartLine (m.StartColumn + 1)
+            let text, m, file = 
+                match errorStyle with
+                  | ErrorStyle.EmacsErrors   -> 
+                    let file = file.Replace("\\","/")
+                    (sprintf "File \"%s\", line %d, characters %d-%d: " file m.StartLine m.StartColumn m.EndColumn), m, file
 
-              // Here, we want the complete range information so Project Systems can generate proper squiggles
-              | ErrorStyle.VSErrors      -> 
-                    // Show prefix only for real files. Otherise, we just want a truncated error like:
-                    //      parse error FS0031 : blah blah
-                    if m<>range0 && m<>rangeStartup && m<>rangeCmdArgs then 
-                        Printf.bprintf os "%s(%d,%d,%d,%d): " (file.Replace("/","\\")) m.StartLine (m.StartColumn + 1) m.EndLine (m.EndColumn + 1)
+                  // We're adjusting the columns here to be 1-based - both for parity with C# and for MSBuild, which assumes 1-based columns for error output
+                  | ErrorStyle.DefaultErrors -> 
+                    let file = file.Replace('/',System.IO.Path.DirectorySeparatorChar)
+                    let m = mkRange m.FileName (mkPos m.StartLine (m.StartColumn + 1)) m.End
+                    (sprintf "%s(%d,%d): " file m.StartLine m.StartColumn), m, file
+
+                  // We may also want to change TestErrors to be 1-based
+                  | ErrorStyle.TestErrors    -> 
+                    let file = file.Replace("/","\\")
+                    let m = mkRange m.FileName (mkPos m.StartLine (m.StartColumn + 1)) (mkPos m.EndLine (m.EndColumn + 1) )
+                    sprintf "%s(%d,%d-%d,%d): " file m.StartLine m.StartColumn m.EndLine m.EndColumn, m, file
+
+                  | ErrorStyle.GccErrors     -> 
+                    let file = file.Replace('/',System.IO.Path.DirectorySeparatorChar)
+                    let m = mkRange m.FileName (mkPos m.StartLine (m.StartColumn + 1)) (mkPos m.EndLine (m.EndColumn + 1) )
+                    sprintf "%s:%d:%d: " file m.StartLine m.StartColumn, m, file
+
+                  // Here, we want the complete range information so Project Systems can generate proper squiggles
+                  | ErrorStyle.VSErrors      -> 
+                        // Show prefix only for real files. Otherise, we just want a truncated error like:
+                        //      parse error FS0031 : blah blah
+                        if m<>range0 && m<>rangeStartup && m<>rangeCmdArgs then 
+                            let file = file.Replace("/","\\")
+                            let m = mkRange m.FileName (mkPos m.StartLine (m.StartColumn + 1)) (mkPos m.EndLine (m.EndColumn + 1) )
+                            sprintf "%s(%d,%d,%d,%d): " file m.StartLine m.StartColumn m.EndLine m.EndColumn, m, file
+                        else
+                            "", m, file
+            { Range = m; TextRepresentation = text; IsEmpty = false; File = file }
 
     match err.Exception with 
     | ReportedError _ -> 
         dprintf "Unexpected ReportedError"  (* this should actually never happen *)
+        Seq.empty
     | StopProcessing -> 
         dprintf "Unexpected StopProcessing"  (* this should actually never happen *)
+        Seq.empty
     | _ -> 
+        let errors = ResizeArray()
         let report err =
             let OutputWhere(err) = 
-                Printf.bprintf os "\n";
                 match RangeOfError err with 
-                | Some m -> outputWhere (showFullPaths,errorStyle) os m 
-                | None -> ()
+                | Some m -> Some(outputWhere (showFullPaths,errorStyle) m)
+                | None -> None
 
             let OutputCanonicalInformation(err:PhasedError,subcategory, errorNumber) = 
-                match errorStyle with
-                // Show the subcategory for --vserrors so that we can fish it out in Visual Studio and use it to determine error stickiness.
-                | ErrorStyle.VSErrors -> Printf.bprintf os "%s %s FS%04d: " subcategory (if warn then "warning" else "error") errorNumber;
-                | _ -> Printf.bprintf os "%s FS%04d: " (if warn then "warning" else "error") (GetErrorNumber err);
+                let text = 
+                    match errorStyle with
+                    // Show the subcategory for --vserrors so that we can fish it out in Visual Studio and use it to determine error stickiness.
+                    | ErrorStyle.VSErrors -> sprintf "%s %s FS%04d: " subcategory (if warn then "warning" else "error") errorNumber;
+                    | _ -> sprintf "%s FS%04d: " (if warn then "warning" else "error") (GetErrorNumber err);
+                {  ErrorNumber = errorNumber; Subcategory = subcategory; TextRepresentation = text}
         
             let mainError,relatedErrors = SplitRelatedErrors err
-            OutputWhere(mainError)
-            OutputCanonicalInformation(mainError,err.Subcategory(),GetErrorNumber mainError)
-            OutputPhasedError os mainError flattenErrors;
-        
+            let where = OutputWhere(mainError)
+            let canonical = OutputCanonicalInformation(mainError,err.Subcategory(),GetErrorNumber mainError)
+            let message = 
+                let os = System.Text.StringBuilder()
+                OutputPhasedError os mainError flattenErrors;
+                os.ToString()
+            
+            let entry = { Location = where; Canonical = canonical; Message = message }
+            
+            errors.Add ( ErrorOrWarning.Long( not warn, entry ) )
+
             let OutputRelatedError(err) =
                 match errorStyle with
                 // Give a canonical string when --vserror.
                 | ErrorStyle.VSErrors -> 
-                    OutputWhere(mainError) // mainError?
-                    OutputCanonicalInformation(err, err.Subcategory(),GetErrorNumber mainError) // Use main error for code
+                    let relWhere = OutputWhere(mainError) // mainError?
+                    let relCanonical = OutputCanonicalInformation(err, err.Subcategory(),GetErrorNumber mainError) // Use main error for code
+                    let relMessage = 
+                        let os = System.Text.StringBuilder()
+                        OutputPhasedError os err flattenErrors
+                        os.ToString()
+
+                    let entry = { Location = relWhere; Canonical = relCanonical; Message = relMessage}
+                    errors.Add( ErrorOrWarning.Long (not warn, entry) )
+
+                | _ -> 
+                    let os = System.Text.StringBuilder()
                     OutputPhasedError os err flattenErrors
-                | _ -> Printf.bprintf os "\n"; OutputPhasedError os err flattenErrors
-                    
+                    errors.Add( ErrorOrWarning.Short((not warn), os.ToString()) )
         
             relatedErrors |> List.iter OutputRelatedError
 
@@ -1441,6 +1508,26 @@ let rec OutputErrorOrWarning (implicitIncludeDir,showFullPaths,flattenErrors,err
             )
 #endif
         | x -> report x
+
+        errors :> seq<_>
+
+/// used by fsc.exe and fsi.exe, but not by VS
+/// prints error and related errors to the specified StringBuilder
+let rec OutputErrorOrWarning (implicitIncludeDir,showFullPaths,flattenErrors,errorStyle,warn) os (err:PhasedError) = 
+    
+    let errors = CollectErrorOrWarning (implicitIncludeDir,showFullPaths,flattenErrors,errorStyle,warn, err)
+    for e in errors do
+        Printf.bprintf os "\n"
+        match e with
+        | Short(_, txt) -> 
+            os.Append txt |> ignore
+        | Long(_, details) ->
+            match details.Location with
+            | Some l when not l.IsEmpty -> os.Append(l.TextRepresentation) |> ignore
+            | _ -> ()
+            os.Append( details.Canonical.TextRepresentation ) |> ignore
+            os.Append( details.Message ) |> ignore
+      
 let OutputErrorOrWarningContext prefix fileLineFn os err =
     match RangeOfError err with
     | None   -> ()      
@@ -2949,7 +3036,8 @@ type ErrorLoggerFilteringByScopedPragmas (checkFile,scopedPragmas,errorLogger:Er
                         Range.posGeq m.Start pragmaRange.Start))  
             | None -> true
         if report then errorLogger.WarnSink(err);
-    override x.ErrorOrWarningNumbers = errorLogger.ErrorOrWarningNumbers
+    override x.ErrorNumbers = errorLogger.ErrorNumbers
+    override x.WarningNumbers = errorLogger.WarningNumbers
 
 let GetErrorLoggerFilteringByScopedPragmas(checkFile,scopedPragmas,errorLogger) = 
     (ErrorLoggerFilteringByScopedPragmas(checkFile,scopedPragmas,errorLogger) :> ErrorLogger)
