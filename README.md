@@ -5,9 +5,9 @@ and core tools for use across multiple platforms.
 
 ### Contributing to the F# Compiler, Core Library and Tools
 
-Most contributions to the F# compiler/library/tools are currently facilitated via the  
-repository at http://visualfsharp.codeplex.com.  This arrangement helps ensure that the one of the major
-packagings of F# (the Visual F# Tools) also includes any contributions that are made.
+Most contributions to the F# compiler/library/tools arecurrently go via the  
+repository at http://visualfsharp.codeplex.com.  This helps ensure that the main
+packaging of F# on Windows (the Visual F# Tools) also includes any contributions that are made.
 
 If you are using Windows, you should fork that repo and contribute directly.
 
