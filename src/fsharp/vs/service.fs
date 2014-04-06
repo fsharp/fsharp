@@ -1377,10 +1377,14 @@ module internal Parser =
                 // results in duplication of textual variables. So we ensure we never record two name resolutions 
                 // for the same identifier at the same location.
                 if allowedRange m then 
+                    let keyOpt = match item with
+                                 | Item.Value vref -> Some (endPos, vref.DisplayName)
+                                 | Item.ArgName (id, _, _) -> Some (endPos, id.idText)
+                                 | _ -> None
+
                     let alreadyDone = 
-                        match item with 
-                        | Item.Value vref -> 
-                            let key = (endPos, vref.DisplayName)
+                        match keyOpt with
+                        | Some key ->
                             let res = capturedNameResolutionIdentifiers.Contains key
                             if not res then capturedNameResolutionIdentifiers.Add key |> ignore
                             res
@@ -1779,8 +1783,6 @@ type BackgroundCompiler(notifyFileTypeCheckStateIsDirty:NotifyFileTypeCheckState
     let CreateOneIncrementalBuilder (options:CheckOptions) = 
         use t = Trace.Call("Reactor","CreateOneIncrementalBuilder", fun () -> sprintf "options = %+A" options)
         let builder, errorsAndWarnings = 
-            // PROBLEM: This call can currently fail if an error happens while setting up the TcConfig
-            // This leaves us completely horked.
             IncrementalFSharpBuild.IncrementalBuilder.CreateBackgroundBuilderForProjectOptions
                   (scriptClosure.TryGet options, Array.toList options.ProjectFileNames, 
                    Array.toList options.ProjectOptions, options.ProjectDirectory, 

@@ -69,6 +69,8 @@ type internal DataTipElement =
     | DataTipElementNone
     /// A single type, method, etc with comment.
     | DataTipElement of (* text *) string * XmlComment
+    /// A parameter of a method.
+    | DataTipElementParameter of string * XmlComment * string
     /// For example, a method overload group.
     | DataTipElementGroup of ((* text *) string * XmlComment) list
     /// An error occurred formatting this element
@@ -394,6 +396,10 @@ module internal ItemDescriptionsImpl =
 
         | Item.MethodGroup(_,minfo :: _) -> GetXmlDocSigOfMethInfo infoReader  m minfo
         | Item.CtorGroup(_,minfo :: _) -> GetXmlDocSigOfMethInfo infoReader  m minfo
+        | Item.ArgName(_, _, Some argContainer) -> match argContainer with 
+                                                   | ArgumentContainer.Method(minfo) -> GetXmlDocSigOfMethInfo infoReader m minfo
+                                                   | ArgumentContainer.Type(tcref) -> GetXmlDocSigOfEntityRef infoReader m tcref
+                                                   | ArgumentContainer.UnionCase(ucinfo) -> GetXmlDocSigOfUnionCaseInfo ucinfo
         |  _ -> XmlCommentNone
 
     /// Produce an XmlComment with a signature or raw text.
@@ -842,13 +848,21 @@ module internal ItemDescriptionsImpl =
                 DataTipElement(os.ToString(), GetXmlComment (XmlDoc [||]) infoReader m d)
 
         // Named parameters
-        | Item.ArgName (id, argTy) -> 
+        | Item.ArgName (id, argTy, argContainer) -> 
             let _, argTy, _ = PrettyTypes.PrettifyTypes1 g argTy
             let text = bufs (fun os -> 
                           bprintf os "%s %s : " (FSComp.SR.typeInfoArgument()) id.idText 
                           NicePrint.outputTy denv os argTy)
-            let xml = GetXmlComment (XmlDoc [||]) infoReader m d
-            DataTipElement(text, xml)
+            let xmldoc = match argContainer with
+                         | Some(ArgumentContainer.Method (minfo)) ->
+                               if minfo.HasDirectXmlComment then minfo.XmlDoc else XmlDoc [||] 
+                         | Some(ArgumentContainer.Type(tcref)) ->
+                               if (tyconRefUsesLocalXmlDoc g.compilingFslib tcref) then tcref.XmlDoc else XmlDoc [||]
+                         | Some(ArgumentContainer.UnionCase(ucinfo)) ->
+                               if (tyconRefUsesLocalXmlDoc g.compilingFslib ucinfo.TyconRef) then ucinfo.UnionCase.XmlDoc else XmlDoc [||]
+                         | _ -> XmlDoc [||]
+            let xml = GetXmlComment xmldoc infoReader m d
+            DataTipElementParameter(text, xml, id.idText)
             
         | Item.SetterArg (_, item) -> 
             FormatItemDescriptionToDataTipElement isDeclInfo infoReader m denv item

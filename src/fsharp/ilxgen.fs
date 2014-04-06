@@ -2035,7 +2035,7 @@ and GenAllocRecd cenv cgbuf eenv ctorInfo (tcref,argtys,args,m) sequel =
     match ctorInfo with 
     | RecdExprIsObjInit  -> 
         (args,relevantFields) ||> List.iter2 (fun e f -> 
-                CG.EmitInstr cgbuf (pop 0) (Push [typ]) mkLdarg0; 
+                CG.EmitInstr cgbuf (pop 0) (Push (if tcref.IsStructOrEnumTycon then [ILType.Byref typ] else [typ])) mkLdarg0; 
                 GenExpr cenv cgbuf eenv SPSuppress e Continue;
                 GenFieldStore false cenv cgbuf eenv (mkNestedRecdFieldRef tcref f,argtys,m) discard) 
         // Object construction doesn't generate a true value. 
@@ -6009,8 +6009,8 @@ and GenTopImpl cenv mgbuf mainInfoOpt eenv (TImplFile(qname, _, mexpr, hasExplic
     // Commit the directed initializations
     if doesSomething then 
         // Create the field to act as the target for the forced initialization. 
-        // jomof: Why do this for the final file?
-        // dsyme: There is no need to do this for a final file with an implicit entry point. For an explicit entry point in lazyInitInfo.
+        // Why do this for the final file?
+        // There is no need to do this for a final file with an implicit entry point. For an explicit entry point in lazyInitInfo.
         let initFieldName = CompilerGeneratedName "init"
         let ilFieldDef = 
             mkILStaticField (initFieldName,cenv.g.ilg.typ_Int32, None, None, ComputeMemberAccess true)

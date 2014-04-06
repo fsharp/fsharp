@@ -156,7 +156,7 @@ type internal GlobalParseAndTypeCheckCounter private(initialParseCount:int, init
         let n = IncrementalFSharpBuild.GetCurrentIncrementalBuildEventNum()
         IncrementalFSharpBuild.GetMostRecentIncrementalBuildEvents(n-initialEventNum)
     member private this.SawIBNuked() = 
-        this.GetEvents() |> List.exists (function | IncrementalFSharpBuild.IBENuked -> true | _ -> false)
+        this.GetEvents() |> List.exists (function | IncrementalFSharpBuild.IBEDeleted -> true | _ -> false)
     member private this.GetParsedFilesSet() = 
         this.GetEvents() |> List.choose (function | IncrementalFSharpBuild.IBEParsed(file) -> Some(file) | _ -> None) |> set
     member private this.GetTypeCheckedFilesSet() = 

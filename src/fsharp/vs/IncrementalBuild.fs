@@ -1137,7 +1137,7 @@ module internal IncrementalFSharpBuild =
     type IBEvent =
         | IBEParsed of string // filename
         | IBETypechecked of string // filename
-        | IBENuked
+        | IBEDeleted
 
     let IncrementalBuilderEventsMRU = new FixedLengthMRU<IBEvent>()  
     let GetMostRecentIncrementalBuildEvents(n) = IncrementalBuilderEventsMRU.MostRecentList(n)
@@ -1569,7 +1569,7 @@ module internal IncrementalFSharpBuild =
               )
 #endif        
 
-        do IncrementalBuilderEventsMRU.Add(IBENuked)
+        do IncrementalBuilderEventsMRU.Add(IBEDeleted)
         let buildInputs = ["FileNames", sourceFiles.Length, sourceFiles |> List.map box
                            "ReferencedAssemblies", nonFrameworkAssemblyInputs.Length, nonFrameworkAssemblyInputs |> List.map box ]
 
@@ -1744,7 +1744,7 @@ module internal IncrementalFSharpBuild =
         
             // Sink internal errors and warnings.
             // Q: Why is it ok to ignore these?
-            // jomof: These are errors from the background build of files the user doesn't see. Squiggles will appear in the editted file via the foreground parse\typecheck
+            // These are errors from the background build of files the user doesn't see. Squiggles will appear in the editted file via the foreground parse\typecheck
             let warnSink (exn:PhasedError) = Trace.PrintLine("IncrementalBuild", (exn.ToString >> sprintf "Background warning: %s"))
             let errorSink (exn:PhasedError) = Trace.PrintLine("IncrementalBuild", (exn.ToString >> sprintf "Background error: %s"))
 

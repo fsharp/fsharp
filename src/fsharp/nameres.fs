@@ -115,6 +115,12 @@ let ActivePatternElemsOfModuleOrNamespace (modref:ModuleOrNamespaceRef) : NameMa
 // Name Resolution Items
 //------------------------------------------------------------------------- 
 
+[<NoEquality; NoComparison; RequireQualifiedAccess>]
+type ArgumentContainer =
+    | Method of MethInfo
+    | Type of TyconRef
+    | UnionCase of UnionCaseInfo
+
 // Note: Active patterns are encoded like this:
 //   let (|A|B|) x = if x < 0 then A else B    // A and B are reported as results using 'Item.ActivePatternResult' 
 //   match () with | A | B -> ()               // A and B are reported using 'Item.ActivePatternCase'
@@ -169,7 +175,7 @@ type Item =
     /// Represents the resolution of a name to an operator
     | ImplicitOp of Ident * TraitConstraintSln option ref
     /// Represents the resolution of a name to a named argument
-    | ArgName of Ident * TType
+    | ArgName of Ident * TType * ArgumentContainer option
     /// Represents the resolution of a name to a named property setter
     | SetterArg of Ident * Item 
     /// Represents the potential resolution of an unqualified name to a type.
@@ -201,7 +207,7 @@ type Item =
         | Item.Types(nm,_) -> DemangleGenericTypeName nm
         | Item.TypeVar nm -> nm
         | Item.ModuleOrNamespaces(modref :: _) ->  modref.DemangledModuleOrNamespaceName
-        | Item.ArgName (id,_)  -> id.idText
+        | Item.ArgName (id, _, _)  -> id.idText
         | Item.SetterArg (id, _) -> id.idText
         | Item.CustomOperation (customOpName,_,_) -> customOpName
         | Item.CustomBuilder (nm,_) -> nm
@@ -2509,7 +2515,9 @@ let ResolveCompletionsInType (ncenv: NameResolver) nenv isApplicableMeth m ad st
     let pinfoItems = 
         pinfos
         |> List.map (fun pinfo -> DecodeFSharpEvent [pinfo] ad g ncenv m)
-        |> List.filter (fun pinfo->pinfo.IsSome)
+        |> List.filter (fun pinfo-> match pinfo with
+                                    | Some(Item.Event(einfo)) -> IsStandardEventInfo ncenv.InfoReader m ad einfo
+                                    | _ -> pinfo.IsSome)
         |> List.map (fun pinfo->pinfo.Value)
 
     let addersAndRemovers = 

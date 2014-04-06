@@ -31,6 +31,8 @@ type internal DataTipElement =
     | DataTipElementNone
     /// A single type, method, etc with comment.
     | DataTipElement of (* text *) string * XmlComment
+    /// A parameter of a method.
+    | DataTipElementParameter of string * XmlComment * string
     /// For example, a method overload group.
     | DataTipElementGroup of ((* text *) string * XmlComment) list
     /// An error occurred formatting this element

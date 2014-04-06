@@ -27,6 +27,12 @@ type NameResolver =
     member amap : ImportMap
     member g : TcGlobals
 
+[<NoEquality; NoComparison; RequireQualifiedAccess>]
+type ArgumentContainer =
+    | Method of MethInfo
+    | Type of TyconRef
+    | UnionCase of UnionCaseInfo
+
 //---------------------------------------------------------------------------
 // 
 //------------------------------------------------------------------------- 
@@ -59,7 +65,7 @@ type Item =
   /// Represents the resolution of a source identifier to an implicit use of an infix operator (+solution if such available)
   | ImplicitOp of Ident * TraitConstraintSln option ref
   /// Represents the resolution of a source identifier to a named argument
-  | ArgName of Ident * TType
+  | ArgName of Ident * TType * ArgumentContainer option
   | SetterArg of Ident * Item 
   | UnqualifiedType of TyconRef list
   member DisplayName : TcGlobals -> string

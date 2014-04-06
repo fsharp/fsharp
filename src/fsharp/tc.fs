@@ -4306,12 +4306,12 @@ and TcTyparConstraints cenv newOk checkCxs occ env tpenv wcs =
     tpenv
 
 #if EXTENSIONTYPING
-and TcStaticConstantParameter cenv (env:TcEnv) tpenv kind (v:SynType) idOpt =
+and TcStaticConstantParameter cenv (env:TcEnv) tpenv kind (v:SynType) idOpt (tcref:TyconRef) =
     let fail() = error(Error(FSComp.SR.etInvalidStaticArgument(NicePrint.minimalStringOfType env.DisplayEnv kind),v.Range)) 
     let record(ttype) =
         match idOpt with
         | Some id ->
-            let item = Item.ArgName (id, ttype)
+            let item = Item.ArgName (id, ttype, Some(ArgumentContainer.Type(tcref)))
             CallNameResolutionSink cenv.tcSink (id.idRange,env.NameEnv,item,item,ItemOccurence.Use,env.DisplayEnv,env.eAccessRights)
         | _ -> ()
     match v with 
@@ -4366,7 +4366,7 @@ and TcStaticConstantParameter cenv (env:TcEnv) tpenv kind (v:SynType) idOpt =
         v, tpenv'
     | SynType.LongIdent(lidwd) ->
         let m = lidwd.Range
-        TcStaticConstantParameter cenv env tpenv kind (SynType.StaticConstantExpr(SynExpr.LongIdent(false,lidwd,None,m),m)) idOpt
+        TcStaticConstantParameter cenv env tpenv kind (SynType.StaticConstantExpr(SynExpr.LongIdent(false,lidwd,None,m),m)) idOpt tcref
     | _ ->  
         fail()
 
@@ -4409,12 +4409,12 @@ and TcProvidedTypeAppToStaticConstantArgs cenv env optGeneratedTypePath tpenv (t
             let spName = sp.PUntaint((fun sp -> sp.Name), m)
             if i < unnamedArgs.Length then 
                 let v = unnamedArgs.[i]
-                let v, _tpenv = TcStaticConstantParameter cenv env tpenv spKind v None
+                let v, _tpenv = TcStaticConstantParameter cenv env tpenv spKind v None tcref
                 v
             else
                 match namedArgs |> List.filter (fun (n,_) -> n.idText = spName) with 
                 | [(n,v)] -> 
-                    let v, _tpenv = TcStaticConstantParameter cenv env tpenv spKind v (Some n)
+                    let v, _tpenv = TcStaticConstantParameter cenv env tpenv spKind v (Some n) tcref
                     v
                 | [] -> 
                     if sp.PUntaint((fun sp -> sp.IsOptional), m) then
@@ -4816,6 +4816,12 @@ and TcPat warnOnUpper cenv env topValInfo vFlags (tpenv,names,takenNames) ty pat
                             match box result.[idx] with
                             | null -> 
                                 result.[idx] <- pat
+                                let argContainerOpt = match item with
+                                                      | Item.UnionCase uci -> Some(ArgumentContainer.UnionCase(uci))
+                                                      | Item.ExnCase tref -> Some(ArgumentContainer.Type(tref))
+                                                      | _ -> None
+                                let argItem = Item.ArgName (id, (List.nth argtys idx), argContainerOpt)   
+                                CallNameResolutionSink cenv.tcSink (id.idRange,env.NameEnv,argItem,argItem,ItemOccurence.Use,env.DisplayEnv,ad)
                             | _ ->
                                 error(Error(FSComp.SR.tcUnionCaseFieldCannotBeUsedMoreThanOnce(id.idText), id.idRange))
                     for i = 0 to nargtys - 1 do
@@ -5662,7 +5668,7 @@ and TcIndexerThen cenv env overallTy mWholeExpr mDot tpenv wholeExpr e1 indexArg
             // e1.[e2] <- e3
             | SynExpr.DotIndexedSet(_,_,e3,mOfLeftOfSet,_,_) -> 
                 match indexArgs with 
-                | [_] -> DelayedDotLookup([ident(nm,mOfLeftOfSet)],mOfLeftOfSet) :: DelayedApp(ExprAtomicFlag.Atomic,MakeIndexParam None,mOfLeftOfSet) :: MakeDelayedSet(e3,mWholeExpr) :: delayed
+                | [SynIndexerArg.One(_)] -> DelayedDotLookup([ident(nm,mOfLeftOfSet)],mOfLeftOfSet) :: DelayedApp(ExprAtomicFlag.Atomic,MakeIndexParam None,mOfLeftOfSet) :: MakeDelayedSet(e3,mWholeExpr) :: delayed
                 | _ -> DelayedDotLookup([ident("SetSlice",mOfLeftOfSet)],mOfLeftOfSet) :: DelayedApp(ExprAtomicFlag.Atomic,MakeIndexParam (Some e3),mWholeExpr) :: delayed
                 
             | _ -> error(InternalError("unreachable",mWholeExpr))
@@ -7856,8 +7862,12 @@ and TcItemThen cenv overallTy env tpenv (item,mItem,rest,afterOverloadResolution
                         | Some i -> 
                             if box fittedArgs.[i] = null then
                                 fittedArgs.[i] <- arg
-                                let item = Item.ArgName (id, (List.nth argtys i))   
-                                CallNameResolutionSink cenv.tcSink (id.idRange,env.NameEnv,item,item,ItemOccurence.Use,env.DisplayEnv,ad)
+                                let argContainerOpt = match item with
+                                                      | Item.UnionCase uci -> Some(ArgumentContainer.UnionCase(uci))
+                                                      | Item.ExnCase tref -> Some(ArgumentContainer.Type(tref))
+                                                      | _ -> None
+                                let argItem = Item.ArgName (id, (List.nth argtys i), argContainerOpt)   
+                                CallNameResolutionSink cenv.tcSink (id.idRange,env.NameEnv,argItem,argItem,ItemOccurence.Use,env.DisplayEnv,ad)
                             else error(Error(FSComp.SR.tcUnionCaseFieldCannotBeUsedMoreThanOnce(id.idText), id.idRange))
                             currentIndex <- SEEN_NAMED_ARGUMENT
                         | None ->
@@ -9019,7 +9029,7 @@ and TcMethodApplication
         match assignedArg.NamedArgIdOpt with 
         | None -> ()
         | Some id -> 
-            let item = Item.ArgName (id, assignedArg.CalledArg.CalledArgumentType)
+            let item = Item.ArgName (id, assignedArg.CalledArg.CalledArgumentType, Some(ArgumentContainer.Method(finalCalledMethInfo)))
             CallNameResolutionSink cenv.tcSink (id.idRange,env.NameEnv,item,item,ItemOccurence.Use,env.DisplayEnv,ad))
 
     let allArgsCoerced = List.map coerce  allArgs

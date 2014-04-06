@@ -107,7 +107,7 @@ module internal IncrementalFSharpBuild =
   type IBEvent =
         | IBEParsed of string // filename
         | IBETypechecked of string // filename
-        | IBENuked
+        | IBEDeleted
 
     /// Used for unit testing
   val GetMostRecentIncrementalBuildEvents : int -> IBEvent list
