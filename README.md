@@ -1,23 +1,31 @@
-## The F# Software Foundation Packaging Repository for the Open Edition of the F# Compiler, Core Library & Tools
+## The Open Edition of the F# Compiler, Core Library & Tools
 
-The purpose of this repository is to package the open editions of the F# compiler, core library 
+The main purpose of this repository is to package the open editions of the F# compiler, core library 
 and core tools for use across multiple platforms.  
 
-Most contributions to the F# compiler/library/tools are currently facilitated via the  
-repository at http://visualfsharp.codeplex.com.  This arrangement helps ensure that the major
-commercial packaging of F# (the Visual F# Tools) also includes any contributions that are made.
+### Contributing to the F# Compiler, Core Library and Tools
 
-Contributions in the following categories are strongly encouraged but should be made via http://visualfsharp.codeplex.com:
+Most contributions to the F# compiler/library/tools go first via the  
+repository at http://visualfsharp.codeplex.com.  This ensures that the main
+packaging of F# on Windows (the Visual F# Tools) also includes any contributions that are made, and
+ensures that the versions do not diverge.
 
-◦ compiler optimizations
-◦ code generation improvements
-◦ bug fixes
-◦ library improvements
-◦ improvements related to FSharp.Data.TypeProviders.dll
-◦ improvements to allow additional targets for the F# compiler
+If you are using Windows, you should fork that repo and contribute directly there. Your contributions will 
+then be merged into this repo.
+
+If you are using Linux or OSX, you should prepare your contributions by forking this repository (the code is 
+essentially the same). This will give you access to the cross-platform testing 
+available from this repo. At the moment the process is:
+
+1. Fork this repo.
+2. Build and test using the subset of tests available in this repo. If you like, submit a PR to this repo in order to trigger an automatic Travis run, or set up a Travis hook in your fork.
+3. Seek initial review by posting an issue in this repository or http://visualfsharp.codeplex.com. Make it clear you are working on Linux or OSX.
+4. Cherry-pick your changes into a pull request for http://visualfsharp.codeplex.com and submit for final testing and clearance.
+5. The change will then be merged into this repo at a later point.
+
+It is likely that some people don't have access to Windows in order to run final tests at step 4. If you need help, email fsharp-opensource@googlegroups.com and ask to make a final test run on Windows.
 
 Contributions specifically related to the packaging of the Open Edition should be made here.
-
 
 
 
