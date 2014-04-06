@@ -1050,6 +1050,10 @@ let pdbInitialize (binaryName:string) (pdbName:string) =
 [<assembly:System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Reliability", "CA2001:AvoidCallingProblematicMethods", Scope="member", Target="Microsoft.FSharp.Compiler.AbstractIL.Internal.Support.#pdbClose(Microsoft.FSharp.Compiler.AbstractIL.Internal.Support+PdbWriter)", MessageId="System.GC.Collect")>]
 do()
 
+let pdbCloseDocument(documentWriter : PdbDocumentWriter) = 
+    Marshal.ReleaseComObject (documentWriter.symDocWriter)
+    |> ignore
+
 [<System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Reliability", "CA2001:AvoidCallingProblematicMethods", MessageId="System.GC.Collect")>]
 let pdbClose (writer:PdbWriter) =
     writer.symWriter.Close()

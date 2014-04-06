@@ -164,9 +164,6 @@ type internal InteractiveChecker =
     
     /// For a given script file, get the CheckOptions implied by the #load closure
     member GetCheckOptionsFromScriptRoot : filename : string * source : string * loadedTimestamp : System.DateTime -> CheckOptions
-
-    /// For a given script file, get the CheckOptions implied by the #load closure. Optional 'otherFlags'
-    member GetCheckOptionsFromScriptRoot : filename : string * source : string * loadedTimestamp : System.DateTime * otherFlags : string[] -> CheckOptions
         
 #if NO_QUICK_SEARCH_HELPERS // only used in QuickSearch prototype
 #else

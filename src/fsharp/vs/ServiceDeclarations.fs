@@ -853,6 +853,7 @@ module internal ItemDescriptionsImpl =
             let text = bufs (fun os -> 
                           bprintf os "%s %s : " (FSComp.SR.typeInfoArgument()) id.idText 
                           NicePrint.outputTy denv os argTy)
+
             let xmldoc = match argContainer with
                          | Some(ArgumentContainer.Method (minfo)) ->
                                if minfo.HasDirectXmlComment then minfo.XmlDoc else XmlDoc [||] 

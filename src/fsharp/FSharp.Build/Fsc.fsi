@@ -14,6 +14,7 @@ type Fsc = class
              member internal InternalGenerateFullPathToTool : unit -> System.String
              member internal InternalGenerateCommandLineCommands : unit -> System.String
              member internal InternalExecuteTool : string * string * string -> int
+             member internal GetCapturedArguments : unit -> string[]
              member BaseAddress : string with get,set
              member CodePage : string with get,set
              member DebugSymbols : bool with get,set

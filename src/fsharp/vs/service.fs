@@ -1388,7 +1388,6 @@ module internal Parser =
                             let res = capturedNameResolutionIdentifiers.Contains key
                             if not res then capturedNameResolutionIdentifiers.Add key |> ignore
                             res
-
                         | _ -> false
                 
                     if not alreadyDone then 
