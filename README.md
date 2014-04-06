@@ -15,11 +15,11 @@ If you are using Linux or OSX, you should prepare your contributions by forking 
 essentially the same). This will give you access to the cross-platform testing 
 available from this repo. At the moment the process is:
 
-* Fork this repo.
-* Build and test using the subset of tests available in this repo. If you like, submit a PR to this repo in order to trigger an automatic Travis run, or set up a Travis hook in your fork.
-* Seek initial review by posting an issue in this repository or http://visualfsharp.codeplex.com. Make it clear you are working on Linux or OSX.
-* Cherry-pick your changes into a pull request for http://visualfsharp.codeplex.com and submit for final testing and clearance.
-* The change will then be mergerd into this repo at a later point.
+1. Fork this repo.
+2. Build and test using the subset of tests available in this repo. If you like, submit a PR to this repo in order to trigger an automatic Travis run, or set up a Travis hook in your fork.
+3. Seek initial review by posting an issue in this repository or http://visualfsharp.codeplex.com. Make it clear you are working on Linux or OSX.
+4. Cherry-pick your changes into a pull request for http://visualfsharp.codeplex.com and submit for final testing and clearance.
+5. The change will then be mergerd into this repo at a later point.
 
 It is likely that some people don't have access to Windows in order to run final tests at step 4. If you need help, email fsharp-opensource@googlegroups.com and ask to make a final test run on Windows.
 
