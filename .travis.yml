@@ -15,5 +15,5 @@ script:
   - xbuild ./src/fsharp-library-unittests-build.proj /p:TargetFramework=net40 /p:Configuration=Release
   - /Library/Frameworks/Mono.framework/Versions/${MONO_VERSION}/bin/nunit-console4 ./lib/release/FSharp.Core.Unittests.dll
   - (cd tests/projects; ./build.sh)
-  - (cd tests/fsharp/core; ./run-all.sh)
+  - (cd tests/fsharp/core; ./run-opt.sh)
 
