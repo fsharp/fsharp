@@ -72,9 +72,7 @@ Copyright (C) Microsoft Corporation. All rights reserved.
 	</PropertyGroup>
 
 	<Target Name="ImplicitlyExpandTargetFramework"
-		DependsOnTargets="$(ImplicitlyExpandTargetFrameworkDependsOn)"
-                Condition="!Exists('$(MSBuildExtensionsPath32)\Microsoft\Portable\v4.0\Microsoft.Portable.Common.targets') AND
-                           !Exists('$(MSBuildExtensionsPath32)\Microsoft\Portable\Microsoft.Portable.Core.props')" >
+		DependsOnTargets="$(ImplicitlyExpandTargetFrameworkDependsOn)">
 
 		<ItemGroup>
 			<ReferenceAssemblyPaths Include="$(_TargetFrameworkDirectories)"/>
