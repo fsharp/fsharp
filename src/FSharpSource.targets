@@ -115,13 +115,14 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(TargetFramework)'=='net40'">
-    <TargetFrameworkVersion Condition="'$(TargetFrameworkVersion)' == '' ">v4.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <!-- When compiling for .NET 4.0 place all binaries directly in the primary output directory -->
     <TargetFrameworkOutputDirectory>.</TargetFrameworkOutputDirectory>
     <!-- When compiling back versions of the core library place binary in the qualified location -->
     <!-- An additional back version qualification is added further below. -->
     <TargetFrameworkOutputDirectory Condition="'$(FSharpCoreBackVersion)' != ''">$(TargetFramework)</TargetFrameworkOutputDirectory>
-    <DefineConstants Condition="'$(TargetFrameworkVersion)' == 'v4.5'">$(DefineConstants);FX_ATLEAST_45</DefineConstants>
+    <DefineConstants>$(DefineConstants);FSHARP_CORE_4_5</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_ATLEAST_45</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_ATLEAST_40</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_ATLEAST_35</DefineConstants>
     <DefineConstants>$(DefineConstants);BE_SECURITY_TRANSPARENT</DefineConstants>
@@ -202,6 +203,7 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <DefineConstants>$(DefineConstants);FX_RESHAPED_REFLECTION</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_EXIT_CONTEXT_FLAGS</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_EVENTWAITHANDLE_NO_IDISPOSABLE</DefineConstants>
+    <DefineConstants>$(DefineConstants);QUERIES_IN_FSLIB</DefineConstants>
     <AssemblySearchPaths>$(MSBuildExtensionsPath32)\..\xbuild-frameworks\.NETPortable\v4.5</AssemblySearchPaths>
     <AssemblySearchPaths>$(AssemblySearchPaths);$(MSBuildExtensionsPath32)\..\Reference Assemblies\Microsoft\Framework\.NETCore\v4.5</AssemblySearchPaths>
     <OtherFlags>$(OtherFlags) --targetprofile:netcore</OtherFlags>
@@ -332,10 +334,10 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <DefineConstants>$(DefineConstants);FX_NO_BIGINT</DefineConstants>
     <DefineConstants>$(DefineConstants);DONT_INCLUDE_DEPRECATED</DefineConstants>
     <DefineConstants>$(DefineConstants);PUT_TYPE_PROVIDERS_IN_FSCORE</DefineConstants>
+    <DefineConstants>$(DefineConstants);QUERIES_IN_FSLIB</DefineConstants>
 
     <AssemblySearchPaths>$(MSBuildExtensionsPath32)\..\xbuild-frameworks\.NETPortable\v4.0\Profile\$(TargetFrameworkProfile)</AssemblySearchPaths>
     <AssemblySearchPaths>$(AssemblySearchPaths);$(MSBuildExtensionsPath32)\..\Reference Assemblies\Microsoft\Framework\.NETPortable\v4.0\Profile\$(TargetFrameworkProfile)</AssemblySearchPaths>
-
   </PropertyGroup>
 
   <!-- Target Silverlight 3.0 -->
@@ -732,7 +734,6 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <OutputPath>$(FSharpSourcesRoot)\..\lib\$(ConfigurationOutputDirectory)\$(TargetFrameworkOutputDirectory)</OutputPath>
   </PropertyGroup>
 
-
   <!-- Include the proto targets file when building the final compiler using the proto -->
   <Import Project="..\lib\proto\Microsoft.FSharp-proto.targets" 
           Condition="Exists('..\lib\proto\Microsoft.FSharp-proto.targets') AND '$(BuildWith)' == ''"/>
@@ -765,7 +766,7 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
   <!-- Also include it if Proto targets file doesn't exist, e.g. when cleaning the build with /t:Clean -->
   <Import Project="$(LkgPath)\Microsoft.FSharp.Targets"  
           Condition="(!Exists('..\lib\proto\Microsoft.FSharp-proto.targets')  OR '$(BuildWith)' == 'LKG') " />
-
+  
   <!-- Reference an existing FSI.EXE for use from within MSBuild -->
   <PropertyGroup>
     <FsSrGenToolPath>$(LkgPath)\..\2.0</FsSrGenToolPath>
@@ -788,7 +789,6 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <Error
             Text="Configuration '$(Configuration)' is not one of the supported configurations: Debug, Release, Proto"
             Condition="'$(Configuration)'!='Release' and '$(Configuration)'!='Debug' and '$(Configuration)'!='Proto'"/>
-
   </Target>
 
   <Import Project="$(LkgPath)\..\2.0\FSharp.SRGen.targets" />

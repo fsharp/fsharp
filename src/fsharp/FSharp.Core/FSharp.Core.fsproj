@@ -124,6 +124,18 @@
     <Compile Include="event.fs">
       <Link>Event/event.fs</Link>
     </Compile>
+    <Compile Include="math\n.fsi">
+      <Link>Numerics/n.fsi</Link>
+    </Compile>
+    <Compile Include="math\n.fs">
+      <Link>Numerics/n.fs</Link>
+    </Compile>
+    <Compile Include="math\z.fsi">
+      <Link>Numerics/z.fsi</Link>
+    </Compile>
+    <Compile Include="math\z.fs">
+      <Link>Numerics/z.fs</Link>
+    </Compile>
     <Compile Include="..\..\utils\sformat.fsi">
       <Link>Printf/sformat.fsi</Link>
     </Compile>
@@ -174,18 +186,6 @@
     </Compile>
     <Compile Include="SI.fs">
       <Link>Units/SI.fs</Link>
-    </Compile>
-    <Compile Include="math\n.fsi">
-      <Link>Numerics/n.fsi</Link>
-    </Compile>
-    <Compile Include="math\n.fs">
-      <Link>Numerics/n.fs</Link>
-    </Compile>
-    <Compile Include="math\z.fsi">
-      <Link>Numerics/z.fsi</Link>
-    </Compile>
-    <Compile Include="math\z.fs">
-      <Link>Numerics/z.fs</Link>
     </Compile>
     <Compile Include="fslib-extra-pervasives.fsi">
       <Link>Extras/fslib-extra-pervasives.fsi</Link>

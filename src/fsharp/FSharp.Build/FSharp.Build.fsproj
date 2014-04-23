@@ -46,6 +46,10 @@
       <Link>Microsoft.Portable.FSharp.Targets</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <Compile Include="Fsc.fsi" />
+    <Compile Include="Fsc.fs" />
+    <Compile Include="CreateFSharpManifestResourceName.fsi" />
+    <Compile Include="CreateFSharpManifestResourceName.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="mscorlib" />
