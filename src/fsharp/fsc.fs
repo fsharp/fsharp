@@ -1282,6 +1282,7 @@ module MainModuleBuilder =
            // otherwise, include the default manifest
            else
                System.Runtime.InteropServices.RuntimeEnvironment.GetRuntimeDirectory() + @"default.win32manifest"
+#endif
         
         let nativeResources = 
 #if SILVERLIGHT
@@ -1412,7 +1413,7 @@ module StaticLinker =
             ilxMainModule, rewriteExternalRefsToLocalRefs
 
 
-    #if DEBUG
+#if DEBUG
     let PrintModule outfile x = 
 #if SILVERLIGHT
         ()
@@ -1420,7 +1421,7 @@ module StaticLinker =
         use os = File.CreateText(outfile) :> TextWriter
         ILAsciiWriter.output_module os x  
 #endif
-    #endif
+#endif
 
 
     // Find all IL modules that are to be statically linked given the static linking roots.

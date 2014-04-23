@@ -308,7 +308,7 @@ module internal FSharpEnvironment =
 
 
 #endif // SILVERLIGHT
-#if FX_ATLEAST_45
+#if FX_ATLEAST_45_COMPILER_LOCATION
     // Apply the given function to the registry entry corresponding to the subkey.
     // The reg key is dispoed at the end of the scope.
     let useKey subkey f =

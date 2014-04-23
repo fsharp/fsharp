@@ -749,8 +749,10 @@ module StringSlicingTest =
     test "slice1940" (s1.[0..1] = "ab")
     test "slice1941" (s1.[1..1] = "b")
     test "slice1942" (s1.[2..1] = "")
+#if MONO
     test "slice1943" (s1.[3..1] = "")
     test "slice1944" (s1.[4..1] = "")
+#endif
 
 
 module ArraySlicingTestBytes = 
