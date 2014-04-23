@@ -1,10 +1,17 @@
 
-HEAD
-  * Added tests
+3.1.1.11
 
-  * Merged F# 3.1 open source release
+  * F# Interactive now uses .NET 4.5 profile
+  * Fix for performance regression in 3.1 with extension members
+  * Add query support to FSharp.Core portable profiles
+  * Fix problem with building portable libraries (https://github.com/fsharp/fsharp/issues/299)
 
-  * Fixed build logic for F# 3.1
+3.1.1.10
+  * Include fixes from Microsoft included with Visual F# Tools 3.1.1
+
+3.1.1.7
+  * Build back versions of FSharp.Core 2.3.0.0, 2.3.5.0, 4.3.0.0 to include code generation fix.
+  * Build Profile7 (portable-net45+sl5+win8) FSharp.Core
 
 3.0.30
   * Partial fix for allowing F# 3.1 projects to compile using xbuild (also 
