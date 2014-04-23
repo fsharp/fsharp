@@ -1273,16 +1273,15 @@ module MainModuleBuilder =
 #if SILVERLIGHT
            ""
 #else
+           // use custom manifest if provided
            if not(tcConfig.win32manifest = "") then
                tcConfig.win32manifest
-           elif not(tcConfig.includewin32manifest) || not(tcConfig.win32res = "") || runningOnMono then // don't embed a manifest if a native resource is being included
+           // don't embed a manifest if target is not an exe, if manifest is specifically excluded, if another native resource is being included, or if running on mono
+           elif not(tcConfig.target.IsExe) || not(tcConfig.includewin32manifest) || not(tcConfig.win32res = "") || runningOnMono then
                ""
+           // otherwise, include the default manifest
            else
-               match MSBuildResolver.HighestInstalledNetFrameworkVersionMajorMinor() with
-               | _,"v4.0" -> System.Runtime.InteropServices.RuntimeEnvironment.GetRuntimeDirectory() + @"default.win32manifest"
-               | _,"v3.5" -> System.Runtime.InteropServices.RuntimeEnvironment.GetRuntimeDirectory() + @"..\v3.5\default.win32manifest"
-               | _,_ -> "" // only have default manifests for 3.5 and 4.0               
-#endif
+               System.Runtime.InteropServices.RuntimeEnvironment.GetRuntimeDirectory() + @"default.win32manifest"
         
         let nativeResources = 
 #if SILVERLIGHT

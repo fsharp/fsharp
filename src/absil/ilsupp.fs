@@ -1192,7 +1192,7 @@ let pdbReadOpen (moduleName:string) (path:string) :  PdbReader =
         with _ ->  
             { symReader = null } 
 #else 
-        let symbolBinder = System.Diagnostics.SymbolStore.SymBinder() 
+        let symbolBinder = new System.Diagnostics.SymbolStore.SymBinder() 
         { symReader = symbolBinder.GetReader(importerPtr, moduleName, path) } 
 #endif
     finally
