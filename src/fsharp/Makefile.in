@@ -48,6 +48,11 @@ ifeq ("$(pclenabled)", "yes")
 	$(MAKE) -C FSharp.Core FSharpCoreBackVersion=3.0 TargetFramework=net20 $@
 endif
 
+all-monotouch-monodroid:
+	$(MAKE) build-proto
+	$(MAKE) -C FSharp.Core TargetFramework=monodroid build
+	$(MAKE) -C FSharp.Core TargetFramework=monotouch build
+
 
 
 
