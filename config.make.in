@@ -44,13 +44,13 @@ outsuffix = .
 endif
 
 ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-monodroid-)
-VERSION = 2.3.0.1
+VERSION = 2.3.98.1
 TARGET = monodroid
 endif
 
 
 ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-monotouch-)
-VERSION = 2.3.0.1
+VERSION = 2.3.98.1
 TARGET = monotouch
 endif
 
