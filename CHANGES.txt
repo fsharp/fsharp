@@ -1,4 +1,8 @@
 
+3.1.1.13
+
+  * Change monotouch and monodroid FSharp.Core.dll to both use 2.3.1.0, as used in MonoTouch and MonoDroid SDKs
+  
 3.1.1.12
 
   * Add build command "all-monotouch-monodroid"

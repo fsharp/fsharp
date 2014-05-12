@@ -21,8 +21,8 @@
     <!-- These correspond to the frameworks supported by Microsoft -->
     <AssemblyVersion Condition="'$(TargetFramework)' == 'net20'">2.3.1.0</AssemblyVersion>
     <AssemblyVersion Condition="'$(TargetFramework)' == 'portable-net45+sl5+win8' ">2.3.5.1</AssemblyVersion>
-    <AssemblyVersion Condition="'$(TargetFramework)' == 'monodroid' ">2.3.98.1</AssemblyVersion>
-    <AssemblyVersion Condition="'$(TargetFramework)' == 'monotouch' ">2.3.99.1</AssemblyVersion>
+    <AssemblyVersion Condition="'$(TargetFramework)' == 'monodroid' ">2.3.0.1</AssemblyVersion>
+    <AssemblyVersion Condition="'$(TargetFramework)' == 'monotouch' ">2.3.0.1</AssemblyVersion>
     <AssemblyVersion Condition="'$(TargetFramework)' == 'portable-windows8+net45'">3.3.1.0</AssemblyVersion>
 
     <!-- These are simulations of previous versions of FSharp.Core for F# 3.0, useable to support the 'build a library compatible with a back version of F#' multi-targeting option supported by some IDEs -->
@@ -30,8 +30,6 @@
     <AssemblyVersion Condition="'$(TargetFramework)' == 'net20' AND '$(FSharpCoreBackVersion)' == '3.0' ">2.3.0.0</AssemblyVersion>
     <AssemblyVersion Condition="'$(TargetFramework)' == 'net40' AND '$(FSharpCoreBackVersion)' == '3.0' ">4.3.0.0</AssemblyVersion>
     <AssemblyVersion Condition="'$(TargetFramework)' == 'portable-net45+sl5+win8' AND '$(FSharpCoreBackVersion)' == '3.0' ">2.3.5.0</AssemblyVersion>
-    <AssemblyVersion Condition="'$(TargetFramework)' == 'monodroid' AND '$(FSharpCoreBackVersion)' == '3.0' ">2.3.98.0</AssemblyVersion>
-    <AssemblyVersion Condition="'$(TargetFramework)' == 'monotouch' AND '$(FSharpCoreBackVersion)' == '3.0' ">2.3.99.0</AssemblyVersion>
     <!-- FSharp.Core using System.Runtime -->
     <OtherFlags>$(OtherFlags) --version:$(AssemblyVersion)</OtherFlags>
     <!--
