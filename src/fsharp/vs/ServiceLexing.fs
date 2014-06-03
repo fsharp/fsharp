@@ -96,9 +96,6 @@ type TokenInformation = {
 //--------------------------------------------------------------------------
 
 module internal Flags = 
-#if SILVERLIGHT
-    let init ()= ()
-#else
 #if DEBUG
     let loggingTypes             = System.Environment.GetEnvironmentVariable("mFSharp_Logging")
     let logging                  = not (String.IsNullOrEmpty(loggingTypes))
@@ -188,7 +185,6 @@ module internal Flags =
 
     //let stripFSharpCoreReferences   = not (String.IsNullOrEmpty(System.Environment.GetEnvironmentVariable("mFSharp_StripFSharpCoreReferences")))
     let init() = doInit
-#endif
         
 open Flags
 

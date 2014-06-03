@@ -378,9 +378,6 @@ type AsyncModule() =
 #if FSHARP_CORE_2_0
 // nothing
 #else
-#if SILVERLIGHT
-// nothing
-#else
 // we are on the desktop
     member this.RunExeAndExpectOutput(exeName, expected:string) =
         let curDir = (new Uri(System.Reflection.Assembly.GetExecutingAssembly().CodeBase)).LocalPath |> System.IO.Path.GetDirectoryName
@@ -458,6 +455,5 @@ AwaitWaitHandleAlreadySignaled0 [|("ok", true); ("caught:boom", true)|]
 AwaitWaitHandleAlreadySignaled1 [|("ok", false); ("unhandled", false)|]
 """               )
 
-#endif
 #endif
 #endif
