@@ -106,7 +106,13 @@ src/fsharp/policy.4.3.FSharp.Core/Makefile
 ])
 AC_OUTPUT
 
+CONFIGURE_FILE=autogen.sh
+if ! test -e $CONFIGURE_FILE; then
+	CONFIGURE_FILE=configure
+fi
+CONFIGURE_COMMAND="`dirname $0`/$CONFIGURE_FILE"
+
 if ! test "x$MONOPREFIX" = "x$prefix"; then
 	AC_WARN([Prefix to use is not the same as mono's: $prefix
-		Consider using: ./autogen.sh --prefix=$MONOPREFIX])
+		Consider using: $CONFIGURE_COMMAND --prefix=$MONOPREFIX])
 fi
