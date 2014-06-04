@@ -349,54 +349,54 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
 
 
   <ItemGroup Condition="'$(TargetProfile)'=='netcore'">
-    <Reference Include="System.Collections.Concurrent.dll" Condition="'$(TargetFramework)'=='netcore7'" />
-    <Reference Include="System.Collections.dll" />
-    <Reference Include="System.ComponentModel.dll" />
-    <Reference Include="System.Core.dll" />
-    <Reference Include="System.Diagnostics.Contracts.dll" />
-    <Reference Include="System.Diagnostics.Debug.dll" />
-    <Reference Include="System.Diagnostics.Tools.dll" />
-    <Reference Include="System.dll" />
-    <Reference Include="System.Dynamic.Runtime.dll" />
-    <Reference Include="System.Globalization.dll" />
-    <Reference Include="System.IO.dll" />
-    <Reference Include="System.Linq.dll" />
-    <Reference Include="System.Linq.Expressions.dll" />
-    <Reference Include="System.Linq.Parallel.dll" Condition="'$(TargetFramework)'=='netcore7'" />
-    <Reference Include="System.Linq.Queryable.dll" />
-    <Reference Include="System.Net.dll" />
-    <Reference Include="System.Net.Http.dll" Condition="'$(TargetFramework)'=='netcore7'" />
-    <Reference Include="System.Net.NetworkInformation.dll" />
-    <Reference Include="System.Net.Primitives.dll" />
-    <Reference Include="System.Net.Requests.dll" />
-    <Reference Include="System.Numerics.dll" Condition="'$(TargetFramework)'=='netcore7'" />
-    <Reference Include="System.ObjectModel.dll" />
-    <Reference Include="System.Reflection.dll" />
-    <Reference Include="System.Reflection.Extensions.dll" />
-    <Reference Include="System.Reflection.Primitives.dll" />
-    <Reference Include="System.Resources.ResourceManager.dll" />
-    <Reference Include="System.Runtime.dll" />
-    <Reference Include="System.Runtime.Extensions.dll" />
-    <Reference Include="System.Runtime.Numerics.dll" Condition="'$(TargetFramework)'=='netcore7'" />
-    <Reference Include="System.Runtime.InteropServices.dll" Condition="'$(TargetFramework)'=='netcore7'" />
-    <Reference Include="System.Runtime.Serialization.dll" />
-    <Reference Include="System.Runtime.Serialization.Json.dll" />
-    <Reference Include="System.Runtime.Serialization.Primitives.dll" />
-    <Reference Include="System.Runtime.Serialization.Xml.dll" />
-    <Reference Include="System.Security.Principal.dll" />
-    <Reference Include="System.Text.Encoding.dll" />
-    <Reference Include="System.Text.Encoding.Extensions.dll" />
-    <Reference Include="System.Text.RegularExpressions.dll" />
-    <Reference Include="System.Threading.dll" />
-    <Reference Include="System.Threading.Tasks.dll" />
-    <Reference Include="System.Threading.Tasks.Parallel.dll" Condition="'$(TargetFramework)'=='netcore7'" />
-    <Reference Include="System.Windows.dll" />
-    <Reference Include="System.Xml.dll" />
-    <Reference Include="System.Xml.Linq.dll" />
-    <Reference Include="System.Xml.ReaderWriter.dll" />
-    <Reference Include="System.Xml.Serialization.dll" />
-    <Reference Include="System.Xml.XDocument.dll" />
-    <Reference Include="System.Xml.XmlSerializer.dll" />
+    <Reference Include="System.Collections.Concurrent.dll" Condition="'$(TargetFramework)'=='netcore7'"><Private>false</Private></Reference>
+    <Reference Include="System.Collections.dll"><Private>false</Private></Reference>
+    <Reference Include="System.ComponentModel.dll"><Private>false</Private></Reference>
+    <Reference Include="System.Core.dll"><Private>false</Private></Reference>
+    <Reference Include="System.Diagnostics.Contracts.dll"><Private>false</Private></Reference>
+    <Reference Include="System.Diagnostics.Debug.dll"><Private>false</Private></Reference>
+    <Reference Include="System.Diagnostics.Tools.dll"><Private>false</Private></Reference>
+    <Reference Include="System.dll"><Private>false</Private></Reference>
+    <Reference Include="System.Dynamic.Runtime.dll"><Private>false</Private></Reference>
+    <Reference Include="System.Globalization.dll"><Private>false</Private></Reference>
+    <Reference Include="System.IO.dll"><Private>false</Private></Reference>
+    <Reference Include="System.Linq.dll"><Private>false</Private></Reference>
+    <Reference Include="System.Linq.Expressions.dll"><Private>false</Private></Reference>
+    <Reference Include="System.Linq.Parallel.dll" Condition="'$(TargetFramework)'=='netcore7'"><Private>false</Private></Reference>
+    <Reference Include="System.Linq.Queryable.dll"><Private>false</Private></Reference>
+    <Reference Include="System.Net.dll"><Private>false</Private></Reference>
+    <Reference Include="System.Net.Http.dll" Condition="'$(TargetFramework)'=='netcore7'"><Private>false</Private></Reference>
+    <Reference Include="System.Net.NetworkInformation.dll"><Private>false</Private></Reference>
+    <Reference Include="System.Net.Primitives.dll"><Private>false</Private></Reference>
+    <Reference Include="System.Net.Requests.dll"><Private>false</Private></Reference>
+    <Reference Include="System.Numerics.dll" Condition="'$(TargetFramework)'=='netcore7'"><Private>false</Private></Reference>
+    <Reference Include="System.ObjectModel.dll"><Private>false</Private></Reference>
+    <Reference Include="System.Reflection.dll"><Private>false</Private></Reference>
+    <Reference Include="System.Reflection.Extensions.dll"><Private>false</Private></Reference>
+    <Reference Include="System.Reflection.Primitives.dll"><Private>false</Private></Reference>
+    <Reference Include="System.Resources.ResourceManager.dll"><Private>false</Private></Reference>
+    <Reference Include="System.Runtime.dll"><Private>false</Private></Reference>
+    <Reference Include="System.Runtime.Extensions.dll"><Private>false</Private></Reference>
+    <Reference Include="System.Runtime.Numerics.dll" Condition="'$(TargetFramework)'=='netcore7'"><Private>false</Private></Reference>
+    <Reference Include="System.Runtime.InteropServices.dll" Condition="'$(TargetFramework)'=='netcore7'"><Private>false</Private></Reference>
+    <Reference Include="System.Runtime.Serialization.dll"><Private>false</Private></Reference>
+    <Reference Include="System.Runtime.Serialization.Json.dll"><Private>false</Private></Reference>
+    <Reference Include="System.Runtime.Serialization.Primitives.dll"><Private>false</Private></Reference>
+    <Reference Include="System.Runtime.Serialization.Xml.dll"><Private>false</Private></Reference>
+    <Reference Include="System.Security.Principal.dll"><Private>false</Private></Reference>
+    <Reference Include="System.Text.Encoding.dll"><Private>false</Private></Reference>
+    <Reference Include="System.Text.Encoding.Extensions.dll"><Private>false</Private></Reference>
+    <Reference Include="System.Text.RegularExpressions.dll"><Private>false</Private></Reference>
+    <Reference Include="System.Threading.dll"><Private>false</Private></Reference>
+    <Reference Include="System.Threading.Tasks.dll"><Private>false</Private></Reference>
+    <Reference Include="System.Threading.Tasks.Parallel.dll" Condition="'$(TargetFramework)'=='netcore7'"><Private>false</Private></Reference>
+    <Reference Include="System.Windows.dll"><Private>false</Private></Reference>
+    <Reference Include="System.Xml.dll"><Private>false</Private></Reference>
+    <Reference Include="System.Xml.Linq.dll"><Private>false</Private></Reference>
+    <Reference Include="System.Xml.ReaderWriter.dll"><Private>false</Private></Reference>
+    <Reference Include="System.Xml.Serialization.dll"><Private>false</Private></Reference>
+    <Reference Include="System.Xml.XDocument.dll"><Private>false</Private></Reference>
+    <Reference Include="System.Xml.XmlSerializer.dll"><Private>false</Private></Reference>
   </ItemGroup>
 
   <!-- Target Silverlight 3.0 -->

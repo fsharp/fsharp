@@ -67,13 +67,42 @@ if ! test -e $MONOGACDIR20/mscorlib.dll; then
 fi
 
 if test -e $MONOLIBDIR/mono/xbuild-frameworks/.NETPortable/v4.0/Profile/Profile47/mscorlib.dll; then
-   PCLENABLED=yes
+   PCLENABLED47=yes
 else
-   PCLENABLED=no
+   PCLENABLED47=no
 fi
-AC_MSG_NOTICE(PCL Reference Assemblies found: $PCLENABLED)
+AC_MSG_NOTICE(PCL Reference Assemblies for Profile 47 found: $PCLENABLED47)
 
-AC_SUBST(PCLENABLED)
+AC_SUBST(PCLENABLED47)
+
+
+if test -e $MONOLIBDIR/mono/xbuild-frameworks/.NETPortable/v4.5/Profile/Profile7/System.Runtime.dll; then
+   PCLENABLED7=yes
+else
+   PCLENABLED7=no
+fi
+AC_MSG_NOTICE(PCL Reference Assemblies for Profile 7 found: $PCLENABLED7)
+
+AC_SUBST(PCLENABLED7)
+
+if test -e $MONOLIBDIR/mono/xbuild-frameworks/.NETPortable/v4.5/Profile/Profile78/System.Runtime.dll; then
+   PCLENABLED78=yes
+else
+   PCLENABLED78=no
+fi
+AC_MSG_NOTICE(PCL Reference Assemblies for Profile 78 found: $PCLENABLED78)
+
+AC_SUBST(PCLENABLED78)
+
+if test -e $MONOLIBDIR/mono/xbuild-frameworks/.NETPortable/v4.5/Profile/Profile259/System.Runtime.dll; then
+   PCLENABLED259=yes
+else
+   PCLENABLED259=no
+fi
+AC_MSG_NOTICE(PCL Reference Assemblies for Profile 259 found: $PCLENABLED259)
+
+AC_SUBST(PCLENABLED259)
+
 AC_SUBST(MONOLIBDIR)
 AC_SUBST(MONOGACDIR)
 

@@ -17,7 +17,10 @@ monogacdir21 := @abs_top_srcdir@/dependencies/mono/2.1
 monogacdir35 := @MONOGACDIR35@
 monogacdir40 := @MONOGACDIR40@
 
-pclenabled := @PCLENABLED@
+pclenabled47 := @PCLENABLED47@
+pclenabled7 := @PCLENABLED7@
+pclenabled78 := @PCLENABLED78@
+pclenabled259 := @PCLENABLED259@
 
 gacdir := ${libdir}mono
 
