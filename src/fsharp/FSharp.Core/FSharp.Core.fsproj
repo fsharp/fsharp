@@ -199,8 +199,9 @@
     </CustomAdditionalCompileInputs>
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="mscorlib" Condition=" '$(TargetFramework)' != 'netcore7' AND '$(TargetFramework)' != 'netcore78' AND '$(TargetFramework)' != 'netcore259' " />
+    <Reference Include="mscorlib" Condition=" '$(TargetProfile)' != 'netcore' " />
     <Reference Include="System" />
+    <Reference Include="System.Runtime" Condition=" '$(TargetProfile)' == 'netcore' " />
     <Reference Include="System.Numerics" Condition="'$(TargetFramework)' == 'net40'" />
     <Reference Include="System.Net" Condition="'$(TargetFramework)' == 'sl5' OR '$(TargetFramework)' == 'sl5-compiler' OR '$(TargetFramework)' == 'XNA\5.0' OR '$(TargetFramework)' == 'wp7' OR '$(TargetFramework)' == 'portable-net45+sl5+win8' OR '$(TargetFramework)' == 'net40-xna40-xbox360' OR '$(TargetFramework)' == 'netcore7'" />
     <Reference Include="System.Observable" Condition="'$(TargetFramework)' == 'wp7' " />
