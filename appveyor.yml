@@ -3,7 +3,7 @@ init:
 build_script:
   - cmd: build.bat
 test: off
-version: 3.1.0.{build}
+version: 3.1.1.0.{build}
 artifacts:
   - path: lib\release
     name: release
