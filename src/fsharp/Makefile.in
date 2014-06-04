@@ -42,7 +42,9 @@ build clean install:
 	$(MAKE) -C FSharp.Core TargetFramework=monotouch $@
 ifeq ("$(pclenabled)", "yes")
 	$(MAKE) -C FSharp.Core TargetFramework=portable-net45+sl5+win8 $@
-	$(MAKE) -C FSharp.Core TargetFramework=portable-windows8+net45 $@
+	$(MAKE) -C FSharp.Core TargetFramework=netcore7 $@
+	$(MAKE) -C FSharp.Core TargetFramework=netcore78 $@
+	$(MAKE) -C FSharp.Core TargetFramework=netcore259 $@
 	$(MAKE) -C FSharp.Core FSharpCoreBackVersion=3.0 TargetFramework=portable-net45+sl5+win8 $@
 	$(MAKE) -C FSharp.Core FSharpCoreBackVersion=3.0 TargetFramework=net40 $@
 	$(MAKE) -C FSharp.Core FSharpCoreBackVersion=3.0 TargetFramework=net20 $@

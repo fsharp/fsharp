@@ -60,9 +60,21 @@ TARGET = portable-net45+sl5+win8
 PCLPATH = .NETPortable
 endif
 
-ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-portable-windows8+net45-)
+ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-netcore7-)
 VERSION = 3.3.1.0
-TARGET = portable-windows8+net45
+TARGET = netcore7
+PCLPATH = .NETCore
+endif
+
+ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-netcore78-)
+VERSION = 3.3.1.78
+TARGET = netcore78
+PCLPATH = .NETCore
+endif
+
+ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-netcore259-)
+VERSION = 3.3.1.259
+TARGET = netcore259
 PCLPATH = .NETCore
 endif
 

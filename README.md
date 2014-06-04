@@ -103,7 +103,9 @@ Portable Profile47 (net45+sl5+win8), XNA 4.0 for Xbox 360, and Silverlight 5.0 p
 ```
 msbuild fsharp-library-build.proj /p:TargetFramework=net20 /p:Configuration=Release
 msbuild fsharp-library-build.proj /p:TargetFramework=portable-net45+sl5+win8 /p:Configuration=Release
-msbuild fsharp-library-build.proj /p:TargetFramework=portable-windows8+net45 /p:Configuration=Release
+msbuild fsharp-library-build.proj /p:TargetFramework=netcore7 /p:Configuration=Release
+msbuild fsharp-library-build.proj /p:TargetFramework=netcore78 /p:Configuration=Release
+msbuild fsharp-library-build.proj /p:TargetFramework=netcore259 /p:Configuration=Release
 msbuild fsharp-library-build.proj /p:TargetFramework=sl5 /p:Configuration=Release
 
 msbuild fsharp-library-build.proj /p:TargetFramework=monodroid /p:Configuration=Release
@@ -122,12 +124,6 @@ version number suitable for use when building libaries that have usable with bot
 msbuild fsharp-library-build.proj /p:TargetFramework=net20 /p:Configuration=Release /p:FSharpCoreBackVersion=3.0
 msbuild fsharp-library-build.proj /p:TargetFramework=net40 /p:Configuration=Release /p:FSharpCoreBackVersion=3.0
 msbuild fsharp-library-build.proj /p:TargetFramework=portable-net45+sl5+win8 /p:Configuration=Release /p:FSharpCoreBackVersion=3.0
-msbuild fsharp-library-build.proj /p:TargetFramework=portable-windows8+net45 /p:Configuration=Release /p:FSharpCoreBackVersion=3.0
-msbuild fsharp-library-build.proj /p:TargetFramework=sl5 /p:Configuration=Release /p:FSharpCoreBackVersion=3.0
-
-msbuild fsharp-library-build.proj /p:TargetFramework=monodroid /p:Configuration=Release /p:FSharpCoreBackVersion=3.0
-msbuild fsharp-library-build.proj /p:TargetFramework=monotouch /p:Configuration=Release /p:FSharpCoreBackVersion=3.0
-msbuild fsharp-library-build.proj /p:TargetFramework=net40-xna40-xbox360 /p:Configuration=Release /p:FSharpCoreBackVersion=3.0
 ```
 
 ### Windows, using xbuild (e.g. if no .NET is installed and only Mono 3.0 is installed):
