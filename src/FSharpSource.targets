@@ -425,8 +425,9 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
   </PropertyGroup>
 
   <!-- Target Silverlight 5.0 -->
-  <PropertyGroup Condition="'$(TargetFramework)'=='sl5'">
+  <PropertyGroup Condition="'$(TargetFramework)'=='sl5' OR '$(TargetFramework)'=='sl5-compiler'">
     <DefineConstants>$(DefineConstants);SILVERLIGHT</DefineConstants>
+    <DefineConstants Condition="'$(TargetFramework)'=='sl5-compiler'">$(DefineConstants);EXTRAS_FOR_SILVERLIGHT_COMPILER</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_ATLEAST_SILVERLIGHT_50</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_ARRAY_LONG_LENGTH</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_BIGINT</DefineConstants>

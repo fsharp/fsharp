@@ -1,0 +1,8 @@
+init:
+  - git config --global core.autocrlf input
+build_script:
+  - cmd: build.bat
+test: off
+artifacts:
+  - path: lib\release
+    name: release
