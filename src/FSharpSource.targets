@@ -227,10 +227,9 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <DefineConstants>$(DefineConstants);DONT_INCLUDE_DEPRECATED</DefineConstants>
     <DefineConstants>$(DefineConstants);PUT_TYPE_PROVIDERS_IN_FSCORE</DefineConstants>
     <DefineConstants>$(DefineConstants);QUERIES_IN_FSLIB</DefineConstants>
-    <ImplicitlyExpandTargetFramework>false</ImplicitlyExpandTargetFramework>
 
-    <AssemblySearchPaths>$(MSBuildExtensionsPath32)\..\xbuild-frameworks\.NETPortable\v4.0\Profile\$(TargetFrameworkProfile)</AssemblySearchPaths>
-    <AssemblySearchPaths>$(AssemblySearchPaths);$(MSBuildExtensionsPath32)\..\Reference Assemblies\Microsoft\Framework\.NETPortable\v4.0\Profile\$(TargetFrameworkProfile)</AssemblySearchPaths>
+    <!-- An explicit search path seems to be needed on Mono 3.4.0 otherwise the reference assemblies for the profile aren't found -->
+    <AssemblySearchPaths Condition="Exists('$(MSBuildExtensionsPath32)\..\xbuild-frameworks\.NETPortable\v4.0\mscorlib.dll')">$(MSBuildExtensionsPath32)\..\xbuild-frameworks\.NETPortable\v4.0</AssemblySearchPaths>
   </PropertyGroup>
 
   <!-- Target Portable -->
@@ -270,10 +269,8 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <TargetProfile>netcore</TargetProfile>
     <TargetFrameworkProfile>Profile7</TargetFrameworkProfile>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
-    <ImplicitlyExpandTargetFramework>false</ImplicitlyExpandTargetFramework>
-    <!--
-    <AssemblySearchPaths>$(MSBuildExtensionsPath32)\..\xbuild-frameworks\.NETPortable\v4.5</AssemblySearchPaths>
--->
+    <!-- An explicit search path seems to be needed on Mono 3.4.0 otherwise the reference assemblies for the profile aren't found -->
+    <AssemblySearchPaths Condition="Exists('$(MSBuildExtensionsPath32)\..\xbuild-frameworks\.NETPortable\v4.5\System.Runtime.dll')">$(MSBuildExtensionsPath32)\..\xbuild-frameworks\.NETPortable\v4.5</AssemblySearchPaths>
     <OtherFlags>$(OtherFlags) --targetprofile:netcore</OtherFlags>
   </PropertyGroup>
 
@@ -309,10 +306,8 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <TargetProfile>netcore</TargetProfile>
     <TargetFrameworkProfile>Profile78</TargetFrameworkProfile>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
-    <ImplicitlyExpandTargetFramework>false</ImplicitlyExpandTargetFramework>
-    <!--
-<AssemblySearchPaths>$(MSBuildExtensionsPath32)\..\xbuild-frameworks\.NETPortable\v4.5</AssemblySearchPaths>
--->
+    <!-- An explicit search path seems to be needed on Mono 3.4.0 otherwise the reference assemblies for the profile aren't found -->
+    <AssemblySearchPaths Condition="Exists('$(MSBuildExtensionsPath32)\..\xbuild-frameworks\.NETPortable\v4.5\System.Runtime.dll')">$(MSBuildExtensionsPath32)\..\xbuild-frameworks\.NETPortable\v4.5</AssemblySearchPaths>
     <OtherFlags>$(OtherFlags) --targetprofile:netcore</OtherFlags>    
   </PropertyGroup>
 
@@ -345,13 +340,10 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <DefineConstants>$(DefineConstants);FX_NO_CONCURRENT_DICTIONARY</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_ATLEAST_LINQ</DefineConstants>
     <TargetProfile>netcore</TargetProfile>
-    <ImplicitlyExpandTargetFramework>false</ImplicitlyExpandTargetFramework>
     <TargetFrameworkProfile>Profile259</TargetFrameworkProfile>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
-<!--
-    <AssemblySearchPaths>$(MSBuildExtensionsPath32)\..\xbuild-frameworks\.NETPortable\v4.5</AssemblySearchPaths>
-    <AssemblySearchPaths>$(AssemblySearchPaths);$(MSBuildExtensionsPath32)\..\Reference Assemblies\Microsoft\Framework\.NETCore\v4.5</AssemblySearchPaths>
--->
+    <!-- An explicit search path seems to be needed on Mono 3.4.0 otherwise the reference assemblies for the profile aren't found -->
+    <AssemblySearchPaths Condition="Exists('$(MSBuildExtensionsPath32)\..\xbuild-frameworks\.NETPortable\v4.5\System.Runtime.dll')">$(MSBuildExtensionsPath32)\..\xbuild-frameworks\.NETPortable\v4.5</AssemblySearchPaths>
     <OtherFlags>$(OtherFlags) --targetprofile:netcore</OtherFlags>    
   </PropertyGroup>
 
@@ -815,7 +807,7 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
    <TargetFrameworkMonikerDisplayName>.NET Portable Subset</TargetFrameworkMonikerDisplayName>
    <AddAdditionalExplicitAssemblyReferences>false</AddAdditionalExplicitAssemblyReferences>
    <NoStdLib>true</NoStdLib>
-   <ImplicitlyExpandTargetFramework Condition="'$(ImplicitlyExpandTargetFramework)' == '' ">true</ImplicitlyExpandTargetFramework> 
+   <ImplicitlyExpandTargetFramework>false</ImplicitlyExpandTargetFramework>
  </PropertyGroup>
 
   <!-- Include the proto targets file unless building wioth the LKG -->
