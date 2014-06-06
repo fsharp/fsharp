@@ -1,4 +1,8 @@
 
+
+3.1.1.18
+  * Do not install FSharp.Build.dll in the GAC. It is not in the GAC on Windows.
+
 3.1.1.17
   * Remove service components from FSharp.Compiler.dll since. All clients should now use FSharp.Compiler.Service.dll
 
