@@ -19,6 +19,11 @@
 (cd Sample_VS2013_FSharp_Portable_Library_net451 && xbuild) &&
 (cd Sample_VS2012_FSharp_ConsoleApp_net40_upgraded_VS2013 && xbuild) &&
 (cd Sample_VS2012_FSharp_Portable_Library_upgraded_2013 && xbuild) &&
+(cd Sample_VS2013_FSharp_Portable_Library_net451_adjusted_to_profile78 && xbuild) &&
 echo "all projects built successfully"
+
+
+# Profile 259 not yet available on CI server Mono installation:
+# (cd Sample_VS2013_FSharp_Portable_Library_net451_adjusted_to_profile259 && xbuild)
 
 
