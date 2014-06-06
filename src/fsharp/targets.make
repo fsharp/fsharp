@@ -33,7 +33,6 @@ install-lib:
 	    echo "Signing $(outdir)$(ASSEMBLY) with Mono key"; \
 	    sn -q -R $(outdir)$(ASSEMBLY) $(srcdir)../../../mono.snk; \
 	fi
-	gacutil -i $(outdir)$(ASSEMBLY) -root $(DESTDIR)$(libdir) -package $(TARGET)
 	@if test x-$(NAME) = x-FSharp.Build; then \
 	    echo "Installing Microsoft.FSharp.Targets and Microsoft.Portable.FSharp.Targets into install locations matching Visual Studio"; \
 	    echo " --> $(DESTDIR)$(gacdir)/$(TARGET)/"; \
@@ -70,10 +69,16 @@ install-lib:
 	    $(INSTALL_LIB) $(tmpdir)Microsoft.Portable.FSharp.Targets $(DESTDIR)$(gacdir)/Microsoft\ SDKs/F#/3.1/Framework/v$(TARGET)/; \
 	    $(INSTALL_LIB) $(tmpdir)Microsoft.Portable.FSharp.Targets $(DESTDIR)$(gacdir)/xbuild/Microsoft/VisualStudio/v/FSharp/; \
 	    $(INSTALL_LIB) $(tmpdir)Microsoft.Portable.FSharp.Targets $(DESTDIR)$(gacdir)/xbuild/Microsoft/VisualStudio/v12.0/FSharp/; \
-	fi
-	@if test -e $(outdir)$(NAME).xml; then \
+	    \
+	    echo $(INSTALL_LIB) $(outdir)$(ASSEMBLY) $(DESTDIR)$((gacdir)/$(TARGET); \
+	    $(INSTALL_LIB) $(outdir)$(ASSEMBLY) $(DESTDIR)$(gacdir)/$(TARGET); \
+	    $(INSTALL_LIB) $(outdir)$(NAME).xml $(DESTDIR)$(gacdir)/$(TARGET); \
+	else \
+	    gacutil -i $(outdir)$(ASSEMBLY) -root $(DESTDIR)$(libdir) -package $(TARGET); \
+	    if test -e $(outdir)$(NAME).xml; then \
 		$(INSTALL_LIB) $(outdir)$(NAME).xml $(DESTDIR)$(gacdir)/gac/$(NAME)/$(VERSION)__$(TOKEN)/; \
 		ln -fs  ../gac/$(NAME)/$(VERSION)__$(TOKEN)/$(NAME).xml $(DESTDIR)$(gacdir)/$(TARGET)/$(NAME).xml; \
+	    fi; \
 	fi
 	@if test -e $(outdir)$(NAME).sigdata; then \
 		$(INSTALL_LIB) $(outdir)$(NAME).sigdata $(DESTDIR)$(gacdir)/gac/$(NAME)/$(VERSION)__$(TOKEN)/; \
