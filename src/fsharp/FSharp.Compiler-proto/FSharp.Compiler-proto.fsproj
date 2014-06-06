@@ -402,12 +402,14 @@
     <Compile Include="..\fscopts.fs">
       <Link>fscopts.fs</Link>
     </Compile>
+<!--
     <Compile Include="..\vs\IncrementalBuild.fsi">
       <Link>IncrementalBuild.fsi</Link>
     </Compile>
     <Compile Include="..\vs\IncrementalBuild.fs">
       <Link>IncrementalBuild.fs</Link>
     </Compile>
+-->
     <Compile Include="..\fsc.fs">
       <Link>fsc.fs</Link>
     </Compile>

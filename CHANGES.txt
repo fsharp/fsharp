@@ -1,11 +1,14 @@
 
+3.1.1.17
+  * Remove service components from FSharp.Compiler.dll since. All clients should now use FSharp.Compiler.Service.dll
+
 3.1.1.15
   * Upstream 2d8ebcd43: XmlDoc generation bugfix: remove duplicate namespaces
   * Upstream 3bd52625b: Address-of optimizations for better performance on structs
   * Upstream c46aa237a: Perf improvement for Seq.windowed  
   * Upstream 301a6f33: make it possible to set breakpoint inside quotation
   * Upstream 301a6f33: make it possible to set breakpoint inside quotation
-  * Unsigned FSharp.Core for portable profiles 7, 78, 259 if reference assemblies are present
+  * FSharp.Core for portable profiles 7, 78, 259 if reference assemblies are present (delay-signed)
   
 3.1.1.14
   * Change monotouch and monodroid FSharp.Core.dll to both use 2.3.98.1

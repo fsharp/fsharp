@@ -436,6 +436,7 @@ let getTcImportsFromCommandLine(displayPSTypeProviderSecurityDialogBlockingUI : 
     
         ReportTime tcConfig "Import mscorlib"
 
+#if INCREMENTAL_BUILD_OPTION
         if tcConfig.useIncrementalBuilder then 
             ReportTime tcConfig "Incremental Parse and Typecheck"
             let builder = 
@@ -446,6 +447,9 @@ let getTcImportsFromCommandLine(displayPSTypeProviderSecurityDialogBlockingUI : 
             let tcState,topAttribs,typedAssembly,_tcEnv,tcImports,tcGlobals,tcConfig = builder.TypeCheck()
             tcGlobals,tcImports,tcImports,tcState.Ccu,typedAssembly,topAttribs,tcConfig
         else
+#else
+        begin
+#endif
         
             ReportTime tcConfig "Import mscorlib and FSharp.Core.dll"
             ReportTime tcConfig "Import system references"
@@ -515,7 +519,11 @@ let getTcImportsFromCommandLine(displayPSTypeProviderSecurityDialogBlockingUI : 
             ReportTime tcConfig "Typechecked"
 
             (tcGlobals,tcImports,frameworkTcImports,generatedCcu,typedAssembly,topAttrs,tcConfig)
-                    
+#if INCREMENTAL_BUILD_OPTION
+#else
+    end
+#endif
+
     tcGlobals,tcImports,frameworkTcImports,generatedCcu,typedAssembly,topAttrs,tcConfig,outfile,pdbfile,assemblyName,errorLogger
 
 // only called from the project system, as a way to run the front end of the compiler far enough to determine if we need to pop up the dialog (and do so if necessary)

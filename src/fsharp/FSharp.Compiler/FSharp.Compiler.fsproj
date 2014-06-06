@@ -445,6 +445,7 @@
     <Compile Include="..\fsc.fs">
       <Link>Driver\fsc.fs</Link>
     </Compile>
+    <!--
     <Compile Include="..\vs\Reactor.fsi">
       <Link>Service\Reactor.fsi</Link>
     </Compile>
@@ -493,7 +494,6 @@
     <Compile Include="..\vs\service.fs">
       <Link>Service\service.fs</Link>
     </Compile>
-    <!--
     <Compile Include="..\vs\SimpleServices.fs">
       <Link>SimpleServices.fs</Link>
     </Compile>
