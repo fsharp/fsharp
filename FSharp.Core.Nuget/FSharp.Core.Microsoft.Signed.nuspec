@@ -5,7 +5,7 @@
         <version>0.0.1</version>
         <title>FSharp.Core Microsoft signed</title>
         <authors>Microsoft Corporation,Dave Thomas</authors>
-        <owners>FSharp.Org</owners>
+        <owners>F# Software Foundation</owners>
         <licenseUrl>https://github.com/fsharp/fsharp/blob/master/LICENSE</licenseUrl>
         <projectUrl>https://github.com/fsharp/fsharp</projectUrl>
         <iconUrl>http://fsharp.org/img/logo.png</iconUrl>
@@ -23,22 +23,22 @@ profile47
     <files>
 
         <!-- .Net 2.0 -->
-        <file src="..\lib\bootstrap\signed\.NETFramework\v2.0\2.3.0.0\FSharp.Core.dll" target="lib\net40\FSharp.Core.dll" />
-        <file src="..\lib\bootstrap\signed\.NETFramework\v2.0\2.3.0.0\FSharp.Core.optdata" target="lib\net40\FSharp.Core.optdata" />
-        <file src="..\lib\bootstrap\signed\.NETFramework\v2.0\2.3.0.0\FSharp.Core.sigdata" target="lib\net40\FSharp.Core.sigdata" />
-        <file src="..\lib\bootstrap\signed\.NETFramework\v2.0\2.3.0.0\FSharp.Core.xml" target="lib\net40\FSharp.Core.xml" />
+        <file src="..\lib\bootstrap\signed\.NETFramework\v2.0\2.3.1.0\FSharp.Core.dll" target="lib\net40\FSharp.Core.dll" />
+        <file src="..\lib\bootstrap\signed\.NETFramework\v2.0\2.3.1.0\FSharp.Core.optdata" target="lib\net40\FSharp.Core.optdata" />
+        <file src="..\lib\bootstrap\signed\.NETFramework\v2.0\2.3.1.0\FSharp.Core.sigdata" target="lib\net40\FSharp.Core.sigdata" />
+        <file src="..\lib\bootstrap\signed\.NETFramework\v2.0\2.3.1.0\FSharp.Core.xml" target="lib\net40\FSharp.Core.xml" />
 
         <!-- .Net 4.0 -->
-        <file src="..\lib\bootstrap\signed\.NETFramework\v4.0\4.3.0.0\FSharp.Core.dll" target="lib\net40\FSharp.Core.dll" />
-        <file src="..\lib\bootstrap\signed\.NETFramework\v4.0\4.3.0.0\FSharp.Core.optdata" target="lib\net40\FSharp.Core.optdata" />
-        <file src="..\lib\bootstrap\signed\.NETFramework\v4.0\4.3.0.0\FSharp.Core.sigdata" target="lib\net40\FSharp.Core.sigdata" />
-        <file src="..\lib\bootstrap\signed\.NETFramework\v4.0\4.3.0.0\FSharp.Core.xml" target="lib\net40\FSharp.Core.xml" />
+        <file src="..\lib\bootstrap\signed\.NETFramework\v4.0\4.3.1.0\FSharp.Core.dll" target="lib\net40\FSharp.Core.dll" />
+        <file src="..\lib\bootstrap\signed\.NETFramework\v4.0\4.3.1.0\FSharp.Core.optdata" target="lib\net40\FSharp.Core.optdata" />
+        <file src="..\lib\bootstrap\signed\.NETFramework\v4.0\4.3.1.0\FSharp.Core.sigdata" target="lib\net40\FSharp.Core.sigdata" />
+        <file src="..\lib\bootstrap\signed\.NETFramework\v4.0\4.3.1.0\FSharp.Core.xml" target="lib\net40\FSharp.Core.xml" />
 
         <!-- .Net 4.5 -->
-        <file src="..\lib\bootstrap\signed\.NETFramework\v4.0\4.3.0.0\FSharp.Core.dll" target="lib\net45\FSharp.Core.dll" />
-        <file src="..\lib\bootstrap\signed\.NETFramework\v4.0\4.3.0.0\FSharp.Core.optdata" target="lib\net45\FSharp.Core.optdata" />
-        <file src="..\lib\bootstrap\signed\.NETFramework\v4.0\4.3.0.0\FSharp.Core.sigdata" target="lib\net45\FSharp.Core.sigdata" />
-        <file src="..\lib\bootstrap\signed\.NETFramework\v4.0\4.3.0.0\FSharp.Core.xml" target="lib\net45\FSharp.Core.xml" />
+        <file src="..\lib\bootstrap\signed\.NETFramework\v4.0\4.3.1.0\FSharp.Core.dll" target="lib\net45\FSharp.Core.dll" />
+        <file src="..\lib\bootstrap\signed\.NETFramework\v4.0\4.3.1.0\FSharp.Core.optdata" target="lib\net45\FSharp.Core.optdata" />
+        <file src="..\lib\bootstrap\signed\.NETFramework\v4.0\4.3.1.0\FSharp.Core.sigdata" target="lib\net45\FSharp.Core.sigdata" />
+        <file src="..\lib\bootstrap\signed\.NETFramework\v4.0\4.3.1.0\FSharp.Core.xml" target="lib\net45\FSharp.Core.xml" />
 
         <!-- Profile 7 -->
         <file src="..\lib\bootstrap\signed\.NETCore\3.3.1.0\FSharp.Core.dll" target="lib\portable-net45+netcore45+MonoAndroid1+MonoTouch1\FSharp.Core.dll" />

@@ -5,7 +5,7 @@
         <version>0.0.1</version>
         <title>FSharp.Core Mono delay signed</title>
         <authors>Microsoft Corporation,Dave Thomas</authors>
-        <owners>FSharp.Org</owners>
+        <owners>F# Software Foundation</owners>
         <licenseUrl>https://github.com/fsharp/fsharp/blob/master/LICENSE</licenseUrl>
         <projectUrl>https://github.com/fsharp/fsharp</projectUrl>
         <iconUrl>http://fsharp.org/img/logo.png</iconUrl>
