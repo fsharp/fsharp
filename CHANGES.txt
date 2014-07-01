@@ -1,5 +1,8 @@
 
 
+3.1.1.19
+  * Added files for the nuget packages
+  
 3.1.1.18
   * Do not install FSharp.Build.dll in the GAC. It is not in the GAC on Windows.
 
