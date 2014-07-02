@@ -1,3 +1,6 @@
+#!/bin/usr/env fsharpi --exec
+//The shebang above should be treated like a line comment. #! is only allowed in the first byte of a file.
+
 // #Regression #Conformance #Operators #SyntacticSugar #Exceptions #ControlFlow #Arrays #Tuples #Lists #Classes #Constants #Records 
 #if ALL_IN_ONE
 module Core_syntax
@@ -9,7 +12,7 @@ let report_failure () =
 let test s b = stderr.Write(s:string);  if b then stderr.WriteLine " OK" else report_failure() 
 
 // Test the __LINE__ directive
-test "line number test" (__LINE__ = "12")
+test "line number test" (__LINE__ = "15")
 #line 100
 test "line number test" (__LINE__ = "100")
 
@@ -31,6 +34,7 @@ test "line number test" (__SOURCE_FILE__ = "file.fs")
 # 29 "original-test-file.fs"
 test "line number test" (__LINE__ = "29")
 test "line number test" (__SOURCE_FILE__ = "original-test-file.fs")
+
 
 #if NetCore
 #else

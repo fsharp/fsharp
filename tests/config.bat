@@ -230,6 +230,9 @@ echo fsc_flags           =%fsc_flags%
 echo FSCBinPath          =%FSCBinPath%
 echo FSCOREDLL20PATH     =%FSCOREDLL20PATH%
 echo FSCOREDLLPATH       =%FSCOREDLLPATH%
+echo FSCOREDLLPORTABLEPATH =%FSCOREDLLPORTABLEPATH%
+echo FSCOREDLLNETCOREPATH =%FSCOREDLLNETCOREPATH%
+echo FSDATATPPATH        =%FSDATATPPATH%
 echo FSDIFF              =%FSDIFF%
 echo FSI                 =%FSI%
 echo fsi_flags           =%fsi_flags%
@@ -286,3 +289,19 @@ IF /I "%OSARCH%"=="AMD64" set X86_PROGRAMFILES=%ProgramFiles(x86)%
 REM == Set path to v2.0 and v4.0 FSharp.Core.dll (4.0 is the default)
 set FSCOREDLLPATH=%X86_PROGRAMFILES%\Reference Assemblies\Microsoft\FSharp\.NETFramework\v4.0\4.3.1.0
 set FSCOREDLL20PATH=%X86_PROGRAMFILES%\Reference Assemblies\Microsoft\FSharp\.NETFramework\v2.0\2.3.0.0
+set FSCOREDLLPORTABLEPATH=%X86_PROGRAMFILES%\Reference Assemblies\Microsoft\FSharp\.NETPortable\2.3.5.1
+set FSCOREDLLNETCOREPATH=%X86_PROGRAMFILES%\Reference Assemblies\Microsoft\FSharp\.NETCore\3.3.1.0
+set FSDATATPPATH=%X86_PROGRAMFILES%\Reference Assemblies\Microsoft\FSharp\.NETFramework\v4.0\4.3.0.0\Type Providers
+
+REM == Check if using open build instead
+IF EXIST "%FSCBinPath%\FSharp.Core.dll" set FSCOREDLLPATH=%FSCBinPath%
+IF EXIST "%FSCBinPath%\..\..\net20\bin\FSharp.Core.dll" set FSCOREDLL20PATH=%FSCBinPath%\..\..\net20\bin
+IF EXIST "%FSCBinPath%\..\..\portable47\bin\FSharp.Core.dll" set FSCOREDLLPORTABLEPATH=%FSCBinPath%\..\..\portable47\bin
+IF EXIST "%FSCBinPath%\..\..\portable7\bin\FSharp.Core.dll" set FSCOREDLLNETCOREPATH=%FSCBinPath%\..\..\portable7\bin
+IF EXIST "%FSCBinPath%\FSharp.Data.TypeProviders.dll" set FSDATATPPATH=%FSCBinPath%
+
+set FSCOREDLLPATH=%FSCOREDLLPATH%\FSharp.Core.dll
+set FSCOREDLL20PATH=%FSCOREDLL20PATH%\FSharp.Core.dll
+set FSCOREDLLPORTABLEPATH=%FSCOREDLLPORTABLEPATH%\FSharp.Core.dll
+set FSCOREDLLNETCOREPATH=%FSCOREDLLNETCOREPATH%\FSharp.Core.dll
+set FSDATATPPATH=%FSDATATPPATH%\FSharp.Data.TypeProviders.dll

@@ -983,6 +983,7 @@ val StripSelfRefCell : TcGlobals * ValBaseOrThisInfo * TType -> TType
 val (|AppTy|_|)   : TcGlobals -> TType -> (TyconRef * TType list) option
 val (|NullableTy|_|)   : TcGlobals -> TType -> TType option
 val (|StripNullableTy|)   : TcGlobals -> TType -> TType 
+val (|ByrefTy|_|)   : TcGlobals -> TType -> TType option
 
 //-------------------------------------------------------------------------
 // Special semantic constraints
@@ -1255,12 +1256,12 @@ val buildAccessPath : CompilationPath option -> string
 
 val XmlDocArgsEnc : TcGlobals -> Typars * Typars -> TType list -> string
 val XmlDocSigOfVal : TcGlobals -> string -> Val -> string
-val XmlDocSigOfUnionCase : string -> string -> string -> string
-val XmlDocSigOfField : string -> string -> string -> string
-val XmlDocSigOfTycon : string -> Tycon -> string
-val XmlDocSigOfSubModul : string -> string
+val XmlDocSigOfUnionCase : (string list -> string)
+val XmlDocSigOfField : (string list -> string)
+val XmlDocSigOfProperty : (string list -> string)
+val XmlDocSigOfTycon : (string list -> string)
+val XmlDocSigOfSubModul : (string list -> string)
 val XmlDocSigOfEntity : EntityRef -> string
-
 
 //---------------------------------------------------------------------------
 // Resolve static optimizations

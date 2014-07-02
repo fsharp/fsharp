@@ -1,4 +1,10 @@
 
+3.1.1.20
+  * Upstream fix:: #! treated as a comment when it is at the start of an fsharp file
+  * Upstream fix visualfsharp.codeplex.com issue #78 - allow space characters in active pattern case identifiers
+  * Upstream fix visualfsharp.codeplex.com issue #78 - Adjust parser to disallow vertical pipes in active pattern case identifiers. 
+  * Upstream fix for visualfsharp.codeplex.com issue #69 - Invalid code generated when calling C# method with optional nullable args
+  * Upstream fix for visualfsharp.codeplex.com issue #9 - XML doc comments on F# record type fields do not appear when accessing in C#
 
 3.1.1.19
   * Added files for the nuget packages
@@ -13,7 +19,6 @@
   * Upstream 2d8ebcd43: XmlDoc generation bugfix: remove duplicate namespaces
   * Upstream 3bd52625b: Address-of optimizations for better performance on structs
   * Upstream c46aa237a: Perf improvement for Seq.windowed  
-  * Upstream 301a6f33: make it possible to set breakpoint inside quotation
   * Upstream 301a6f33: make it possible to set breakpoint inside quotation
   * FSharp.Core for portable profiles 7, 78, 259 if reference assemblies are present (delay-signed)
   

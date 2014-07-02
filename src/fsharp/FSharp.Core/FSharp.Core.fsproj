@@ -21,6 +21,9 @@
     <OtherFlags Condition=" '$(TargetFramework)'=='net20' AND EXISTS('$(SystemRoot)\Microsoft.NET\Framework\v4.0.30319\mscorlib.dll')">$(OtherFlags) --compiling-fslib-20:"$(SystemRoot)\Microsoft.NET\Framework\v4.0.30319\mscorlib.dll" </OtherFlags>
     <OtherFlags Condition=" '$(TargetFramework)'=='net20' AND EXISTS('$(MonoLibDir40)/mscorlib.dll')">$(OtherFlags) --compiling-fslib-20:"$(MonoLibDir40)/mscorlib.dll" </OtherFlags>
     <OtherFlags Condition=" '$(TargetFramework)'=='net40'">$(OtherFlags) --compiling-fslib-40</OtherFlags>	
+    <OtherFlags Condition=" '$(TargetFramework)'=='net20'">$(OtherFlags) --compiling-fslib-20:"$(SystemRoot)\Microsoft.NET\Framework\v4.0.30319\mscorlib.dll" </OtherFlags>
+    <OtherFlags Condition=" '$(TargetFramework)'=='net40'">$(OtherFlags) --compiling-fslib-40</OtherFlags>
+    <OtherFlags Condition=" '$(TargetFramework)'=='portable7'">$(OtherFlags) --targetprofile:netcore</OtherFlags>
   </PropertyGroup>
   <!-- MonoDevelop likes these here to recognise the configurations -->
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' " />

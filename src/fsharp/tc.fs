@@ -8934,21 +8934,31 @@ and TcMethodApplication
                   | NotOptional -> 
                       error(InternalError("Unexpected NotOptional",mItem))
                   | CallerSide dfltVal ->
-                      let rec build = function 
+                      let rec build currCalledArgTy currDfltVal =
+                          match currDfltVal with
                           | MissingValue -> 
                               // Add an I_nop if this is an initonly field to make sure we never recognize it as an lvalue. See mkExprAddrOfExpr. 
-                              emptyPreBinder,mkAsmExpr ([ mkNormalLdsfld (fspec_Missing_Value cenv.g.ilg); AI_nop ],[],[],[calledArgTy],mMethExpr)
+                              emptyPreBinder,mkAsmExpr ([ mkNormalLdsfld (fspec_Missing_Value cenv.g.ilg); AI_nop ],[],[],[currCalledArgTy],mMethExpr)
                           | DefaultValue -> 
-                              emptyPreBinder,mkDefault(mMethExpr,calledArgTy)
+                              emptyPreBinder,mkDefault(mMethExpr,currCalledArgTy)
                           | Constant fieldInit -> 
-                              emptyPreBinder,Expr.Const(TcFieldInit mMethExpr fieldInit,mMethExpr,calledArgTy)  
+                                match currCalledArgTy with
+                                | NullableTy cenv.g inst when fieldInit <> ILFieldInit.Null ->
+                                    let nullableTy = mkILNonGenericBoxedTy(mkILTyRef(cenv.g.ilg.traits.ScopeRef, "System.Nullable`1"))
+                                    let ctor = mkILCtorMethSpecForTy(nullableTy, [ILType.TypeVar 0us]).MethodRef
+                                    let ctorArgs = [Expr.Const(TcFieldInit mMethExpr fieldInit,mMethExpr, inst)]
+                                    emptyPreBinder,Expr.Op(TOp.ILCall(false, false, true, true, NormalValUse, false, false, ctor, [inst], [], [currCalledArgTy]), [], ctorArgs, mMethExpr)
+                                | ByrefTy cenv.g inst ->
+                                    build inst (PassByRef(inst, currDfltVal))
+                                | _ ->
+                                    emptyPreBinder,Expr.Const(TcFieldInit mMethExpr fieldInit,mMethExpr,currCalledArgTy)
                           | WrapperForIDispatch ->
                               match cenv.g.ilg.traits.SystemRuntimeInteropServicesScopeRef.Value with
                               | None -> error(Error(FSComp.SR.fscSystemRuntimeInteropServicesIsRequired(), mMethExpr))
                               | Some assemblyRef ->
                                   let tref = mkILNonGenericBoxedTy(mkILTyRef(assemblyRef, "System.Runtime.InteropServices.DispatchWrapper"))
                                   let mref = mkILCtorMethSpecForTy(tref,[cenv.g.ilg.typ_Object]).MethodRef
-                                  let expr = Expr.Op(TOp.ILCall(false,false,false,false,CtorValUsedAsSuperInit,false,false,mref,[],[],[cenv.g.obj_ty]),[],[mkDefault(mMethExpr,calledArgTy)],mMethExpr)
+                                  let expr = Expr.Op(TOp.ILCall(false,false,false,false,CtorValUsedAsSuperInit,false,false,mref,[],[],[cenv.g.obj_ty]),[],[mkDefault(mMethExpr,currCalledArgTy)],mMethExpr)
                                   emptyPreBinder,expr
                           | WrapperForIUnknown ->
                               match cenv.g.ilg.traits.SystemRuntimeInteropServicesScopeRef.Value with
@@ -8956,14 +8966,13 @@ and TcMethodApplication
                               | Some assemblyRef ->
                                   let tref = mkILNonGenericBoxedTy(mkILTyRef(assemblyRef, "System.Runtime.InteropServices.UnknownWrapper"))
                                   let mref = mkILCtorMethSpecForTy(tref,[cenv.g.ilg.typ_Object]).MethodRef
-                                  let expr = Expr.Op(TOp.ILCall(false,false,false,false,CtorValUsedAsSuperInit,false,false,mref,[],[],[cenv.g.obj_ty]),[],[mkDefault(mMethExpr,calledArgTy)],mMethExpr)
+                                  let expr = Expr.Op(TOp.ILCall(false,false,false,false,CtorValUsedAsSuperInit,false,false,mref,[],[],[cenv.g.obj_ty]),[],[mkDefault(mMethExpr,currCalledArgTy)],mMethExpr)
                                   emptyPreBinder,expr
                           | PassByRef (ty, dfltVal2) ->
                               let v,_ = mkCompGenLocal mMethExpr "defaultByrefArg" ty
-                              let wrapper2,rhs = build dfltVal2 
+                              let wrapper2,rhs = build currCalledArgTy dfltVal2
                               (wrapper2 >> mkCompGenLet mMethExpr v rhs), mkValAddr mMethExpr (mkLocalValRef v)
-                      build dfltVal
-
+                      build calledArgTy dfltVal
                   | CalleeSide -> 
                       let calledNonOptTy = 
                           if isOptionTy cenv.g calledArgTy then 
@@ -13479,24 +13488,8 @@ module EstablishTypeDefinitionCores = begin
             // Build up a mapping from System.Type --> TyconRef/ILTypeRef, to allow reverse-mapping
             // of types
 
-            // NOTE: for the purposes of remapping the closure of generated types, the FullName is sufficient.
-            // We do _not_ rely on object identity or any other notion of equivalence provided by System.Type
-            // itself. The mscorlib implementations of System.Type equality relations a very suspect, for
-            // example RuntimeType overrides the equality relation to be reference equality for the Equals(object)
-            // override, but the other subtypes of System.Type do not, making the relation non-reflecive.
-            //
-            // Further, avoiding reliance on canonicalization (UnderlyingSystemType) or System.Type object identity means that 
-            // providers can implement wrap-and-filter "views" over existing System.Type clusters without needing
-            // to preserve object identity when presenting the types to the F# compiler.
-
             let previousContext = (theRootType.PApply ((fun x -> x.Context), m)).PUntaint ((fun x -> x), m)
-            let lookupILTypeRef, lookupTyconRef =
-                match previousContext with
-                | NoEntries -> 
-                    Dictionary<System.Type,ILTypeRef>(providedSystemTypeComparer), Dictionary<System.Type,obj>(providedSystemTypeComparer)
-                | Entries (lookupILTR, lookupILTCR) ->
-                    // REVIEW: do we really need a lazy dict for this? How much time are we saving during remap?
-                    lookupILTR, Lazy.force(lookupILTCR)
+            let lookupILTypeRef, lookupTyconRef = previousContext.GetDictionaries()
                     
             let ctxt = ProvidedTypeContext.Create(lookupILTypeRef, lookupTyconRef)
 
