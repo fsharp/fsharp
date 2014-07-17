@@ -3316,13 +3316,13 @@ Microsoft.FSharp.Reflection.UnionCaseInfo: System.Type GetType()
 Microsoft.FSharp.Reflection.UnionCaseInfo: System.Type get_DeclaringType()
 "
         let normalize (s:string) =
-            s.Replace("\r\n\r\n", "\r\n").Trim([|'\r';'\n'|])
+            s.Replace("\r\n\r\n", "\r\n").Trim([|'\r';'\n'|]).Replace("\r\n","\n")
 
         let expected = 
             expectedSurfaceArea |> normalize
 
         let act = actual.ToString() |> normalize
-        if expected.Replace("\r\n","\n") <> act.Replace("\r\n","\n") then
+        if expected <> act then
             let mutable indexFirstDiff = 0
             while indexFirstDiff < expected.Length && expected.[indexFirstDiff] = act.[indexFirstDiff] do
                 indexFirstDiff <- indexFirstDiff + 1

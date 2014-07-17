@@ -3297,7 +3297,7 @@ System.IObserver`1[T]: Void OnCompleted()
 System.IObserver`1[T]: Void OnError(System.Exception)
 System.IObserver`1[T]: Void OnNext(T)"
         let normalize (s:string) =
-            s.Replace("\r\n\r\n", "\r\n").Trim([|'\r';'\n'|])
+            s.Replace("\r\n\r\n", "\r\n").Trim([|'\r';'\n'|]).Replace("\r\n","\n")
 
         let expected = 
             postdev10 |> normalize

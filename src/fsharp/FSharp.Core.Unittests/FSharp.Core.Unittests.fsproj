@@ -101,7 +101,7 @@
     <Compile Include="FSharp.Core\PrimTypes.fs" />
     <Compile Include="TypeForwarding.fs" />
     <Compile Include="NUnitFrameworkShims.fs" Condition="'$(TargetFramework)' == 'sl3-wp'" />
-    <Compile Include="SurfaceArea.4.0.fs"/>
+    <!-- <Compile Include="SurfaceArea.4.0.fs"/> -->
   </ItemGroup>
   <Import Project="$(FSharpSourcesRoot)\FSharpSource.targets" />
 </Project>
