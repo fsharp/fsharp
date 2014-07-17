@@ -3322,7 +3322,7 @@ Microsoft.FSharp.Reflection.UnionCaseInfo: System.Type get_DeclaringType()
             expectedSurfaceArea |> normalize
 
         let act = actual.ToString() |> normalize
-        if expected <> act then
+        if expected.Replace("\r\n","\n") <> act.Replace("\r\n","\n") then
             let mutable indexFirstDiff = 0
             while indexFirstDiff < expected.Length && expected.[indexFirstDiff] = act.[indexFirstDiff] do
                 indexFirstDiff <- indexFirstDiff + 1

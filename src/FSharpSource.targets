@@ -98,6 +98,9 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
 
   <!-- v2.0-specific flags -->
   <PropertyGroup Condition="'$(TargetFramework)'=='net20'">
+    <!-- If 3.5 is not configured explicitly, use 2.0 -->
+    <TargetFrameworkVersion Condition="'$(TargetFrameworkVersion)'==''">v2.0</TargetFrameworkVersion>
+    <TargetFrameworkOutputDirectory>net20</TargetFrameworkOutputDirectory>
     <DefineConstants>$(DefineConstants);FSHARP_CORE_2_0</DefineConstants>
     <DefineConstants>$(DefineConstants);RUNTIME</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_ATLEAST_35</DefineConstants>
