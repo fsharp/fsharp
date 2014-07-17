@@ -98,8 +98,7 @@ msbuild fsharp-library-build.proj /p:Configuration=Release
 msbuild fsharp-compiler-build.proj /p:Configuration=Release
 ```
 
-You can also build the FSharp.Core for .NET 2.0, Xamarin Android, Xamarin iOS, 
-Portable Profile47 (net45+sl5+win8), XNA 4.0 for Xbox 360, and Silverlight 5.0 profiles:
+You can also build FSharp.Core.dll for other profiles:
 ```
 msbuild fsharp-library-build.proj /p:TargetFramework=net20 /p:Configuration=Release
 msbuild fsharp-library-build.proj /p:TargetFramework=portable47 /p:Configuration=Release
