@@ -1,4 +1,6 @@
-
+3.1.1.25
+  * Upstream fix: implement correct version number scheme for new PCL profiles
+  
 3.1.1.20
   * Upstream fix:: #! treated as a comment when it is at the start of an fsharp file
   * Upstream fix visualfsharp.codeplex.com issue #78 - allow space characters in active pattern case identifiers
