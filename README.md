@@ -102,10 +102,10 @@ You can also build the FSharp.Core for .NET 2.0, Xamarin Android, Xamarin iOS,
 Portable Profile47 (net45+sl5+win8), XNA 4.0 for Xbox 360, and Silverlight 5.0 profiles:
 ```
 msbuild fsharp-library-build.proj /p:TargetFramework=net20 /p:Configuration=Release
-msbuild fsharp-library-build.proj /p:TargetFramework=portable-net45+sl5+win8 /p:Configuration=Release
-msbuild fsharp-library-build.proj /p:TargetFramework=netcore7 /p:Configuration=Release
-msbuild fsharp-library-build.proj /p:TargetFramework=netcore78 /p:Configuration=Release
-msbuild fsharp-library-build.proj /p:TargetFramework=netcore259 /p:Configuration=Release
+msbuild fsharp-library-build.proj /p:TargetFramework=portable47 /p:Configuration=Release
+msbuild fsharp-library-build.proj /p:TargetFramework=portable7 /p:Configuration=Release
+msbuild fsharp-library-build.proj /p:TargetFramework=portable78 /p:Configuration=Release
+msbuild fsharp-library-build.proj /p:TargetFramework=portable259 /p:Configuration=Release
 msbuild fsharp-library-build.proj /p:TargetFramework=sl5 /p:Configuration=Release
 
 msbuild fsharp-library-build.proj /p:TargetFramework=monodroid /p:Configuration=Release
@@ -123,7 +123,7 @@ version number suitable for use when building libaries that have usable with bot
 ```
 msbuild fsharp-library-build.proj /p:TargetFramework=net20 /p:Configuration=Release /p:FSharpCoreBackVersion=3.0
 msbuild fsharp-library-build.proj /p:TargetFramework=net40 /p:Configuration=Release /p:FSharpCoreBackVersion=3.0
-msbuild fsharp-library-build.proj /p:TargetFramework=portable-net45+sl5+win8 /p:Configuration=Release /p:FSharpCoreBackVersion=3.0
+msbuild fsharp-library-build.proj /p:TargetFramework=portable47 /p:Configuration=Release /p:FSharpCoreBackVersion=3.0
 ```
 
 ### Windows, using xbuild (e.g. if no .NET is installed and only Mono 3.0 is installed):

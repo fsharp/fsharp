@@ -24,6 +24,7 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' " />
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' " />
   <ItemGroup>
+    <Compile Include="InternalsVisibleTo.fs" />
     <Compile Include="..\..\assemblyinfo\assemblyinfo.fsc.exe.fs">
       <Link>Resources/assemblyinfo.fsc.exe.fs</Link>
     </Compile>

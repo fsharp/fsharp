@@ -20,6 +20,10 @@
     <FsSrGen Include="FSBuild.txt">
       <Link>FSBuild.txt</Link>
     </FsSrGen>
+      <FsSrGen Include="FSBuild.txt">
+        <Link>FSBuild.txt</Link>
+      </FsSrGen>
+    <Compile Include="InternalsVisibleTo.fs" />
     <Compile Include="..\..\assemblyinfo\assemblyinfo.FSharp.Build.dll.fs">
       <Link>Utilities/assemblyinfo.FSharp.Build.dll.fs</Link>
     </Compile>

@@ -20,18 +20,18 @@
     <AssemblyVersion Condition="'$(TargetFramework)' == 'net40'">4.3.1.0</AssemblyVersion>
     <!-- These correspond to the frameworks supported by Microsoft -->
     <AssemblyVersion Condition="'$(TargetFramework)' == 'net20'">2.3.1.0</AssemblyVersion>
-    <AssemblyVersion Condition="'$(TargetFramework)' == 'portable-net45+sl5+win8' ">2.3.5.1</AssemblyVersion>
+    <AssemblyVersion Condition="'$(TargetFramework)' == 'portable47' ">2.3.5.1</AssemblyVersion>
     <AssemblyVersion Condition="'$(TargetFramework)' == 'monodroid' ">2.3.98.1</AssemblyVersion>
     <AssemblyVersion Condition="'$(TargetFramework)' == 'monotouch' ">2.3.98.1</AssemblyVersion>
-    <AssemblyVersion Condition="'$(TargetFramework)' == 'netcore7'">3.3.1.0</AssemblyVersion>
-    <AssemblyVersion Condition="'$(TargetFramework)' == 'netcore78'">3.3.1.78</AssemblyVersion>
-    <AssemblyVersion Condition="'$(TargetFramework)' == 'netcore259'">3.3.1.259</AssemblyVersion>
+    <AssemblyVersion Condition="'$(TargetFramework)' == 'portable7'">3.3.1.0</AssemblyVersion>
+    <AssemblyVersion Condition="'$(TargetFramework)' == 'portable78'">3.78.3.1</AssemblyVersion>
+    <AssemblyVersion Condition="'$(TargetFramework)' == 'portable259'">3.259.3.1</AssemblyVersion>
 
     <!-- These are simulations of previous versions of FSharp.Core for F# 3.0, useable to support the 'build a library compatible with a back version of F#' multi-targeting option supported by some IDEs -->
     <!-- The actual libraries will contain additional functionality related to F# 3.1 etc. but that doesn't matter - the version number will be right which is what counts -->
     <AssemblyVersion Condition="'$(TargetFramework)' == 'net20' AND '$(FSharpCoreBackVersion)' == '3.0' ">2.3.0.0</AssemblyVersion>
     <AssemblyVersion Condition="'$(TargetFramework)' == 'net40' AND '$(FSharpCoreBackVersion)' == '3.0' ">4.3.0.0</AssemblyVersion>
-    <AssemblyVersion Condition="'$(TargetFramework)' == 'portable-net45+sl5+win8' AND '$(FSharpCoreBackVersion)' == '3.0' ">2.3.5.0</AssemblyVersion>
+    <AssemblyVersion Condition="'$(TargetFramework)' == 'portable47' AND '$(FSharpCoreBackVersion)' == '3.0' ">2.3.5.0</AssemblyVersion>
     <!-- FSharp.Core using System.Runtime -->
     <OtherFlags>$(OtherFlags) --version:$(AssemblyVersion)</OtherFlags>
     <!--
@@ -98,9 +98,9 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
 
   <!-- v2.0-specific flags -->
   <PropertyGroup Condition="'$(TargetFramework)'=='net20'">
-    <!-- If 3.5 is not configured explicitly, use 2.0 -->
-    <TargetFrameworkVersion Condition="'$(TargetFrameworkVersion)'==''">v2.0</TargetFrameworkVersion>
-    <TargetFrameworkOutputDirectory>$(TargetFramework)</TargetFrameworkOutputDirectory>
+    <DefineConstants>$(DefineConstants);FSHARP_CORE_2_0</DefineConstants>
+    <DefineConstants>$(DefineConstants);RUNTIME</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_ATLEAST_35</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_STRUCTURAL_EQUALITY</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_CANCELLATIONTOKEN_CLASSES</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_TASK</DefineConstants>
@@ -170,13 +170,14 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
 
 
   <!-- Target Portable -->
-  <PropertyGroup Condition="'$(TargetFramework)'=='portable-net45+sl5+win8'">
+  <PropertyGroup Condition="'$(TargetFramework)'=='portable47'">
 
     <TargetFrameworkProfile>Profile47</TargetFrameworkProfile>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <TargetFrameworkOutputDirectory>$(TargetFramework)</TargetFrameworkOutputDirectory>
 
     <DefineConstants>$(DefineConstants);FSHARP_CORE_PORTABLE</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_ATLEAST_35</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_CONCURRENT_DICTIONARY</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_ATLEAST_PORTABLE</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_ARRAY_LONG_LENGTH</DefineConstants>
@@ -187,7 +188,6 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <DefineConstants>$(DefineConstants);FX_SIMPLE_SECURITY_PERMISSIONS</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_TRUNCATE</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_CULTURE_INFO_ARGS</DefineConstants>
-    <DefineConstants>$(DefineConstants);FX_NO_REFLECTION_MODULES</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_REFLECTION_METADATA_TOKENS</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_TO_LOWER_INVARIANT</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_EXIT_CONTEXT_FLAGS</DefineConstants>
@@ -233,24 +233,25 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
   </PropertyGroup>
 
   <!-- Target Portable -->
-  <PropertyGroup Condition="'$(TargetFramework)'=='netcore7'">
+  <PropertyGroup Condition="'$(TargetFramework)'=='portable7'">
 
     <TargetFrameworkOutputDirectory>$(TargetFramework)</TargetFrameworkOutputDirectory>
     <DefineConstants>$(DefineConstants);FSHARP_CORE_NETCORE_PORTABLE</DefineConstants>
+    <DefineConstants>$(DefineConstants);FSHARP_CORE_NETCORE_PORTABLE</DefineConstants>
+    <DefineConstants>$(DefineConstants);FSHARP_CORE_NETCORE_PORTABLE7</DefineConstants>
+    <DefineConstants>$(DefineConstants);QUERIES_IN_FSLIB</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_ATLEAST_35</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_ATLEAST_PORTABLE</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_ARRAY_LONG_LENGTH</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_EXIT</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_CHAR_PARSE</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_DEFAULT_DEPENDENCY_TYPE</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_SIMPLE_SECURITY_PERMISSIONS</DefineConstants>
-    <DefineConstants>$(DefineConstants);FX_NO_REFLECTION_MODULES</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_REFLECTION_METADATA_TOKENS</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_EXIT_CONTEXT_FLAGS</DefineConstants>
-    <DefineConstants>$(DefineConstants);FX_NO_BASED_ARRAYS</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_BINARY_SERIALIZATION</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_WEB_CLIENT</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_CONVERTER</DefineConstants>
-    <DefineConstants>$(DefineConstants);FX_NO_ICLONEABLE</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_SECURITY_PERMISSIONS</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_SYSTEM_CONSOLE</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_ARRAY_KEY_SORT</DefineConstants>
@@ -275,14 +276,17 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
   </PropertyGroup>
   
   <!-- Target Portable -->
-  <PropertyGroup Condition="'$(TargetFramework)'=='netcore78'">
+  <PropertyGroup Condition="'$(TargetFramework)'=='portable78'">
     <TargetFrameworkOutputDirectory>$(TargetFramework)</TargetFrameworkOutputDirectory>
+    <DefineConstants>$(DefineConstants);FSHARP_CORE_NETCORE_PORTABLE</DefineConstants>
+    <DefineConstants>$(DefineConstants);FSHARP_CORE_NETCORE_PORTABLE78</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_CONVERTER</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_RESHAPED_REFLECTION</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_ARRAY_LONG_LENGTH</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_EXIT</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_CHAR_PARSE</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_DEFAULT_DEPENDENCY_TYPE</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_SIMPLE_SECURITY_PERMISSIONS</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_SYSTEM_CONSOLE</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_TPL_PARALLEL</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_BINARY_SERIALIZATION</DefineConstants>
@@ -292,15 +296,15 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <DefineConstants>$(DefineConstants);FX_NO_REFLECTION_METADATA_TOKENS</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_REFLECTION_EMIT</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_WEB_CLIENT</DefineConstants>
-    <DefineConstants>$(DefineConstants);FSHARP_CORE_NETCORE_PORTABLE</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_SECURITY_PERMISSIONS</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_PARAMETERIZED_THREAD_START</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_THREAD</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_EVENTWAITHANDLE_NO_IDISPOSABLE</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_EXIT_CONTEXT_FLAGS</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_REGISTERED_WAIT_HANDLES</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_THREADPOOL</DefineConstants>
+    <DefineConstants>$(DefineConstants);PUT_TYPE_PROVIDERS_IN_FSCORE</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_CUSTOMATTRIBUTEDATA</DefineConstants>
-    <DefineConstants>$(DefineConstants);QUERIES_IN_FSLIB</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_CONCURRENT_DICTIONARY</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_ATLEAST_LINQ</DefineConstants>
     <TargetProfile>netcore</TargetProfile>
@@ -311,14 +315,17 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <OtherFlags>$(OtherFlags) --targetprofile:netcore</OtherFlags>    
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(TargetFramework)'=='netcore259'">
+  <PropertyGroup Condition="'$(TargetFramework)'=='portable259'">
     <TargetFrameworkOutputDirectory>$(TargetFramework)</TargetFrameworkOutputDirectory>
+    <DefineConstants>$(DefineConstants);FSHARP_CORE_NETCORE_PORTABLE</DefineConstants>
+    <DefineConstants>$(DefineConstants);FSHARP_CORE_NETCORE_PORTABLE259</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_CONVERTER</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_RESHAPED_REFLECTION</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_ARRAY_LONG_LENGTH</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_EXIT</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_CHAR_PARSE</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_DEFAULT_DEPENDENCY_TYPE</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_SIMPLE_SECURITY_PERMISSIONS</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_SYSTEM_CONSOLE</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_TPL_PARALLEL</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_BINARY_SERIALIZATION</DefineConstants>
@@ -328,15 +335,15 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <DefineConstants>$(DefineConstants);FX_NO_REFLECTION_METADATA_TOKENS</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_REFLECTION_EMIT</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_WEB_CLIENT</DefineConstants>
-    <DefineConstants>$(DefineConstants);FSHARP_CORE_NETCORE_PORTABLE</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_SECURITY_PERMISSIONS</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_PARAMETERIZED_THREAD_START</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_THREAD</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_EVENTWAITHANDLE_NO_IDISPOSABLE</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_EXIT_CONTEXT_FLAGS</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_REGISTERED_WAIT_HANDLES</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_THREADPOOL</DefineConstants>
+    <DefineConstants>$(DefineConstants);PUT_TYPE_PROVIDERS_IN_FSCORE</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_CUSTOMATTRIBUTEDATA</DefineConstants>
-    <DefineConstants>$(DefineConstants);QUERIES_IN_FSLIB</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_CONCURRENT_DICTIONARY</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_ATLEAST_LINQ</DefineConstants>
     <TargetProfile>netcore</TargetProfile>
@@ -349,7 +356,7 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
 
 
   <ItemGroup Condition="'$(TargetProfile)'=='netcore'">
-    <Reference Include="System.Collections.Concurrent.dll" Condition="'$(TargetFramework)'=='netcore7'"><Private>false</Private></Reference>
+    <Reference Include="System.Collections.Concurrent.dll" Condition="'$(TargetFramework)'=='portable7'"><Private>false</Private></Reference>
     <Reference Include="System.Collections.dll"><Private>false</Private></Reference>
     <Reference Include="System.ComponentModel.dll"><Private>false</Private></Reference>
     <Reference Include="System.Core.dll"><Private>false</Private></Reference>
@@ -362,14 +369,14 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <Reference Include="System.IO.dll"><Private>false</Private></Reference>
     <Reference Include="System.Linq.dll"><Private>false</Private></Reference>
     <Reference Include="System.Linq.Expressions.dll"><Private>false</Private></Reference>
-    <Reference Include="System.Linq.Parallel.dll" Condition="'$(TargetFramework)'=='netcore7'"><Private>false</Private></Reference>
+    <Reference Include="System.Linq.Parallel.dll" Condition="'$(TargetFramework)'=='portable7'"><Private>false</Private></Reference>
     <Reference Include="System.Linq.Queryable.dll"><Private>false</Private></Reference>
     <Reference Include="System.Net.dll"><Private>false</Private></Reference>
-    <Reference Include="System.Net.Http.dll" Condition="'$(TargetFramework)'=='netcore7'"><Private>false</Private></Reference>
+    <Reference Include="System.Net.Http.dll" Condition="'$(TargetFramework)'=='portable7'"><Private>false</Private></Reference>
     <Reference Include="System.Net.NetworkInformation.dll"><Private>false</Private></Reference>
     <Reference Include="System.Net.Primitives.dll"><Private>false</Private></Reference>
     <Reference Include="System.Net.Requests.dll"><Private>false</Private></Reference>
-    <Reference Include="System.Numerics.dll" Condition="'$(TargetFramework)'=='netcore7'"><Private>false</Private></Reference>
+    <Reference Include="System.Numerics.dll" Condition="'$(TargetFramework)'=='portable7'"><Private>false</Private></Reference>
     <Reference Include="System.ObjectModel.dll"><Private>false</Private></Reference>
     <Reference Include="System.Reflection.dll"><Private>false</Private></Reference>
     <Reference Include="System.Reflection.Extensions.dll"><Private>false</Private></Reference>
@@ -377,8 +384,8 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <Reference Include="System.Resources.ResourceManager.dll"><Private>false</Private></Reference>
     <Reference Include="System.Runtime.dll"><Private>false</Private></Reference>
     <Reference Include="System.Runtime.Extensions.dll"><Private>false</Private></Reference>
-    <Reference Include="System.Runtime.Numerics.dll" Condition="'$(TargetFramework)'=='netcore7'"><Private>false</Private></Reference>
-    <Reference Include="System.Runtime.InteropServices.dll" Condition="'$(TargetFramework)'=='netcore7'"><Private>false</Private></Reference>
+    <Reference Include="System.Runtime.Numerics.dll" Condition="'$(TargetFramework)'=='portable7'"><Private>false</Private></Reference>
+    <Reference Include="System.Runtime.InteropServices.dll" Condition="'$(TargetFramework)'=='portable7'"><Private>false</Private></Reference>
     <Reference Include="System.Runtime.Serialization.dll"><Private>false</Private></Reference>
     <Reference Include="System.Runtime.Serialization.Json.dll"><Private>false</Private></Reference>
     <Reference Include="System.Runtime.Serialization.Primitives.dll"><Private>false</Private></Reference>
@@ -389,7 +396,7 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <Reference Include="System.Text.RegularExpressions.dll"><Private>false</Private></Reference>
     <Reference Include="System.Threading.dll"><Private>false</Private></Reference>
     <Reference Include="System.Threading.Tasks.dll"><Private>false</Private></Reference>
-    <Reference Include="System.Threading.Tasks.Parallel.dll" Condition="'$(TargetFramework)'=='netcore7'"><Private>false</Private></Reference>
+    <Reference Include="System.Threading.Tasks.Parallel.dll" Condition="'$(TargetFramework)'=='portable7'"><Private>false</Private></Reference>
     <Reference Include="System.Windows.dll"><Private>false</Private></Reference>
     <Reference Include="System.Xml.dll"><Private>false</Private></Reference>
     <Reference Include="System.Xml.Linq.dll"><Private>false</Private></Reference>
@@ -795,11 +802,11 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
 
   <!-- If compiling portable, then include Microsoft.Portable.Common.targets -->
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\v4.0\Microsoft.Portable.Common.targets"
-          Condition=" ('$(TargetFramework)'=='portable-net45+sl5+win8' OR '$(TargetProfile)'=='netcore') AND 
+          Condition=" ('$(TargetFramework)'=='portable47' OR '$(TargetProfile)'=='netcore') AND 
                       Exists('$(MSBuildExtensionsPath32)\Microsoft\Portable\v4.0\Microsoft.Portable.Common.targets')" />
 
   <!-- If the Microsoft.Portable.Common.targets file does not exist when building the portable FSharp.Core, include the following ProperyGroup -->
- <PropertyGroup Condition=" ('$(TargetFramework)'=='portable-net45+sl5+win8'  OR '$(TargetProfile)'=='netcore') AND 
+ <PropertyGroup Condition=" ('$(TargetFramework)'=='portable47'  OR '$(TargetProfile)'=='netcore') AND 
                             !Exists('$(MSBuildExtensionsPath32)\Microsoft\Portable\v4.0\Microsoft.Portable.Common.targets')">
    <AvailablePlatforms>Any CPU</AvailablePlatforms>
    <TargetPlatformIdentifier>Portable</TargetPlatformIdentifier>
@@ -821,7 +828,7 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
 
   <!-- If compiling portable, then Microsoft.Portable.Core.targets -->
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\Microsoft.Portable.Core.targets"
-          Condition=" ('$(TargetFramework)'=='portable-net45+sl5+win8' OR '$(TargetProfile)'=='netcore') AND
+          Condition=" ('$(TargetFramework)'=='portable47' OR '$(TargetProfile)'=='netcore') AND
                       Exists('$(MSBuildExtensionsPath32)\Microsoft\Portable\Microsoft.Portable.Core.targets')" />
           
 

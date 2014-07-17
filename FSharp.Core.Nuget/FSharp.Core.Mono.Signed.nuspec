@@ -46,16 +46,16 @@ Profile 259
         <file src="..\lib\release\FSharp.Core.xml" target="lib\net45\FSharp.Core.xml" />
 
         <!-- Profile 7 -->
-        <file src="..\lib\release\netcore7\FSharp.Core.dll" target="lib\portable-net45+netcore45+MonoAndroid1+MonoTouch1\FSharp.Core.dll" />
-        <file src="..\lib\release\netcore7\FSharp.Core.optdata" target="lib\portable-net45+netcore45+MonoAndroid1+MonoTouch1\FSharp.Core.optdata" />
-        <file src="..\lib\release\netcore7\FSharp.Core.sigdata" target="lib\portable-net45+netcore45+MonoAndroid1+MonoTouch1\FSharp.Core.sigdata" />
-        <file src="..\lib\release\netcore7\FSharp.Core.xml" target="lib\portable-net45+netcore45+MonoAndroid1+MonoTouch1\FSharp.Core.xml" />
+        <file src="..\lib\release\portable7\FSharp.Core.dll" target="lib\portable-net45+netcore45+MonoAndroid1+MonoTouch1\FSharp.Core.dll" />
+        <file src="..\lib\release\portable7\FSharp.Core.optdata" target="lib\portable-net45+netcore45+MonoAndroid1+MonoTouch1\FSharp.Core.optdata" />
+        <file src="..\lib\release\portable7\FSharp.Core.sigdata" target="lib\portable-net45+netcore45+MonoAndroid1+MonoTouch1\FSharp.Core.sigdata" />
+        <file src="..\lib\release\portable7\FSharp.Core.xml" target="lib\portable-net45+netcore45+MonoAndroid1+MonoTouch1\FSharp.Core.xml" />
 
         <!-- Profile 47-->
-        <file src="..\lib\release\portable-net45+sl5+win8\FSharp.Core.dll" target="lib\portable-net45+sl5+netcore45+MonoAndroid1+MonoTouch1\FSharp.Core.dll" />
-        <file src="..\lib\release\portable-net45+sl5+win8\FSharp.Core.optdata" target="lib\portable-net45+sl5+netcore45+MonoAndroid1+MonoTouch1\FSharp.Core.optdata" />
-        <file src="..\lib\release\portable-net45+sl5+win8\FSharp.Core.sigdata" target="lib\portable-net45+sl5+netcore45+MonoAndroid1+MonoTouch1\FSharp.Core.sigdata" />
-        <file src="..\lib\release\portable-net45+sl5+win8\FSharp.Core.xml" target="lib\portable-net45+sl5+netcore45+MonoAndroid1+MonoTouch1\FSharp.Core.xml" />
+        <file src="..\lib\release\portable47\FSharp.Core.dll" target="lib\portable-net45+sl5+netcore45+MonoAndroid1+MonoTouch1\FSharp.Core.dll" />
+        <file src="..\lib\release\portable47\FSharp.Core.optdata" target="lib\portable-net45+sl5+netcore45+MonoAndroid1+MonoTouch1\FSharp.Core.optdata" />
+        <file src="..\lib\release\portable47\FSharp.Core.sigdata" target="lib\portable-net45+sl5+netcore45+MonoAndroid1+MonoTouch1\FSharp.Core.sigdata" />
+        <file src="..\lib\release\portable47\FSharp.Core.xml" target="lib\portable-net45+sl5+netcore45+MonoAndroid1+MonoTouch1\FSharp.Core.xml" />
 
         <!-- Android -->
         <file src="..\lib\release\monodroid\FSharp.Core.dll" target="lib\MonoAndroid\FSharp.Core.dll" />
@@ -70,16 +70,16 @@ Profile 259
         <file src="..\lib\release\monotouch\FSharp.Core.xml" target="lib\MonoTouch\FSharp.Core.xml" />
 
         <!-- Profile 78 -->
-        <file src="..\lib\release\netcore78\FSharp.Core.dll" target="lib\portable-net45+netcore45+wp8+MonoAndroid1+MonoTouch1\FSharp.Core.dll" />
-        <file src="..\lib\release\netcore78\FSharp.Core.optdata" target="lib\portable-net45+netcore45+wp8+MonoAndroid1+MonoTouch1\FSharp.Core.optdata" />
-        <file src="..\lib\release\netcore78\FSharp.Core.sigdata" target="lib\portable-net45+netcore45+wp8+MonoAndroid1+MonoTouch1\FSharp.Core.sigdata" />
-        <file src="..\lib\release\netcore78\FSharp.Core.xml" target="lib\portable-net45+netcore45+wp8+MonoAndroid1+MonoTouch1\FSharp.Core.xml" />
+        <file src="..\lib\release\portable78\FSharp.Core.dll" target="lib\portable-net45+netcore45+wp8+MonoAndroid1+MonoTouch1\FSharp.Core.dll" />
+        <file src="..\lib\release\portable78\FSharp.Core.optdata" target="lib\portable-net45+netcore45+wp8+MonoAndroid1+MonoTouch1\FSharp.Core.optdata" />
+        <file src="..\lib\release\portable78\FSharp.Core.sigdata" target="lib\portable-net45+netcore45+wp8+MonoAndroid1+MonoTouch1\FSharp.Core.sigdata" />
+        <file src="..\lib\release\portable78\FSharp.Core.xml" target="lib\portable-net45+netcore45+wp8+MonoAndroid1+MonoTouch1\FSharp.Core.xml" />
 
         <!-- Profile 259-->
-        <file src="..\lib\release\netcore259\FSharp.Core.dll" target="lib\portable-net45+netcore45+wpa81+wp8+MonoAndroid1+MonoTouch1\FSharp.Core.dll" />
-        <file src="..\lib\release\netcore259\FSharp.Core.optdata" target="lib\portable-net45+netcore45+wpa81+wp8+MonoAndroid1+MonoTouch1\FSharp.Core.optdata" />
-        <file src="..\lib\release\netcore259\FSharp.Core.sigdata" target="lib\portable-net45+netcore45+wpa81+wp8+MonoAndroid1+MonoTouch1\FSharp.Core.sigdata" />
-        <file src="..\lib\release\netcore259\FSharp.Core.xml" target="lib\portable-net45+netcore45+wpa81+wp8+MonoAndroid1+MonoTouch1\FSharp.Core.xml" />
+        <file src="..\lib\release\portable259\FSharp.Core.dll" target="lib\portable-net45+netcore45+wpa81+wp8+MonoAndroid1+MonoTouch1\FSharp.Core.dll" />
+        <file src="..\lib\release\portable259\FSharp.Core.optdata" target="lib\portable-net45+netcore45+wpa81+wp8+MonoAndroid1+MonoTouch1\FSharp.Core.optdata" />
+        <file src="..\lib\release\portable259\FSharp.Core.sigdata" target="lib\portable-net45+netcore45+wpa81+wp8+MonoAndroid1+MonoTouch1\FSharp.Core.sigdata" />
+        <file src="..\lib\release\portable259\FSharp.Core.xml" target="lib\portable-net45+netcore45+wpa81+wp8+MonoAndroid1+MonoTouch1\FSharp.Core.xml" />
 
     </files>
 </package>

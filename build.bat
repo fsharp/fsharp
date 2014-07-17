@@ -18,9 +18,9 @@ set ABS_PATH=%CD%
 %MSBUILD% "%ABS_PATH%\fsharp-library-build.proj" /p:TargetFramework=net40 /p:Configuration=Release
 %MSBUILD% "%ABS_PATH%\fsharp-compiler-build.proj" /p:TargetFramework=net40 /p:Configuration=Release
 %MSBUILD% "%ABS_PATH%\fsharp-library-build.proj" /p:TargetFramework=net20 /p:Configuration=Release
-%MSBUILD% "%ABS_PATH%\fsharp-library-build.proj" /p:TargetFramework=portable-net45+sl5+win8 /p:Configuration=Release
-%MSBUILD% "%ABS_PATH%\fsharp-library-build.proj" /p:TargetFramework=netcore7 /p:Configuration=Release
-%MSBUILD% "%ABS_PATH%\fsharp-library-build.proj" /p:TargetFramework=netcore78 /p:Configuration=Release
-%MSBUILD% "%ABS_PATH%\fsharp-library-build.proj" /p:TargetFramework=netcore259 /p:Configuration=Release
+%MSBUILD% "%ABS_PATH%\fsharp-library-build.proj" /p:TargetFramework=portable47 /p:Configuration=Release
+%MSBUILD% "%ABS_PATH%\fsharp-library-build.proj" /p:TargetFramework=portable7 /p:Configuration=Release
+%MSBUILD% "%ABS_PATH%\fsharp-library-build.proj" /p:TargetFramework=portable78 /p:Configuration=Release
+%MSBUILD% "%ABS_PATH%\fsharp-library-build.proj" /p:TargetFramework=portable259 /p:Configuration=Release
 %MSBUILD% "%ABS_PATH%\fsharp-library-build.proj" /p:TargetFramework=sl5 /p:Configuration=Release
 popd

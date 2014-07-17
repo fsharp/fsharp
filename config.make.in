@@ -57,27 +57,27 @@ VERSION = 2.3.98.1
 TARGET = monotouch
 endif
 
-ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-portable-net45+sl5+win8-)
+ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-portable47-)
 VERSION = 2.3.5.1
-TARGET = portable-net45+sl5+win8
+TARGET = portable47
 PCLPATH = .NETPortable
 endif
 
-ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-netcore7-)
+ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-portable7-)
 VERSION = 3.3.1.0
-TARGET = netcore7
+TARGET = portable7
 PCLPATH = .NETCore
 endif
 
-ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-netcore78-)
-VERSION = 3.3.1.78
-TARGET = netcore78
+ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-portable78-)
+VERSION = 3.78.3.1
+TARGET = portable78
 PCLPATH = .NETCore
 endif
 
-ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-netcore259-)
-VERSION = 3.3.1.259
-TARGET = netcore259
+ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-portable259-)
+VERSION = 3.259.3.1
+TARGET = portable259
 PCLPATH = .NETCore
 endif
 
@@ -96,9 +96,9 @@ TARGET = 4.0
 outsuffix = fsharp30/$(TargetFramework)
 endif
 
-ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-portable-net45+sl5+win8-3.0)
+ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-portable47-3.0)
 VERSION = 2.3.5.0
-TARGET = portable-net45+sl5+win8
+TARGET = portable47
 PCLPATH = .NETPortable
 outsuffix = fsharp30/$(TargetFramework)
 endif
