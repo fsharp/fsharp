@@ -277,8 +277,8 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <AssemblySearchPaths Condition="Exists('$(MSBuildExtensionsPath32)\..\xbuild-frameworks\.NETPortable\v4.5\System.Runtime.dll')">$(MSBuildExtensionsPath32)\..\xbuild-frameworks\.NETPortable\v4.5</AssemblySearchPaths>
     <OtherFlags>$(OtherFlags) --targetprofile:netcore</OtherFlags>
   </PropertyGroup>
-  
-  <!-- Target Portable -->
+
+  <!-- Target Portable Profile 78 -->
   <PropertyGroup Condition="'$(TargetFramework)'=='portable78'">
     <TargetFrameworkOutputDirectory>$(TargetFramework)</TargetFrameworkOutputDirectory>
     <DefineConstants>$(DefineConstants);FSHARP_CORE_NETCORE_PORTABLE</DefineConstants>
@@ -318,6 +318,7 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <OtherFlags>$(OtherFlags) --targetprofile:netcore</OtherFlags>    
   </PropertyGroup>
 
+  <!-- Target Portable Profile 259 -->
   <PropertyGroup Condition="'$(TargetFramework)'=='portable259'">
     <TargetFrameworkOutputDirectory>$(TargetFramework)</TargetFrameworkOutputDirectory>
     <DefineConstants>$(DefineConstants);FSHARP_CORE_NETCORE_PORTABLE</DefineConstants>
@@ -863,7 +864,7 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
   <Target Name="ValidateConfiguration">
     <Error
             Text="Configuration '$(Configuration)' is not one of the supported configurations: Debug, Release, Proto"
-            Condition="'$(Configuration)'!='Release' and '$(Configuration)'!='Debug' and '$(Configuration)'!='Proto'"/>
+            Condition="'$(Configuration)'!='Release' and '$(Configuration)'!='Debug' and '$(Configuration)'!='VSRelease' and '$(Configuration)'!='VSDebug' and '$(Configuration)'!='Proto'"/>
   </Target>
 
   <Import Project="$(LkgPath)\..\2.0\FSharp.SRGen.targets" />

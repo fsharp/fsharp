@@ -57,6 +57,7 @@ tests/projects/Sample_VS2012_FSharp_ConsoleApp_net45_with_resource/Sample_VS2012
 tests/projects/Sample_VS2012_FSharp_ConsoleApp_net45_with_resource/Sample_VS2012_FSharp_ConsoleApp_net45/Sample_VS2012_FSharp_ConsoleApp_net45.userprefs
 *.suo
 obj
+<<<<<<< HEAD
 src/fsharp/FSharp.Data.TypeProviders/FSData.resx
 src/fsharp/fsiAnyCpu/FSIstrings.resx
 *.actual
@@ -101,3 +102,5 @@ build.ok
 *.vserr
 
 *.userprefs
+extras
+ossreadme*.txt
