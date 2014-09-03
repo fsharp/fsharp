@@ -101,3 +101,5 @@ build.ok
 *.vserr
 
 *.userprefs
+extras
+ossreadme*.txt

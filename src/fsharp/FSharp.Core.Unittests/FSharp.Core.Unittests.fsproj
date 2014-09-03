@@ -18,6 +18,13 @@
     <!-- Prevent compiler from inlining calls to FSharp.Core to improve code coverage accuracy -->
     <Optimize>false</Optimize>
     <Tailcalls>false</Tailcalls>
+    <TargetProfile Condition=" '$(TargetFramework)' == 'portable7' or '$(TargetFramework)' == 'portable78' or '$(TargetFramework)' == 'portable259' ">netcore</TargetProfile>
+    <!-- workaround for msbuild narrowing the assembly search paths when building portable libs -->
+    <AssemblySearchPaths Condition=" '$(TargetFramework)' == 'portable47' or '$(TargetFramework)' == 'portable7' or '$(TargetFramework)' == 'portable78' or '$(TargetFramework)' == 'portable259' ">
+      {CandidateAssemblyFiles};
+      {TargetFrameworkDirectory};
+      {Registry:Software\Microsoft\.NETFramework,v4.5,AssemblyFoldersEx};
+    </AssemblySearchPaths>
   </PropertyGroup>
   <PropertyGroup>
     <DefineConstants Condition=" '$(TargetFramework)' == 'sl5' OR '$(TargetFramework)' == 'sl5-compiler' ">$(DefineConstants);SILVERLIGHT</DefineConstants>
@@ -42,7 +49,10 @@
     <DebugSymbols>False</DebugSymbols>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="nunit.framework" Condition="'$(TargetFramework)' != 'sl5' AND '$(TargetFramework)' != 'sl3-wp'" />
+    <!-- need full name and SpecificVersion = true in order to convince msbuild to allow this reference when targeting portable47 -->
+    <Reference Include="nunit.framework, Version=2.6.3.13283, Culture=neutral, PublicKeyToken=96d09a1eb7f44a77" Condition="'$(TargetFramework)' != 'sl5' AND '$(TargetFramework)' != 'sl3-wp'" >
+        <SpecificVersion>true</SpecificVersion>
+    </Reference>
     <Reference Include="NUnitFramework" Condition="'$(TargetFramework)' == 'sl5' OR '$(TargetFramework)' == 'sl3-wp'" />
     <ProjectReference Include="$(FSharpSourcesRoot)\fsharp\FSharp.Core\FSharp.Core.fsproj">
       <Project>{DED3BBD7-53F4-428A-8C9F-27968E768605}</Project>
@@ -50,6 +60,8 @@
     </ProjectReference>
     <Reference Include="nunit.framework" Condition="'$(TargetFramework)' != 'sl5' AND '$(TargetFramework)' != 'sl5-compiler' AND '$(TargetFramework)' != 'wp7'" />
     <Reference Include="NUnitFramework" Condition="'$(TargetFramework)' == 'sl5' OR '$(TargetFramework)' == 'wp7' OR '$(TargetFramework)' == 'sl5-compiler'" />
+  </ItemGroup>
+  <ItemGroup Condition="!('$(TargetFramework)' == 'portable47' or '$(TargetFramework)' == 'portable7' or '$(TargetFramework)' == 'portable78' or '$(TargetFramework)' == 'portable259' )">
     <Reference Include="mscorlib" />
     <Reference Include="System" />
     <Reference Include="System.Numerics" Condition="'$(TargetFramework)' == 'net40'" />
@@ -101,7 +113,7 @@
     <Compile Include="FSharp.Core\PrimTypes.fs" />
     <Compile Include="TypeForwarding.fs" />
     <Compile Include="NUnitFrameworkShims.fs" Condition="'$(TargetFramework)' == 'sl3-wp'" />
-    <!-- <Compile Include="SurfaceArea.4.0.fs"/> -->
+    <!-- <Compile Include="SurfaceArea.4.0.fs" Condition="'$(TargetFramework)' == 'net40'"/> -->
   </ItemGroup>
   <Import Project="$(FSharpSourcesRoot)\FSharpSource.targets" />
 </Project>
