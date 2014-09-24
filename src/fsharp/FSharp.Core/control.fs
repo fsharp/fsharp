@@ -1627,10 +1627,12 @@ namespace Microsoft.FSharp.Control
                     
                     let savedCont = args.cont
                     try
+                      lock rwh <| fun () ->
                         rwh := Some(ThreadPool.RegisterWaitForSingleObject
                                       (waitObject=waitHandle,
                                        callBack=WaitOrTimerCallback(fun _ timeOut ->
                                                     if latch.Enter() then
+                                                        lock rwh <| fun () -> rwh.Value.Value.Unregister(waitHandle)
                                                         rwh := None
                                                         registration.Dispose()
                                                         aux.trampolineHolder.Protect (fun () -> savedCont (not timeOut)) |> unfake),
