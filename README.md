@@ -241,3 +241,46 @@ make
 sudo make install
 ```
 
+### FSharp.Core Deployed with Nuget
+FSharp.Core is also available via Nuget.  
+
+*   [FSharp.Core 3.0 Microsoft Signed](https://www.nuget.org/packages/FSharp.Core.4.3.0.0.Microsoft.Signed)
+*   [FSharp.Core 3.1 Microsoft Signed](https://www.nuget.org/packages/FSharp.Core.Microsoft.Signed)
+*   [FSharp.Core 3.1 Mono Signed](https://www.nuget.org/packages/FSharp.Core.Mono.Signed)
+
+
+The folder FSharp.Core.Nuget contains the nuget package scripts for the deployment of FSharp.Core.  
+
+There are currently three versions:
+
+#### FSharp.Core.Microsoft.Signed.3.0
+Contains the following versions Microsoft signed versions: 
+*   .Net 2.0
+*   .Net 4.0
+*   .Net 4.5
+*   Profile 47
+
+#### FSharp.Core.Microsoft.Signed.3.1
+Contains the following versions Microsoft signed versions: 
+*   .Net 4.0
+*   .Net 4.5
+*   Profile 7
+*   Profile 47
+*   Profile 78
+*   Profile 259
+
+#### FSharp.Core.Mono.DelaySigned.3.1
+Contains the following versions Microsoft signed versions: 
+*   .Net 4.0
+*   .Net 4.5
+*   Profile 7
+*   Profile 47
+*   Profile 78
+*   Profile 259
+
+And the following are delay signed with the Mono key:
+*   MonoAndroid
+*   MonoTouch
+
+The FSharp.Core.Mono.DelaySigned.3.1 is deployed with a version matching the current tag of the open source build, the Microsoft signed versions use a version which matches the current Microsoft signed versions of FSharp core.
+
