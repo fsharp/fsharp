@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
     <metadata>
         <id>FSharp.Core.Mono.Signed</id>
-        <version>3.1.1.0</version>
+        <version>3.1.1.27</version>
         <title>FSharp.Core for F# 3.1+ (with MonoAndroid and MonoTouch)</title>
         <authors>F# Software Foundation, Dave Thomas</authors>
         <owners>F# Software Foundation</owners>
@@ -10,7 +10,7 @@
         <projectUrl>https://github.com/fsharp/fsharp</projectUrl>
         <iconUrl>http://fsharp.org/img/logo.png</iconUrl>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
-        <description>Microsoft-signed versions of FSharp.Core for F# 3.1 and above. Some may be delay-signed. Target profiles include:
+        <description>Microsoft-signed versions of FSharp.Core for F# 3.1 and above. MonoTouch and MonoAndroid versions are delay-signed. Target profiles include:
 .Net 4.0
 .Net 4.5
 Profile 7
@@ -51,16 +51,16 @@ MonoTouch
         <file src="..\lib\bootstrap\signed\.NETPortable\2.3.5.1\FSharp.Core.xml" target="lib\portable-net45+sl5+netcore45+MonoAndroid1+MonoTouch1\FSharp.Core.xml" />
 
         <!-- Profile 78 -->
-        <file src="..\lib\bootstrap\signed\.NETCore\3.78.3.1\FSharp.Core.dll" target="lib\portable-portable-net45+netcore45+wp8+MonoAndroid1+MonoTouch1\FSharp.Core.dll" />
-        <file src="..\lib\bootstrap\signed\.NETCore\3.78.3.1\FSharp.Core.optdata" target="lib\portable-portable-net45+netcore45+wp8+MonoAndroid1+MonoTouch1\FSharp.Core.optdata" />
-        <file src="..\lib\bootstrap\signed\.NETCore\3.78.3.1\FSharp.Core.sigdata" target="lib\portable-portable-net45+netcore45+wp8+MonoAndroid1+MonoTouch1\FSharp.Core.sigdata" />
-        <file src="..\lib\bootstrap\signed\.NETCore\3.78.3.1\FSharp.Core.xml" target="lib\portable-portable-net45+netcore45+wp8+MonoAndroid1+MonoTouch1\FSharp.Core.xml" />
+        <file src="..\lib\bootstrap\signed\.NETCore\3.78.3.1\FSharp.Core.dll" target="lib\portable-net45+netcore45+wp8+MonoAndroid1+MonoTouch1\FSharp.Core.dll" />
+        <file src="..\lib\bootstrap\signed\.NETCore\3.78.3.1\FSharp.Core.optdata" target="lib\portable-net45+netcore45+wp8+MonoAndroid1+MonoTouch1\FSharp.Core.optdata" />
+        <file src="..\lib\bootstrap\signed\.NETCore\3.78.3.1\FSharp.Core.sigdata" target="lib\portable-net45+netcore45+wp8+MonoAndroid1+MonoTouch1\FSharp.Core.sigdata" />
+        <file src="..\lib\bootstrap\signed\.NETCore\3.78.3.1\FSharp.Core.xml" target="lib\portable-net45+netcore45+wp8+MonoAndroid1+MonoTouch1\FSharp.Core.xml" />
 
         <!-- Profile 259 -->
-        <file src="..\lib\bootstrap\signed\.NETCore\3.259.3.1\FSharp.Core.dll" target="lib\portable-portable-net45+netcore45+wpa81+wp8+MonoAndroid1+MonoTouch1\FSharp.Core.dll" />
-        <file src="..\lib\bootstrap\signed\.NETCore\3.259.3.1\FSharp.Core.optdata" target="lib\portable-portable-net45+netcore45+wpa81+wp8+MonoAndroid1+MonoTouch1\FSharp.Core.optdata" />
-        <file src="..\lib\bootstrap\signed\.NETCore\3.259.3.1\FSharp.Core.sigdata" target="lib\portable-portable-net45+netcore45+wpa81+wp8+MonoAndroid1+MonoTouch1\FSharp.Core.sigdata" />
-        <file src="..\lib\bootstrap\signed\.NETCore\3.259.3.1\FSharp.Core.xml" target="lib\portable-portable-net45+netcore45+wpa81+wp8+MonoAndroid1+MonoTouch1\FSharp.Core.xml" />
+        <file src="..\lib\bootstrap\signed\.NETCore\3.259.3.1\FSharp.Core.dll" target="lib\portable-net45+netcore45+wpa81+wp8+MonoAndroid1+MonoTouch1\FSharp.Core.dll" />
+        <file src="..\lib\bootstrap\signed\.NETCore\3.259.3.1\FSharp.Core.optdata" target="lib\portable-net45+netcore45+wpa81+wp8+MonoAndroid1+MonoTouch1\FSharp.Core.optdata" />
+        <file src="..\lib\bootstrap\signed\.NETCore\3.259.3.1\FSharp.Core.sigdata" target="lib\portable-net45+netcore45+wpa81+wp8+MonoAndroid1+MonoTouch1\FSharp.Core.sigdata" />
+        <file src="..\lib\bootstrap\signed\.NETCore\3.259.3.1\FSharp.Core.xml" target="lib\portable-net45+netcore45+wpa81+wp8+MonoAndroid1+MonoTouch1\FSharp.Core.xml" />
       
         <!-- MonoAndroid -->
         <file src="..\lib\release\monodroid\FSharp.Core.dll" target="lib\MonoAndroid\FSharp.Core.dll" />
