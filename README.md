@@ -282,5 +282,5 @@ And the following are delay signed with the Mono key:
 *   MonoAndroid
 *   MonoTouch
 
-The FSharp.Core.Mono.DelaySigned.3.1 is deployed with a version matching the current tag of the open source build, the Microsoft signed versions use a version which matches the current Microsoft signed versions of FSharp core.
+The FSharp.Core.Mono.DelaySigned.3.1 is normally deployed with a version matching the current tag of the open source build, the Microsoft signed versions use a version which matches the current Microsoft signed versions of FSharp core.
 

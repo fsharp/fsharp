@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
     <metadata>
         <id>FSharp.Core.Mono.Signed</id>
-        <version>3.1.1.26</version>
+        <version>3.1.1.27</version>
         <title>FSharp.Core for F# 3.1+ (with MonoAndroid and MonoTouch)</title>
         <authors>F# Software Foundation, Dave Thomas</authors>
         <owners>F# Software Foundation</owners>
@@ -10,7 +10,7 @@
         <projectUrl>https://github.com/fsharp/fsharp</projectUrl>
         <iconUrl>http://fsharp.org/img/logo.png</iconUrl>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
-        <description>Microsoft-signed versions of FSharp.Core for F# 3.1 and above. Some may be delay-signed. Target profiles include:
+        <description>Microsoft-signed versions of FSharp.Core for F# 3.1 and above. MonoTouch and MonoAndroid versions are delay-signed. Target profiles include:
 .Net 4.0
 .Net 4.5
 Profile 7
