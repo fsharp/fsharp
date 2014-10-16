@@ -20,7 +20,7 @@
     <ProjectGuid>{9D7C9060-9263-40EB-8FE3-1E4E3C6D941C}</ProjectGuid>
     <AllowCrossTargeting>true</AllowCrossTargeting>
     <OtherFlags>$(OtherFlags) --stackReserveSize:4096000</OtherFlags>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
   </PropertyGroup>
   <!-- MonoDevelop likes these here to recognise the configurations -->
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' " />

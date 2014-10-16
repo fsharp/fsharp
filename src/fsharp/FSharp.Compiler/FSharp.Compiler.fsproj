@@ -509,11 +509,11 @@
     <Reference Include="System.Drawing" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Runtime.Remoting" />
-    <Reference Include="Microsoft.Build.Framework" Condition="'$(TargetFramework)'=='net40'" />
-    <Reference Include="Microsoft.Build.Engine" Condition="'$(TargetFramework)'=='net40'" />
-    <Reference Include="Microsoft.Build" Condition="'$(TargetFramework)'=='net40'" />
-    <Reference Include="Microsoft.Build.Utilities.v4.0" Condition="'$(TargetFramework)'=='net40'" />
-    <Reference Include="Microsoft.Build.Tasks.v4.0" Condition="'$(TargetFramework)'=='net40'" />
+    <Reference Include="Microsoft.Build.Framework, Version=12.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+    <Reference Include="Microsoft.Build.Engine, Version=12.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+    <Reference Include="Microsoft.Build, Version=12.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+    <Reference Include="Microsoft.Build.Utilities.v12.0" />
+    <Reference Include="Microsoft.Build.Tasks.v12.0" />
     <Reference Include="ISymWrapper, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" Condition="'$(TargetFramework)'=='net40'" />
     <ProjectReference Include="..\FSharp.Core\FSharp.Core.fsproj" >
       <Project>{DED3BBD7-53F4-428A-8C9F-27968E768605}</Project>
