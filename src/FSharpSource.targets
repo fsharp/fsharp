@@ -283,6 +283,7 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <TargetFrameworkOutputDirectory>$(TargetFramework)</TargetFrameworkOutputDirectory>
     <DefineConstants>$(DefineConstants);FSHARP_CORE_NETCORE_PORTABLE</DefineConstants>
     <DefineConstants>$(DefineConstants);FSHARP_CORE_NETCORE_PORTABLE78</DefineConstants>
+    <DefineConstants>$(DefineConstants);QUERIES_IN_FSLIB</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_CONVERTER</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_RESHAPED_REFLECTION</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_ARRAY_LONG_LENGTH</DefineConstants>
@@ -323,6 +324,7 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <TargetFrameworkOutputDirectory>$(TargetFramework)</TargetFrameworkOutputDirectory>
     <DefineConstants>$(DefineConstants);FSHARP_CORE_NETCORE_PORTABLE</DefineConstants>
     <DefineConstants>$(DefineConstants);FSHARP_CORE_NETCORE_PORTABLE259</DefineConstants>
+    <DefineConstants>$(DefineConstants);QUERIES_IN_FSLIB</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_CONVERTER</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_RESHAPED_REFLECTION</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_ARRAY_LONG_LENGTH</DefineConstants>

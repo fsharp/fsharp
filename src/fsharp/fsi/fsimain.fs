@@ -27,7 +27,8 @@ do()
 
 // Mark the main thread as STAThread since it is a GUI thread
 [<EntryPoint>]
-[<STAThread()>]    
+[<STAThread()>]
+[<LoaderOptimization(LoaderOptimization.MultiDomainHost)>]     
 let FsiMain argv = 
     MainMain argv
 #endif // SILVERLIGHT

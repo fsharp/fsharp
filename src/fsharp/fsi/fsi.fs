@@ -2614,11 +2614,12 @@ let MainMain (argv:string[]) =
         fsi.Run() 
 #endif
 
-    if argv |> Array.exists  (fun x -> x = "/shadowcopyreferences" || x = "--shadowcopyreferences" || x = "/shadowcopyreferences+" || x = "--shadowcopyreferences+") then
+    let isShadowCopy x = (x = "/shadowcopyreferences" || x = "--shadowcopyreferences" || x = "/shadowcopyreferences+" || x = "--shadowcopyreferences+")
+    if AppDomain.CurrentDomain.IsDefaultAppDomain() && argv |> Array.exists isShadowCopy then
         let setupInformation = AppDomain.CurrentDomain.SetupInformation
         setupInformation.ShadowCopyFiles <- "true"
         let helper = AppDomain.CreateDomain("FSI_Domain", null, setupInformation)
-        helper.DoCallBack(fun() -> evaluateSession() )
+        helper.ExecuteAssemblyByName(Assembly.GetExecutingAssembly().GetName()) |> ignore
     else
         evaluateSession()
     0
