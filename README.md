@@ -186,10 +186,10 @@ plus scripts
 ### Integrating changes from 'visualfsharp'
 
 To integrate latest changes from https://git01.codeplex.com/visualfsharp, use
-
+```
 git remote add visualfsharp https://git01.codeplex.com/visualfsharp
 git pull visualfsharp master
-
+```
 
 ### Continuous Integration Build 
 
