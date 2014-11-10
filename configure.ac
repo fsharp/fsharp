@@ -61,8 +61,9 @@ fi
 MONOGACDIR20="$MONOGACDIR"/2.0
 MONOGACDIR35="$MONOGACDIR"/3.5
 MONOGACDIR40="$MONOGACDIR"/4.0
+MONOGACDIR45="$MONOGACDIR"/4.5
 
-if ! test -e $MONOGACDIR20/mscorlib.dll; then
+if ! test -e $MONOGACDIR20/mscorlib.dll -o -e $MONOGACDIR45/mscorlib.dll; then
 	AC_ERROR(Couldn't find the mono gac directory or mscorlib.dll in the usual places. Set --with-gacdir=<path>)
 fi
 
