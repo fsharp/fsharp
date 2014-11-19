@@ -20,6 +20,11 @@ build-proto: $(bootstrapdir)FSharp.Core.dll $(bootstrapdir)FSharp.Core.sigdata $
 	$(MAKE) -C FSharp.Compiler-proto Configuration=proto $@
 	$(MAKE) -C Fsc-proto Configuration=proto $@
 
+# The main targets
+#
+# - Only build a net20 version of FSharp.Core if net20 mscorlib exists
+#   Modern versions of mono no longer include net20 or net35 assemblies
+#
 build clean install:
 	$(MAKE) -C FSharp.Core TargetFramework=net40 $@
 	$(MAKE) -C FSharp.Build $@
@@ -37,13 +42,11 @@ build clean install:
 	$(MAKE) -C policy.4.3.FSharp.Core $@
 	$(MAKE) -C policy.2.0.FSharp.Core TargetFramework=net20 $@
 	$(MAKE) -C policy.2.3.FSharp.Core TargetFramework=net20 $@
-# Only build a net20 version of FSharp.Core if net20 mscorlib exists
-# Modern versions of mono no longer include net20 or net35 assemblies
-if test -e $MONOGACDIR20/mscorlib.dll; then $(MAKE) -C FSharp.Core TargetFramework=net20 $@;fi
+	if test -e $MONOGACDIR20/mscorlib.dll; then $(MAKE) -C FSharp.Core TargetFramework=net20 $@;fi
 	$(MAKE) -C FSharp.Core TargetFramework=monodroid $@
 	$(MAKE) -C FSharp.Core TargetFramework=monotouch $@
 	$(MAKE) -C FSharp.Core FSharpCoreBackVersion=3.0 TargetFramework=net40 $@
-if test -e $MONOGACDIR20/mscorlib.dll; then $(MAKE) -C FSharp.Core FSharpCoreBackVersion=3.0 TargetFramework=net20 $@;fi
+	if test -e $MONOGACDIR20/mscorlib.dll; then $(MAKE) -C FSharp.Core FSharpCoreBackVersion=3.0 TargetFramework=net20 $@;fi
 ifeq ("$(pclenabled47)", "yes")
 	$(MAKE) -C FSharp.Core TargetFramework=portable47 $@
 	$(MAKE) -C FSharp.Core FSharpCoreBackVersion=3.0 TargetFramework=portable47 $@
