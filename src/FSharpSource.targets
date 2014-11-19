@@ -869,7 +869,7 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
             Condition="'$(Configuration)'!='Release' and '$(Configuration)'!='Debug' and '$(Configuration)'!='VSRelease' and '$(Configuration)'!='VSDebug' and '$(Configuration)'!='Proto'"/>
   </Target>
 
-  <Import Project="$(LkgPath)\..\4.0\FSharp.SRGen.targets" />
+  <Import Project="$(LkgPath)\FSharp.SRGen.targets" />
 
   <Target Name="ReorderCompileItems"
       BeforeTargets="CoreCompile"
