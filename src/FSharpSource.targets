@@ -847,9 +847,9 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
 
   <!-- Reference an existing FSI.EXE for use from within MSBuild -->
   <PropertyGroup>
-    <FsSrGenToolPath>$(LkgPath)\..\4.0</FsSrGenToolPath>
-    <FsLexToolPath>$(LkgPath)\..\4.0</FsLexToolPath>
-    <FsYaccToolPath>$(LkgPath)\..\4.0</FsYaccToolPath>
+    <FsSrGenToolPath>$(LkgPath)</FsSrGenToolPath>
+    <FsLexToolPath>$(LkgPath)</FsLexToolPath>
+    <FsYaccToolPath>$(LkgPath)</FsYaccToolPath>
     <FsLexToolExe>fslex.exe</FsLexToolExe>
     <FsYaccToolExe>fsyacc.exe</FsYaccToolExe>
   </PropertyGroup>
