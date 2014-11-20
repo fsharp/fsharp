@@ -847,9 +847,9 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
 
   <!-- Reference an existing FSI.EXE for use from within MSBuild -->
   <PropertyGroup>
-    <FsSrGenToolPath>$(LkgPath)\..\2.0</FsSrGenToolPath>
-    <FsLexToolPath>$(LkgPath)\..\2.0</FsLexToolPath>
-    <FsYaccToolPath>$(LkgPath)\..\2.0</FsYaccToolPath>
+    <FsSrGenToolPath>$(LkgPath)</FsSrGenToolPath>
+    <FsLexToolPath>$(LkgPath)</FsLexToolPath>
+    <FsYaccToolPath>$(LkgPath)</FsYaccToolPath>
     <FsLexToolExe>fslex.exe</FsLexToolExe>
     <FsYaccToolExe>fsyacc.exe</FsYaccToolExe>
   </PropertyGroup>
@@ -869,7 +869,7 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
             Condition="'$(Configuration)'!='Release' and '$(Configuration)'!='Debug' and '$(Configuration)'!='VSRelease' and '$(Configuration)'!='VSDebug' and '$(Configuration)'!='Proto'"/>
   </Target>
 
-  <Import Project="$(LkgPath)\..\2.0\FSharp.SRGen.targets" />
+  <Import Project="$(LkgPath)\FSharp.SRGen.targets" />
 
   <Target Name="ReorderCompileItems"
       BeforeTargets="CoreCompile"
