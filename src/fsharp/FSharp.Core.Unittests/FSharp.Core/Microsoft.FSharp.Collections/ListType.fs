@@ -255,9 +255,9 @@ type ListType() =
         CheckThrowsIndexOutRangException((fun _ -> lst.[-4..-3] |> ignore))
 
         let empty : obj list = List.empty
-        Assert.AreEqual(empty.[*], ([]: int list))
-        Assert.AreEqual(empty.[5..3], ([]: int list))
-        Assert.AreEqual(empty.[0..], ([]: int list))
+        Assert.AreEqual(empty.[*], ([]: obj list))
+        Assert.AreEqual(empty.[5..3], ([]: obj list))
+        Assert.AreEqual(empty.[0..], ([]: obj list))
         CheckThrowsIndexOutRangException((fun _ -> empty.[..0] |> ignore))
         CheckThrowsIndexOutRangException((fun _ -> empty.[0..0] |> ignore))
         CheckThrowsIndexOutRangException((fun _ -> empty.[0..1] |> ignore))

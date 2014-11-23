@@ -242,7 +242,7 @@ type ListModule() =
 
     [<Test>]
     member this.splitAt() =        
-        Assert.AreEqual(([],[]), List.splitAt 0 [])
+        Assert.AreEqual((([] : int list),([] : int list)), List.splitAt 0 ([] : int list))
 
         Assert.AreEqual([1..4], List.splitAt 4 [1..10] |> fst)       
         Assert.AreEqual([5..10], List.splitAt 4 [1..10] |> snd)      
@@ -254,7 +254,7 @@ type ListModule() =
         Assert.AreEqual([2], List.splitAt 1 [1..2] |> snd)
 
         Assert.AreEqual([1..2], List.splitAt 2 [1..2] |> fst)
-        Assert.AreEqual([], List.splitAt 2 [1..2] |> snd)
+        Assert.AreEqual(([] : int list), List.splitAt 2 [1..2] |> snd)
 
         Assert.AreEqual(["a"], List.splitAt 1 ["a";"b";"c"] |> fst)
         Assert.AreEqual(["b";"c"], List.splitAt 1 ["a";"b";"c"] |> snd)
@@ -924,7 +924,7 @@ type ListModule() =
     [<Test>]
     member this.``pairwise should return pairs of the input list``() =
         Assert.AreEqual(0,List.pairwise [] |> List.length)
-        Assert.AreEqual([],List.pairwise [1])
+        Assert.AreEqual(([]: (int*int) list),List.pairwise [1])
         Assert.AreEqual([1,2],List.pairwise [1;2])
         Assert.AreEqual([1,2; 2,3],List.pairwise [1;2;3])
         Assert.AreEqual(["H","E"; "E","L"; "L","L"; "L","O"],List.pairwise ["H";"E";"L";"L";"O"])
