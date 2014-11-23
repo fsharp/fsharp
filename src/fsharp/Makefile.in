@@ -50,19 +50,24 @@ build clean install:
 	$(MAKE) -C FSharp.Core TargetFramework=monodroid $@
 	$(MAKE) -C FSharp.Core TargetFramework=monotouch $@
 	$(MAKE) -C FSharp.Core FSharpCoreBackVersion=3.0 TargetFramework=net40 $@
+	$(MAKE) -C FSharp.Core FSharpCoreBackVersion=3.1 TargetFramework=net40 $@
 	if test -e $MONOGACDIR20/mscorlib.dll; then $(MAKE) -C FSharp.Core FSharpCoreBackVersion=3.0 TargetFramework=net20 $@;fi
 ifeq ("$(pclenabled47)", "yes")
 	$(MAKE) -C FSharp.Core TargetFramework=portable47 $@
 	$(MAKE) -C FSharp.Core FSharpCoreBackVersion=3.0 TargetFramework=portable47 $@
+	$(MAKE) -C FSharp.Core FSharpCoreBackVersion=3.1 TargetFramework=portable47 $@
 endif
 ifeq ("$(pclenabled7)", "yes")
 	$(MAKE) -C FSharp.Core TargetFramework=portable7 $@
+	$(MAKE) -C FSharp.Core FSharpCoreBackVersion=3.1 TargetFramework=portable7 $@
 endif
 ifeq ("$(pclenabled78)", "yes")
 	$(MAKE) -C FSharp.Core TargetFramework=portable78 $@
+	$(MAKE) -C FSharp.Core FSharpCoreBackVersion=3.1 TargetFramework=portable78 $@
 endif
 ifeq ("$(pclenabled259)", "yes")
 	$(MAKE) -C FSharp.Core TargetFramework=portable259 $@
+	$(MAKE) -C FSharp.Core FSharpCoreBackVersion=3.1 TargetFramework=portable259 $@
 endif
 
 all-monotouch-monodroid:
