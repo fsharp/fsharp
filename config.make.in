@@ -35,48 +35,43 @@ outsuffix = $(TargetFramework)
 # Version number mappings for various versions of FSharp.Core
 
 
-ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-net20-)
-VERSION = 2.3.1.0
-TARGET = 2.0
-endif
-
 ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-net40-)
-VERSION = 4.3.1.0
+VERSION = 4.4.4.0
 TARGET = 4.0
 outsuffix = .
 endif
 
 ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-monodroid-)
-VERSION = 2.3.98.1
+VERSION = 3.98.4.0
 TARGET = monodroid
 endif
 
 
 ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-monotouch-)
-VERSION = 2.3.98.1
+VERSION = 3.98.4.0
 TARGET = monotouch
 endif
 
 ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-portable47-)
-VERSION = 2.3.5.1
+VERSION = 3.47.4.0
 TARGET = portable47
 PCLPATH = .NETPortable
 endif
 
 ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-portable7-)
-VERSION = 3.3.1.0
+VERSION = 3.7.4.0
 TARGET = portable7
 PCLPATH = .NETCore
 endif
 
 ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-portable78-)
-VERSION = 3.78.3.1
+VERSION = 3.78.4.0
 TARGET = portable78
 PCLPATH = .NETCore
 endif
 
 ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-portable259-)
-VERSION = 3.259.3.1
+VERSION = 3.259.4.0
 TARGET = portable259
 PCLPATH = .NETCore
 endif
@@ -88,7 +83,6 @@ VERSION = 2.3.0.0
 TARGET = 2.0
 outsuffix = fsharp30/$(TargetFramework)
 endif
-
 
 ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-net40-3.0)
 VERSION = 4.3.0.0
@@ -102,6 +96,58 @@ TARGET = portable47
 PCLPATH = .NETPortable
 outsuffix = fsharp30/$(TargetFramework)
 endif
+
+# Version number mappings for various back versions of FSharp.Core (F# 3.1 versions of FSharp.Core)
+
+ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-net40-3.1)
+VERSION = 4.3.1.0
+TARGET = 4.0
+outsuffix = fsharp31/$(TargetFramework)
+endif
+
+ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-monodroid-3.1)
+VERSION = 2.3.98.1
+TARGET = fsharp31/monodroid
+endif
+
+
+ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-monotouch-3.1)
+VERSION = 2.3.98.1
+TARGET = fsharp31/monotouch
+endif
+
+
+ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-portable7-3.1)
+VERSION = 3.3.1.0
+TARGET = portable7
+PCLPATH = .NETCore
+outsuffix = fsharp31/$(TargetFramework)
+endif
+
+
+ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-portable47-3.1)
+VERSION = 2.3.5.1
+TARGET = portable47
+PCLPATH = .NETPortable
+outsuffix = fsharp31/$(TargetFramework)
+endif
+
+
+
+ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-portable78-3.1)
+VERSION = 3.78.3.1
+TARGET = portable78
+PCLPATH = .NETCore
+outsuffix = fsharp31/$(TargetFramework)
+endif
+
+ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-portable259-3.1)
+VERSION = 3.259.3.1
+TARGET = portable259
+PCLPATH = .NETCore
+outsuffix = fsharp31/$(TargetFramework)
+endif
+
 
 
 DELAY_SIGN_TOKEN = b03f5f7f11d50a3a

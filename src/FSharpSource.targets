@@ -17,21 +17,24 @@
     <!-- Compute the assembly version numbers to use -->
     <AssemblyVersion>2.9.9.999</AssemblyVersion>
     <!-- This is the primary framework, used to run the compiler itself -->
-    <AssemblyVersion Condition="'$(TargetFramework)' == 'net40'">4.3.1.0</AssemblyVersion>
-    <!-- These correspond to the frameworks supported by Microsoft -->
-    <AssemblyVersion Condition="'$(TargetFramework)' == 'net20'">2.3.1.0</AssemblyVersion>
-    <AssemblyVersion Condition="'$(TargetFramework)' == 'portable47' ">2.3.5.1</AssemblyVersion>
-    <AssemblyVersion Condition="'$(TargetFramework)' == 'monodroid' ">2.3.98.1</AssemblyVersion>
-    <AssemblyVersion Condition="'$(TargetFramework)' == 'monotouch' ">2.3.98.1</AssemblyVersion>
-    <AssemblyVersion Condition="'$(TargetFramework)' == 'portable7'">3.3.1.0</AssemblyVersion>
-    <AssemblyVersion Condition="'$(TargetFramework)' == 'portable78'">3.78.3.1</AssemblyVersion>
-    <AssemblyVersion Condition="'$(TargetFramework)' == 'portable259'">3.259.3.1</AssemblyVersion>
+    <AssemblyVersion Condition="'$(TargetFramework)' == 'net40'">4.4.0.0</AssemblyVersion>
+    <AssemblyVersion Condition="'$(TargetFramework)' == 'portable7'">3.7.4.0</AssemblyVersion>
+    <AssemblyVersion Condition="'$(TargetFramework)' == 'portable47'">3.47.4.0</AssemblyVersion>
+    <AssemblyVersion Condition="'$(TargetFramework)' == 'portable78'">3.78.4.0</AssemblyVersion>
+    <AssemblyVersion Condition="'$(TargetFramework)' == 'monodroid' ">3.98.4.0</AssemblyVersion>
+    <AssemblyVersion Condition="'$(TargetFramework)' == 'monotouch' ">3.98.4.0</AssemblyVersion>
+    <AssemblyVersion Condition="'$(TargetFramework)' == 'portable259'">3.259.4.0</AssemblyVersion>
 
-    <!-- These are simulations of previous versions of FSharp.Core for F# 3.0, useable to support the 'build a library compatible with a back version of F#' multi-targeting option supported by some IDEs -->
-    <!-- The actual libraries will contain additional functionality related to F# 3.1 etc. but that doesn't matter - the version number will be right which is what counts -->
+    <!-- These are simulations of previous versions of FSharp.Core for F# 3.0/3.1 -->
     <AssemblyVersion Condition="'$(TargetFramework)' == 'net20' AND '$(FSharpCoreBackVersion)' == '3.0' ">2.3.0.0</AssemblyVersion>
-    <AssemblyVersion Condition="'$(TargetFramework)' == 'net40' AND '$(FSharpCoreBackVersion)' == '3.0' ">4.3.0.0</AssemblyVersion>
     <AssemblyVersion Condition="'$(TargetFramework)' == 'portable47' AND '$(FSharpCoreBackVersion)' == '3.0' ">2.3.5.0</AssemblyVersion>
+    <AssemblyVersion Condition="'$(TargetFramework)' == 'net40' AND '$(FSharpCoreBackVersion)' == '3.0' ">4.3.0.0</AssemblyVersion>
+
+    <AssemblyVersion Condition="'$(TargetFramework)' == 'net40' AND '$(FSharpCoreBackVersion)' == '3.1' ">4.3.1.0</AssemblyVersion>
+    <AssemblyVersion Condition="'$(TargetFramework)' == 'portable7' AND '$(FSharpCoreBackVersion)' == '3.1' ">3.3.1.0</AssemblyVersion>
+    <AssemblyVersion Condition="'$(TargetFramework)' == 'portable47' AND '$(FSharpCoreBackVersion)' == '3.1' ">2.3.5.1</AssemblyVersion>
+    <AssemblyVersion Condition="'$(TargetFramework)' == 'portable78' AND '$(FSharpCoreBackVersion)' == '3.1' ">3.78.3.1</AssemblyVersion>
+    <AssemblyVersion Condition="'$(TargetFramework)' == 'portable259' AND '$(FSharpCoreBackVersion)' == '3.1' ">3.259.3.1</AssemblyVersion>
     <!-- FSharp.Core using System.Runtime -->
     <OtherFlags>$(OtherFlags) --version:$(AssemblyVersion)</OtherFlags>
     <!--
@@ -106,6 +109,7 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <DefineConstants>$(DefineConstants);FX_ATLEAST_35</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_STRUCTURAL_EQUALITY</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_CANCELLATIONTOKEN_CLASSES</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_EXCEPTIONDISPATCHINFO</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_TASK</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_IOBSERVABLE</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_LAZY</DefineConstants>
@@ -114,6 +118,7 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <DefineConstants>$(DefineConstants);FX_NO_TPL_PARALLEL</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_CUSTOMATTRIBUTEDATA</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_BIGINT</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_CONDITIONAL_WEAK_TABLE</DefineConstants>
     <OtherFlags>$(OtherFlags) --simpleresolution</OtherFlags>
   </PropertyGroup>
 
@@ -144,6 +149,7 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <DefineConstants>$(DefineConstants);FX_NO_STRUCTURAL_EQUALITY</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_CUSTOMATTRIBUTEDATA</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_BIGINT_CULTURE_PARSE</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_EXCEPTIONDISPATCHINFO</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_ATLEAST_40</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_ATLEAST_35</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_ATLEAST_LINQ</DefineConstants>
@@ -160,6 +166,7 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <DefineConstants>$(DefineConstants);FX_NO_STRUCTURAL_EQUALITY</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_CUSTOMATTRIBUTEDATA</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_BIGINT_CULTURE_PARSE</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_EXCEPTIONDISPATCHINFO</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_ATLEAST_40</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_ATLEAST_35</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_ATLEAST_LINQ</DefineConstants>
@@ -219,6 +226,7 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <DefineConstants>$(DefineConstants);FX_NO_PARAMETERIZED_THREAD_START</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_EVENTWAITHANDLE_NO_IDISPOSABLE</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_REGISTERED_WAIT_HANDLES</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_EXCEPTIONDISPATCHINFO</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_ATLEAST_LINQ</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_THREAD</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_THREADPOOL</DefineConstants>
@@ -418,6 +426,7 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <TargetFrameworkOutputDirectory>$(TargetFramework)</TargetFrameworkOutputDirectory>
     <DefineConstants>$(DefineConstants);SILVERLIGHT</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_CANCELLATIONTOKEN_CLASSES</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_EXCEPTIONDISPATCHINFO</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_TASK</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_ARRAY_LONG_LENGTH</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_DEBUG_PROXIES</DefineConstants>
@@ -459,6 +468,7 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <DefineConstants>$(DefineConstants);SILVERLIGHT</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_ISIN_ON_PARAMETER_INFO</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_CANCELLATIONTOKEN_CLASSES</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_EXCEPTIONDISPATCHINFO</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_TASK</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_BIGINT</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_CUSTOMATTRIBUTEDATA</DefineConstants>
@@ -534,6 +544,7 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <DefineConstants>$(DefineConstants);DONT_INCLUDE_DEPRECATED</DefineConstants>
     <DefineConstants>$(DefineConstants);QUERIES_IN_FSLIB</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_CONCURRENT_DICTIONARY</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_EXCEPTIONDISPATCHINFO</DefineConstants>
     <DefineConstants>$(DefineConstants);PUT_TYPE_PROVIDERS_IN_FSCORE;</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_ATLEAST_LINQ</DefineConstants>
     <DefineConstants>$(DefineConstants);TARGET_SILVERLIGHT_5_0</DefineConstants>
@@ -551,6 +562,7 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <TargetFrameworkIdentifier>Silverlight</TargetFrameworkIdentifier>
     <DefineConstants>$(DefineConstants);SILVERLIGHT</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_CANCELLATIONTOKEN_CLASSES</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_EXCEPTIONDISPATCHINFO</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_TASK</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_ARRAY_LONG_LENGTH</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_DEBUG_PROXIES</DefineConstants>
@@ -606,6 +618,7 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <TargetFrameworkIdentifier>CompactFramework</TargetFrameworkIdentifier>
     <DefineConstants>$(DefineConstants);FX_ATLEAST_COMPACT_FRAMEWORK_20</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_CANCELLATIONTOKEN_CLASSES</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_EXCEPTIONDISPATCHINFO</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_TASK</DefineConstants>
     <DefineConstants>$(DefineConstants);COMPACT_FRAMEWORK</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_ARRAY_LONG_LENGTH</DefineConstants>
@@ -645,6 +658,7 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <DefineConstants>$(DefineConstants);FX_NO_LAZY</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_TUPLE</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_DELEGATE_CREATE_DELEGATE_FROM_STATIC_METHOD</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_CONDITIONAL_WEAK_TABLE</DefineConstants>
     <DefineConstants>$(DefineConstants)</DefineConstants>
     <TargetFrameworkOutputDirectory>$(TargetFramework)</TargetFrameworkOutputDirectory>
     <!-- It would be better to use MSBuild resolution here, but the TargetFrameworkIdentifier etc. aren't set up quite correctly as yet -->
@@ -695,6 +709,7 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <TargetFrameworkIdentifier>CompactFramework</TargetFrameworkIdentifier>
     <DefineConstants>$(DefineConstants);FX_ATLEAST_COMPACT_FRAMEWORK_35</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_CANCELLATIONTOKEN_CLASSES</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_EXCEPTIONDISPATCHINFO</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_TASK</DefineConstants>
     <DefineConstants>$(DefineConstants);COMPACT_FRAMEWORK</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_ARRAY_LONG_LENGTH</DefineConstants>
@@ -786,6 +801,7 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
   <!-- If building an FSharp.Core for F# 3.0, put it in the 3.0 directory -->
   <PropertyGroup>
     <TargetFrameworkOutputDirectory Condition="'$(FSharpCoreBackVersion)' == '3.0'">fsharp30\$(TargetFrameworkOutputDirectory)</TargetFrameworkOutputDirectory>
+    <TargetFrameworkOutputDirectory Condition="'$(FSharpCoreBackVersion)' == '3.1'">fsharp31\$(TargetFrameworkOutputDirectory)</TargetFrameworkOutputDirectory>
   </PropertyGroup>
 
   <!-- Always qualify the IntermediateOutputPath by the TargetFramework if any exists -->

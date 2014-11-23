@@ -131,6 +131,10 @@ src/fsharp/fsiAnyCpu/Makefile
 src/fsharp/policy.2.0.FSharp.Core/Makefile
 src/fsharp/policy.2.3.FSharp.Core/Makefile
 src/fsharp/policy.3.3.FSharp.Core/Makefile
+src/fsharp/policy.3.7.FSharp.Core/Makefile
+src/fsharp/policy.3.47.FSharp.Core/Makefile
+src/fsharp/policy.3.78.FSharp.Core/Makefile
+src/fsharp/policy.3.259.FSharp.Core/Makefile
 src/fsharp/policy.4.0.FSharp.Core/Makefile
 src/fsharp/policy.4.3.FSharp.Core/Makefile
 ])

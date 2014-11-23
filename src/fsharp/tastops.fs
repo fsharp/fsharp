@@ -3,6 +3,8 @@
 /// Derived expression manipulation and construction functions.
 module internal Microsoft.FSharp.Compiler.Tastops 
 
+#nowarn "44" // This construct is deprecated. please use List.item
+
 open System.Collections.Generic 
 open Internal.Utilities
 open Microsoft.FSharp.Compiler.AbstractIL 
@@ -4264,27 +4266,29 @@ let decideStaticOptimizationConstraint g c =
         // Both types must be nominal for a definite result
        let rec checkTypes a b =
            let a = normalizeEnumTy g (stripTyEqnsAndMeasureEqns g a)
-           let b = normalizeEnumTy g (stripTyEqnsAndMeasureEqns g b)
-           match a, b with
-           | AppTy g (tcref1, _), AppTy g (tcref2, _) -> 
+           match a with
+           | AppTy g (tcref1, _) ->
+               let b = normalizeEnumTy g (stripTyEqnsAndMeasureEqns g b)
+               match b with 
+               | AppTy g (tcref2, _) -> 
                 if tyconRefEq g tcref1 tcref2 then StaticOptimizationAnswer.Yes else StaticOptimizationAnswer.No
-           | FunTy g (dty1, rty1), FunTy g (dty2, rty2) ->
-                let dtyCheck = checkTypes dty1 dty2
-                if dtyCheck = StaticOptimizationAnswer.Unknown then 
-                    StaticOptimizationAnswer.Unknown
-                else
-                    let rtyCheck = checkTypes rty1 rty2
-                    if dtyCheck = rtyCheck then rtyCheck else StaticOptimizationAnswer.Unknown
-           | TupleTy g (t1::ts1), TupleTy g (t2::ts2) ->
-                let rec iter l1 l2 prev =
-                    match l1, l2 with
-                    | [], [] -> prev
-                    | t1::ts1, t2::ts2 -> 
-                        let r = checkTypes t1 t2
-                        if r = StaticOptimizationAnswer.Unknown || r <> prev then StaticOptimizationAnswer.Unknown else iter ts1 ts2 r
-                    | _ -> StaticOptimizationAnswer.Unknown
-                let r = checkTypes t1 t2
-                if r = StaticOptimizationAnswer.Unknown then StaticOptimizationAnswer.Unknown else iter ts1 ts2 r
+               | TupleTy g _  | FunTy g _  -> StaticOptimizationAnswer.No
+               | _ -> StaticOptimizationAnswer.Unknown
+
+           | FunTy g _ ->
+               let b = normalizeEnumTy g (stripTyEqnsAndMeasureEqns g b)
+               match b with 
+               | FunTy g _   -> StaticOptimizationAnswer.Yes
+               | AppTy g _ | TupleTy g _ -> StaticOptimizationAnswer.No
+               | _ -> StaticOptimizationAnswer.Unknown
+           | TupleTy g ts1 -> 
+               let b = normalizeEnumTy g (stripTyEqnsAndMeasureEqns g b)
+               match b with 
+               | TupleTy g ts2 ->
+                if ts1.Length = ts2.Length then StaticOptimizationAnswer.Yes
+                else StaticOptimizationAnswer.No
+               | AppTy g _ | FunTy g _ -> StaticOptimizationAnswer.No
+               | _ -> StaticOptimizationAnswer.Unknown
            | _ -> StaticOptimizationAnswer.Unknown
        checkTypes a b
     | TTyconIsStruct a -> 
@@ -7120,11 +7124,21 @@ let doesActivePatternHaveFreeTypars g (v:ValRef) =
 type ExprRewritingEnv = 
     { PreIntercept: ((Expr -> Expr) -> Expr -> Expr option) option;
       PostTransform: Expr -> Expr option;
+      PreInterceptBinding: ((Expr -> Expr) -> Binding -> Binding option) option;
       IsUnderQuotations: bool }    
 
-let rec rewrite_bind env (TBind(v,e,letSeqPtOpt)) = TBind(v,RewriteExpr env e,letSeqPtOpt) 
+let rec rewriteBind env bind = 
+     match env.PreInterceptBinding  with 
+     | Some f -> 
+         match f (RewriteExpr env) bind with 
+         | Some res -> res
+         | None -> rewriteBindStructure env bind
+     | None -> rewriteBindStructure env bind
+     
+and rewriteBindStructure env (TBind(v,e,letSeqPtOpt)) = 
+     TBind(v,RewriteExpr env e,letSeqPtOpt) 
 
-and rewrite_binds env binds = FlatList.map (rewrite_bind env) binds
+and rewriteBinds env binds = FlatList.map (rewriteBind env) binds
 
 and RewriteExpr env expr =
   match expr with 
@@ -7188,7 +7202,7 @@ and rewriteExprStructure env expr =
       mkAndSimplifyMatch spBind exprm m ty dtree' targets'
 
   | Expr.LetRec (binds,e,m,_) ->
-      let binds = rewrite_binds env binds
+      let binds = rewriteBinds env binds
       let e' = RewriteExpr env e
       Expr.LetRec(binds,e',m,NewFreeVarsCache())
 
@@ -7212,7 +7226,7 @@ and rewriteLinearExpr env expr contf =
     | None -> 
         match expr with 
         | Expr.Let (bind,body,m,_) ->  
-            let bind = rewrite_bind env bind
+            let bind = rewriteBind env bind
             rewriteLinearExpr env body (contf << (fun body' ->
                 mkLetBind m bind body'))
         | Expr.Sequential  (e1,e2,dir,spSeq,m) ->
@@ -7247,7 +7261,7 @@ and rewriteDecisionTree env x =
       TDSwitch (e',cases',dflt',m)
 
   | TDBind (bind,body) ->
-      let bind' = rewrite_bind env bind
+      let bind' = rewriteBind env bind
       let body = rewriteDecisionTree env body
       TDBind (bind',body)
 
@@ -7270,8 +7284,8 @@ and rewriteModuleOrNamespaceDefs env x = List.map (rewriteModuleOrNamespaceDef e
     
 and rewriteModuleOrNamespaceDef env x = 
     match x with 
-    | TMDefRec(tycons,binds,mbinds,m) -> TMDefRec(tycons,rewrite_binds env binds,rewriteModuleOrNamespaceBindings env mbinds,m)
-    | TMDefLet(bind,m)         -> TMDefLet(rewrite_bind env bind,m)
+    | TMDefRec(tycons,binds,mbinds,m) -> TMDefRec(tycons,rewriteBinds env binds,rewriteModuleOrNamespaceBindings env mbinds,m)
+    | TMDefLet(bind,m)         -> TMDefLet(rewriteBind env bind,m)
     | TMDefDo(e,m)             -> TMDefDo(RewriteExpr env e,m)
     | TMDefs defs             -> TMDefs(rewriteModuleOrNamespaceDefs env defs)
     | TMAbstract mexpr        -> TMAbstract(rewriteModuleOrNamespaceExpr env mexpr)

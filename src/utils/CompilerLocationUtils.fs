@@ -253,7 +253,7 @@ module internal FSharpEnvironment =
 
         // On windows the location of the compiler is via a registry key
         let key20 = @"Software\Microsoft\FSharp\2.0\Runtime\v4.0"
-        let key40 = @"Software\Microsoft\FSharp\3.1\Runtime\v4.0"
+        let key40 = @"Software\Microsoft\FSharp\4.0\Runtime\v4.0"
         let key1,key2 = 
           match FSharpCoreLibRunningVersion with 
           | None -> key40,key20 

@@ -842,7 +842,7 @@ namespace Microsoft.FSharp.Core
         val GenericComparer : System.Collections.IComparer
 
         /// <summary>Make an F# comparer object for the given type</summary>
-        val FastGenericComparer<'T>  : System.Collections.Generic.IComparer<'T> when 'T : comparison 
+        val inline FastGenericComparer<'T>  : System.Collections.Generic.IComparer<'T> when 'T : comparison 
 
         /// <summary>Make an F# comparer object for the given type, where it can be null if System.Collections.Generic.Comparer&lt;'T&gt;.Default</summary>
         val internal FastGenericComparerCanBeNull<'T>  : System.Collections.Generic.IComparer<'T> when 'T : comparison 
@@ -855,6 +855,14 @@ namespace Microsoft.FSharp.Core
         /// <param name="limit">The input limit on the number of nodes.</param>
         /// <returns>System.Collections.Generic.IEqualityComparer&lt;'T&gt;</returns>
         val inline FastLimitedGenericEqualityComparer<'T> : limit: int -> System.Collections.Generic.IEqualityComparer<'T> when 'T : equality
+
+        /// <summary>Make an F# hash/equality object for the given type</summary>
+        [<CompilerMessage("This function is a compiler instrinsic should not be used directly", 1204, IsHidden=true)>]
+        val FastGenericEqualityComparerFromTable<'T> : System.Collections.Generic.IEqualityComparer<'T> when 'T : equality
+
+        [<CompilerMessage("This function is a compiler instrinsic should not be used directly", 1204, IsHidden=true)>]
+        /// <summary>Make an F# comparer object for the given type</summary>
+        val FastGenericComparerFromTable<'T>  : System.Collections.Generic.IComparer<'T> when 'T : comparison 
 
         /// <summary>Hash a value according to its structure. This hash is not limited by an overall node count when hashing F#
         /// records, lists and union types.</summary>
@@ -1762,6 +1770,7 @@ namespace Microsoft.FSharp.Collections
         
         /// <summary>Gets the number of items contained in the list</summary>
         member Length : int
+
         /// <summary>Gets a value indicating if the list contains no entries</summary>
         member IsEmpty : bool
 
@@ -1777,8 +1786,11 @@ namespace Microsoft.FSharp.Collections
         /// <returns>The value at the given index.</returns>
         member Item : index:int -> 'T with get 
         
-        // /// Get the elements of the list from the given start index to the given end index.
-        // member GetSlice : startIndex:int option * endIndex:int option -> 'T list  
+        /// <summary>Gets a slice of the list, the elements of the list from the given start index to the given end index.</summary>
+        /// <param name="startIndex">The start index.</param>
+        /// <param name="endIndex">The end index.</param>
+        /// <returns>The sub list specified by the input indices.</returns>
+        member GetSlice : startIndex:int option * endIndex:int option -> 'T list  
         
         /// <summary>Returns a list with <c>head</c> as its first element and <c>tail</c> as its subsequent elements</summary>
         /// <param name="head">A new head value for the list.</param>

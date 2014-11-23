@@ -42,6 +42,8 @@ This codebase uses the Apache 2.0 license.
 
 Head (branch ``master``), Mono 3.x, OSX + some unit tests (Travis) [![Build Status](https://travis-ci.org/fsharp/fsharp.png?branch=master)](https://travis-ci.org/fsharp/fsharp/branches)
 
+F# 4.0 in progress (branch ``fsharp4``, Mono 3.x, OSX + some unit tests (Travis) [![Build Status](https://travis-ci.org/fsharp/fsharp.png?branch=fsharp4)](https://travis-ci.org/fsharp/fsharp/branches)
+
 F# 3.1 (branch ``fsharp_31``, Mono 3.x, OSX + some unit tests (Travis) [![Build Status](https://travis-ci.org/fsharp/fsharp.png?branch=fsharp_31)](https://travis-ci.org/fsharp/fsharp/branches)
 
 F# 3.0 (branch ``fsharp_30``), Mono 3.x, OSX + some unit tests (Travis) [![Build Status](https://travis-ci.org/fsharp/fsharp.png?branch=fsharp_30)](https://travis-ci.org/fsharp/fsharp/branches)
@@ -53,86 +55,79 @@ Head (branch ``master``), Windows Server 2012 (Appveyor)  [![Build status](https
 Requires mono 3.0 or higher.
 
 OS X requires automake 2.69. To install from [homebrew](http://mxcl.github.com/homebrew):
-```
-brew install automake
-```
+
+	brew install automake
 
 ## How to Build
 
 ### Linux and other Unix systems:
 The usual:
-```
-./autogen.sh --prefix=/usr
-make
-sudo make install
-```
+
+	./autogen.sh --prefix=/usr
+	make
+	sudo make install
+
 By default that makes optimized binaries. To make debug, use ```make CONFIG=debug```
 
 
 ### OS X
 
 Use a prefix to your version of Mono:
-```
-./autogen.sh --prefix=/Library/Frameworks/Mono.framework/Versions/Current/
-make
-sudo make install
-```
+
+	./autogen.sh --prefix=/Library/Frameworks/Mono.framework/Versions/Current/
+	make
+	sudo make install
+
 By default that makes optimized binaries. To make debug, use ```make CONFIG=debug```
 
 ### Windows, using msbuild
 
-If you have only VS2012 or VS2013 installed, and not VS2010, you'll need to install the F# 2.0 Runtime (http://www.microsoft.com/en-us/download/details.aspx?id=13450).
-
 Build using:
-```
-build.bat
-```
+	build.bat
+
 This build the proto compiler, then the library, then the final compiler.
 
 You can also build these independently using:
-```
-cd src
-msbuild fsharp-proto-build.proj
-ngen install ..\lib\proto\fsc-proto.exe 
-msbuild fsharp-library-build.proj /p:Configuration=Release
-msbuild fsharp-compiler-build.proj /p:Configuration=Release
-```
 
-You can also build FSharp.Core.dll for other profiles:
-```
-msbuild fsharp-library-build.proj /p:TargetFramework=net20 /p:Configuration=Release
-msbuild fsharp-library-build.proj /p:TargetFramework=portable47 /p:Configuration=Release
-msbuild fsharp-library-build.proj /p:TargetFramework=portable7 /p:Configuration=Release
-msbuild fsharp-library-build.proj /p:TargetFramework=portable78 /p:Configuration=Release
-msbuild fsharp-library-build.proj /p:TargetFramework=portable259 /p:Configuration=Release
-msbuild fsharp-library-build.proj /p:TargetFramework=sl5 /p:Configuration=Release
+	msbuild src\fsharp-proto-build.proj
+	ngen install lib\proto\fsc-proto.exe 
+	msbuild src\fsharp-library-build.proj /p:Configuration=Release
+	msbuild src\fsharp-compiler-build.proj /p:Configuration=Release
 
-msbuild fsharp-library-build.proj /p:TargetFramework=monodroid /p:Configuration=Release
-msbuild fsharp-library-build.proj /p:TargetFramework=monotouch /p:Configuration=Release
-msbuild fsharp-library-build.proj /p:TargetFramework=net40-xna40-xbox360 /p:Configuration=Release
-```
-You can also build the FSharp.Core and FSharp.Compiler.Silverlight.dll for Silverlight 5.0:
-```
-msbuild fsharp-library-build.proj /p:TargetFramework=sl5-compiler  /p:Configuration=Release
-```
+You can also build FSharp.Core.dll for various portable profile subsets:
+
+	msbuild src\fsharp-library-build.proj /p:TargetFramework=portable7 /p:Configuration=Release
+	msbuild src\fsharp-library-build.proj /p:TargetFramework=portable47 /p:Configuration=Release
+	msbuild src\fsharp-library-build.proj /p:TargetFramework=portable78 /p:Configuration=Release
+	msbuild src\fsharp-library-build.proj /p:TargetFramework=portable259 /p:Configuration=Release
+
+You can also build FSharp.Core.dll for various specific runtimes:
+
+	msbuild src\fsharp-library-build.proj /p:TargetFramework=sl5 /p:Configuration=Release
+	msbuild src\fsharp-library-build.proj /p:TargetFramework=monodroid /p:Configuration=Release
+	msbuild src\fsharp-library-build.proj /p:TargetFramework=monotouch /p:Configuration=Release
+
+You can also build the FSharp.Core for use with a browser-hosted FSharp.Compiler.Service using Silverlight 5.0:
+
+	msbuild src\fsharp-library-build.proj /p:TargetFramework=sl5-compiler  /p:Configuration=Release
+
 Change to ``` /p:Configuration=Debug``` for debug binaries.
 
-Add ``` /p:FSharpCoreBackVersion=3.0``` to build a back version of FSharp.Core.dll with a 
-version number suitable for use when building libaries that have usable with both F# 3.0 and F# 3.1 libraries.
-```
-msbuild fsharp-library-build.proj /p:TargetFramework=net20 /p:Configuration=Release /p:FSharpCoreBackVersion=3.0
-msbuild fsharp-library-build.proj /p:TargetFramework=net40 /p:Configuration=Release /p:FSharpCoreBackVersion=3.0
-msbuild fsharp-library-build.proj /p:TargetFramework=portable47 /p:Configuration=Release /p:FSharpCoreBackVersion=3.0
-```
+Add ``` /p:FSharpCoreBackVersion=...``` to build back versions of FSharp.Core.dll:
 
-### Windows, using xbuild (e.g. if no .NET is installed and only Mono 3.0 is installed):
+	msbuild src\fsharp-library-build.proj /p:TargetFramework=net40 /p:Configuration=Release /p:FSharpCoreBackVersion=3.0
+	msbuild src\fsharp-library-build.proj /p:TargetFramework=portable47 /p:Configuration=Release /p:FSharpCoreBackVersion=3.0
+	msbuild src\fsharp-library-build.proj /p:TargetFramework=net40 /p:Configuration=Release /p:FSharpCoreBackVersion=3.1
+	msbuild src\fsharp-library-build.proj /p:TargetFramework=portable7 /p:Configuration=Release /p:FSharpCoreBackVersion=3.1
+	msbuild src\fsharp-library-build.proj /p:TargetFramework=portable47 /p:Configuration=Release /p:FSharpCoreBackVersion=3.1
+	msbuild src\fsharp-library-build.proj /p:TargetFramework=portable78 /p:Configuration=Release /p:FSharpCoreBackVersion=3.1
+	msbuild src\fsharp-library-build.proj /p:TargetFramework=portable259 /p:Configuration=Release /p:FSharpCoreBackVersion=3.1
 
-```
-cd src
-xbuild fsharp-proto-build.proj
-xbuild fsharp-library-build.proj
-xbuild fsharp-compiler-build.proj
-```
+### Windows, using xbuild (e.g. if only Mono is installed):
+
+	xbuild src\fsharp-proto-build.proj
+	xbuild src\fsharp-library-build.proj /p:Configuration=Release
+	xbuild src\fsharp-compiler-build.proj /p:Configuration=Release
 
 Building using xbuild does not yet lay down a Mono-ready distribution (see src/fsharp/targets.make), so should only
 be used for private development rather than preparing distributions. 
@@ -140,10 +135,10 @@ be used for private development rather than preparing distributions.
 ## Build Note: Strong Names
 
 The FSharp.Core.dll produced is only delay-signed (Mono does not require strong names). 
-If a strong-name signed FSharp.Core.dll is needed then use the one in 
-```
-   lib\bootstrap\signed\.NETFramework\v4.0\4.3.1.0\FSharp.Core.dll
-```
+If a strong-name signed FSharp.Core.dll is needed then use these:
+
+    lib\bootstrap\signed\.NETFramework\v4.0\4.3.0.0\FSharp.Core.dll
+    lib\bootstrap\signed\.NETFramework\v4.0\4.3.1.0\FSharp.Core.dll
 
 ## How to Install 
 

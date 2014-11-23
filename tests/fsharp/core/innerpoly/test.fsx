@@ -188,8 +188,8 @@ do test5365()
 do test5365() 
 
 module TestOptimizationOfTypeFunctionsWithSideEffects = begin
-    let count = ref 0
-    let f<'a> = incr count; !count
+    let mutable count = 0
+    let f<'a> = count <- (count + 1); count
 
 
     do test "eoeo23c1" (f<int> = 1)
@@ -222,31 +222,31 @@ module Bug1126BenjaminTeuber = begin
 end
 
 module FSharp_1_0_Bug1024 = begin
-    let count = ref 1
-    let x<'a> = (count := !count + 1); typeof<'a>
+    let mutable count = 1
+    let x<'a> = (count <- count + 1); typeof<'a>
     
-    do test "vnwo9wu1" (!count = 1)
+    do test "vnwo9wu1" (count = 1)
     let z0<'a> =  x<'a>
-    do test "vnwo9wu1" (!count = 1)
+    do test "vnwo9wu1" (count = 1)
     let z1 =  x<int>
-    do test "vnwo9wu2" (!count = 2)
+    do test "vnwo9wu2" (count = 2)
     let z2 =  x<int>
-    do test "vnwo9wu3" (!count = 3)
+    do test "vnwo9wu3" (count = 3)
 
 end
 module FSharp_1_0_Bug1024B = begin
-    let count = ref 1
-    let r<'a> = (count := !count + 1); ref ([] : 'a list)
-    do test "vnwo9wu1" (!count = 1)
+    let mutable count = 1
+    let r<'a> = (count <- count + 1); ref ([] : 'a list)
+    do test "vnwo9wu1" (count = 1)
     let x1 = r<int>
 
-    do test "vnwo9wu1" (!count = 2)
+    do test "vnwo9wu1" (count = 2)
     let z0 =  x1
-    do test "vnwo9wu1" (!count = 2)
+    do test "vnwo9wu1" (count = 2)
     let (z1,z2) =  (x1,x1)
-    do test "vnwo9wu2" (!count = 2)
+    do test "vnwo9wu2" (count = 2)
     let z3 =  x1
-    do test "vnwo9wu3" (!count = 2)
+    do test "vnwo9wu3" (count = 2)
 
 end
 

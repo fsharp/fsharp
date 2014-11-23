@@ -39,6 +39,10 @@ build clean install:
 	$(MAKE) -C policy.4.0.FSharp.Core $@
 	$(MAKE) -C policy.2.3.FSharp.Core $@
 	$(MAKE) -C policy.3.3.FSharp.Core $@
+	$(MAKE) -C policy.3.7.FSharp.Core $@
+	$(MAKE) -C policy.3.47.FSharp.Core $@
+	$(MAKE) -C policy.3.78.FSharp.Core $@
+	$(MAKE) -C policy.3.259.FSharp.Core $@
 	$(MAKE) -C policy.4.3.FSharp.Core $@
 	$(MAKE) -C policy.2.0.FSharp.Core TargetFramework=net20 $@
 	$(MAKE) -C policy.2.3.FSharp.Core TargetFramework=net20 $@
