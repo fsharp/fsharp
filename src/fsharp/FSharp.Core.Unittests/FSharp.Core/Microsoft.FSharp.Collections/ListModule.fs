@@ -146,8 +146,8 @@ type ListModule() =
 
     [<Test>]
     member this.Take() =
-        Assert.AreEqual([],List.take 0 [])
-        Assert.AreEqual([],List.take 0 ["str1";"str2";"str3";"str4"])
+        Assert.AreEqual(([] : int list) ,List.take 0 ([] : int list))
+        Assert.AreEqual(([] : string list),List.take 0 ["str1";"str2";"str3";"str4"])
         Assert.AreEqual([1;2;4],List.take 3 [1;2;4;5;7])
         Assert.AreEqual(["str1";"str2"],List.take 2 ["str1";"str2";"str3";"str4"])
 
@@ -205,12 +205,12 @@ type ListModule() =
         
     [<Test>]
     member this.takeWhile() =
-        Assert.AreEqual([],List.takeWhile (fun x -> failwith "should not be used") [])
+        Assert.AreEqual(([] : int list),List.takeWhile (fun x -> failwith "should not be used") ([] : int list))
         Assert.AreEqual([1;2;4;5],List.takeWhile (fun x -> x < 6) [1;2;4;5;6;7])
         Assert.AreEqual(["a"; "ab"; "abc"],List.takeWhile (fun (x:string) -> x.Length < 4) ["a"; "ab"; "abc"; "abcd"; "abcde"])        
         Assert.AreEqual(["a"; "ab"; "abc"; "abcd"; "abcde"],List.takeWhile (fun _ -> true) ["a"; "ab"; "abc"; "abcd"; "abcde"])
-        Assert.AreEqual([],List.takeWhile (fun _ -> false) ["a"; "ab"; "abc"; "abcd"; "abcde"])
-        Assert.AreEqual([],List.takeWhile (fun _ -> false) ["a"])
+        Assert.AreEqual(([] : string list),List.takeWhile (fun _ -> false) ["a"; "ab"; "abc"; "abcd"; "abcde"])
+        Assert.AreEqual(([] : string list),List.takeWhile (fun _ -> false) ["a"])
         Assert.AreEqual(["a"],List.takeWhile (fun _ -> true) ["a"])
         Assert.AreEqual(["a"],List.takeWhile (fun x -> x <> "ab") ["a"; "ab"; "abc"; "abcd"; "abcde"])
 
@@ -247,7 +247,7 @@ type ListModule() =
         Assert.AreEqual([1..4], List.splitAt 4 [1..10] |> fst)       
         Assert.AreEqual([5..10], List.splitAt 4 [1..10] |> snd)      
 
-        Assert.AreEqual([], List.splitAt 0 [1..2] |> fst)
+        Assert.AreEqual(([]: int list), List.splitAt 0 [1..2] |> fst)
         Assert.AreEqual([1..2], List.splitAt 0 [1..2] |> snd)
 
         Assert.AreEqual([1], List.splitAt 1 [1..2] |> fst)
@@ -268,7 +268,7 @@ type ListModule() =
     [<Test>]
     member this.countBy() =
         // countBy should work on empty list
-        Assert.AreEqual([],List.countBy (fun _ -> failwith "should not be executed") [])
+        Assert.AreEqual(0,List.countBy (fun _ -> failwith "should not be executed") [] |> List.length)
 
         // countBy should count by the given key function
         Assert.AreEqual([5,1; 2,2; 3,2],List.countBy id [5;2;2;3;3])
@@ -354,15 +354,15 @@ type ListModule() =
         Assert.AreEqual(["..."; "...."], resultStr)
         
         // empty List
-        let emptyArr:int list = [ ]
-        let resultEpt = List.where funcInt emptyArr        
-        Assert.AreEqual(emptyArr, resultEpt)
+        let emptyList:int list = [ ]
+        let resultEpt = List.where funcInt emptyList
+        Assert.AreEqual(emptyList, resultEpt)
             
         ()   
 
     [<Test>]
     member this.``where should work like filter``() =
-        Assert.AreEqual([], List.where (fun x -> x % 2 = 0) [])
+        Assert.AreEqual(([] : int list), List.where (fun x -> x % 2 = 0) [])
         Assert.AreEqual([0;2;4;6;8], List.where (fun x -> x % 2 = 0) [0..9])
         Assert.AreEqual(["a";"b";"c"], List.where (fun _ -> true) ["a";"b";"c"])
 
@@ -394,9 +394,9 @@ type ListModule() =
     [<Test>]
     member this.replicate() = 
         // replicate should create multiple copies of the given value
-        Assert.AreEqual([],List.replicate 0 null)
-        Assert.AreEqual([],List.replicate 0 1)
-        Assert.AreEqual([null],List.replicate 1 null)
+        Assert.AreEqual(0,List.replicate 0 null |> List.length)
+        Assert.AreEqual(0,List.replicate 0 1 |> List.length)
+        Assert.AreEqual([ (null : obj) ],(List.replicate 1 null : obj list))
         Assert.AreEqual(["1";"1"],List.replicate 2 "1")
 
         CheckThrowsArgumentException (fun () ->  List.replicate -1 null |> ignore)
@@ -923,7 +923,7 @@ type ListModule() =
 
     [<Test>]
     member this.``pairwise should return pairs of the input list``() =
-        Assert.AreEqual([],List.pairwise [])
+        Assert.AreEqual(0,List.pairwise [] |> List.length)
         Assert.AreEqual([],List.pairwise [1])
         Assert.AreEqual([1,2],List.pairwise [1;2])
         Assert.AreEqual([1,2; 2,3],List.pairwise [1;2;3])

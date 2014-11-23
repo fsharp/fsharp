@@ -222,8 +222,8 @@ type ListModule02() =
         Assert.AreEqual("BBC", resultStrAcc)
 
         // empty List
-        let resultEpt,resultEptAcc = List.mapFold funcInt 100 []
-        Assert.AreEqual([], resultEpt)
+        let (resultEpt: int list),resultEptAcc = List.mapFold funcInt 100 []
+        Assert.AreEqual(([]: int list), resultEpt)
         Assert.AreEqual(100, resultEptAcc)
 
         ()
@@ -248,8 +248,8 @@ type ListModule02() =
         Assert.AreEqual("CBB", resultStrAcc)
 
         // empty List
-        let resultEpt,resultEptAcc = List.mapFoldBack funcInt [] 100
-        Assert.AreEqual([], resultEpt)
+        let (resultEpt: int list),resultEptAcc = List.mapFoldBack funcInt [] 100
+        Assert.AreEqual(([]: int list), resultEpt)
         Assert.AreEqual(100, resultEptAcc)
 
         ()
@@ -681,7 +681,7 @@ type ListModule02() =
 
         // empty list
         let resultEpt = List.sortWith intComparer []
-        Assert.AreEqual([], resultEpt)
+        Assert.AreEqual(([] : int list), resultEpt)
 
         ()
 
@@ -821,14 +821,14 @@ type ListModule02() =
         // integer list
         Assert.AreEqual([1..3], List.truncate 3 [1..5])
         Assert.AreEqual([1..5], List.truncate 10 [1..5])
-        Assert.AreEqual([], List.truncate 0 [1..5])
+        Assert.AreEqual(([] : int list), List.truncate 0 [1..5])
 
         // string list
         Assert.AreEqual(["str1";"str2"], List.truncate 2 ["str1";"str2";"str3"])
 
         // empty list
-        Assert.AreEqual([], List.truncate 0 [])
-        Assert.AreEqual([], List.truncate 1 [])
+        Assert.AreEqual(([] : int list), List.truncate 0 [])
+        Assert.AreEqual(([] : int list), List.truncate 1 [])
 
         // negative count
         CheckThrowsArgumentException(fun() -> List.truncate -1 [1..5] |> ignore)

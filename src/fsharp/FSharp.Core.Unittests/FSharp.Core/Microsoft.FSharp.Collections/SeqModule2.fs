@@ -66,15 +66,15 @@ type SeqModule2() =
     member this.Tl() =
         // integer seq  
         let resultInt = Seq.tail <| seq { 1..10 }        
-        Assert.AreEqual(seq { 2..10 }, resultInt)
+        Assert.AreEqual(Array.ofSeq (seq { 2..10 }), Array.ofSeq resultInt)
         
         // string seq    
         let resultStr = Seq.tail <| seq { yield "a"; yield "b"; yield "c"; yield "d" }      
-        Assert.AreEqual(seq { yield "b";  yield "c" ; yield "d" }, resultStr)
+        Assert.AreEqual(Array.ofSeq (seq { yield "b";  yield "c" ; yield "d" }), Array.ofSeq resultStr)
         
         // 1-element seq    
         let resultStr2 = Seq.tail <| seq { yield "a" }      
-        Assert.AreEqual(Seq.empty, resultStr2)
+        Assert.AreEqual(Array.ofSeq (Seq.empty : seq<string>), Array.ofSeq resultStr2)
 
         CheckThrowsArgumentNullException(fun () -> Seq.tail null |> ignore)
         CheckThrowsArgumentException(fun () -> Seq.tail Seq.empty |> Seq.iter (fun _ -> failwith "Should not be reached"))
