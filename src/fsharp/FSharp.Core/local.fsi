@@ -26,6 +26,7 @@ module internal List =
     val zip3 : 'T1 list -> 'T2 list -> 'T3 list -> ('T1 * 'T2 * 'T3) list
     val ofArray : 'T[] -> 'T list
     val toArray : 'T list -> 'T[]
+    val inline ofSeq : seq<'T> -> 'T List
     val sortWith : ('T -> 'T -> int) -> 'T list -> 'T list
 
 module internal Array =
@@ -35,6 +36,8 @@ module internal Array =
     val inline init : int -> (int -> 'T) -> 'T[]
 
     val permute : indexMap:(int -> int) -> 'T[] -> 'T[]
+
+    val inline subUnchecked : int -> int -> 'T[] -> 'T[]
 
     val unstableSortInPlaceBy: projection:('T -> 'Key) -> array:'T[] -> unit when 'Key : comparison 
 
