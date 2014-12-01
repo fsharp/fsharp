@@ -1541,12 +1541,13 @@ module internal MagicAssemblyResolution =
 // Reading stdin 
 //----------------------------------------------------------------------------
 
-type internal FsiStdinLexerProvider(tcConfigB, fsiStdinSyphon, 
-                                    fsiConsoleInput : FsiConsoleInput, 
-                                    fsiConsoleOutput : FsiConsoleOutput, 
-                                    fsiOptions : FsiCommandLineOptions,
-                                    lexResourceManager : LexResourceManager,
-                                    errorLogger) = 
+type internal FsiStdinLexerProvider
+                          (tcConfigB, fsiStdinSyphon, 
+                           fsiConsoleInput : FsiConsoleInput, 
+                           fsiConsoleOutput : FsiConsoleOutput, 
+                           fsiOptions : FsiCommandLineOptions,
+                           lexResourceManager : LexResourceManager,
+                           errorLogger) = 
 
     // #light is the default for FSI
     let interactiveInputLightSyntaxStatus = 
@@ -1556,7 +1557,6 @@ type internal FsiStdinLexerProvider(tcConfigB, fsiStdinSyphon,
     let LexbufFromLineReader (fsiStdinSyphon: FsiStdinSyphon) readf = 
         UnicodeLexing.FunctionAsLexbuf 
           (fun (buf: char[], start, len) -> 
-            if !progress then printfn "calling readf..."
             //fprintf fsiConsoleOutput.Out "Calling ReadLine\n";
             let inputOption = try Some(readf()) with :? EndOfStreamException -> None
             inputOption |> Option.iter (fun t -> fsiStdinSyphon.Add (t + "\n"));
@@ -1605,14 +1605,9 @@ type internal FsiStdinLexerProvider(tcConfigB, fsiStdinSyphon,
                 LexbufFromLineReader fsiStdinSyphon (fun () -> 
                     match fsiConsoleInput.TryGetFirstLine() with 
                     | Some firstLine -> firstLine
-                    | None -> 
-                          if !progress then printfn "have console... calling ReadLine..."
-                          console.ReadLine())
+                    | None -> console.ReadLine())
             | _ -> 
-              
-               LexbufFromLineReader fsiStdinSyphon (fun () -> 
-                   if !progress then printfn "no console... calling ReadLine..."
-                   fsiConsoleInput.In.ReadLine() |> removeZeroCharsFromString)
+                LexbufFromLineReader fsiStdinSyphon (fun () -> fsiConsoleInput.In.ReadLine() |> removeZeroCharsFromString)
 #endif                
 
         fsiStdinSyphon.Reset();
@@ -1682,7 +1677,6 @@ type internal FsiInteractionProcessor
                     Parser.interaction lexerWhichSavesLastToken tokenizer.LexBuffer)
             Some input
         with e ->
-            if !progress then fprintfn fsiConsoleOutput.Out "Error in ParseInteraction: %s" (e.ToString())
             // On error, consume tokens until to ;; or EOF.
             // Caveat: Unless the error parse ended on ;; - so check the lastToken returned by the lexer function.
             // Caveat: What if this was a look-ahead? That's fine! Since we need to skip to the ;; anyway.     
@@ -2176,9 +2170,9 @@ let internal StartStdinReadAndProcessThread
                 if !progress then fprintfn fsiConsoleOutput.Out "- READER: Exiting process because of failure/exit on  stdinReaderThread";  
                 // REVIEW: On some flavors of Mono, calling exit may freeze the process if we're using the WinForms event handler
                 // Basically, on Mono 2.6.3, the GUI thread may be left dangling on exit.  At that point:
-                //   -- System.Environment.Exit will cause the process to hang
+                //   -- System.Environment.Exit will cause the process to stop responding
                 //   -- Calling Application.Exit() will leave the GUI thread up and running, creating a Zombie process
-                //   -- Calling Abort() on the Main thread or the GUI thread will have no effect, and the process will remain hung
+                //   -- Calling Abort() on the Main thread or the GUI thread will have no effect, and the process will remain unresponsive
                 // Also, even the the GUI thread is up and running, the WinForms event loop will be listed as closed
                 // In this case, killing the process is harmless, since we've already cleaned up after ourselves and FSI is responding
                 // to an error.  (CTRL-C is handled elsewhere.) 
@@ -2229,7 +2223,7 @@ let internal DriveFsiEventLoop (fsiConsoleOutput: FsiConsoleOutput) =
 
 /// The primary type, representing a full F# Interactive session, reading from the given
 /// text input, writing to the given text output and error writers.
-type FsiEvaluationSession (argv:string[], inReader:TextReader, outWriter:TextWriter, errorWriter: TextWriter) = 
+type internal FsiEvaluationSession (argv:string[], inReader:TextReader, outWriter:TextWriter, errorWriter: TextWriter) = 
 #if SILVERLIGHT
     do
         Microsoft.FSharp.Core.Printf.setWriter outWriter
@@ -2450,7 +2444,6 @@ type FsiEvaluationSession (argv:string[], inReader:TextReader, outWriter:TextWri
         progress := condition "FSHARP_INTERACTIVE_PROGRESS"
         // Update the console completion function now we've got an initial type checking state.
         // This means completion doesn't work until the initial type checking state has finished loading - fair enough!
-        if !progress then fprintfn fsiConsoleOutput.Out "Run: Calling TryGetConsole"
         match fsiConsoleInput.TryGetConsole() with 
         | Some console when fsiOptions.EnableConsoleKeyProcessing -> 
             console.SetCompletionFunction(fun (s1,s2) -> fsiIntellisenseProvider.CompletionsForPartialLID !istateRef (match s1 with | Some s -> s + "." + s2 | None -> s2)  |> Seq.ofList)
@@ -2524,10 +2517,7 @@ type FsiEvaluationSession (argv:string[], inReader:TextReader, outWriter:TextWri
                             reraise()
                 )
 
-
         if fsiOptions.Interact then 
-
-            if !progress then fprintfn fsiConsoleOutput.Out "Run: Interact..."
             // page in the type check env 
             istateRef := fsiInteractionProcessor.LoadDummyInteraction !istateRef
             if !progress then fprintfn fsiConsoleOutput.Out "MAIN: InstallKillThread!";
@@ -2576,15 +2566,12 @@ type FsiEvaluationSession (argv:string[], inReader:TextReader, outWriter:TextWri
             DriveFsiEventLoop fsiConsoleOutput 
 
         else // not interact
-            if !progress then fprintfn fsiConsoleOutput.Out "Run: not interact, loading intitial files..."
             istateRef := fsiInteractionProcessor.LoadInitialFiles (false, !istateRef)
-            if !progress then fprintfn fsiConsoleOutput.Out "Run: done..."
             exit (min errorLogger.ErrorCount 1)
 
         // The Ctrl-C exception handler that we've passed to native code has
         // to be explicitly kept alive.
         GC.KeepAlive fsiInterruptController.EventHandlers
-
    
 
 let MainMain (argv:string[]) = 

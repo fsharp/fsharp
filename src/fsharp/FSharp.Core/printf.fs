@@ -390,6 +390,7 @@ module internal PrintfImpl =
                     next env : 'Tail
                 )
             )
+
         static member StarFinal1<'A>(s1 : string, conv, s2 : string) = 
             (fun (env : unit -> PrintfEnv<'State, 'Residue, 'Result>) ->
                 (fun (star1 : int) (a : 'A) -> 
@@ -423,7 +424,7 @@ module internal PrintfImpl =
                 )
             )
 
-       /// Handles case when '%*.*%' is used at the end of string
+        /// Handles case when '%*.*%' is used at the end of string
         static member PercentStarFinal2(s1 : string, s2 : string) = 
             (fun (env : unit -> PrintfEnv<'State, 'Residue, 'Result>) ->
                 (fun (_star1 : int) (_star2 : int) -> 
@@ -446,7 +447,7 @@ module internal PrintfImpl =
                     next env : 'Tail
                 )
             )
-  
+        
         /// Handles case when '%*%' is used in the middle of the string so it needs to be chained to another printing block
         static member PercentStarChained1<'Tail>(s1 : string, next : PrintfFactory<'State, 'Residue, 'Result,'Tail>) = 
             (fun (env : unit -> PrintfEnv<'State, 'Residue, 'Result>) ->
@@ -471,7 +472,7 @@ module internal PrintfImpl =
                     next env : 'Tail
                 )
             )
-    
+        
         /// Handles case when '%*.*%' is used in the middle of the string so it needs to be chained to another printing block
         static member PercentStarChained2<'Tail>(s1 : string, next : PrintfFactory<'State, 'Residue, 'Result,'Tail>) = 
             (fun (env : unit -> PrintfEnv<'State, 'Residue, 'Result>) ->
@@ -1030,7 +1031,7 @@ module internal PrintfImpl =
                     let prefix = if spec.TypeChar = '%' then "PercentStarChained" else "StarChained"
                     let name = prefix + (string n)
                     typeof<Specializations<'S, 'Re, 'Res>>.GetMethod(name, NonPublicStatics)
-
+                
                 verifyMethodInfoWasTaken mi
                 
                 let argTypes, args =
@@ -1040,7 +1041,7 @@ module internal PrintfImpl =
                         let argTy = argTys.[argTys.Length - 2]
                         let conv = getValueConverter argTy spec 
                         [| argTy; retTy |], [| box prefix; box conv; tail |]
-
+                
                 let mi = mi.MakeGenericMethod argTypes
                 mi.Invoke(null, args)
             
@@ -1064,7 +1065,7 @@ module internal PrintfImpl =
                     let prefix = if spec.TypeChar = '%' then "PercentStarFinal" else "StarFinal"
                     let name = prefix + (string n)
                     typeof<Specializations<'S, 'Re, 'Res>>.GetMethod(name, NonPublicStatics)
-
+               
                 verifyMethodInfoWasTaken mi
 
                 let mi, args = 
@@ -1128,6 +1129,7 @@ module internal PrintfImpl =
             let spec = { TypeChar = typeChar; Precision = precision; Flags = flags; Width = width}
             
             let next, suffix = FormatString.findNextFormatSpecifier s i
+
             let argTys = 
                 let n = 
                     if spec.TypeChar = 'a' then 2 
