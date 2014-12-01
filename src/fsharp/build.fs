@@ -1637,7 +1637,7 @@ let SystemAssemblies (primaryAssembly, mscorlibVersion: System.Version, primaryA
       yield "System.Web.Services"
       yield "System.Windows.Forms"
       // Include System.Observable in the potential-system-assembly set
-      // on WP7.  Note that earlier versions of silverlight did not have this DLL, but
+      // on sl3-wp.  Note that earlier versions of silverlight did not have this DLL, but
       // it is OK to over-approximate the system assembly set.
       if primaryAssemblyIsSilverlight then 
           yield "System.Observable"

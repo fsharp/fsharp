@@ -545,7 +545,7 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <AssemblySearchPaths>$(MSBuildExtensionsPath32)\..\Reference Assemblies\Microsoft\Framework\Silverlight\v5.0</AssemblySearchPaths>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(TargetFramework)'=='wp7'">
+  <PropertyGroup Condition="'$(TargetFramework)'=='sl3-wp'">
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <TargetFrameworkProfile>WindowsPhone</TargetFrameworkProfile>
     <TargetFrameworkIdentifier>Silverlight</TargetFrameworkIdentifier>

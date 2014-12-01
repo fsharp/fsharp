@@ -245,7 +245,7 @@ namespace Microsoft.FSharp.Collections
         let rec fold f x m = 
             match m with 
             | SetNode(k,l,r,_) -> 
-                let x = fold f x l 
+                let x = fold f x l in 
                 let x = f x k
                 fold f x r
             | SetOne(k) -> f x k
