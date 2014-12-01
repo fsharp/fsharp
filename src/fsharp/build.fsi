@@ -493,8 +493,6 @@ type TcConfig =
  
     static member Create : TcConfigBuilder * validate: bool -> TcConfig
 
-    member TargetMscorlibVersion : System.Version
-    member TargetIsSilverlight : bool
 
 //----------------------------------------------------------------------------
 // Tables of referenced DLLs 
