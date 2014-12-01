@@ -7,14 +7,11 @@ bindir := ${prefix}/bin/
 monolibdir := @MONOLIBDIR@
 monogacdir := @MONOGACDIR@
 
-monogacdir20 := @MONOGACDIR20@
-
 #This is where to find MonoTouch of MonoAndroid, for "make build-monodroid"
 #
 #For now this is hardwired, it should be optionally detected by configure.ac
 monogacdir21 := @abs_top_srcdir@/dependencies/mono/2.1
 
-monogacdir35 := @MONOGACDIR35@
 monogacdir40 := @MONOGACDIR40@
 
 pclenabled47 := @PCLENABLED47@
