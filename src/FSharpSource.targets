@@ -152,7 +152,7 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <!-- Although Reflection Emit is available on MonoAndroid, we don't use it for FSharp.Core -->
     <!-- because we want the FSharp.Core DLLs to be identical for MonoAndroid and MonoTouch -->
     <DefineConstants>$(DefineConstants);FX_NO_REFLECTION_EMIT</DefineConstants>
-    <AssemblySearchPaths>$(FSharpSourcesRoot)\..\dependencies\mono\2.1;$(AssemblySearchPaths)</AssemblySearchPaths>
+    <AssemblySearchPaths>$(FSharpSourcesRoot)\..\dependencies\mono\2.1\MonoAndroid;$(AssemblySearchPaths)</AssemblySearchPaths>
   </PropertyGroup>
 
   <!-- Target MonoTouch (should be identical to MonoAndroid configurations, though we sanity check --> 
