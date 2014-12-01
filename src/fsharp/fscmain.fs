@@ -2,12 +2,9 @@
 
 module internal Microsoft.FSharp.Compiler.CommandLineMain
 
-open System.IO
-open System.Text
-open System.Reflection
 open Microsoft.FSharp.Compiler
 open Microsoft.FSharp.Compiler.AbstractIL.IL // runningOnMono 
-open Microsoft.FSharp.Compiler.AbstractIL.Internal.Library 
+open Microsoft.FSharp.Compiler.AbstractIL.Internal.Library
 open Microsoft.FSharp.Compiler.ErrorLogger
 open Microsoft.FSharp.Compiler.Driver
 open Internal.Utilities
@@ -18,29 +15,27 @@ open System.Runtime.CompilerServices
 
 type TypeInThisAssembly() = member x.Dummy = 1
 
-[<Dependency("FSharp.Compiler",LoadHint.Always)>] 
-do ()
-
-/// Collect the output from the stdout and stderr streams, character by character,
-/// recording the console color used along the way.
-type OutputCollector() = 
-    let output = ResizeArray()
-    let outWriter isOut = 
-        { new TextWriter() with 
-              member x.Write(c:char) = 
-                  lock output (fun () -> 
-                  output.Add (isOut, (try Some System.Console.ForegroundColor with _ -> None) ,c)) 
-              member x.Encoding = Encoding.UTF8 }
-    member x.GetTextAndClear() = lock output (fun () -> let res = output.ToArray() in output.Clear(); res)
-
 /// Implement the optional resident compilation service
 module FSharpResidentCompiler = 
 
     open System
     open System.Diagnostics
+    open System.IO
+    open System.Reflection
     open System.Runtime.Remoting.Channels
     open System.Runtime.Remoting
     open System.Runtime.Remoting.Lifetime
+    open System.Text
+
+    /// Collect the output from the stdout and stderr streams, character by character,
+    /// recording the console color used along the way.
+    type private OutputCollector() = 
+        let output = ResizeArray()
+        let outWriter isOut = 
+            { new TextWriter() with 
+                 member x.Write(c:char) = lock output (fun () -> output.Add (isOut, (try Some System.Console.ForegroundColor with _ -> None) ,c)) 
+                 member x.Encoding = Encoding.UTF8 }
+        member x.GetTextAndClear() = lock output (fun () -> let res = output.ToArray() in output.Clear(); res)
 
     /// The compilation server, which runs in the server process. Accessed by clients using .NET remoting.
     type FSharpCompilationServer(exiter:Exiter)  =
@@ -259,43 +254,48 @@ module FSharpResidentCompiler =
             | None -> 
                 None
 
+module Driver = 
+    let main argv = 
+        let inline hasArgument name args = 
+            args |> Array.exists (fun x -> x = ("--" + name) || x = ("/" + name))
+        let inline stripArgument name args = 
+            args |> Array.filter (fun x -> x <> ("--" + name) && x <> ("/" + name))
 
-let runMain argv = 
-    let inline hasArgument name args = 
-        args |> Array.exists (fun x -> x = ("--" + name) || x = ("/" + name))
-    let inline stripArgument name args = 
-        args |> Array.filter (fun x -> x <> ("--" + name) && x <> ("/" + name))
-
-    // Check for --pause as the very first step so that a compiler can be attached here.
-    if hasArgument "pause" argv then 
-        System.Console.WriteLine("Press any key to continue...")
-        System.Console.ReadKey() |> ignore
+        // Check for --pause as the very first step so that a compiler can be attached here.
+        if hasArgument "pause" argv then 
+            System.Console.WriteLine("Press any key to continue...")
+            System.Console.ReadKey() |> ignore
       
-    if runningOnMono && hasArgument "resident" argv then 
-        let argv = stripArgument "resident" argv
+        if runningOnMono && hasArgument "resident" argv then 
+            let argv = stripArgument "resident" argv
 
-        if not (hasArgument "nologo" argv) then 
-            printfn "%s" (FSComp.SR.buildProductName(FSharpEnvironment.FSharpTeamVersionNumber))
-            printfn "%s" (FSComp.SR.optsCopyright())
+            if not (hasArgument "nologo" argv) then 
+                printfn "%s" (FSComp.SR.buildProductName(FSharpEnvironment.FSharpTeamVersionNumber))
+                printfn "%s" (FSComp.SR.optsCopyright())
 
-        let fscServerExe = typeof<TypeInThisAssembly>.Assembly.Location
-        let exitCodeOpt = FSharpResidentCompiler.FSharpCompilationServer.TryCompileUsingServer (fscServerExe, argv)
-        match exitCodeOpt with 
-        | Some exitCode -> exitCode
-        | None -> 
-            mainCompile (argv, true, QuitProcessExiter)
+            let fscServerExe = typeof<TypeInThisAssembly>.Assembly.Location
+            let exitCodeOpt = FSharpResidentCompiler.FSharpCompilationServer.TryCompileUsingServer (fscServerExe, argv)
+            match exitCodeOpt with 
+            | Some exitCode -> exitCode
+            | None -> 
+                mainCompile (argv, true, QuitProcessExiter)
+                0
+
+        elif runningOnMono && hasArgument "server" argv then 
+            // Install the right exiter so we can catch "StopProcessing" without exiting the server
+            let exiter = { new Exiter with member x.Exit n = raise StopProcessing }
+            FSharpResidentCompiler.FSharpCompilationServer.RunServer(exiter)        
             0
-
-    elif runningOnMono && hasArgument "server" argv then 
-        // Install the right exiter so we can catch "StopProcessing" without exiting the server
-        let exiter = { new Exiter with member x.Exit n = raise StopProcessing }
-        FSharpResidentCompiler.FSharpCompilationServer.RunServer(exiter)        
-        0
         
-    else
-        mainCompile (argv, false, QuitProcessExiter)
-        0
+        else
+            mainCompile (argv, false, QuitProcessExiter)
+            0 
 
+
+
+
+[<Dependency("FSharp.Compiler",LoadHint.Always)>] 
+do ()
 
 [<EntryPoint>]
 let main(argv) =
@@ -304,7 +304,7 @@ let main(argv) =
     if not runningOnMono then Lib.UnmanagedProcessExecutionOptions.EnableHeapTerminationOnCorruption() (* SDL recommendation *)
 
     try 
-        runMain(Array.append [| "fsc.exe" |] argv); 
+        Driver.main(Array.append [| "fsc.exe" |] argv); 
     with e -> 
         errorRecovery e Microsoft.FSharp.Compiler.Range.range0; 
         1

@@ -29,12 +29,6 @@ module internal FSharpEnvironment =
     // WARNING: Do not change this revision number unless you absolutely know what you're doing.
     let FSharpBinaryMetadataFormatRevision = "2.0.0.0"
 
-#if SILVERLIGHT
-    let Get32BitRegistryStringValueViaPInvoke(_subKey:string) = 
-        None
-    let BinFolderOfDefaultFSharpCompiler(pathProbe) = 
-        Some ""
-#else
 
     let FSharpCoreLibRunningVersion = 
         try match (typeof<Microsoft.FSharp.Collections.List<int>>).Assembly.GetName().Version.ToString() with
@@ -307,7 +301,6 @@ module internal FSharpEnvironment =
       None
 
 
-#endif // SILVERLIGHT
 #if FX_ATLEAST_45_COMPILER_LOCATION
     // Apply the given function to the registry entry corresponding to the subkey.
     // The reg key is dispoed at the end of the scope.

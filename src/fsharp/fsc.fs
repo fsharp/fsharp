@@ -191,8 +191,6 @@ let ConsoleErrorLoggerThatQuitsAfterMaxErrors (tcConfigB:TcConfigBuilder, exiter
                     );
     }
 
-let ErrorLoggerInitial (tcConfigB:TcConfigBuilder, exiter : Exiter) = ConsoleErrorLoggerThatQuitsAfterMaxErrors(tcConfigB, exiter)
-
 //    val TypeCheck : TcConfig * TcImports * TcGlobals * ErrorLogger * string * NiceNameGenerator * TypeChecker.TcEnv * Input list * Exiter -> 
 //              TcState * TypeChecker.TopAttribs * Tast.TypedAssembly * TypeChecker.TcEnv
 let TypeCheck (tcConfig,tcImports,tcGlobals,errorLogger:ErrorLogger,assemblyName,niceNameGen,tcEnv0,inputs, exiter : Exiter) =
@@ -355,13 +353,10 @@ let getTcImportsFromCommandLine(displayPSTypeProviderSecurityDialogBlockingUI : 
             ParseCompilerOptions collect (GetCoreFscCompilerOptions tcConfigB) (List.tail (PostProcessCompilerArgs abbrevArgs argv))
             let inputFiles = List.rev !inputFilesRef
 
-#if SILVERLIGHT
-#else
             // Check if we have a codepage from the console
             match tcConfigB.lcid with
             | Some _ -> ()
             | None -> tcConfigB.lcid <- lcidFromCodePage
-#endif
 
             setProcessThreadLocals(tcConfigB)
 
@@ -519,11 +514,11 @@ let getTcImportsFromCommandLine(displayPSTypeProviderSecurityDialogBlockingUI : 
             ReportTime tcConfig "Typechecked"
 
             (tcGlobals,tcImports,frameworkTcImports,generatedCcu,typedAssembly,topAttrs,tcConfig)
+                    
 #if INCREMENTAL_BUILD_OPTION
 #else
     end
 #endif
-
     tcGlobals,tcImports,frameworkTcImports,generatedCcu,typedAssembly,topAttrs,tcConfig,outfile,pdbfile,assemblyName,errorLogger
 
 // only called from the project system, as a way to run the front end of the compiler far enough to determine if we need to pop up the dialog (and do so if necessary)
@@ -711,15 +706,11 @@ module XmlDocWriter =
 // cmd line - option state
 //----------------------------------------------------------------------------
 
-#if SILVERLIGHT
-let defaultFSharpBinariesDir = "."
-#else
 let getModuleFileName() = 
     Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory,
                            System.AppDomain.CurrentDomain.FriendlyName)  
 
 let defaultFSharpBinariesDir = Filename.directoryName (getModuleFileName())
-#endif
 
 
 let outpath outfile extn =
@@ -1147,9 +1138,6 @@ module MainModuleBuilder =
                  let name,bytes,pub = 
                      let lower = String.lowercase file
                      if List.exists (Filename.checkSuffix lower) [".resx"]  then
-#if SILVERLIGHT
-                         failwith "resx files not supported as legacy compiler inputs"
-#else
                          let file = tcConfig.ResolveSourceFile(rangeStartup,file,tcConfig.implicitIncludeDir)
                          let outfile = (file |> Filename.chopExtension) + ".resources"
                          
@@ -1168,7 +1156,6 @@ module MainModuleBuilder =
                          let bytes = FileSystem.ReadAllBytesShim file
                          FileSystem.FileDelete outfile
                          name,bytes,pub
-#endif
                      else
 
                          let file,name,pub = TcConfigBuilder.SplitCommandLineResourceInfo file
@@ -1284,9 +1271,6 @@ module MainModuleBuilder =
             error(Error(FSComp.SR.fscTwoResourceManifests(),rangeCmdArgs));
                       
         let win32Manifest =
-#if SILVERLIGHT
-           ""
-#else
            // use custom manifest if provided
            if not(tcConfig.win32manifest = "") then
                tcConfig.win32manifest
@@ -1296,12 +1280,8 @@ module MainModuleBuilder =
            // otherwise, include the default manifest
            else
                System.Runtime.InteropServices.RuntimeEnvironment.GetRuntimeDirectory() + @"default.win32manifest"
-#endif
         
         let nativeResources = 
-#if SILVERLIGHT
-            []
-#else
             [ for av in assemblyVersionResources do
                   yield Lazy.CreateFromValue av
               if not(tcConfig.win32res = "") then
@@ -1309,7 +1289,6 @@ module MainModuleBuilder =
               if tcConfig.includewin32manifest && not(win32Manifest = "") && not(runningOnMono) then
                   yield  Lazy.CreateFromValue [|   yield! ResFileFormat.ResFileHeader() 
                                                    yield! (ManifestResourceFormat.VS_MANIFEST_RESOURCE((FileSystem.ReadAllBytesShim win32Manifest), tcConfig.target = Dll))|]]
-#endif
 
 
         // Add attributes, version number, resources etc. 
@@ -1427,15 +1406,11 @@ module StaticLinker =
             ilxMainModule, rewriteExternalRefsToLocalRefs
 
 
-#if DEBUG
+    #if DEBUG
     let PrintModule outfile x = 
-#if SILVERLIGHT
-        ()
-#else
         use os = File.CreateText(outfile) :> TextWriter
         ILAsciiWriter.output_module os x  
-#endif
-#endif
+    #endif
 
 
     // Find all IL modules that are to be statically linked given the static linking roots.
@@ -1916,9 +1891,6 @@ let main0(argv,bannerAlreadyPrinted,exiter:Exiter, errorLoggerProvider : ErrorLo
 
     // See Bug 735819 
     let lcidFromCodePage = 
-#if SILVERLIGHT
-        None
-#else
         if (System.Console.OutputEncoding.CodePage <> 65001) &&
            (System.Console.OutputEncoding.CodePage <> System.Threading.Thread.CurrentThread.CurrentUICulture.TextInfo.OEMCodePage) &&
            (System.Console.OutputEncoding.CodePage <> System.Threading.Thread.CurrentThread.CurrentUICulture.TextInfo.ANSICodePage) then
@@ -1926,18 +1898,9 @@ let main0(argv,bannerAlreadyPrinted,exiter:Exiter, errorLoggerProvider : ErrorLo
                 Some(1033)
         else
             None
-#endif
 
     let tcGlobals,tcImports,frameworkTcImports,generatedCcu,typedAssembly,topAttrs,tcConfig,outfile,pdbfile,assemblyName,errorLogger = 
-#if SILVERLIGHT
-        let curDir = "."
-#else
-        let curDir = Directory.GetCurrentDirectory()
-#endif
-        getTcImportsFromCommandLine(None, argv, defaultFSharpBinariesDir, curDir, lcidFromCodePage, (fun tcConfigB ->
-#if SILVERLIGHT
-                          ()
-#else
+        getTcImportsFromCommandLine(None, argv, defaultFSharpBinariesDir, Directory.GetCurrentDirectory(), lcidFromCodePage, (fun tcConfigB ->
                           match tcConfigB.lcid with
                           | Some(n) -> System.Threading.Thread.CurrentThread.CurrentUICulture <- new System.Globalization.CultureInfo(n)
                           | None -> ()
@@ -1946,7 +1909,6 @@ let main0(argv,bannerAlreadyPrinted,exiter:Exiter, errorLoggerProvider : ErrorLo
                               let prev = System.Console.OutputEncoding
                               System.Console.OutputEncoding <- Encoding.UTF8
                               System.AppDomain.CurrentDomain.ProcessExit.Add(fun _ -> System.Console.OutputEncoding <- prev)
-#endif
                                     ), (fun tcConfigB -> 
                         // display the banner text, if necessary
                         if not bannerAlreadyPrinted then 
@@ -2073,14 +2035,8 @@ let main2(Args(tcConfig,tcImports,frameworkTcImports : TcImports,tcGlobals,error
     // data structures involved here are so large we can't take the risk.
     Args(tcConfig,tcImports,tcGlobals,errorLogger,generatedCcu,outfile,optimizedImpls,topAttrs,pdbfile,assemblyName, (sigDataAttributes, sigDataResources), generatedOptData,assemVerFromAttrib,signingInfo,metadataVersion,exiter)
 
-let mutable tcImportsCapture = None
-let mutable dynamicAssemblyCreator = None
 let main2b(Args(tcConfig:TcConfig,tcImports,tcGlobals,errorLogger,generatedCcu:CcuThunk,outfile,optimizedImpls,topAttrs,pdbfile,assemblyName,idata,generatedOptData,assemVerFromAttrib,signingInfo,metadataVersion,exiter:Exiter)) = 
   
-    match tcImportsCapture with 
-    | None -> ()
-    | Some f -> f tcImports
-
     // Compute a static linker. 
     let ilGlobals = tcGlobals.ilg
     if tcConfig.standalone && generatedCcu.UsesQuotations then 
@@ -2095,11 +2051,7 @@ let main2b(Args(tcConfig:TcConfig,tcImports,tcGlobals,errorLogger,generatedCcu:C
     // so that make sure the compiler only emits "serializable" bit into IL metadata when it is available.
     // Note that SerializableAttribute may be relocated in the future but now resides in mscorlib.
     let netFxHasSerializableAttribute = tcImports.SystemRuntimeContainsType "System.SerializableAttribute"
-    let codegenResults = 
-        match dynamicAssemblyCreator with
-        | None -> GenerateIlxCode (IlWriteBackend, false, false, tcConfig, topAttrs, optimizedImpls, generatedCcu.AssemblyName, netFxHasSerializableAttribute, ilxGenerator)
-        | Some _ -> GenerateIlxCode (IlReflectBackend, true, false, tcConfig, topAttrs, optimizedImpls, generatedCcu.AssemblyName, netFxHasSerializableAttribute, ilxGenerator)
-
+    let codegenResults = GenerateIlxCode (IlWriteBackend, false, false, tcConfig, topAttrs, optimizedImpls, generatedCcu.AssemblyName, netFxHasSerializableAttribute, ilxGenerator)
     let casApplied = new Dictionary<Stamp,bool>()
     let securityAttrs,topAssemblyAttrs = topAttrs.assemblyAttrs |> List.partition (fun a -> TypeChecker.IsSecurityAttribute tcGlobals (tcImports.GetImportMap()) casApplied a rangeStartup)
     // remove any security attributes from the top-level assembly attribute list
@@ -2154,23 +2106,18 @@ let main4(Args(tcConfig,errorLogger:ErrorLogger,ilGlobals,ilxMainModule,outfile,
     let outfile = expandFileNameIfNeeded tcConfig outfile
 
     let pdbfile = pdbfile |> Option.map ((expandFileNameIfNeeded tcConfig) >> Path.GetFullPath)
-    match dynamicAssemblyCreator with 
-    | None -> FileWriter.EmitIL (tcConfig,ilGlobals,errorLogger,outfile,pdbfile,ilxMainModule,signingInfo,exiter)
-    | Some da -> da (tcConfig,ilGlobals,errorLogger,outfile,pdbfile,ilxMainModule,signingInfo); 
+    FileWriter.EmitIL (tcConfig,ilGlobals,errorLogger,outfile,pdbfile,ilxMainModule,signingInfo,exiter)
 
     ReportTime tcConfig "Write Stats File"
     FileWriter.WriteStatsFile (tcConfig,outfile)
 
     abortOnError(errorLogger,tcConfig,exiter)
-#if SILVERLIGHT
-#else
     if tcConfig.showLoadedAssemblies then
         for a in System.AppDomain.CurrentDomain.GetAssemblies() do
             dprintfn "%s" a.FullName
 
 #if SQM_SUPPORT
     SqmLoggerWithConfig tcConfig errorLogger.ErrorNumbers errorLogger.WarningNumbers
-#endif
 #endif
 
     ReportTime tcConfig "Exiting"

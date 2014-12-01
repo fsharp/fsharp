@@ -13,25 +13,6 @@ open System.Collections.Generic
 /// Represents encoded information for the end-of-line continutation of lexing
 type internal LexState = int64
 
-type ColorState =
-    | Token = 1
-    | IfDefSkip = 3
-    | String = 4
-    | Comment = 5
-    | StringInComment = 6
-    | VerbatimStringInComment = 7
-    | CamlOnly = 8
-    | VerbatimString = 9
-    | SingleLineComment = 10
-    | EndLineThenSkip = 11
-    | EndLineThenToken = 12
-    | TripleQuoteString = 13
-    | TripleQuoteStringInComment = 14
-    
-    | InitialState = 0 
-    
-
-
 /// A line/column pair
 type internal Position = int * int
 
@@ -90,9 +71,7 @@ type internal TokenInformation =
       /// The tag is an integer identifier for the token
       Tag:int
       /// Provides additional information about the token
-      TokenName:string;
-      /// The full length consumed by this match, including delayed tokens (which can be ignored in naive lexers)
-      FullMatchedLength: int }
+      TokenName:string }
 
 /// Object to tokenize a line of F# source code, starting with the given lexState.  The lexState should be 0 for
 /// the first line of text. Returns an array of ranges of the text and two enumerations categorizing the
@@ -105,16 +84,12 @@ type internal TokenInformation =
 type internal LineTokenizer =
     /// Scan one token from the line
     member ScanToken : lexState:LexState -> TokenInformation option * LexState
-    static member ColorStateOfLexState : LexState -> ColorState
-    static member LexStateOfColorState : ColorState -> LexState
-    
 
 /// Tokenizer for a source file. Holds some expensive-to-compute resources at the scope of the file.
 [<Sealed>]
 type internal SourceTokenizer =
     new : conditionalDefines:string list * fileName:string -> SourceTokenizer
     member CreateLineTokenizer : lineText:string -> LineTokenizer
-    member CreateBufferTokenizer : bufferFiller:(char[] * int * int -> int) -> LineTokenizer
     
 
 module internal TestExpose =     
