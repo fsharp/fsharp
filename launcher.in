@@ -21,4 +21,4 @@ fi
 # location of the default FSharp install in order to find the FSharp compiler binaries (see 
 # fsharpbinding/MonoDevelop.FSharpBinding/Services/CompilerLocationUtils.fs). That's a pretty unfortunate
 # way of finding those binaries. And really should be changed.
-$EXEC mono $DEBUG $MONO_OPTIONS @DIR@/@TOOL@ --exename:$(basename $0) "$@"
+$EXEC mono $DEBUG $MONO_OPTIONS @DIR@/@TOOL@ --exename:$(basename "$0") "$@"
