@@ -140,7 +140,7 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
   <!-- Target MonoAndroid -->
   <PropertyGroup Condition="'$(TargetFramework)'=='monodroid'">
     <TargetFrameworkVersion>v1.0</TargetFrameworkVersion>
-    <TargetFrameworkIdentifier>MonoAndroid</TargetFrameworkIdentifier>
+    <!-- <TargetFrameworkIdentifier>MonoAndroid</TargetFrameworkIdentifier> -->
     <TargetFrameworkOutputDirectory>$(TargetFramework)</TargetFrameworkOutputDirectory>
     <DefineConstants>$(DefineConstants);FSHARP_CORE_4_5</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_ATLEAST_45</DefineConstants>
@@ -159,7 +159,7 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
   <!-- by building against the MonoTouch mscorlib) -->
   <PropertyGroup Condition="'$(TargetFramework)'=='monotouch'">
     <TargetFrameworkVersion>v1.0</TargetFrameworkVersion>
-    <TargetFrameworkIdentifier>MonoTouch</TargetFrameworkIdentifier>
+    <!-- <TargetFrameworkIdentifier>MonoTouch</TargetFrameworkIdentifier> --> 
     <TargetFrameworkOutputDirectory>$(TargetFramework)</TargetFrameworkOutputDirectory>
     <DefineConstants>$(DefineConstants);FSHARP_CORE_4_5</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_ATLEAST_45</DefineConstants>
