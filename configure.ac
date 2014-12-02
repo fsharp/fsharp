@@ -58,12 +58,10 @@ if ! test "x$with_gacdir" = "xno"; then
 	MONOGACDIR=$(cd "$with_gacdir/.." && pwd)
 fi
 
-MONOGACDIR20="$MONOGACDIR"/2.0
-MONOGACDIR35="$MONOGACDIR"/3.5
 MONOGACDIR40="$MONOGACDIR"/4.0
 MONOGACDIR45="$MONOGACDIR"/4.5
 
-if ! test -e $MONOGACDIR20/mscorlib.dll -o -e $MONOGACDIR45/mscorlib.dll; then
+if ! test -e $MONOGACDIR40/mscorlib.dll -o -e $MONOGACDIR45/mscorlib.dll; then
 	AC_ERROR(Couldn't find the mono gac directory or mscorlib.dll in the usual places. Set --with-gacdir=<path>)
 fi
 
@@ -107,8 +105,6 @@ AC_SUBST(PCLENABLED259)
 AC_SUBST(MONOLIBDIR)
 AC_SUBST(MONOGACDIR)
 
-AC_SUBST(MONOGACDIR20)
-AC_SUBST(MONOGACDIR35)
 AC_SUBST(MONOGACDIR40)
 
 AC_CONFIG_FILES([
