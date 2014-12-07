@@ -1,1 +1,1 @@
-.nuget\NuGet.exe pack FSharp.Core.3.1.nuspec
+%~dp0.nuget\NuGet.exe pack %~dp0FSharp.Core.3.1.nuspec
