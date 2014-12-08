@@ -4655,7 +4655,7 @@
  <summary>Indicates that, when a custom operator is used in a computation expression,
  a parameter is automatically parameterized by the variable space of the computation expression</summary>
 </member>
-<member name="F:Microsoft.FSharp.Core.Microsoft.FSharp.Core.FSharpRef`1.contents">
+<member name="P:Microsoft.FSharp.Core.FSharpRef`1.contents">
 <summary>
  The current value of the reference cell
 </summary>
@@ -7824,28 +7824,25 @@
  <summary>Returns the length of the string.</summary>
  <param name="str">The input string.</param>
  <returns>The number of characters in the string.</returns>
- <exception cref="System.ArgumentNullException">Thrown when the input string is null.</exception>
 </member>
 <member name="M:Microsoft.FSharp.Core.StringModule.Replicate(System.Int32,System.String)">
  <summary>Returns a string by concatenating <c>count</c> instances of <c>str</c>.</summary>
  <param name="count">The number of copies of the input string will be copied.</param>
  <param name="str">The input string.</param>
  <returns>The concatenated string.</returns>
- <exception cref="System.ArgumentNullException">Thrown when the input string is null.</exception>
+ <exception cref="System.ArgumentException">Thrown when <c>count</c> is negative.</exception>
 </member>
 <member name="M:Microsoft.FSharp.Core.StringModule.Exists(Microsoft.FSharp.Core.FSharpFunc{System.Char,System.Boolean},System.String)">
  <summary>Tests if any character of the string satisfies the given predicate.</summary>
  <param name="predicate">The function to test each character of the string.</param>
  <param name="str">The input string.</param>
  <returns>True if any character returns true for the predicate and false otherwise.</returns>
- <exception cref="System.ArgumentNullException">Thrown when the input string is null.</exception>
 </member>
 <member name="M:Microsoft.FSharp.Core.StringModule.ForAll(Microsoft.FSharp.Core.FSharpFunc{System.Char,System.Boolean},System.String)">
  <summary>Tests if all characters in the string satisfy the given predicate.</summary>
  <param name="predicate">The function to test each character of the string.</param>
  <param name="str">The input string.</param>
  <returns>True if all characters return true for the predicate and false otherwise.</returns>
- <exception cref="System.ArgumentNullException">Thrown when the input string is null.</exception>
 </member>
 <member name="M:Microsoft.FSharp.Core.StringModule.Initialize(System.Int32,Microsoft.FSharp.Core.FSharpFunc{System.Int32,System.String})">
  <summary>Builds a new string whose characters are the results of applying the function <c>mapping</c>
@@ -7864,7 +7861,6 @@
  <param name="mapping">The function to produce a string from each character of the input string.</param>
  <param name="str">The input string.</param>
  <returns>The concatenated string.</returns>
- <exception cref="System.ArgumentNullException">Thrown when the input string is null.</exception>
 </member>
 <member name="M:Microsoft.FSharp.Core.StringModule.MapIndexed(Microsoft.FSharp.Core.FSharpFunc{System.Int32,Microsoft.FSharp.Core.FSharpFunc{System.Char,System.Char}},System.String)">
  <summary>Builds a new string whose characters are the results of applying the function <c>mapping</c>
@@ -7872,7 +7868,6 @@
  <param name="mapping">The function to apply to each character and index of the string.</param>
  <param name="str">The input string.</param>
  <returns>The resulting string.</returns>
- <exception cref="System.ArgumentNullException">Thrown when the input string is null.</exception>
 </member>
 <member name="M:Microsoft.FSharp.Core.StringModule.Map(Microsoft.FSharp.Core.FSharpFunc{System.Char,System.Char},System.String)">
  <summary>Builds a new string whose characters are the results of applying the function <c>mapping</c>
@@ -7880,20 +7875,17 @@
  <param name="mapping">The function to apply to the characters of the string.</param>
  <param name="str">The input string.</param>
  <returns>The resulting string.</returns>
- <exception cref="System.ArgumentNullException">Thrown when the input string is null.</exception>
 </member>
 <member name="M:Microsoft.FSharp.Core.StringModule.IterateIndexed(Microsoft.FSharp.Core.FSharpFunc{System.Int32,Microsoft.FSharp.Core.FSharpFunc{System.Char,Microsoft.FSharp.Core.Unit}},System.String)">
  <summary>Applies the function <c>action</c> to the index of each character in the string and the
  character itself.</summary>
  <param name="action">The function to apply to each character and index of the string.</param>
  <param name="str">The input string.</param>
- <exception cref="System.ArgumentNullException">Thrown when the input string is null.</exception>
 </member>
 <member name="M:Microsoft.FSharp.Core.StringModule.Iterate(Microsoft.FSharp.Core.FSharpFunc{System.Char,Microsoft.FSharp.Core.Unit},System.String)">
  <summary>Applies the function <c>action</c> to each character in the string.</summary>
  <param name="action">The function to be applied to each character of the string.</param>
  <param name="str">The input string.</param>
- <exception cref="System.ArgumentNullException">Thrown when the input string is null.</exception>
 </member>
 <member name="M:Microsoft.FSharp.Core.StringModule.Concat(System.String,System.Collections.Generic.IEnumerable{System.String})">
  <summary>Returns a new string made by concatenating the given strings
@@ -7903,7 +7895,7 @@
  <param name="strings">The sequence of strings to be concatenated.</param>
  <returns>A new string consisting of the concatenated strings separated by
  the separation string.</returns>
- <exception cref="System.ArgumentNullException">Thrown when strings is null.</exception>
+ <exception cref="System.ArgumentNullException">Thrown when <c>strings</c> is null.</exception>
 </member>
 <member name="T:Microsoft.FSharp.Core.StringModule">
  <summary>Functional programming operators for string processing.  Further string operations
