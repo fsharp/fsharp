@@ -3,7 +3,7 @@
   <metadata>
     <id>FSharp.Core</id>
     <version>3.1.2.1</version>
-    <title>F# 3.1 Runtime</title>
+    <title>FSharp.Core for F# 3.1</title>
     <authors>F# Software Foundation</authors>
     <owners>F# Software Foundation</owners>
     <licenseUrl>https://github.com/fsharp/fsharp/blob/master/LICENSE</licenseUrl>
@@ -11,7 +11,7 @@
     <iconUrl>http://fsharp.org/img/logo.png</iconUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>
-      F# 3.1 Runtime
+      FSharp.Core for F# 3.1
 
       FSharp.Core redistributables from Visual F# 3.1.2
 
@@ -22,11 +22,11 @@
       .NET Portable Profile 259 (portable-net45+netcore45+wpa81+wp8+MonoAndroid1+MonoTouch1)
 
       FSharp.Core built by F# Software Foundation
-      
+
       MonoAndroid
       MonoTouch
     </description>
-    <summary>F# 3.1 Runtime</summary>
+    <summary>FSharp.Core for F# 3.1</summary>
     <tags>F#, FSharp, FSharp.Core</tags>
   </metadata>
   <files>
