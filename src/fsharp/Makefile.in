@@ -66,6 +66,13 @@ all-monotouch-monodroid:
 	$(MAKE) -C FSharp.Core TargetFramework=monodroid build
 	$(MAKE) -C FSharp.Core TargetFramework=monotouch build
 
+all-monotouch:
+	$(MAKE) build-proto
+	$(MAKE) -C FSharp.Core TargetFramework=monotouch build
+
+all-monodroid:
+	$(MAKE) build-proto
+	$(MAKE) -C FSharp.Core TargetFramework=monodroid build
 
 
 
