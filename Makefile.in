@@ -1,6 +1,6 @@
 include $(topsrcdir)config.make
 
-all clean install build build-proto all-monotouch-monodroid:
+all clean install build build-proto all-monotouch-monodroid all-monotouch all-monodroid:
 	$(MAKE) -C src/fsharp $@
 
 dist:
