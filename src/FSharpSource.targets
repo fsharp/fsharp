@@ -51,7 +51,8 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
 
   <PropertyGroup Condition="('$(Configuration)'=='Debug' OR '$(Configuration)'=='Release') AND ('$(AssemblyName)'=='FSharp.Core')">
     <DefineConstants>STRONG_NAME_AND_DELAY_SIGN_FSHARP_COMPILER_WITH_MSFT_KEY;$(DefineConstants)</DefineConstants>
-    <OtherFlags>$(OtherFlags) --delaysign+ --keyfile:"$(FSharpSourcesRoot)\fsharp\msft.pubkey"</OtherFlags>
+    <OtherFlags Condition="'$(KeyFile)' != ''">$(OtherFlags) --keyfile:"$(KeyFile)"</OtherFlags>
+    <OtherFlags Condition="'$(KeyFile)' == ''">$(OtherFlags) --delaysign+ --keyfile:"$(FSharpSourcesRoot)\fsharp\msft.pubkey"</OtherFlags>
     <StrongNames>true</StrongNames>
   </PropertyGroup>
 
@@ -139,7 +140,7 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
 
   <!-- Target MonoAndroid -->
   <PropertyGroup Condition="'$(TargetFramework)'=='monodroid'">
-    <TargetFrameworkVersion>v1.0</TargetFrameworkVersion>
+    <!--<TargetFrameworkVersion>v1.0</TargetFrameworkVersion>-->
     <!-- <TargetFrameworkIdentifier>MonoAndroid</TargetFrameworkIdentifier> -->
     <TargetFrameworkOutputDirectory>$(TargetFramework)</TargetFrameworkOutputDirectory>
     <DefineConstants>$(DefineConstants);FSHARP_CORE_4_5</DefineConstants>
@@ -158,7 +159,7 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
   <!-- Target MonoTouch (should be identical to MonoAndroid configurations, though we sanity check --> 
   <!-- by building against the MonoTouch mscorlib) -->
   <PropertyGroup Condition="'$(TargetFramework)'=='monotouch'">
-    <TargetFrameworkVersion>v1.0</TargetFrameworkVersion>
+    <!--<TargetFrameworkVersion>v1.0</TargetFrameworkVersion>-->
     <!-- <TargetFrameworkIdentifier>MonoTouch</TargetFrameworkIdentifier> --> 
     <TargetFrameworkOutputDirectory>$(TargetFramework)</TargetFrameworkOutputDirectory>
     <DefineConstants>$(DefineConstants);FSHARP_CORE_4_5</DefineConstants>
