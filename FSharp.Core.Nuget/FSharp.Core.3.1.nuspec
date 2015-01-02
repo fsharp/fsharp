@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
   <metadata>
     <id>FSharp.Core</id>
-    <version>3.1.2.1</version>
+    <version>3.1.2.2</version>
     <title>FSharp.Core for F# 3.1</title>
     <authors>F# Software Foundation</authors>
     <owners>F# Software Foundation</owners>
