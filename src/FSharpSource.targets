@@ -22,7 +22,7 @@
     <AssemblyVersion Condition="'$(TargetFramework)' == 'net20'">2.3.1.0</AssemblyVersion>
     <AssemblyVersion Condition="'$(TargetFramework)' == 'portable47' ">2.3.5.1</AssemblyVersion>
     <AssemblyVersion Condition="'$(TargetFramework)' == 'monodroid' ">2.3.98.1</AssemblyVersion>
-    <AssemblyVersion Condition="'$(TargetFramework)' == 'monotouch' ">2.3.98.2</AssemblyVersion>
+    <AssemblyVersion Condition="'$(TargetFramework)' == 'monotouch' ">2.3.98.1</AssemblyVersion>
     <AssemblyVersion Condition="'$(TargetFramework)' == 'portable7'">3.3.1.0</AssemblyVersion>
     <AssemblyVersion Condition="'$(TargetFramework)' == 'portable78'">3.78.3.1</AssemblyVersion>
     <AssemblyVersion Condition="'$(TargetFramework)' == 'portable259'">3.259.3.1</AssemblyVersion>
