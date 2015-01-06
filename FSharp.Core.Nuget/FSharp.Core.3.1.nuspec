@@ -23,7 +23,7 @@
 
       FSharp.Core built by F# Software Foundation
 
-      MonoAndroid, MonoTouch, Xamarin.iOS (portable-monoandroid1+monotouch1+xamarinios1)
+      MonoAndroid, MonoTouch, Xamarin.iOS (portable-net45+monoandroid1+monotouch1+xamarinios1)
     </description>
     <summary>FSharp.Core for F# 3.1</summary>
     <tags>F#, FSharp, FSharp.Core</tags>
