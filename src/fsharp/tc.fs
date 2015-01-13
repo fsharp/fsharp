@@ -16,6 +16,7 @@ open Microsoft.FSharp.Compiler.AbstractIL.Diagnostics
 
 open Microsoft.FSharp.Compiler 
 open Microsoft.FSharp.Compiler.Range
+open Microsoft.FSharp.Compiler.Rational
 open Microsoft.FSharp.Compiler.Ast
 open Microsoft.FSharp.Compiler.ErrorLogger
 open Microsoft.FSharp.Compiler.Tast
@@ -276,12 +277,12 @@ let computeAccessRights eAccessPath eInternalsVisibleCompPaths eFamilyType =
     AccessibleFrom (eAccessPath :: eInternalsVisibleCompPaths, eFamilyType) // env.eAccessRights 
 
 let emptyTcEnv g  =
-    let cpath = CompPath (g.ilg.traits.ScopeRef,[])
+    let cpath = compPathInternal // allow internal access initially
     { eNameResEnv = NameResolutionEnv.Empty(g)
       eUngeneralizableItems=[]
       ePath=[]
-      eCompPath=cpath // dummy 
-      eAccessPath=cpath // dummy 
+      eCompPath=cpath 
+      eAccessPath=cpath  
       eAccessRights=computeAccessRights cpath [] None // compute this field 
       eInternalsVisibleCompPaths=[]
       eModuleOrNamespaceTypeAccumulator= ref (NewEmptyModuleOrNamespaceType Namespace)
@@ -412,8 +413,8 @@ let AddLocalTyconsAndReport tcSink g amap scopem tycons env =
 // Open a structure or an IL namespace 
 //------------------------------------------------------------------------- 
 
-let OpenModulesOrNamespaces tcSink g amap scopem env mvvs =
-    let env = ModifyNameResEnv (fun nenv -> AddModulesAndNamespacesContentsToNameEnv g amap env.eAccessRights scopem nenv mvvs)  env
+let OpenModulesOrNamespaces tcSink g amap scopem root env mvvs =
+    let env = ModifyNameResEnv (fun nenv -> AddModulesAndNamespacesContentsToNameEnv g amap env.eAccessRights scopem root nenv mvvs)  env
     CallEnvSink tcSink (scopem,env.NameEnv,env.eAccessRights)
     env
 
@@ -612,7 +613,7 @@ let ImplicitlyOpenOwnNamespace tcSink g amap scopem enclosingNamespacePath env =
     else
         let ad = env.eAccessRights
         match ResolveLongIndentAsModuleOrNamespace amap scopem OpenQualified env.eNameResEnv ad enclosingNamespacePath with 
-        | Result modrefs -> OpenModulesOrNamespaces tcSink g amap scopem env (List.map p23 modrefs)
+        | Result modrefs -> OpenModulesOrNamespaces tcSink g amap scopem false env (List.map p23 modrefs)
         | Exception _ ->  env
 
 
@@ -755,6 +756,13 @@ type AfterTcOverloadResolution =
         |   AfterTcOverloadResolution.ReplaceWithOverrideAndSendToSink(_,_,IfOverloadResolutionFails f) -> f()
 
 
+/// Typecheck rational constant terms in units-of-measure exponents
+let rec TcSynRationalConst c =
+  match c with
+  | SynRationalConst.Integer i -> intToRational i
+  | SynRationalConst.Negate c' -> NegRational (TcSynRationalConst c')
+  | SynRationalConst.Rational(p,q,_) -> DivRational (intToRational p) (intToRational q)
+
 /// Typecheck constant terms in expressions and patterns
 let TcConst cenv ty m env c =
     let rec tcMeasure ms =
@@ -767,7 +775,7 @@ let TcConst cenv ty m env c =
             | TyparKind.Type -> error(Error(FSComp.SR.tcExpectedUnitOfMeasureNotType(), m))
             | TyparKind.Measure -> MeasureCon tcref
 
-        | SynMeasure.Power(ms, exponent, _) -> MeasurePower (tcMeasure ms) exponent
+        | SynMeasure.Power(ms, exponent, _) -> MeasureRationalPower (tcMeasure ms, TcSynRationalConst exponent)
         | SynMeasure.Product(ms1,ms2,_) -> MeasureProd(tcMeasure ms1, tcMeasure ms2)     
         | SynMeasure.Divide(ms1, ((SynMeasure.Seq (_::(_::_), _)) as ms2), m) -> 
             warning(Error(FSComp.SR.tcImplicitMeasureFollowingSlash(),m))
@@ -2042,7 +2050,7 @@ module GeneralizationHelpers =
             TrimUngeneralizableTypars genConstrainedTyparFlag inlineFlag generalizedTypars freeInEnv
 
     /// Condense type variables in positive position
-    let CondenseTypars (cenv, denv:DisplayEnv, generalizedTypars: Typars, tauTy) =
+    let CondenseTypars (cenv, denv:DisplayEnv, generalizedTypars: Typars, tauTy, m) =
 
         // The type of the value is ty11 * ... * ty1N -> ... -> tyM1 * ... * tyMM -> retTy
         // This is computed REGARDLESS of the arity of the expression.
@@ -2058,7 +2066,7 @@ module GeneralizationHelpers =
             match tp.Constraints |> List.partition (function (TyparConstraint.CoercesTo _) -> true | _ -> false) with 
             | [TyparConstraint.CoercesTo(cxty,_)], others -> 
                  // Throw away null constraints if they are implied 
-                 match others |> List.filter (function (TyparConstraint.SupportsNull(_)) -> not (TypeSatisfiesNullConstraint cenv.g cxty) | _ -> true) with
+                 match others |> List.filter (function (TyparConstraint.SupportsNull(_)) -> not (TypeSatisfiesNullConstraint cenv.g m cxty) | _ -> true) with
                  | [] -> Some cxty
                  | _ -> None
             | _ -> None
@@ -2132,7 +2140,7 @@ module GeneralizationHelpers =
                 let ty =  mkTyparTy tp
                 error(Error(FSComp.SR.tcNotSufficientlyGenericBecauseOfScope(NicePrint.prettyStringOfTy denv ty),m)))
             
-        let generalizedTypars = CondenseTypars(cenv,denv,generalizedTypars,tauTy)    
+        let generalizedTypars = CondenseTypars(cenv, denv, generalizedTypars, tauTy, m)    
 
         let generalizedTypars =  
             if canInferTypars then generalizedTypars 
@@ -4229,7 +4237,7 @@ and TcTypeOrMeasure optKind cenv newOk checkCxs occ env (tpenv:SyntacticUnscoped
             NewErrorType (), tpenv
         | _ ->          
             let ms,tpenv = TcMeasure cenv newOk checkCxs occ env tpenv typ m
-            TType_measure (Tastops.MeasurePower ms exponent), tpenv
+            TType_measure (MeasureRationalPower (ms, TcSynRationalConst exponent)), tpenv
 
     | SynType.MeasureDivide(typ1, typ2, m) -> 
         match optKind with
@@ -11130,7 +11138,27 @@ let TcOpenDecl tcSink g amap m scopem env (longId : Ident list)  =
             match p with 
             | [] -> []
             | (h,_):: t -> if h.StartsWith(FsiDynamicModulePrefix,System.StringComparison.Ordinal) then t else p
-        modref.IsNamespace && p.Length >= longId.Length 
+
+        // See https://fslang.uservoice.com/forums/245727-f-language/suggestions/6107641-make-microsoft-prefix-optional-when-using-core-f
+        let isFSharpCoreSpecialCase =
+            match ccuOfTyconRef modref with 
+            | None -> false
+            | Some ccu -> 
+                ccuEq ccu g.fslibCcu &&
+                // Check if we're using a reference one string shorter than what we expect.
+                //
+                // "p" is the fully qualified path _containing_ the thing we're opening, e.g. "Microsoft.FSharp" when opening "Microsoft.FSharp.Data"
+                // "longId" is the text being used, e.g. "FSharp.Data"
+                //    Length of thing being opened = p.Length + 1
+                //    Length of reference = longId.Length
+                // So the reference is a "shortened" reference if (p.Length + 1) - 1 = longId.Length
+                (p.Length + 1) - 1 = longId.Length && 
+                fst p.[0] = "Microsoft" 
+
+        modref.IsNamespace && 
+        p.Length >= longId.Length &&
+        not isFSharpCoreSpecialCase
+        // Allow "open Foo" for "Microsoft.Foo" from FSharp.Core
 
     modrefs |> List.iter (fun (_,modref,_) ->
        if modref.IsModule && HasFSharpAttribute g g.attrib_RequireQualifiedAccessAttribute modref.Attribs then 
@@ -11144,7 +11172,7 @@ let TcOpenDecl tcSink g amap m scopem env (longId : Ident list)  =
         
     modrefs |> List.iter (fun (_,modref,_) -> CheckEntityAttributes g modref m |> CommitOperationResult)        
 
-    let env = OpenModulesOrNamespaces tcSink g amap scopem env (List.map p23 modrefs)
+    let env = OpenModulesOrNamespaces tcSink g amap scopem false env (List.map p23 modrefs)
     env    
 
 
@@ -13905,8 +13933,8 @@ module EstablishTypeDefinitionCores = begin
                 
             let allowNullLiteralAttributeCheck() = 
                 if hasAllowNullLiteralAttr then 
-                    tycon.TypeContents.tcaug_super |> Option.iter (fun ty -> if not (TypeNullIsExtraValue cenv.g ty) then errorR (Error(FSComp.SR.tcAllowNullTypesMayOnlyInheritFromAllowNullTypes(),m)))
-                    tycon.ImmediateInterfaceTypesOfFSharpTycon |> List.iter (fun ty -> if not (TypeNullIsExtraValue cenv.g ty) then errorR (Error(FSComp.SR.tcAllowNullTypesMayOnlyInheritFromAllowNullTypes(),m)))
+                    tycon.TypeContents.tcaug_super |> Option.iter (fun ty -> if not (TypeNullIsExtraValue cenv.g m ty) then errorR (Error(FSComp.SR.tcAllowNullTypesMayOnlyInheritFromAllowNullTypes(),m)))
+                    tycon.ImmediateInterfaceTypesOfFSharpTycon |> List.iter (fun ty -> if not (TypeNullIsExtraValue cenv.g m ty) then errorR (Error(FSComp.SR.tcAllowNullTypesMayOnlyInheritFromAllowNullTypes(),m)))
                 
                 
             let structLayoutAttributeCheck(allowed) = 
@@ -15295,25 +15323,36 @@ and TcModuleOrNamespace cenv env (id,isModule,defs,xml,modAttrs,vis,m:range) =
 // TypecheckOneImplFile - Typecheck all the namespace fragments in a file.
 //-------------------------------------------------------------------------- 
 
+
+let ApplyAssemblyLevelAutoOpenAttributeToTcEnv g amap (ccu: CcuThunk) scopem env (p, root)  = 
+    let warn() = 
+        warning(Error(FSComp.SR.tcAttributeAutoOpenWasIgnored(p, ccu.AssemblyName),scopem))
+        env
+    let p = splitNamespace p 
+    if isNil p then warn() else
+    let h,t = List.frontAndBack p 
+    let modref = mkNonLocalTyconRef (mkNonLocalEntityRef ccu (Array.ofList h))  t
+    match modref.TryDeref with 
+    | None ->  warn()
+    | Some _ -> OpenModulesOrNamespaces TcResultsSink.NoSink g amap scopem root env [modref]
+
+// Add the CCU and apply the "AutoOpen" attributes
 let AddCcuToTcEnv(g,amap,scopem,env,ccu,autoOpens,internalsVisible) = 
     let env = AddNonLocalCcu g amap scopem env (ccu,internalsVisible)
 
-#if AUTO_OPEN_ATTRIBUTES_AS_OPEN
-    let env = List.fold (fun env p -> TcOpenDecl tcSink g amap scopem scopem env (pathToSynLid scopem (splitNamespace p))) env autoOpens
-#else
-    let env = 
-        (env,autoOpens) ||> List.fold (fun env p -> 
-            let warn() = 
-                warning(Error(FSComp.SR.tcAttributeAutoOpenWasIgnored(p, ccu.AssemblyName),scopem))
-                env
-            let p = splitNamespace p 
-            if isNil p then warn() else
-            let h,t = List.frontAndBack p 
-            let modref = mkNonLocalTyconRef (mkNonLocalEntityRef ccu (Array.ofList h))  t
-            match modref.TryDeref with 
-            | None ->  warn()
-            | Some _ -> OpenModulesOrNamespaces TcResultsSink.NoSink g amap scopem env [modref]) 
-#endif
+    // See https://fslang.uservoice.com/forums/245727-f-language/suggestions/6107641-make-microsoft-prefix-optional-when-using-core-f
+    // "Microsoft" is opened by default in FSharp.Core
+    let autoOpens = 
+        let autoOpens = autoOpens  |> List.map (fun p -> (p,false))
+        if ccuEq ccu g.fslibCcu then 
+            // Auto open 'Microsoft' in FSharp.Core.dll. Even when using old versions of FSharp.Core.dll that do
+            // not have this attribute. The 'true' means 'treat all namespaces so revealed as "roots" accessible via
+            // global, e.g. global.FSharp.Collections'
+            ("Microsoft", true) :: autoOpens
+        else 
+            autoOpens
+
+    let env = (env,autoOpens) ||> List.fold (ApplyAssemblyLevelAutoOpenAttributeToTcEnv g amap ccu scopem)
     env
 
 let CreateInitialTcEnv(g,amap,scopem,ccus) =

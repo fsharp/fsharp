@@ -11,7 +11,7 @@
     <OutputType>Library</OutputType>
     <AssemblyName>FSharp.Compiler</AssemblyName>
     <DefineConstants>EXTENSIONTYPING;COMPILER;INCLUDE_METADATA_READER;INCLUDE_METADATA_WRITER;EXTENSIBLE_DUMPER;TYPE_PROVIDER_SECURITY;$(DefineConstants)</DefineConstants>
-    <NoWarn>$(NoWarn);44;62;9</NoWarn>
+    <NoWarn>$(NoWarn);62;9</NoWarn>
     <ProjectGuid>{2E4D67B4-522D-4CF7-97E4-BA940F0B18F3}</ProjectGuid>
     <AllowCrossTargeting>true</AllowCrossTargeting>
     <TargetFrameworkVersion Condition="'$(TargetFramework)'=='net40'">v4.5</TargetFrameworkVersion>
@@ -142,6 +142,12 @@
     </Compile>
     <Compile Include="..\TraceCall.fs">
       <Link>Utilities\TraceCall.fs</Link>
+    </Compile>
+    <Compile Include="..\rational.fsi">
+      <Link>ErrorLogging\rational.fsi</Link>
+    </Compile>
+    <Compile Include="..\rational.fs">
+      <Link>ErrorLogging\rational.fs</Link>
     </Compile>
     <Compile Include="..\range.fsi">
       <Link>ErrorLogging\range.fsi</Link>
@@ -509,6 +515,7 @@
     <Reference Include="mscorlib" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Numerics" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Runtime.Remoting" />
