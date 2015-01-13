@@ -2012,6 +2012,8 @@ module ExceptionInAsyncParallelOrHowToInvokeContinuationTwice =
 
     check "ExceptionInAsyncParallelOrHowToInvokeContinuationTwice" (Seq.init 30 (ignore >> test) |> Seq.forall id) true
     
+#if FX_NO_EXCEPTIONDISPATCHINFO
+#else
 
 // [Asyncs] Better stack traces for Async
 module BetterStacksTest1 = 
@@ -2051,6 +2053,8 @@ module BetterStacksTest2 =
     //printfn "STACK #2\n------------------------------------\n%s\n----------------------------------" v
 
     test "BetterStacks2" (v.Contains("FunctionRaisingException"))
+
+#endif
 
 // [Asyncs] Cancellation inside Async.AwaitWaitHandle may release source WaitHandle
 module Bug391710 =

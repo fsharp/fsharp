@@ -238,6 +238,13 @@ namespace Microsoft.FSharp.Core
         /// <returns>AllowNullLiteralAttribute</returns>
         new : unit -> AllowNullLiteralAttribute
 
+        /// <summary>Creates an instance of the attribute with the specified value</summary>
+        /// <returns>AllowNullLiteralAttribute</returns>
+        new : value: bool -> AllowNullLiteralAttribute
+
+        /// <summary>The value of the attribute, indicating whether the type allows the null literal or not</summary>
+        member Value: bool
+
     /// <summary>Adding this attribute to a value causes it to be compiled as a CLI constant literal.</summary>
     [<AttributeUsage (AttributeTargets.Field,AllowMultiple=false)>]  
     [<Sealed>]
@@ -2097,7 +2104,7 @@ namespace Microsoft.FSharp.Core
         [<CompiledName("Ignore")>]
         val inline ignore : value:'T -> unit
 
-        /// <summary>Unboxes a strongly typed value. This is the inverse of <c>box</c>, unbox&lt;t&gt;(box&lt;t&gt; a) equals a.</summary>
+        /// <summary>Unboxes a strongly typed value.</summary>
         /// <param name="value">The boxed value.</param>
         /// <returns>The unboxed result.</returns>
         [<CompiledName("Unbox")>]
@@ -2108,6 +2115,18 @@ namespace Microsoft.FSharp.Core
         /// <returns>The boxed object.</returns>
         [<CompiledName("Box")>]
         val inline box : value:'T -> obj
+
+        /// <summary>Try to unbox a strongly typed value.</summary>
+        /// <param name="value">The boxed value.</param>
+        /// <returns>The unboxed result as an option.</returns>
+        [<CompiledName("TryUnbox")>]
+        val inline tryUnbox : value:obj -> 'T option
+
+        /// <summary>Determines whether the given value is null.</summary>
+        /// <param name="value">The value to check.</param>
+        /// <returns>True when value is null, false otherwise.</returns>
+        [<CompiledName("IsNull")>]
+        val inline isNull : value:'T -> bool when 'T : null
 
         /// <summary>Throw a <c>System.Exception</c> exception.</summary>
         /// <param name="message">The exception message.</param>
@@ -3027,6 +3046,73 @@ namespace Microsoft.FSharp.Core
             /// statically required to satisfy the 'equality' constraint. </summary>
             /// <returns>The computed hash value.</returns>
             val inline hash : 'T -> int
+
+        /// <summary>A module of comparison and equality operators that are statically resolved, but which are not fully generic and do not make structural comparison. Opening this
+        /// module may make code that relies on structural or generic comparison no longer compile.</summary>
+        module NonStructuralComparison = 
+
+            /// <summary>Compares the two values for less-than</summary>
+            /// <param name="x">The first parameter.</param>
+            /// <param name="y">The second parameter.</param>
+            /// <returns>The result of the comparison.</returns>
+            val inline ( < ) : x:^T -> y:^U -> bool when (^T or ^U) : (static member ( < ) : ^T * ^U    -> bool) 
+        
+            /// <summary>Compares the two values for greater-than</summary>
+            /// <param name="x">The first parameter.</param>
+            /// <param name="y">The second parameter.</param>
+            /// <returns>The result of the comparison.</returns>
+            val inline ( > ) : x:^T -> y:^U -> bool when (^T or ^U) : (static member ( > ) : ^T * ^U    -> bool) 
+        
+            /// <summary>Compares the two values for greater-than-or-equal</summary>
+            /// <param name="x">The first parameter.</param>
+            /// <param name="y">The second parameter.</param>
+            /// <returns>The result of the comparison.</returns>
+            val inline ( >= ) : x:^T -> y:^U -> bool when (^T or ^U) : (static member ( >= ) : ^T * ^U    -> bool) 
+        
+            /// <summary>Compares the two values for less-than-or-equal</summary>
+            /// <param name="x">The first parameter.</param>
+            /// <param name="y">The second parameter.</param>
+            /// <returns>The result of the comparison.</returns>
+            val inline ( <= ) : x:^T -> y:^U -> bool when (^T or ^U) : (static member ( <= ) : ^T * ^U    -> bool) 
+        
+            /// <summary>Compares the two values for equality</summary>
+            /// <param name="x">The first parameter.</param>
+            /// <param name="y">The second parameter.</param>
+            /// <returns>The result of the comparison.</returns>
+            val inline ( = ) : x:^T -> y:^T -> bool when ^T : (static member ( = ) : ^T * ^T    -> bool) 
+        
+            /// <summary>Compares the two values for inequality</summary>
+            /// <param name="x">The first parameter.</param>
+            /// <param name="y">The second parameter.</param>
+            /// <returns>The result of the comparison.</returns>
+            val inline ( <> ) : x:^T -> y:^T -> bool when ^T : (static member ( <> ) : ^T * ^T    -> bool) 
+
+            /// <summary>Compares the two values</summary>
+            /// <param name="e1">The first value.</param>
+            /// <param name="e2">The second value.</param>
+            /// <returns>The result of the comparison.</returns>
+            [<CompiledName("Compare")>]
+            val inline compare: e1:'T -> e2:^T -> int when ^T : (static member ( < ) : ^T * ^T    -> bool) and ^T : (static member ( > ) : ^T * ^T    -> bool) 
+
+            /// <summary>Maximum of the two values</summary>
+            /// <param name="e1">The first value.</param>
+            /// <param name="e2">The second value.</param>
+            /// <returns>The maximum value.</returns>
+            [<CompiledName("Max")>]
+            val inline max : e1:^T -> e2:^T -> ^T when ^T : (static member ( < ) : ^T * ^T    -> bool) 
+
+            /// <summary>Minimum of the two values</summary>
+            /// <param name="e1">The first value.</param>
+            /// <param name="e2">The second value.</param>
+            /// <returns>The minimum value.</returns>
+            [<CompiledName("Min")>]
+            val inline min : e1:^T -> e2:^T -> ^T  when ^T : (static member ( < ) : ^T * ^T    -> bool) 
+
+            /// <summary>Calls GetHashCode() on the value</summary>
+            /// <param name="e1">The value.</param>
+            /// <returns>The hash code.</returns>
+            [<CompiledName("Hash")>]
+            val inline hash :value:'T -> int   when 'T : equality
 
         /// <summary>This module contains the basic arithmetic operations with overflow checks.</summary>
         module Checked =
