@@ -6,7 +6,7 @@ and core tools for use across multiple platforms.
 ### Contributing to the F# Compiler, Core Library and Tools
 
 Most contributions to the F# compiler/library/tools go first via the  
-repository at http://visualfsharp.codeplex.com.  This ensures that the main
+repository at https://github.com/Microsoft/visualfsharp.  This ensures that the main
 packaging of F# on Windows (the Visual F# Tools) also includes any contributions that are made, and
 ensures that the versions do not diverge.
 
@@ -19,8 +19,8 @@ available from this repo. At the moment the process is:
 
 1. Fork this repo.
 2. Build and test using the subset of tests available in this repo. If you like, submit a PR to this repo in order to trigger an automatic Travis run, or set up a Travis hook in your fork.
-3. Seek initial review by posting an issue in this repository or http://visualfsharp.codeplex.com. Make it clear you are working on Linux or OSX.
-4. Cherry-pick your changes into a pull request for http://visualfsharp.codeplex.com and submit for final testing and clearance.
+3. Seek initial review by posting an issue in this repository or https://github.com/Microsoft/visualfsharp. Make it clear you are working on Linux or OSX.
+4. Cherry-pick your changes into a pull request for https://github.com/Microsoft/visualfsharp and submit for final testing and clearance.
 5. The change will then be merged into this repo at a later point.
 
 If you don't have access to Windows in order to run final tests at step 4. If you need help, email fsharp-opensource@googlegroups.com and ask to make a final test run on Windows.
@@ -179,9 +179,9 @@ plus scripts
 
 ### Integrating changes from 'visualfsharp'
 
-To integrate latest changes from https://git01.codeplex.com/visualfsharp, use
+To integrate latest changes from https://github.com/Microsoft/visualfsharp, use
 ```
-git remote add visualfsharp https://git01.codeplex.com/visualfsharp
+git remote add visualfsharp https://github.com/Microsoft/visualfsharp
 git pull visualfsharp master
 ```
 
@@ -211,7 +211,7 @@ cd tests/fsharp/core
 
 ### Windows
 
-See the http://visualfsharp.codeplex.com for instructions for how to test on Windows. Use that repository
+See the [TESTGUIDE.md](https://github.com/Microsoft/visualfsharp/blob/master/TESTGUIDE.md) for instructions for how to test on Windows. Use that repository
 to develop and test on Windows.
 
 ## History 
