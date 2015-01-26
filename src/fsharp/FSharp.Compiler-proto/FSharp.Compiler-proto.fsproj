@@ -260,23 +260,6 @@
     <Compile Include="..\layout.fs">
       <Link>layout.fs</Link>
     </Compile>
-    <Compile Include="..\ast.fs">
-      <Link>ast.fs</Link>
-    </Compile>
-    <Compile Include="pars.fs" />
-    <Compile Include="..\lexhelp.fsi">
-      <Link>lexhelp.fsi</Link>
-    </Compile>
-    <Compile Include="..\lexhelp.fs">
-      <Link>lexhelp.fs</Link>
-    </Compile>
-    <Compile Include="lex.fs" />
-    <Compile Include="..\sreflect.fsi">
-      <Link>sreflect.fsi</Link>
-    </Compile>
-    <Compile Include="..\sreflect.fs">
-      <Link>sreflect.fs</Link>
-    </Compile>
 	  <Compile Include="..\ast.fs">
 		  <Link>ast.fs</Link>
 	  </Compile>
@@ -365,10 +348,6 @@
     <Compile Include="..\outcome.fs">
       <Link>outcome.fs</Link>
     </Compile>
-    <Compile Include="..\csolve.fsi">
-      <Link>csolve.fsi</Link>
-    </Compile>
-    <Compile Include="..\csolve.fs">
 	  <Compile Include="..\csolve.fsi">
 		  <Link>csolve.fsi</Link>
 	  </Compile>
