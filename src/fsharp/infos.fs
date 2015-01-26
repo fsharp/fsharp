@@ -477,7 +477,7 @@ type OptionalArgInfo =
 [<RequireQualifiedAccess>]
 type ReflectedArgInfo = 
     | None 
-    | Quote of evaluateArg: bool 
+    | Quote of (* evaluateArg: *) bool 
     member x.AutoQuote = match x with None -> false | Quote _ -> true
 
 //-------------------------------------------------------------------------
