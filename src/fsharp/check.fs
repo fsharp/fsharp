@@ -473,11 +473,11 @@ and CheckExprInContext (cenv:cenv) (env:env) expr (context:ByrefCallContext) =
           if cenv.reportErrors then 
               cenv.usesQuotations <- true
               try 
-                  let conv = QuotationTranslator.ConvExprPublic 
-                                (cenv.g, cenv.amap, cenv.viewCcu, QuotationTranslator.IsReflectedDefinition.No) 
-                                QuotationTranslator.QuotationTranslationEnv.Empty ast  
-                  match !savedConv with 
-                  | None -> savedConv:= Some conv
+                  let qscope = QuotationTranslator.QuotationGenerationScope.Create (cenv.g,cenv.amap,cenv.viewCcu, QuotationTranslator.IsReflectedDefinition.No) 
+                  let qdata = QuotationTranslator.ConvExprPublic qscope QuotationTranslator.QuotationTranslationEnv.Empty ast  
+                  let typeDefs,spliceTypes,spliceExprs = qscope.Close()
+                  match savedConv.Value with 
+                  | None -> savedConv:= Some (typeDefs, List.map fst spliceTypes, List.map fst spliceExprs, qdata)
                   | Some _ -> ()
               with QuotationTranslator.InvalidQuotedTerm e -> 
                   errorRecovery e m
@@ -490,9 +490,10 @@ and CheckExprInContext (cenv:cenv) (env:env) expr (context:ByrefCallContext) =
           CheckInterfaceImpls cenv env basev iimpls;
           CheckTypePermitByrefs cenv m typ
           let interfaces = 
-              [ yield! AllSuperTypesOfType cenv.g cenv.amap m AllowMultiIntfInstantiations.Yes typ
+              [ if isInterfaceTy cenv.g typ then 
+                    yield! AllSuperTypesOfType cenv.g cenv.amap m AllowMultiIntfInstantiations.Yes typ
                 for (ty,_) in iimpls do
-                    yield! AllSuperTypesOfType cenv.g cenv.amap m AllowMultiIntfInstantiations.Yes ty ]
+                    yield! AllSuperTypesOfType cenv.g cenv.amap m AllowMultiIntfInstantiations.Yes ty  ]
               |> List.filter (isInterfaceTy cenv.g)
           CheckMultipleInterfaceInstantiations cenv interfaces m
 
@@ -995,12 +996,12 @@ and CheckBinding cenv env alwaysCheckNoReraise (TBind(v,e,_) as bind) =
                       | Expr.TyLambda (_,tps,b,_,_) -> tps,b,applyForallTy cenv.g ety (List.map mkTyparTy tps)
                       | _ -> [],e,ety
                     let env = QuotationTranslator.QuotationTranslationEnv.Empty.BindTypars tps
-                    let _,argExprs,_ = QuotationTranslator.ConvExprPublic 
-                                            (cenv.g,cenv.amap,cenv.viewCcu, QuotationTranslator.IsReflectedDefinition.Yes) 
-                                            env taue 
-                    if nonNil(argExprs) then 
-                        errorR(Error(FSComp.SR.chkReflectedDefCantSplice(), v.Range));
-                    QuotationTranslator.ConvMethodBase (cenv.g,cenv.amap,cenv.viewCcu) env (v.CompiledName, v) |> ignore
+                    let qscope = QuotationTranslator.QuotationGenerationScope.Create (cenv.g,cenv.amap,cenv.viewCcu, QuotationTranslator.IsReflectedDefinition.Yes) 
+                    QuotationTranslator.ConvExprPublic qscope env taue  |> ignore
+                    let _,_,argExprs = qscope.Close()
+                    if nonNil argExprs then 
+                        errorR(Error(FSComp.SR.chkReflectedDefCantSplice(), v.Range))
+                    QuotationTranslator.ConvMethodBase qscope env (v.CompiledName, v) |> ignore
                 with 
                   | QuotationTranslator.InvalidQuotedTerm e -> 
                           errorR(e)
@@ -1239,8 +1240,8 @@ let CheckEntityDefn cenv env (tycon:Entity) =
 
             if minfo.NumArgs.Length > 1 && 
                (minfo.GetParamDatas(cenv.amap, m, minfo.FormalMethodInst) 
-                |> List.existsSquared (fun (ParamData(isParamArrayArg, isOutArg, optArgInfo, _, ty)) -> 
-                    isParamArrayArg || isOutArg || optArgInfo.IsOptional || isByrefTy cenv.g ty)) then 
+                |> List.existsSquared (fun (ParamData(isParamArrayArg, isOutArg, optArgInfo, _, reflArgInfo, ty)) -> 
+                    isParamArrayArg || isOutArg || reflArgInfo.AutoQuote || optArgInfo.IsOptional || isByrefTy cenv.g ty)) then 
                 errorR(Error(FSComp.SR.chkCurriedMethodsCantHaveOutParams(), m))
 
         for pinfo in immediateProps do
@@ -1367,6 +1368,11 @@ let CheckEntityDefn cenv env (tycon:Entity) =
  
     if cenv.reportErrors then 
         if not tycon.IsTypeAbbrev then 
+            let typ = generalizedTyconRef (mkLocalTyconRef tycon)
+            let immediateInterfaces = GetImmediateInterfacesOfType cenv.g cenv.amap m typ
+            let interfaces = 
+              [ for ty in immediateInterfaces do
+                    yield! AllSuperTypesOfType cenv.g cenv.amap m AllowMultiIntfInstantiations.Yes ty  ]
             CheckMultipleInterfaceInstantiations cenv interfaces m
         
         // Check struct fields. We check these late because we have to have first checked that the structs are
@@ -1465,6 +1471,6 @@ let CheckTopImpl (g,amap,reportErrors,infoReader,internalsVisibleToPaths,viewCcu
 
     CheckModuleExpr cenv env mexpr;
     CheckAttribs cenv env extraAttribs;
-    if cenv.usesQuotations then 
-        viewCcu.UsesQuotations <- true
+    if cenv.usesQuotations && QuotationTranslator.QuotationGenerationScope.ComputeQuotationFormat(cenv.g) = QuotationTranslator.FSharp_20_Plus then 
+        viewCcu.UsesFSharp20PlusQuotations <- true
     cenv.entryPointGiven
