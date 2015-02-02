@@ -42,7 +42,7 @@ endif
 
 ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-net40-)
 VERSION = 4.3.1.0
-TARGET = 4.0
+TARGET = 4.5
 outsuffix = .
 endif
 
