@@ -103,7 +103,7 @@ module internal MSBuildResolver =
     // When the x-plat compiler is run on Windows/.NET this will curently cause slightly divergent behaviour.
     let GetPathToDotNetFrameworkForLastResortCompileTimeAssemblySearch _v = []
 #else
-    let GetPathToDotNetFrameworkForLastResortCompileTimeAssemblySearch (v) =
+    let GetPathToDotNetFrameworkForLastResortCompileTimeAssemblySearch v =
         let v =
             match v with
             | Net11 ->  Some TargetDotNetFrameworkVersion.Version11
@@ -116,7 +116,7 @@ module internal MSBuildResolver =
             | _ -> assert false; None
         match v with
         | Some v -> 
-            match ToolLocationHelper.GetPathToDotNetFrameworkForLastResortCompileTimeAssemblySearch  v with
+            match ToolLocationHelper.GetPathToDotNetFramework v with
             | null -> []
             | x -> [x]
         | _ -> []
