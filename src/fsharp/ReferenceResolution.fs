@@ -103,7 +103,7 @@ module internal MSBuildResolver =
     // When the x-plat compiler is run on Windows/.NET this will curently cause slightly divergent behaviour.
     let GetPathToDotNetFrameworkForLastResortCompileTimeAssemblySearch _v = []
 #else
-    let GetPathToDotNetFrameworkForLastResortCompileTimeAssemblySearch v =
+    let GetPathToDotNetFrameworkForLastResortCompileTimeAssemblySearch (v) =
         let v =
             match v with
             | Net11 ->  Some TargetDotNetFrameworkVersion.Version11
@@ -116,7 +116,7 @@ module internal MSBuildResolver =
             | _ -> assert false; None
         match v with
         | Some v -> 
-            match ToolLocationHelper.GetPathToDotNetFramework v with
+            match ToolLocationHelper.GetPathToDotNetFrameworkForLastResortCompileTimeAssemblySearch  v with
             | null -> []
             | x -> [x]
         | _ -> []
@@ -294,6 +294,7 @@ module internal MSBuildResolver =
 #if BUILDING_WITH_LKG
         ignore targetProcessorArchitecture
 #else       
+        rar.TargetProcessorArchitecture <- targetProcessorArchitecture
         let targetedRuntimeVersionValue = typeof<obj>.Assembly.ImageRuntimeVersion
 #if CROSS_PLATFORM_COMPILER 
         // The properties TargetedRuntimeVersion and CopyLocalDependenciesWhenParentReferenceInGac 
@@ -307,8 +308,7 @@ module internal MSBuildResolver =
         rar.TargetedRuntimeVersion <- targetedRuntimeVersionValue
         rar.CopyLocalDependenciesWhenParentReferenceInGac <- true
 #endif
-#endif        
-        rar.TargetProcessorArchitecture <- targetProcessorArchitecture
+#endif
         rar.Assemblies <- [|for (referenceName,baggage) in references -> 
                                         let item = new Microsoft.Build.Utilities.TaskItem(referenceName)
                                         item.SetMetadata("Baggage", baggage)

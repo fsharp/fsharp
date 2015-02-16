@@ -3,11 +3,13 @@
 #light
 namespace Microsoft.FSharp
 open System.Reflection
+open System.Runtime.InteropServices
 
 [<assembly:AssemblyDescription("FSharp.Compiler.Server.Shared.dll")>]
 [<assembly:AssemblyTitle("FSharp.Compiler.Server.Shared.dll")>]
 [<assembly:AssemblyCopyright("\169 Microsoft Corporation and other contributors.  Apache 2.0 License.")>]
-[<assembly:AssemblyProduct("F# (open source edition)")>]
+[<assembly:AssemblyProduct("F# (open edition)")>]
+[<assembly:ComVisible(false)>]
 
 #if NO_STRONG_NAMES
 [<assembly:System.Runtime.CompilerServices.InternalsVisibleTo("fsi")>]
