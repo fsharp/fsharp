@@ -27,6 +27,16 @@
       <Link>FSComp.txt</Link>
     </FsSrGen>
     <EmbeddedResource Include="..\FSStrings.resx" />
+    <FsLex Include="..\pplex.fsl">
+      <OtherFlags>--lexlib Internal.Utilities.Text.Lexing</OtherFlags>
+      <Link>pplex.fsl</Link>
+    </FsLex>
+    <FsYacc Include="..\pppars.fsy">
+      <Module>Microsoft.FSharp.Compiler.PPParser</Module>
+      <Open>Microsoft.FSharp.Compiler</Open>
+      <OtherFlags>--internal --lexlib Internal.Utilities.Text.Lexing --parslib Internal.Utilities.Text.Parsing</OtherFlags>
+      <Link>pppars.fsy</Link>
+    </FsYacc>
     <FsLex Include="..\lex.fsl">
       <OtherFlags>--lexlib Internal.Utilities.Text.Lexing</OtherFlags>
       <Link>lex.fsl</Link>
@@ -250,23 +260,25 @@
     <Compile Include="..\layout.fs">
       <Link>layout.fs</Link>
     </Compile>
-    <Compile Include="..\ast.fs">
-      <Link>ast.fs</Link>
-    </Compile>
-    <Compile Include="pars.fs" />
-    <Compile Include="..\lexhelp.fsi">
-      <Link>lexhelp.fsi</Link>
-    </Compile>
-    <Compile Include="..\lexhelp.fs">
-      <Link>lexhelp.fs</Link>
-    </Compile>
-    <Compile Include="lex.fs" />
-    <Compile Include="..\sreflect.fsi">
-      <Link>sreflect.fsi</Link>
-    </Compile>
-    <Compile Include="..\sreflect.fs">
-      <Link>sreflect.fs</Link>
-    </Compile>
+	  <Compile Include="..\ast.fs">
+		  <Link>ast.fs</Link>
+	  </Compile>
+    <Compile Include="pppars.fs" />
+	  <Compile Include="pars.fs" />
+	  <Compile Include="..\lexhelp.fsi">
+		  <Link>lexhelp.fsi</Link>
+	  </Compile>
+	  <Compile Include="..\lexhelp.fs">
+		  <Link>lexhelp.fs</Link>
+	  </Compile>
+    <Compile Include="pplex.fs" />
+	  <Compile Include="lex.fs" />
+	  <Compile Include="..\sreflect.fsi">
+		  <Link>sreflect.fsi</Link>
+	  </Compile>
+	  <Compile Include="..\sreflect.fs">
+		  <Link>sreflect.fs</Link>
+	  </Compile>
     <Compile Include="..\QueueList.fs">
       <Link>QueueList.fs</Link>
     </Compile>
@@ -309,6 +321,18 @@
     <Compile Include="..\augment.fs">
       <Link>augment.fs</Link>
     </Compile>
+    <Compile Include="..\outcome.fsi">
+      <Link>outcome.fsi</Link>
+    </Compile>
+    <Compile Include="..\outcome.fs">
+      <Link>outcome.fs</Link>
+    </Compile>
+	  <Compile Include="..\nameres.fsi">
+		  <Link>nameres.fsi</Link>
+	  </Compile>
+	  <Compile Include="..\nameres.fs">
+      <Link>nameres.fs</Link>
+    </Compile>
     <Compile Include="..\typrelns.fs">
       <Link>typrelns.fs</Link>
     </Compile>
@@ -324,10 +348,10 @@
     <Compile Include="..\outcome.fs">
       <Link>outcome.fs</Link>
     </Compile>
-    <Compile Include="..\csolve.fsi">
-      <Link>csolve.fsi</Link>
-    </Compile>
-    <Compile Include="..\csolve.fs">
+	  <Compile Include="..\csolve.fsi">
+		  <Link>csolve.fsi</Link>
+	  </Compile>
+	  <Compile Include="..\csolve.fs">
       <Link>csolve.fs</Link>
     </Compile>
     <Compile Include="..\formats.fsi">

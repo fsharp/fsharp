@@ -279,6 +279,7 @@ type TyconRefMultiMap<'T> =
     member Find : TyconRef -> 'T list
     member Add : TyconRef * 'T -> TyconRefMultiMap<'T>
     static member Empty : TyconRefMultiMap<'T>
+    static member OfList : (TyconRef * 'T) list -> TyconRefMultiMap<'T>
 
 
 //-------------------------------------------------------------------------
@@ -540,6 +541,8 @@ val ListMeasureConOccsWithNonZeroExponents : TcGlobals -> bool -> MeasureExpr ->
 val ProdMeasures : MeasureExpr list -> MeasureExpr
 val MeasureVarExponent : Typar -> MeasureExpr -> Rational
 val MeasureConExponent : TcGlobals -> bool -> TyconRef -> MeasureExpr -> Rational
+val normalizeMeasure : TcGlobals -> MeasureExpr -> MeasureExpr
+
 
 //-------------------------------------------------------------------------
 // Members 
@@ -589,6 +592,7 @@ type DisplayEnv =
       suppressNestedTypes: bool;
       maxMembers : int option;
       showObsoleteMembers: bool; 
+      showHiddenMembers: bool; 
       showTyparBinding: bool;
       showImperativeTyparAnnotations: bool;
       suppressInlineKeyword:bool;
@@ -1096,6 +1100,8 @@ val destInt32 : Expr -> int32 option
 // Primitives associated with quotations
 //------------------------------------------------------------------------- 
  
+val isQuotedExprTy : TcGlobals -> TType -> bool
+val destQuotedExprTy : TcGlobals -> TType -> TType
 val mkQuotedExprTy : TcGlobals -> TType -> TType
 val mkRawQuotedExprTy : TcGlobals -> TType
 val mspec_Type_GetTypeFromHandle : ILGlobals ->  ILMethodSpec
@@ -1141,9 +1147,11 @@ val mkCallSubtractionOperator                : TcGlobals -> range -> TType -> Ex
 val mkCallGenericEqualityWithComparerOuter   : TcGlobals -> range -> TType -> Expr -> Expr -> Expr -> Expr
 val mkCallGenericHashWithComparerOuter       : TcGlobals -> range -> TType -> Expr -> Expr -> Expr
 
-val mkCallUnpickleQuotation  : TcGlobals -> range -> Expr -> Expr -> Expr -> Expr -> Expr
+val mkCallDeserializeQuotationFSharp20Plus  : TcGlobals -> range -> Expr -> Expr -> Expr -> Expr -> Expr
+val mkCallDeserializeQuotationFSharp40Plus : TcGlobals -> range -> Expr -> Expr -> Expr -> Expr -> Expr -> Expr
 val mkCallCastQuotation      : TcGlobals -> range -> TType -> Expr -> Expr 
-val mkCallLiftValue          : TcGlobals -> range -> TType -> Expr -> Expr
+val mkCallLiftValueWithName          : TcGlobals -> range -> TType -> string -> Expr -> Expr
+val mkCallLiftValueWithDefn          : TcGlobals -> range -> TType -> Expr -> Expr
 val mkCallSeqCollect         : TcGlobals -> range -> TType  -> TType -> Expr -> Expr -> Expr
 val mkCallSeqUsing           : TcGlobals -> range -> TType  -> TType -> Expr -> Expr -> Expr
 val mkCallSeqDelay           : TcGlobals -> range -> TType  -> Expr -> Expr
@@ -1170,6 +1178,8 @@ val mkCallQuoteToLinqLambdaExpression : TcGlobals -> range -> TType -> Expr -> E
 val mkCallGetQuerySourceAsEnumerable : TcGlobals -> range -> TType -> TType -> Expr -> Expr
 val mkCallNewQuerySource : TcGlobals -> range -> TType -> TType -> Expr -> Expr
 
+val mkArray : TType * Exprs * range -> Expr
+
 //-------------------------------------------------------------------------
 // operations primarily associated with the optimization to fix
 // up loops to generate .NET code that does not include array bound checks
@@ -1195,6 +1205,7 @@ val HasFSharpAttributeOpt          : TcGlobals -> Env.BuiltinAttribInfo option -
 val TryFindFSharpAttribute         : TcGlobals -> Env.BuiltinAttribInfo -> Attribs -> Attrib option
 val TryFindFSharpAttributeOpt      : TcGlobals -> Env.BuiltinAttribInfo option -> Attribs -> Attrib option
 val TryFindFSharpBoolAttribute     : TcGlobals -> Env.BuiltinAttribInfo -> Attribs -> bool option
+val TryFindFSharpBoolAttributeAssumeFalse : TcGlobals -> Env.BuiltinAttribInfo -> Attribs -> bool option
 val TryFindFSharpStringAttribute   : TcGlobals -> Env.BuiltinAttribInfo -> Attribs -> string option
 val TryFindFSharpInt32Attribute    : TcGlobals -> Env.BuiltinAttribInfo -> Attribs -> int32 option
 
@@ -1226,6 +1237,7 @@ val IsMatchingSignatureDataVersionAttr : IL.ILGlobals -> ILVersionInfo -> ILAttr
 val mkCompilationMappingAttr                         : TcGlobals -> int -> ILAttribute
 val mkCompilationMappingAttrWithSeqNum               : TcGlobals -> int -> int -> ILAttribute
 val mkCompilationMappingAttrWithVariantNumAndSeqNum  : TcGlobals -> int -> int -> int             -> ILAttribute
+val mkCompilationMappingAttrForQuotationResource     : TcGlobals -> string * ILTypeRef list -> ILAttribute
 val mkCompilationArgumentCountsAttr                  : TcGlobals -> int list -> ILAttribute
 val mkCompilationSourceNameAttr                      : TcGlobals -> string -> ILAttribute
 val mkSignatureDataVersionAttr                       : TcGlobals -> ILVersionInfo -> ILAttribute

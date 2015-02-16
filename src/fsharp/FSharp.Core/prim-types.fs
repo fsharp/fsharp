@@ -206,10 +206,12 @@ namespace Microsoft.FSharp.Core
     type NoComparisonAttribute() = 
         inherit System.Attribute()
 
-    [<AttributeUsage (AttributeTargets.Class ||| AttributeTargets.Method ||| AttributeTargets.Property ||| AttributeTargets.Constructor,AllowMultiple=false)>]  
+    [<AttributeUsage (AttributeTargets.Class ||| AttributeTargets.Parameter ||| AttributeTargets.Method ||| AttributeTargets.Property ||| AttributeTargets.Constructor,AllowMultiple=false)>]  
     [<Sealed>]
-    type ReflectedDefinitionAttribute() =
+    type ReflectedDefinitionAttribute(includeValue: bool) =
         inherit System.Attribute()
+        new() = ReflectedDefinitionAttribute(false)
+        member x.IncludeValue = includeValue
 
     [<AttributeUsage (AttributeTargets.Method ||| AttributeTargets.Class ||| AttributeTargets.Field ||| AttributeTargets.Interface ||| AttributeTargets.Struct ||| AttributeTargets.Delegate ||| AttributeTargets.Enum ||| AttributeTargets.Property,AllowMultiple=false)>]  
     [<Sealed>]
@@ -259,13 +261,19 @@ namespace Microsoft.FSharp.Core
     [<Sealed>]
     type CompilationMappingAttribute(sourceConstructFlags:SourceConstructFlags,
                                      variantNumber:int,
-                                     sequenceNumber:int)  =
+                                     sequenceNumber:int,
+                                     resourceName:string,
+                                     typeDefinitions:System.Type[])  =
         inherit System.Attribute()
         member x.SourceConstructFlags = sourceConstructFlags
         member x.SequenceNumber = sequenceNumber
         member x.VariantNumber = variantNumber
         new(sourceConstructFlags) = CompilationMappingAttribute(sourceConstructFlags,0,0)
         new(sourceConstructFlags,sequenceNumber) = CompilationMappingAttribute(sourceConstructFlags,0,sequenceNumber)
+        new(sourceConstructFlags,variantNumber,sequenceNumber) = CompilationMappingAttribute(sourceConstructFlags,variantNumber,sequenceNumber,null,null)
+        new(resourceName, typeDefinitions) = CompilationMappingAttribute(SourceConstructFlags.None,0,0,resourceName, typeDefinitions)
+        member x.TypeDefinitions = typeDefinitions
+        member x.ResourceName = resourceName
 
     [<AttributeUsage(AttributeTargets.All,AllowMultiple=false)>]
     [<Sealed>]

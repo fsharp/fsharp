@@ -1133,7 +1133,7 @@ module InfoMemberPrinting =
     /// Format the arguments of a method to a buffer. 
     ///
     /// This uses somewhat "old fashioned" printf-style buffer printing.
-    let formatParamDataToBuffer denv os (ParamData(isParamArray,_isOutArg,optArgInfo,nmOpt,pty)) =
+    let formatParamDataToBuffer denv os (ParamData(isParamArray, _isOutArg, optArgInfo, nmOpt, _reflArgInfo, pty)) =
         let isOptArg = optArgInfo.IsOptional
         match isParamArray, nmOpt, isOptArg, tryDestOptionTy denv.g pty with 
         // Layout an optional argument 
@@ -1390,8 +1390,7 @@ module private TastDefinitionPrinting =
                 GetImmediateInterfacesOfType g amap m ty |> List.map (fun ity -> wordL (if isInterfaceTy g ty then "inherit" else "interface") --- layoutType denv ity)
 
         let props = 
-            //GetImmediateIntrinsicPropInfosOfType  (None,ad) g amap m ty 
-            GetIntrinsicPropInfosOfType infoReader (None,ad,AllowMultiIntfInstantiations.No)  PreferOverrides m ty 
+            GetIntrinsicPropInfosOfType infoReader (None,ad,AllowMultiIntfInstantiations.Yes)  PreferOverrides m ty 
 
         let events = 
             infoReader.GetEventInfosOfType(None,ad,m,ty) 
@@ -1505,7 +1504,8 @@ module private TastDefinitionPrinting =
                                       // Don't print individual methods forming interface implementations - these are currently never exported 
                                       not (isInterfaceTy denv.g oty)
                                   | [] -> true)
-              |> List.filter (fun v -> denv.showObsoleteMembers || not (HasFSharpAttribute denv.g denv.g.attrib_SystemObsolete v.Attribs))
+              |> List.filter (fun v -> denv.showObsoleteMembers || not (Infos.AttributeChecking.CheckFSharpAttributesForObsolete denv.g v.Attribs))
+              |> List.filter (fun v -> denv.showHiddenMembers || not (Infos.AttributeChecking.CheckFSharpAttributesForHidden denv.g v.Attribs))
           // sort 
           let sortKey (v:ValRef) = (not v.IsConstructor,    // constructors before others 
                                     v.Id.idText,            // sort by name 

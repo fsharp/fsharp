@@ -51,7 +51,7 @@ type XmlDocCollector() =
         lazy (savedLines.ToArray() |> Array.sortWith (fun (_,p1) (_,p2) -> posCompare p1 p2))
 
     let check() = 
-        assert (not savedLinesAsArray.IsValueCreated && "can't add more XmlDoc elements to XmlDocCOllector after extracting first XmlDoc from the overall results" <> "")
+        assert (not savedLinesAsArray.IsValueCreated && "can't add more XmlDoc elements to XmlDocCollector after extracting first XmlDoc from the overall results" <> "")
 
     member x.AddGrabPoint(pos) = 
         check()
@@ -2019,7 +2019,19 @@ type LexerEndlineContinuation =
       match x with 
       | LexerEndlineContinuation.Token(ifd) 
       | LexerEndlineContinuation.Skip(ifd, _, _) -> ifd
-          
+
+type LexerIfdefExpression =
+    | IfdefAnd          of LexerIfdefExpression*LexerIfdefExpression
+    | IfdefOr           of LexerIfdefExpression*LexerIfdefExpression
+    | IfdefNot          of LexerIfdefExpression
+    | IfdefId           of string
+
+let rec LexerIfdefEval (lookup : string -> bool) = function
+    | IfdefAnd (l,r)    -> (LexerIfdefEval lookup l) && (LexerIfdefEval lookup r)
+    | IfdefOr (l,r)     -> (LexerIfdefEval lookup l) || (LexerIfdefEval lookup r)
+    | IfdefNot e        -> not (LexerIfdefEval lookup e)
+    | IfdefId id        -> lookup id
+
 /// The parser defines a number of tokens for whitespace and
 /// comments eliminated by the lexer.  These carry a specification of
 /// a continuation for the lexer for continued processing after we've dealt with

@@ -1204,7 +1204,7 @@ and SolveMemberConstraint (csenv:ConstraintSolverEnv) permitWeakResolution ndeep
                       let callerArgs = argtys |> List.map (fun argty -> CallerArg(argty,m,false,dummyExpr))
                       let minst = FreshenMethInfo m minfo
                       let objtys = minfo.GetObjArgTypes(amap, m, minst)
-                      CalledMeth<Expr>(csenv.InfoReader,false,FreshenMethInfo,m,AccessibleFromEverywhere,minfo,minst,minst,None,objtys,[(callerArgs,[])],false,false))
+                      CalledMeth<Expr>(csenv.InfoReader,None,false,FreshenMethInfo,m,AccessibleFromEverywhere,minfo,minst,minst,None,objtys,[(callerArgs,[])],false,false,None))
 
               let methOverloadResult,errors = 
                   CollectThenUndo (fun trace -> ResolveOverloading csenv (WithTrace(trace)) nm ndeep true (0,0) AccessibleFromEverywhere calledMethGroup false (Some rty))  
@@ -1846,8 +1846,9 @@ and CanMemberSigsMatchUpToCheck
             Iterate2D subsumeArg argSet.UnnamedCalledArgs argSet.UnnamedCallerArgs)) ++ (fun () -> 
         (calledMeth.ParamArrayCalledArgOpt |> OptionD (fun calledArg ->
             if isArray1DTy g calledArg.CalledArgumentType then 
-                let ety = destArrayTy g calledArg.CalledArgumentType
-                calledMeth.ParamArrayCallerArgs |> OptionD (IterateD (fun callerArg -> subsumeArg (CalledArg((0,0),false,NotOptional,false,None,ety)) callerArg))
+                let paramArrayElemTy = destArrayTy g calledArg.CalledArgumentType
+                let reflArgInfo = calledArg.ReflArgInfo // propgate the reflected-arg info to each param array argument
+                calledMeth.ParamArrayCallerArgs |> OptionD (IterateD (fun callerArg -> subsumeArg (CalledArg((0,0),false,NotOptional,false,None,reflArgInfo,paramArrayElemTy)) callerArg))
             else
                 CompleteD)
         
@@ -1870,7 +1871,7 @@ and CanMemberSigsMatchUpToCheck
                     let calledArgTy = rfinfo.FieldType
                     rfinfo.Name, calledArgTy
             
-            subsumeArg (CalledArg((-1,0),false, NotOptional,false,Some(name), calledArgTy)) caller) )) ++ (fun () -> 
+            subsumeArg (CalledArg((-1, 0), false, NotOptional, false, Some name, ReflectedArgInfo.None, calledArgTy)) caller) )) ++ (fun () -> 
         
         // - Always take the return type into account for
         //      -- op_Explicit, op_Implicit
@@ -1925,7 +1926,7 @@ and ArgsMustSubsumeOrConvert
     let calledArgTy = AdjustCalledArgType csenv.InfoReader isConstraint calledArg callerArg
     SolveTypSubsumesTypWithReport csenv ndeep m trace calledArgTy callerArg.Type ++ (fun () -> 
 
-    if calledArg.IsParamArray && (isArray1DTy g calledArgTy) && not (isArray1DTy g callerArg.Type)
+    if calledArg.IsParamArray && isArray1DTy g calledArgTy && not (isArray1DTy g callerArg.Type)
     then 
         ErrorD(Error(FSComp.SR.csMethodExpectsParams(),m))
     else
