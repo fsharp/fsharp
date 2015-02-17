@@ -1,19 +1,13 @@
-language: objective-c
-
-env:
-  matrix:
-    - MONO_VERSION="3.4.0"
+language: csharp
 
 install:
-  - wget "http://download.mono-project.com/archive/${MONO_VERSION}/macos-10-x86/MonoFramework-MDK-${MONO_VERSION}.macos10.xamarin.x86.pkg"
-  - sudo installer -pkg "MonoFramework-MDK-${MONO_VERSION}.macos10.xamarin.x86.pkg" -target /
 
 script: 
-  - ./autogen.sh  --prefix=/Library/Frameworks/Mono.framework/Versions/${MONO_VERSION}
+  - ./autogen.sh   --prefix=/usr
   - make 
   - sudo make install
   - xbuild ./src/fsharp-library-unittests-build.proj /p:TargetFramework=net40 /p:Configuration=Release
-  - /Library/Frameworks/Mono.framework/Versions/${MONO_VERSION}/bin/nunit-console4 ./lib/release/FSharp.Core.Unittests.dll
+  - nunit-console4 ./lib/release/FSharp.Core.Unittests.dll
   - (cd tests/projects; ./build.sh)
   - (cd tests/fsharp/core; ./run-opt.sh)
 
