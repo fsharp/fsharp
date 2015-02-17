@@ -923,7 +923,7 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     </ItemGroup>
   </Target>
   <PropertyGroup>
-    <SolutionDir>$(FSharpSourcesRoot)\..</SolutionDir>
+    <SolutionDir>$(FSharpSourcesRoot)\..\</SolutionDir>
   </PropertyGroup>
   <Import Project="$(FSharpSourcesRoot)\..\.nuget\NuGet.targets" />
   <Target Name="BeforeBuild" BeforeTargets="Build">
