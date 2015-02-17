@@ -922,7 +922,11 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
         <CompileBefore Remove="@(CompileBefore)"/>   
     </ItemGroup>
   </Target>
+  <PropertyGroup>
+    <SolutionDir>$(FSharpSourcesRoot)\..</SolutionDir>
+  </PropertyGroup>
+  <Import Project="$(FSharpSourcesRoot)\..\.nuget\NuGet.targets" />
   <Target Name="BeforeBuild" BeforeTargets="Build">
-    <Exec Command=".\.nuget\NuGet.exe restore packages.config -PackagesDirectory packages" WorkingDirectory="$(FSharpSourcesRoot)\.."/>
+    <Exec Command="$(NuGetCommand) restore packages.config -PackagesDirectory packages" WorkingDirectory="$(FSharpSourcesRoot)\.."/>
   </Target>
 </Project>

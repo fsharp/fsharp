@@ -15,7 +15,9 @@ del /F /S /Q lib\release
 %_msbuildexe% src\fsharp-proto-build.proj
 ngen install lib\proto\fsc-proto.exe
 %_msbuildexe% src\fsharp-library-build.proj /p:TargetFramework=net40 /p:Configuration=Release
+%_msbuildexe% src\fsharp-library-unittests-build.proj /p:TargetFramework=net40 /p:Configuration=Release
 %_msbuildexe% src\fsharp-compiler-build.proj /p:TargetFramework=net40 /p:Configuration=Release
+%_msbuildexe% src\fsharp-compiler-unittests-build.proj /p:TargetFramework=net40 /p:Configuration=Release
 %_msbuildexe% src\fsharp-library-build.proj /p:TargetFramework=portable47 /p:Configuration=Release
 %_msbuildexe% src\fsharp-library-build.proj /p:TargetFramework=portable7 /p:Configuration=Release
 %_msbuildexe% src\fsharp-library-build.proj /p:TargetFramework=portable78 /p:Configuration=Release
