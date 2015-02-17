@@ -147,3 +147,5 @@ tests/fsharpqa/Source/CodeGen/EmittedIL/ComputationExpressions/ComputationExprLi
 *.jrs
 *.chk
 *.bak
+packages
+FSharp.Core.Nuget/*.nupkg
