@@ -342,12 +342,6 @@
     <Compile Include="..\patcompile.fs">
       <Link>patcompile.fs</Link>
     </Compile>
-    <Compile Include="..\outcome.fsi">
-      <Link>outcome.fsi</Link>
-    </Compile>
-    <Compile Include="..\outcome.fs">
-      <Link>outcome.fs</Link>
-    </Compile>
 	  <Compile Include="..\csolve.fsi">
 		  <Link>csolve.fsi</Link>
 	  </Compile>

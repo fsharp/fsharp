@@ -3,11 +3,13 @@
 #light
 namespace Microsoft.FSharp
 open System.Reflection
+open System.Runtime.InteropServices
 
 [<assembly:AssemblyDescription("FSharp.Compiler.dll")>]
 [<assembly:AssemblyTitle("FSharp.Compiler.dll")>]
 [<assembly:AssemblyCopyright("\169 Microsoft Corporation and other contributors.  Apache 2.0 License.")>]
-[<assembly:AssemblyProduct("F# (open source edition)")>]
+[<assembly:AssemblyProduct("F# (open edition)")>]
+[<assembly:ComVisible(false)>]
 
 #if NO_STRONG_NAMES
 [<assembly:System.Runtime.CompilerServices.InternalsVisibleTo("fsc")>]

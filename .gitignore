@@ -10,7 +10,7 @@ aclocal.m4
 src/*.userprefs
 src/fsharp/FSStrings.resources
 lkg
-pack
+packages
 src/fsharp/FSharp.Build/*.resx
 src/fsharp/FSharp.Build-proto/*.resx
 src/fsharp/FSharp.Build-proto/*.resources
@@ -28,6 +28,9 @@ src/fsharp/FSharp.Compiler/*.resources
 src/fsharp/FSharp.Compiler/*.sln
 src/fsharp/FSharp.Compiler/*.userprefs
 Debug
+Release
+vsdebug
+vsrelease
 Proto
 .libs
 Makefile
@@ -138,3 +141,9 @@ vsintegration/src/vs/FsPkgs/FSharp.Project/FS/ctofiles/
 tests/fsharpqa/Source/CodeGen/EmittedIL/QueryExpressionStepping/Utils.dll
 tests/fsharpqa/Source/CodeGen/EmittedIL/ComputationExpressions/ComputationExprLibrary.dll
 *.csproj.user
+
+*.ide
+*.log
+*.jrs
+*.chk
+*.bak
