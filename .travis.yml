@@ -7,6 +7,7 @@ script:
   - make 
   - sudo make install
   - xbuild ./src/fsharp-library-unittests-build.proj /p:TargetFramework=net40 /p:Configuration=Release
+  - mono packages/NUnit.Runners.2.6.4/tools/nunit-console-x86.exe ./lib/release/FSharp.Core.Unittests.dll
   - (cd tests/projects; ./build.sh)
   - (cd tests/fsharp/core; ./run-opt.sh)
 
