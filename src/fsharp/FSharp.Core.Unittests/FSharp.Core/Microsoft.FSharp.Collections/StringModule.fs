@@ -41,8 +41,8 @@ type StringModule() =
         let e6 = String.concat "foo" ["bar"]
         Assert.AreEqual("bar", e6)
         
-        let e7 = String.concat "foo" ["bar";"baz"]
-        Assert.AreEqual("barfoobaz", e7)
+        let e7 = String.concat "foo" ["bav";"baz"]
+        Assert.AreEqual("bavfoobaz", e7)
 
         let e8 = String.concat "foo" [null;"baz";null;"bar"]
         Assert.AreEqual("foobazfoofoobar", e8)

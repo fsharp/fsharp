@@ -396,7 +396,7 @@ namespace Microsoft.FSharp.Core
             member inline this.GetProperty(name) = this.GetRuntimeProperty(name)
             member inline this.GetMethod(name, parameterTypes) = this.GetRuntimeMethod(name, parameterTypes)
             member inline this.GetCustomAttributes(attrTy : Type, inherits : bool) : obj[] = 
-                unboxPrim<_> (box (CustomAttributeExtensions.GetCustomAttributes(this.GetTypeInfo(), attrTy, false).ToArray()))
+                unboxPrim<_> (box (CustomAttributeExtensions.GetCustomAttributes(this.GetTypeInfo(), attrTy, inherits).ToArray()))
 
     open PrimReflectionAdapters
 
@@ -646,17 +646,17 @@ namespace Microsoft.FSharp.Core
 
     module LanguagePrimitives =  
    
-
-        module (* internal *) ErrorStrings =
+        [<Sealed>]
+        type (* internal *) ErrorStrings =
             // inline functions cannot call GetString, so we must make these bits public
-            let AddressOpNotFirstClassString = SR.GetString(SR.addressOpNotFirstClass)
-            let NoNegateMinValueString = SR.GetString(SR.noNegateMinValue)
+            static member AddressOpNotFirstClassString with get () = SR.GetString(SR.addressOpNotFirstClass)
+            static member NoNegateMinValueString with get () = SR.GetString(SR.noNegateMinValue)
             // needs to be public to be visible from inline function 'average' and others
-            let InputSequenceEmptyString = SR.GetString(SR.inputSequenceEmpty) 
+            static member InputSequenceEmptyString with get () = SR.GetString(SR.inputSequenceEmpty) 
             // needs to be public to be visible from inline function 'average' and others
-            let InputArrayEmptyString = SR.GetString(SR.arrayWasEmpty) 
+            static member InputArrayEmptyString with get () = SR.GetString(SR.arrayWasEmpty) 
             // needs to be public to be visible from inline function 'average' and others
-            let InputMustBeNonNegativeString = SR.GetString(SR.inputMustBeNonNegative)
+            static member InputMustBeNonNegativeString with get () = SR.GetString(SR.inputMustBeNonNegative)
             
         [<CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1034:NestedTypesShouldNotBeVisible")>]  // nested module OK              
         module IntrinsicOperators =        
