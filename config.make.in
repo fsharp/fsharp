@@ -46,6 +46,12 @@ TARGET = 4.0
 outsuffix = .
 endif
 
+ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-mono-net45-)
+VERSION = 4.3.1.0
+TARGET = 4.5
+outsuffix = .
+endif
+
 ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-monodroid-)
 VERSION = 2.3.98.1
 TARGET = monodroid
