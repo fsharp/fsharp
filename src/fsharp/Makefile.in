@@ -43,8 +43,12 @@ build clean install:
 	$(MAKE) -C policy.2.0.FSharp.Core TargetFramework=net20 $@
 	$(MAKE) -C policy.2.3.FSharp.Core TargetFramework=net20 $@
 	if test -e $MONOGACDIR20/mscorlib.dll; then $(MAKE) -C FSharp.Core TargetFramework=net20 $@;fi
+ifeq ("$(monodroidenabled)", "yes")
 	$(MAKE) -C FSharp.Core TargetFramework=monodroid $@
+endif
+ifeq ("$(monotouchenabled)", "yes")
 	$(MAKE) -C FSharp.Core TargetFramework=monotouch $@
+endif
 	$(MAKE) -C FSharp.Core FSharpCoreBackVersion=3.0 TargetFramework=net40 $@
 	if test -e $MONOGACDIR20/mscorlib.dll; then $(MAKE) -C FSharp.Core FSharpCoreBackVersion=3.0 TargetFramework=net20 $@;fi
 ifeq ("$(pclenabled47)", "yes")
@@ -63,16 +67,24 @@ endif
 
 all-monotouch-monodroid:
 	$(MAKE) build-proto
+ifeq ("$(monodroidenabled)", "yes")
 	$(MAKE) -C FSharp.Core TargetFramework=monodroid build
+endif
+ifeq ("$(monotouchenabled)", "yes")
 	$(MAKE) -C FSharp.Core TargetFramework=monotouch build
+endif
 
 all-monotouch:
 	$(MAKE) build-proto
+ifeq ("$(monotouchenabled)", "yes")
 	$(MAKE) -C FSharp.Core TargetFramework=monotouch build
+endif
 
 all-monodroid:
 	$(MAKE) build-proto
+ifeq ("$(monodroidenabled)", "yes")
 	$(MAKE) -C FSharp.Core TargetFramework=monodroid build
+endif
 
 
 
