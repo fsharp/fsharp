@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <!-- Core library tests: all except compact framework (no nunit there) -->
-  <ItemGroup Condition=" '$(TargetFramework)' != 'wp7' and '$(TargetFramework)' != 'sl5'">
+  <ItemGroup Condition=" '$(TargetFramework)' != 'sl3-wp' and '$(TargetFramework)' != 'sl5'">
     <ProjectFiles Include="fsharp/FSharp.Core.Unittests/FSharp.Core.Unittests.fsproj"/>
   </ItemGroup>
 

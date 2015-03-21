@@ -77,6 +77,16 @@ AC_MSG_NOTICE(PCL Reference Assemblies for Profile 47 found: $PCLENABLED47)
 AC_SUBST(PCLENABLED47)
 
 
+if test -e $MONOLIBDIR/mono/xbuild-frameworks/.NETPortable/v4.0/Profile/Profile47/mscorlib.dll; then
+   PCLENABLED47=yes
+else
+   PCLENABLED47=no
+fi
+AC_MSG_NOTICE(PCL Reference Assemblies for Profile 47 found: $PCLENABLED47)
+
+AC_SUBST(PCLENABLED47)
+
+
 if test -e $MONOLIBDIR/mono/xbuild-frameworks/.NETPortable/v4.5/Profile/Profile7/System.Runtime.dll; then
    PCLENABLED7=yes
 else
@@ -103,6 +113,16 @@ fi
 AC_MSG_NOTICE(PCL Reference Assemblies for Profile 259 found: $PCLENABLED259)
 
 AC_SUBST(PCLENABLED259)
+
+# We enable MonoTouch and MonoDroid builds if PCL components are available.
+# These build using binaries from dependencies/mono/2.1, but see
+# https://github.com/fsharp/fsharp/issues/391 where PCL is a requirement of
+# Microsoft.Common.targets when used in this configuration
+MONOTOUCHENABLED=$PCLENABLED78
+MONODROIDENABLED=$PCLENABLED78
+
+AC_SUBST(MONOTOUCHENABLED)
+AC_SUBST(MONODROIDENABLED)
 
 AC_SUBST(MONOLIBDIR)
 AC_SUBST(MONOGACDIR)

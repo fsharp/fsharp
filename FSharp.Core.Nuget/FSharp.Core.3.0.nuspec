@@ -1,0 +1,44 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata>
+    <id>FSharp.Core</id>
+    <version>3.0.2</version>
+    <title>FSharp.Core for F# 3.0</title>
+    <authors>F# Software Foundation</authors>
+    <owners>F# Software Foundation</owners>
+    <licenseUrl>https://github.com/fsharp/fsharp/blob/master/LICENSE</licenseUrl>
+    <projectUrl>https://github.com/fsharp/fsharp</projectUrl>
+    <iconUrl>http://fsharp.org/img/logo.png</iconUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>
+      FSharp.Core redistributable for F# 3.0 shipped with Visual Studio 2012 Update 2
+
+      .NET 3.5
+      .NET 4.0
+      .NET Portable Profile 47 (portable-net45+sl5+netcore45+MonoAndroid1+MonoTouch1)
+    </description>
+    <summary>FSharp.Core redistributable for F# 3.0 shipped with Visual Studio 2012 Update 2</summary>
+    <tags>F#, FSharp, FSharp.Core</tags>
+  </metadata>
+  <files>
+
+    <!-- .NET 3.5 -->
+    <file src="..\lib\bootstrap\signed\.NETFramework\v2.0\2.3.0.0\FSharp.Core.dll" target="lib\net35\FSharp.Core.dll" />
+    <file src="..\lib\bootstrap\signed\.NETFramework\v2.0\2.3.0.0\FSharp.Core.optdata" target="lib\net35\FSharp.Core.optdata" />
+    <file src="..\lib\bootstrap\signed\.NETFramework\v2.0\2.3.0.0\FSharp.Core.sigdata" target="lib\net35\FSharp.Core.sigdata" />
+    <file src="..\lib\bootstrap\signed\.NETFramework\v2.0\2.3.0.0\FSharp.Core.xml" target="lib\net35\FSharp.Core.xml" />
+
+    <!-- .NET 4.0 -->
+    <file src="..\lib\bootstrap\signed\.NETFramework\v4.0\4.3.0.0\FSharp.Core.dll" target="lib\net40\FSharp.Core.dll" />
+    <file src="..\lib\bootstrap\signed\.NETFramework\v4.0\4.3.0.0\FSharp.Core.optdata" target="lib\net40\FSharp.Core.optdata" />
+    <file src="..\lib\bootstrap\signed\.NETFramework\v4.0\4.3.0.0\FSharp.Core.sigdata" target="lib\net40\FSharp.Core.sigdata" />
+    <file src="..\lib\bootstrap\signed\.NETFramework\v4.0\4.3.0.0\FSharp.Core.xml" target="lib\net40\FSharp.Core.xml" />
+
+    <!-- .NET Portable Profile 47-->
+    <file src="..\lib\bootstrap\signed\.NETPortable\2.3.5.0\FSharp.Core.dll" target="lib\portable-net45+sl5+netcore45+MonoAndroid1+MonoTouch1\FSharp.Core.dll" />
+    <file src="..\lib\bootstrap\signed\.NETPortable\2.3.5.0\FSharp.Core.optdata" target="lib\portable-net45+sl5+netcore45+MonoAndroid1+MonoTouch1\FSharp.Core.optdata" />
+    <file src="..\lib\bootstrap\signed\.NETPortable\2.3.5.0\FSharp.Core.sigdata" target="lib\portable-net45+sl5+netcore45+MonoAndroid1+MonoTouch1\FSharp.Core.sigdata" />
+    <file src="..\lib\bootstrap\signed\.NETPortable\2.3.5.0\FSharp.Core.xml" target="lib\portable-net45+sl5+netcore45+MonoAndroid1+MonoTouch1\FSharp.Core.xml" />
+
+  </files>
+</package>

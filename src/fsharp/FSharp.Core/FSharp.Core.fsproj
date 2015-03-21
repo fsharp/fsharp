@@ -208,31 +208,32 @@
     <Reference Include="System.Runtime" Condition=" '$(TargetProfile)' == 'netcore' " >
       <Private>false</Private>
     </Reference>
-    <Reference Include="System.Numerics" Condition="'$(TargetFramework)' == 'net40'" >
-      <Private>false</Private>
-    </Reference>
-    <Reference Include="System.Net" Condition="'$(TargetFramework)' == 'sl5' OR '$(TargetFramework)' == 'sl5-compiler' OR '$(TargetFramework)' == 'XNA\5.0' OR '$(TargetFramework)' == 'wp7' OR '$(TargetFramework)' == 'portable47' OR '$(TargetFramework)' == 'net40-xna40-xbox360' OR '$(TargetFramework)' == 'portable7'" >
-      <Private>false</Private>
-    </Reference>
-    <Reference Include="System.Observable" Condition="'$(TargetFramework)' == 'wp7' " >
-      <Private>false</Private>
-    </Reference>
-    <Reference Include="System.Core" Condition="'$(TargetFramework)' == 'sl5' OR '$(TargetFramework)' == 'sl5-compiler' OR '$(TargetFramework)' == 'XNA\5.0' OR '$(TargetFramework)' == 'wp7' OR '$(TargetFramework)' == 'portable47' OR '$(TargetFramework)' == 'net40-xna40-xbox360' OR '$(TargetFramework)' == 'portable7'" >
+    <Reference Include="System.Numerics" Condition="'$(TargetFramework)' == 'net40' OR 
+                                                    '$(TargetFramework)' == 'monotouch' OR 
+                                                    '$(TargetFramework)' == 'monodroid'" >
       <Private>false</Private>
     </Reference>
     <Reference Include="System.Net" Condition="'$(TargetFramework)' == 'sl5' OR 
-                                               '$(TargetFramework)' == 'portable47' OR 
+                                               '$(TargetFramework)' == 'sl5-compiler' OR 
                                                '$(TargetFramework)' == 'XNA\5.0' OR 
-                                               '$(TargetFramework)' == 'sl3-wp' ">
+                                               '$(TargetFramework)' == 'sl3-wp' OR 
+                                               '$(TargetFramework)' == 'portable47' OR 
+                                               '$(TargetFramework)' == 'net40-xna40-xbox360' OR 
+                                               '$(TargetFramework)' == 'portable7'" >
       <Private>false</Private>
     </Reference>
-    <Reference Include="System.Observable" Condition="'$(TargetFramework)' == 'sl3-wp' ">
+    <Reference Include="System.Observable" Condition="'$(TargetFramework)' == 'sl3-wp' " >
       <Private>false</Private>
     </Reference>
     <Reference Include="System.Core" Condition="'$(TargetFramework)' == 'sl5' OR 
-                                               '$(TargetFramework)' == 'portable47' OR 
-                                               '$(TargetFramework)' == 'XNA\5.0' OR 
-                                               '$(TargetFramework)' == 'sl3-wp' ">
+                                                '$(TargetFramework)' == 'sl5-compiler' OR 
+                                                '$(TargetFramework)' == 'XNA\5.0' OR 
+                                                '$(TargetFramework)' == 'sl3-wp' OR 
+                                                '$(TargetFramework)' == 'monotouch' OR 
+                                                '$(TargetFramework)' == 'monodroid' OR 
+                                                '$(TargetFramework)' == 'portable47' OR 
+                                                '$(TargetFramework)' == 'net40-xna40-xbox360' OR 
+                                                '$(TargetFramework)' == 'portable7'" >
       <Private>false</Private>
     </Reference>
   </ItemGroup>

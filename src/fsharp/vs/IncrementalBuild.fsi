@@ -24,7 +24,6 @@ type internal ErrorInfo =
       Message:string
       Subcategory:string }
     static member CreateFromExceptionAndAdjustEof : PhasedError * bool * bool * range * (int*int) -> ErrorInfo
-    static member CreateFromException : PhasedError * bool * bool * range -> ErrorInfo
 
 // implementation details used by other code in the compiler    
 [<Sealed>]

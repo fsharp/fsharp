@@ -1,19 +1,5 @@
 // Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
-#if SILVERLIGHT
-namespace Microsoft.FSharp.Compiler.Interactive
-
-module Runner = 
-
-    type public InteractiveConsole(argv:string[],reader:System.IO.TextReader, writer:System.IO.TextWriter, error:System.IO.TextWriter) =
-        do
-            Microsoft.FSharp.Core.Printf.setWriter writer
-            Microsoft.FSharp.Core.Printf.setError error
-        let session = Microsoft.FSharp.Compiler.Interactive.Shell.FsiEvaluationSession(argv, reader, writer, error)
-        member x.Run() = session.Run()
-        member x.Interrupt() = session.Interrupt()
-#endif
-
 namespace Microsoft.FSharp.Compiler.SimpleSourceCodeServices
 
     open System
@@ -175,16 +161,14 @@ namespace Microsoft.FSharp.Compiler.SimpleSourceCodeServices
                     member x.ErrorSinkImpl(exn) = errorSink false exn
                     member x.ErrorCount = errors |> Seq.filter (fun e -> e.Severity = Severity.Error) |> Seq.length }
 
-            let loggerProvider = 
-                { new ErrorLoggerProvider() with
-                    member log.CreateErrorLoggerThatQuitsAfterMaxErrors(tcConfigBuilder, exiter) = errorLogger }
-     
+            let createErrorLogger _ =  errorLogger
+      
             let result = 
                 use unwindParsePhase = PushThreadBuildPhaseUntilUnwind (BuildPhase.Parse)            
                 use unwindEL_2 = PushErrorLoggerPhaseUntilUnwind (fun _ -> errorLogger)
                 let exiter = { new Exiter with member x.Exit n = raise StopProcessing }
                 try 
-                    typecheckAndCompile (argv, true, exiter, loggerProvider); 
+                    mainCompile (argv, true, exiter, createErrorLogger); 
                     0
                 with e -> 
                     stopProcessingRecovery e Range.range0
@@ -202,13 +186,8 @@ namespace Microsoft.FSharp.Compiler.SimpleSourceCodeServices
         member x.CompileToDynamicAssembly (otherFlags: string[], execute: (TextWriter * TextWriter) option)  = 
             match execute with
             | Some (writer,error) -> 
-#if SILVERLIGHT
-                Microsoft.FSharp.Core.Printf.setWriter writer
-                Microsoft.FSharp.Core.Printf.setError error
-#else
                 System.Console.SetOut writer
                 System.Console.SetError error
-#endif
             | None -> ()
             let tcImportsRef = ref None
             let res = ref None
@@ -223,9 +202,7 @@ namespace Microsoft.FSharp.Compiler.SimpleSourceCodeServices
                             (ilGlobals ,
                              Microsoft.FSharp.Compiler.AbstractIL.ILRuntimeWriter.emEnv0,
                              assemblyBuilder,moduleBuilder,
-                             // Omit resources in dynamic assemblies, because the module builder is constructed without a filename the module 
-                             // is tagged as transient and as such DefineManifestResource will throw an invalid operation if resources are present
-                             { ilxMainModule with Resources=Microsoft.FSharp.Compiler.AbstractIL.IL.mkILResources [] },
+                             ilxMainModule,
                              debugInfo,
                              (fun s -> 
                                  match tcImportsRef.Value.Value.TryFindExistingFullyQualifiedPathFromAssemblyRef s with 

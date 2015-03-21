@@ -88,8 +88,7 @@ type TokenInformation = {
     CharClass:TokenCharKind;
     TriggerClass:TriggerClass;
     Tag:int
-    TokenName:string;
-    FullMatchedLength: int }
+    TokenName:string }
 
 //----------------------------------------------------------------------------
 // Flags
@@ -526,14 +525,14 @@ type SingleLineTokenState =
 
 /// Split a line into tokens and attach information about the tokens. This information is used by Visual Studio.
 [<Sealed>]
-type internal LineTokenizer(lexbuf: UnicodeLexing.Lexbuf, 
-                            maxLength: int option,
+type internal LineTokenizer(text:string, 
                             filename : string, 
                             lexArgsLightOn : lexargs,
                             lexArgsLightOff : lexargs
                             ) = 
 
     let skip = false   // don't skip whitespace in the lexer 
+    let lexbuf = UnicodeLexing.StringAsLexbuf text
     
     let mutable singleLineTokenState = SingleLineTokenState.BeforeHash
     let fsx = Build.IsScript(filename)
@@ -621,10 +620,7 @@ type internal LineTokenizer(lexbuf: UnicodeLexing.Lexbuf,
                 let leftp = lexbuf.StartPos 
                 let rightp = lexbuf.EndPos 
                 let leftc = leftp.Column 
-                let rightc = 
-                    match maxLength with 
-                    | Some mx when rightp.Line > leftp.Line -> mx
-                    | _ -> rightp.Column 
+                let rightc = if rightp.Line > leftp.Line then text.Length else rightp.Column 
                 let rightc = rightc - 1   
                 leftc,rightc
 
@@ -712,15 +708,7 @@ type internal LineTokenizer(lexbuf: UnicodeLexing.Lexbuf,
                     // If we're using token from cache, we don't move forward with lexing
                     if isCached then lexcontInitial else LexerStateEncoding.computeNextLexState token lexcontInitial 
                 let tokenTag = tagOfToken token 
-                let fullMatchedLength = lexbuf.EndPos.AbsoluteOffset - lexbuf.StartPos.AbsoluteOffset 
-                let tokenData = { TokenName = token_to_string token; 
-                                  LeftColumn=leftc; 
-                                  RightColumn=rightc;
-                                  ColorClass=colorClass;
-                                  CharClass=charClass;
-                                  TriggerClass=triggerClass;
-                                  Tag=tokenTag;
-                                  FullMatchedLength=fullMatchedLength} 
+                let tokenData = {TokenName = token_to_string token; LeftColumn=leftc; RightColumn=rightc;ColorClass=colorClass;CharClass=charClass;TriggerClass=triggerClass;Tag=tokenTag} 
                 Some(tokenData), lexcontFinal, tokenTag
                 
         // Get the final lex int and color state                
@@ -774,17 +762,6 @@ type internal LineTokenizer(lexbuf: UnicodeLexing.Lexbuf,
             
         tokenDataOption, lexintFinal
 
-    static member ColorStateOfLexState (lexState: LexState) = 
-        let tag,_ncomments,_position,_ifdefStack,_lightSyntaxStatusInital = LexerStateEncoding.decodeLexCont lexState 
-        tag
-
-    static member LexStateOfColorState (colorState: ColorState) = 
-        let ncomments = 0L
-        let position = pos0 
-        let ifdefStack = []
-        let light = true
-        LexerStateEncoding.encodeLexCont colorState ncomments position ifdefStack light
-
 [<Sealed>]
 type SourceTokenizer(defineConstants : string list, filename : string) =     
     let lexResourceManager = new Lexhelp.LexResourceManager() 
@@ -793,11 +770,5 @@ type SourceTokenizer(defineConstants : string list, filename : string) =
     let lexArgsLightOff = mkLexargs(filename,defineConstants,LightSyntaxStatus(false,false),lexResourceManager, ref [],DiscardErrorsLogger) 
     
     member this.CreateLineTokenizer(lineText: string) = 
-        let lexbuf = UnicodeLexing.StringAsLexbuf lineText
-        LineTokenizer(lexbuf, Some lineText.Length, filename, lexArgsLightOn, lexArgsLightOff)
-
-    
-    member this.CreateBufferTokenizer(bufferFiller) = 
-        let lexbuf = UnicodeLexing.FunctionAsLexbuf bufferFiller
-        LineTokenizer(lexbuf, None, filename, lexArgsLightOn, lexArgsLightOff)
+        LineTokenizer(lineText, filename, lexArgsLightOn, lexArgsLightOff)
 

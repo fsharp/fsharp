@@ -20,3 +20,5 @@ ngen install lib\proto\fsc-proto.exe
 %_msbuildexe% src\fsharp-library-build.proj /p:TargetFramework=portable7 /p:Configuration=Release
 %_msbuildexe% src\fsharp-library-build.proj /p:TargetFramework=portable78 /p:Configuration=Release
 %_msbuildexe% src\fsharp-library-build.proj /p:TargetFramework=portable259 /p:Configuration=Release
+%_msbuildexe% src\fsharp-library-build.proj /p:TargetFramework=sl5 /p:Configuration=Release
+%_msbuildexe% src\fsharp-library-build.proj /p:TargetFramework=monotouch /p:Configuration=Release /p:KeyFile=..\..\..\mono.snk

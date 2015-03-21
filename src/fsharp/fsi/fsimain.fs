@@ -22,8 +22,6 @@ open Internal.Utilities
 [<assembly: System.CLSCompliant(true)>]  
 do()
 
-#if SILVERLIGHT
-#else   
 
 // Mark the main thread as STAThread since it is a GUI thread
 [<EntryPoint>]
@@ -31,7 +29,6 @@ do()
 [<LoaderOptimization(LoaderOptimization.MultiDomainHost)>]     
 let FsiMain argv = 
     MainMain argv
-#endif // SILVERLIGHT
 
 
 

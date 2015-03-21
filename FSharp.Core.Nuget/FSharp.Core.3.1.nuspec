@@ -1,0 +1,70 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata>
+    <id>FSharp.Core</id>
+    <version>3.1.2.2</version>
+    <title>FSharp.Core for F# 3.1</title>
+    <authors>F# Software Foundation</authors>
+    <owners>F# Software Foundation</owners>
+    <licenseUrl>https://github.com/fsharp/fsharp/blob/master/LICENSE</licenseUrl>
+    <projectUrl>https://github.com/fsharp/fsharp</projectUrl>
+    <iconUrl>http://fsharp.org/img/logo.png</iconUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>
+      FSharp.Core for F# 3.1
+
+      FSharp.Core redistributables from Visual F# 3.1.2
+
+      .NET 4.0
+      .NET Portable Profile 7 (portable-net45+netcore45)
+      .NET Portable Profile 47 (portable-net45+sl5+netcore45)
+      .NET Portable Profile 78 (portable-net45+netcore45+wp8)
+      .NET Portable Profile 259 (portable-net45+netcore45+wpa81+wp8)
+
+      FSharp.Core built by F# Software Foundation
+
+      MonoAndroid, MonoTouch, Xamarin.iOS (portable-net45+monoandroid1+monotouch1+xamarinios1)
+    </description>
+    <summary>FSharp.Core for F# 3.1</summary>
+    <tags>F#, FSharp, FSharp.Core</tags>
+  </metadata>
+  <files>
+
+    <!-- .NET 4.0 -->
+    <file src="..\lib\bootstrap\signed\.NETFramework\v4.0\4.3.1.0\FSharp.Core.dll" target="lib\net40\FSharp.Core.dll" />
+    <file src="..\lib\bootstrap\signed\.NETFramework\v4.0\4.3.1.0\FSharp.Core.optdata" target="lib\net40\FSharp.Core.optdata" />
+    <file src="..\lib\bootstrap\signed\.NETFramework\v4.0\4.3.1.0\FSharp.Core.sigdata" target="lib\net40\FSharp.Core.sigdata" />
+    <file src="..\lib\bootstrap\signed\.NETFramework\v4.0\4.3.1.0\FSharp.Core.xml" target="lib\net40\FSharp.Core.xml" />
+
+    <!-- .NET Portable Profile 7 -->
+    <file src="..\lib\bootstrap\signed\.NETCore\3.3.1.0\FSharp.Core.dll" target="lib\portable-net45+netcore45\FSharp.Core.dll" />
+    <file src="..\lib\bootstrap\signed\.NETCore\3.3.1.0\FSharp.Core.optdata" target="lib\portable-net45+netcore45\FSharp.Core.optdata" />
+    <file src="..\lib\bootstrap\signed\.NETCore\3.3.1.0\FSharp.Core.sigdata" target="lib\portable-net45+netcore45\FSharp.Core.sigdata" />
+    <file src="..\lib\bootstrap\signed\.NETCore\3.3.1.0\FSharp.Core.xml" target="lib\portable-net45+netcore45\FSharp.Core.xml" />
+
+    <!-- .NET Portable Profile 47-->
+    <file src="..\lib\bootstrap\signed\.NETPortable\2.3.5.1\FSharp.Core.dll" target="lib\portable-net45+sl5+netcore45\FSharp.Core.dll" />
+    <file src="..\lib\bootstrap\signed\.NETPortable\2.3.5.1\FSharp.Core.optdata" target="lib\portable-net45+sl5+netcore45\FSharp.Core.optdata" />
+    <file src="..\lib\bootstrap\signed\.NETPortable\2.3.5.1\FSharp.Core.sigdata" target="lib\portable-net45+sl5+netcore45\FSharp.Core.sigdata" />
+    <file src="..\lib\bootstrap\signed\.NETPortable\2.3.5.1\FSharp.Core.xml" target="lib\portable-net45+sl5+netcore45\FSharp.Core.xml" />
+
+    <!-- .NET Portable Profile 78 -->
+    <file src="..\lib\bootstrap\signed\.NETCore\3.78.3.1\FSharp.Core.dll" target="lib\portable-net45+netcore45+wp8\FSharp.Core.dll" />
+    <file src="..\lib\bootstrap\signed\.NETCore\3.78.3.1\FSharp.Core.optdata" target="lib\portable-net45+netcore45+wp8\FSharp.Core.optdata" />
+    <file src="..\lib\bootstrap\signed\.NETCore\3.78.3.1\FSharp.Core.sigdata" target="lib\portable-net45+netcore45+wp8\FSharp.Core.sigdata" />
+    <file src="..\lib\bootstrap\signed\.NETCore\3.78.3.1\FSharp.Core.xml" target="lib\portable-net45+netcore45+wp8\FSharp.Core.xml" />
+
+    <!-- .NET Portable Profile 259 -->
+    <file src="..\lib\bootstrap\signed\.NETCore\3.259.3.1\FSharp.Core.dll" target="lib\portable-net45+netcore45+wpa81+wp8\FSharp.Core.dll" />
+    <file src="..\lib\bootstrap\signed\.NETCore\3.259.3.1\FSharp.Core.optdata" target="lib\portable-net45+netcore45+wpa81+wp8\FSharp.Core.optdata" />
+    <file src="..\lib\bootstrap\signed\.NETCore\3.259.3.1\FSharp.Core.sigdata" target="lib\portable-net45+netcore45+wpa81+wp8\FSharp.Core.sigdata" />
+    <file src="..\lib\bootstrap\signed\.NETCore\3.259.3.1\FSharp.Core.xml" target="lib\portable-net45+netcore45+wpa81+wp8\FSharp.Core.xml" />
+
+    <!-- MonoAndroid, MonoTouch, Xamarin.iOS -->
+    <file src="..\lib\release\monotouch\FSharp.Core.dll" target="lib\portable-net45+monoandroid1+monotouch1+xamarinios1\FSharp.Core.dll" />
+    <file src="..\lib\release\monotouch\FSharp.Core.optdata" target="lib\portable-net45+monoandroid1+monotouch1+xamarinios1\FSharp.Core.optdata" />
+    <file src="..\lib\release\monotouch\FSharp.Core.sigdata" target="lib\portable-net45+monoandroid1+monotouch1+xamarinios1\FSharp.Core.sigdata" />
+    <file src="..\lib\release\monotouch\FSharp.Core.xml" target="lib\portable-net45+monoandroid1+monotouch1+xamarinios1\FSharp.Core.xml" />
+    
+  </files>
+</package>

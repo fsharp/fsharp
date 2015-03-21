@@ -2,8 +2,10 @@ init:
   - git config --global core.autocrlf input
 build_script:
   - cmd: build.bat
+  - cmd: FSharp.Core.Nuget\build.cmd
 test: off
-version: 3.1.1.0.{build}
+version: '{build}'
 artifacts:
   - path: lib\release
     name: release
+  - path: FSharp.Core.Nuget\*.nupkg

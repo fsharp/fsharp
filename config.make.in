@@ -21,6 +21,8 @@ pclenabled47 := @PCLENABLED47@
 pclenabled7 := @PCLENABLED7@
 pclenabled78 := @PCLENABLED78@
 pclenabled259 := @PCLENABLED259@
+monotouchenabled := @MONOTOUCHENABLED@
+monodroidenabled := @MONODROIDENABLED@
 
 gacdir := ${libdir}mono
 
@@ -37,7 +39,7 @@ outsuffix = $(TargetFramework)
 
 ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-net40-)
 VERSION = 4.4.0.0
-TARGET = 4.0
+TARGET = 4.5
 outsuffix = .
 endif
 
@@ -86,7 +88,7 @@ endif
 
 ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-net40-3.0)
 VERSION = 4.3.0.0
-TARGET = 4.0
+TARGET = 4.5
 outsuffix = fsharp30/$(TargetFramework)
 endif
 
@@ -101,7 +103,7 @@ endif
 
 ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-net40-3.1)
 VERSION = 4.3.1.0
-TARGET = 4.0
+TARGET = 4.5
 outsuffix = fsharp31/$(TargetFramework)
 endif
 
