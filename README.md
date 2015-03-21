@@ -6,7 +6,7 @@ and core tools for use across multiple platforms.
 ### Contributing to the F# Compiler, Core Library and Tools
 
 Most contributions to the F# compiler/library/tools go first via the  
-repository at http://visualfsharp.codeplex.com.  This ensures that the main
+repository at https://github.com/Microsoft/visualfsharp.  This ensures that the main
 packaging of F# on Windows (the Visual F# Tools) also includes any contributions that are made, and
 ensures that the versions do not diverge.
 
@@ -19,8 +19,8 @@ available from this repo. At the moment the process is:
 
 1. Fork this repo.
 2. Build and test using the subset of tests available in this repo. If you like, submit a PR to this repo in order to trigger an automatic Travis run, or set up a Travis hook in your fork.
-3. Seek initial review by posting an issue in this repository or http://visualfsharp.codeplex.com. Make it clear you are working on Linux or OSX.
-4. Cherry-pick your changes into a pull request for http://visualfsharp.codeplex.com and submit for final testing and clearance.
+3. Seek initial review by posting an issue in this repository or https://github.com/Microsoft/visualfsharp. Make it clear you are working on Linux or OSX.
+4. Cherry-pick your changes into a pull request for https://github.com/Microsoft/visualfsharp and submit for final testing and clearance.
 5. The change will then be merged into this repo at a later point.
 
 If you don't have access to Windows in order to run final tests at step 4. If you need help, email fsharp-opensource@googlegroups.com and ask to make a final test run on Windows.
@@ -82,33 +82,35 @@ By default that makes optimized binaries. To make debug, use ```make CONFIG=debu
 ### Windows, using msbuild
 
 Build using:
-	build.bat
+
+    build.bat
 
 This build the proto compiler, then the library, then the final compiler.
 
 You can also build these independently using:
 
-	msbuild src\fsharp-proto-build.proj
-	ngen install lib\proto\fsc-proto.exe 
-	msbuild src\fsharp-library-build.proj /p:Configuration=Release
-	msbuild src\fsharp-compiler-build.proj /p:Configuration=Release
+    msbuild src\fsharp-proto-build.proj
+    ngen install ..\lib\proto\fsc-proto.exe 
+    msbuild src\fsharp-library-build.proj /p:Configuration=Release
+    msbuild src\fsharp-compiler-build.proj /p:Configuration=Release
 
-You can also build FSharp.Core.dll for various portable profile subsets:
+You can also build FSharp.Core.dll for other profiles:
 
-	msbuild src\fsharp-library-build.proj /p:TargetFramework=portable7 /p:Configuration=Release
-	msbuild src\fsharp-library-build.proj /p:TargetFramework=portable47 /p:Configuration=Release
-	msbuild src\fsharp-library-build.proj /p:TargetFramework=portable78 /p:Configuration=Release
-	msbuild src\fsharp-library-build.proj /p:TargetFramework=portable259 /p:Configuration=Release
-
+    msbuild src\fsharp-library-build.proj /p:TargetFramework=net20 /p:Configuration=Release
+    msbuild src\fsharp-library-build.proj /p:TargetFramework=portable47 /p:Configuration=Release
+    msbuild src\fsharp-library-build.proj /p:TargetFramework=portable7 /p:Configuration=Release
+    msbuild src\fsharp-library-build.proj /p:TargetFramework=portable78 /p:Configuration=Release
+    msbuild src\fsharp-library-build.proj /p:TargetFramework=portable259 /p:Configuration=Release
+    
 You can also build FSharp.Core.dll for various specific runtimes:
 
-	msbuild src\fsharp-library-build.proj /p:TargetFramework=sl5 /p:Configuration=Release
-	msbuild src\fsharp-library-build.proj /p:TargetFramework=monodroid /p:Configuration=Release
-	msbuild src\fsharp-library-build.proj /p:TargetFramework=monotouch /p:Configuration=Release
+    msbuild src\fsharp-library-build.proj /p:TargetFramework=sl5 /p:Configuration=Release
+    msbuild src\fsharp-library-build.proj /p:TargetFramework=monodroid /p:Configuration=Release
+    msbuild src\fsharp-library-build.proj /p:TargetFramework=monotouch /p:Configuration=Release
 
 You can also build the FSharp.Core for use with a browser-hosted FSharp.Compiler.Service using Silverlight 5.0:
 
-	msbuild src\fsharp-library-build.proj /p:TargetFramework=sl5-compiler  /p:Configuration=Release
+    msbuild src\fsharp-library-build.proj /p:TargetFramework=sl5-compiler  /p:Configuration=Release
 
 Change to ``` /p:Configuration=Debug``` for debug binaries.
 
@@ -124,9 +126,9 @@ Add ``` /p:FSharpCoreBackVersion=...``` to build back versions of FSharp.Core.dl
 
 ### Windows, using xbuild (e.g. if only Mono is installed):
 
-	xbuild src\fsharp-proto-build.proj
-	xbuild src\fsharp-library-build.proj /p:Configuration=Release
-	xbuild src\fsharp-compiler-build.proj /p:Configuration=Release
+    xbuild src\fsharp-proto-build.proj
+    xbuild src\fsharp-library-build.proj
+    xbuild src\fsharp-compiler-build.proj
 
 Building using xbuild does not yet lay down a Mono-ready distribution (see src/fsharp/targets.make), so should only
 be used for private development rather than preparing distributions. 
@@ -134,6 +136,7 @@ be used for private development rather than preparing distributions.
 ## Build Note: Strong Names
 
 The FSharp.Core.dll produced is only delay-signed (Mono does not require strong names). 
+
 If a strong-name signed FSharp.Core.dll is needed then use these:
 
     lib\bootstrap\signed\.NETFramework\v4.0\4.3.0.0\FSharp.Core.dll
@@ -179,9 +182,9 @@ plus scripts
 
 ### Integrating changes from 'visualfsharp'
 
-To integrate latest changes from https://git01.codeplex.com/visualfsharp, use
+To integrate latest changes from https://github.com/Microsoft/visualfsharp, use
 ```
-git remote add visualfsharp https://git01.codeplex.com/visualfsharp
+git remote add visualfsharp https://github.com/Microsoft/visualfsharp
 git pull visualfsharp master
 ```
 
@@ -211,7 +214,7 @@ cd tests/fsharp/core
 
 ### Windows
 
-See the http://visualfsharp.codeplex.com for instructions for how to test on Windows. Use that repository
+See the [TESTGUIDE.md](https://github.com/Microsoft/visualfsharp/blob/master/TESTGUIDE.md) for instructions for how to test on Windows. Use that repository
 to develop and test on Windows.
 
 ## History 
@@ -235,50 +238,10 @@ make
 sudo make install
 ```
 
-### FSharp.Core Deployed with Nuget
-FSharp.Core is also available via Nuget.  
+### FSharp.Core via NuGet
+FSharp.Core is also available via NuGet. Packages are available for F# 3.0 and F# 3.1
 
-*   [FSharp.Core for F# 3.0+ Microsoft Signed](https://www.nuget.org/packages/FSharp.Core.4.3.0.0.Microsoft.Signed)
-*   [FSharp.Core for F# 3.1+ Microsoft Signed](https://www.nuget.org/packages/FSharp.Core.Microsoft.Signed)
-*   [FSharp.Core for F# 3.1+ with MonoAndroid and MonoTouch](https://www.nuget.org/packages/FSharp.Core.Mono.Signed)
+[http://www.nuget.org/packages/FSharp.Core](http://www.nuget.org/packages/FSharp.Core)
 
-
-The folder FSharp.Core.Nuget contains the nuget package scripts for the deployment of FSharp.Core.  
-
-#### FSharp.Core for F# 3.0+ Microsoft Signed
-NuGet Package Id: `FSharp.Core.4.3.0.0.Microsoft.Signed`  
-
-Contains the following versions Microsoft signed versions: 
-*   .Net 2.0
-*   .Net 4.0
-*   .Net 4.5
-*   Profile 47
-
-#### FSharp.Core for F# 3.1+ Microsoft Signed
-NuGet Package Id: `FSharp.Core.Microsoft.Signed`  
-
-Contains the following versions Microsoft signed versions: 
-*   .Net 4.0
-*   .Net 4.5
-*   Profile 7
-*   Profile 47
-*   Profile 78
-*   Profile 259
-
-#### FSharp.Core for F# 3.1+ with MonoAndroid and MonoTouch
-NuGet Package Id: `FSharp.Core.Mono.Signed`  
-
-Contains the following versions Microsoft signed versions: 
-*   .Net 4.0
-*   .Net 4.5
-*   Profile 7
-*   Profile 47
-*   Profile 78
-*   Profile 259
-
-And the following are delay signed with the Mono key:
-*   MonoAndroid
-*   MonoTouch
-
-The FSharp.Core.Mono.Signed package is normally deployed with a version matching the current tag of the open source build, the Microsoft signed versions use a version which matches the current Microsoft signed versions of FSharp core.
+The packages include all of the FSharp.Core redistributables from Visual F#. In addition, they include assemblies for MonoAndroid and MonoTouch built from this repository.
 
