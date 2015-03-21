@@ -105,27 +105,27 @@ install-lib:
 	    $(INSTALL_LIB) $(outdir)$(NAME).dll $(DESTDIR)$(gacdir)/Reference\ Assemblies/Microsoft/FSharp/3.0/Runtime/$(PCLPATH)/$(NAME).dll; \
 	fi
 
-# Also place some .NET 4.0 libraries into .NET 4.5
+# Also place some .NET 4.5 libraries into .NET 4.0
 install-lib-net45: 
 	@if test '$(TargetFramework)' = 'net40'; then \
-	  if test -e $(DESTDIR)$(gacdir)/4.5/; then \
-		ln -fs ../4.0/$(ASSEMBLY) $(DESTDIR)$(gacdir)/4.5/$(ASSEMBLY); \
-		if test -e $(DESTDIR)$(gacdir)/4.0/$(ASSEMBLY).config; then \
-		    ln -fs ../4.0/$(ASSEMBLY).config $(DESTDIR)$(gacdir)/4.5/$(ASSEMBLY).config; \
+	  if test -e $(DESTDIR)$(gacdir)/4.0/; then \
+		ln -fs ../4.5/$(ASSEMBLY) $(DESTDIR)$(gacdir)/4.0/$(ASSEMBLY); \
+		if test -e $(DESTDIR)$(gacdir)/4.5/$(ASSEMBLY).config; then \
+		    ln -fs ../4.5/$(ASSEMBLY).config $(DESTDIR)$(gacdir)/4.0/$(ASSEMBLY).config; \
 		fi; \
-		if test -e $(DESTDIR)$(gacdir)/4.0/$(NAME).sigdata; then \
-		    ln -fs ../4.0/$(NAME).sigdata $(DESTDIR)$(gacdir)/4.5/$(NAME).sigdata; \
+		if test -e $(DESTDIR)$(gacdir)/4.5/$(NAME).sigdata; then \
+		    ln -fs ../4.5/$(NAME).sigdata $(DESTDIR)$(gacdir)/4.0/$(NAME).sigdata; \
 		fi; \
-		if test -e $(DESTDIR)$(gacdir)/4.0/$(NAME).xml; then \
-		    ln -fs ../4.0/$(NAME).xml $(DESTDIR)$(gacdir)/4.5/$(NAME).xml; \
+		if test -e $(DESTDIR)$(gacdir)/4.5/$(NAME).xml; then \
+		    ln -fs ../4.5/$(NAME).xml $(DESTDIR)$(gacdir)/4.0/$(NAME).xml; \
 		fi; \
-		if test -e $(DESTDIR)$(gacdir)/4.0/$(NAME).optdata; then \
-		    ln -fs ../4.0/$(NAME).optdata $(DESTDIR)$(gacdir)/4.5/$(NAME).optdata; \
+		if test -e $(DESTDIR)$(gacdir)/4.5/$(NAME).optdata; then \
+		    ln -fs ../4.5/$(NAME).optdata $(DESTDIR)$(gacdir)/4.0/$(NAME).optdata; \
 		fi; \
 	  fi \
 	fi
 
-# The binaries fsc.exe and fsi.exe only get installed for Mono 4.0 profile
+# The binaries fsc.exe and fsi.exe only get installed for Mono 4.5 profile
 # This also installs 'fsharpc' and 'fsharpi'
 install-bin:
 	chmod +x $(outdir)$(ASSEMBLY)
