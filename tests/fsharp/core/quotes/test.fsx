@@ -2422,10 +2422,7 @@ module QuotationOfResizeArrayIteration =
          |    _ -> false)
         
 
-<<<<<<< HEAD
-=======
 
->>>>>>> 35e6a0081679838e8b39540d60d72fef5168aead
 module TestAutoQuoteAtStaticMethodCalls = 
     open Microsoft.FSharp.Quotations
 
