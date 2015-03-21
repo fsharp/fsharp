@@ -1682,29 +1682,34 @@ namespace Microsoft.FSharp.Control
                         Action<obj>(fun _ ->
                             if latch.Enter() then
                                 // if we got here - then we need to unregister RegisteredWaitHandle + trigger cancellation
-                                // entrance to TP callback  is protected by latch - so savedCont will never be called
-                                match !rwh with
-                                | None -> ()
-                                | Some rwh -> rwh.Unregister(null) |> ignore
+                                // entrance to TP callback is protected by latch - so savedCont will never be called
+                                lock rwh (fun () ->
+                                    match !rwh with
+                                    | None -> ()
+                                    | Some rwh -> rwh.Unregister(null) |> ignore)
                                 Async.Start (async { do (aux.ccont (OperationCanceledException()) |> unfake) }))
 
-                    and registration : CancellationTokenRegistration= aux.token.Register(cancelHandler, null)
+                    and registration : CancellationTokenRegistration = aux.token.Register(cancelHandler, null)
                     
                     let savedCont = args.cont
                     try
-                        rwh := Some(ThreadPool.RegisterWaitForSingleObject
-                                      (waitObject=waitHandle,
-                                       callBack=WaitOrTimerCallback(fun _ timeOut ->
-                                                    if latch.Enter() then
-                                                        rwh := None
-                                                        registration.Dispose()
-                                                        aux.trampolineHolder.Protect (fun () -> savedCont (not timeOut)) |> unfake),
-                                       state=null,
-                                       millisecondsTimeOutInterval=millisecondsTimeout,
-                                       executeOnlyOnce=true));
-                        FakeUnit
+                        lock rwh (fun () ->
+                            rwh := Some(ThreadPool.RegisterWaitForSingleObject
+                                          (waitObject=waitHandle,
+                                           callBack=WaitOrTimerCallback(fun _ timeOut ->
+                                                        if latch.Enter() then
+                                                            lock rwh (fun () -> rwh.Value.Value.Unregister(null) |> ignore)
+                                                            rwh := None
+                                                            registration.Dispose()
+                                                            aux.trampolineHolder.Protect (fun () -> savedCont (not timeOut)) |> unfake),
+                                           state=null,
+                                           millisecondsTimeOutInterval=millisecondsTimeout,
+                                           executeOnlyOnce=true));
+                            FakeUnit)
                     with _ -> 
-                        if latch.Enter() then reraise() // reraise exception only if we successfully enter the latch (no other continuations were called)
+                        if latch.Enter() then
+                            registration.Dispose()
+                            reraise() // reraise exception only if we successfully enter the latch (no other continuations were called)
                         else FakeUnit
                     )
 #endif
@@ -2142,29 +2147,56 @@ namespace Microsoft.FSharp.Control
 #else
         
         type System.Net.WebClient with
-            [<CompiledName("AsyncDownloadString")>] // give the extension member a 'nice', unmangled compiled name, unique within this module
-            member this.AsyncDownloadString (address:Uri) : Async<string> =
+            member inline private this.Download(event: IEvent<'T, _>, handler: _ -> 'T, start, result) =
                 let downloadAsync =
                     Async.FromContinuations (fun (cont, econt, ccont) ->
-                                let userToken = new obj()
-                                let rec handler = 
-                                        System.Net.DownloadStringCompletedEventHandler (fun _ args ->
-                                            if userToken = args.UserState then
-                                                this.DownloadStringCompleted.RemoveHandler(handler)
-                                                if args.Cancelled then
-                                                    ccont (new OperationCanceledException()) 
-                                                elif args.Error <> null then
-                                                    econt args.Error
-                                                else
-                                                    cont args.Result)
-                                this.DownloadStringCompleted.AddHandler(handler)
-                                this.DownloadStringAsync(address, userToken)
-                            )
+                        let userToken = new obj()
+                        let rec delegate' (_: obj) (args : #ComponentModel.AsyncCompletedEventArgs) =
+                            // ensure we handle the completed event from correct download call
+                            if userToken = args.UserState then
+                                event.RemoveHandler handle
+                                if args.Cancelled then
+                                    ccont (new OperationCanceledException())
+                                elif args.Error <> null then
+                                    econt args.Error
+                                else
+                                    cont (result args)
+                        and handle = handler delegate'
+                        event.AddHandler handle
+                        start userToken
+                    )
 
-                async { 
+                async {
                     use! _holder = Async.OnCancel(fun _ -> this.CancelAsync())
                     return! downloadAsync
                  }
+
+            [<CompiledName("AsyncDownloadString")>] // give the extension member a 'nice', unmangled compiled name, unique within this module
+            member this.AsyncDownloadString (address:Uri) : Async<string> =
+                this.Download(
+                    event   = this.DownloadStringCompleted,
+                    handler = (fun action    -> Net.DownloadStringCompletedEventHandler(action)),
+                    start   = (fun userToken -> this.DownloadStringAsync(address, userToken)),
+                    result  = (fun args      -> args.Result)
+                )
+
+            [<CompiledName("AsyncDownloadData")>] // give the extension member a 'nice', unmangled compiled name, unique within this module
+            member this.AsyncDownloadData (address:Uri) : Async<byte[]> =
+                this.Download(
+                    event   = this.DownloadDataCompleted,
+                    handler = (fun action    -> Net.DownloadDataCompletedEventHandler(action)),
+                    start   = (fun userToken -> this.DownloadDataAsync(address, userToken)),
+                    result  = (fun args      -> args.Result)
+                )
+
+            [<CompiledName("AsyncDownloadFile")>] // give the extension member a 'nice', unmangled compiled name, unique within this module
+            member this.AsyncDownloadFile (address:Uri, fileName:string) : Async<unit> =
+                this.Download(
+                    event   = this.DownloadFileCompleted,
+                    handler = (fun action    -> ComponentModel.AsyncCompletedEventHandler(action)),
+                    start   = (fun userToken -> this.DownloadFileAsync(address, fileName, userToken)),
+                    result  = (fun _         -> ())
+                )
 #endif
 
 

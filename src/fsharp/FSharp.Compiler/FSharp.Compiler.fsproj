@@ -11,7 +11,7 @@
     <OutputType>Library</OutputType>
     <AssemblyName>FSharp.Compiler</AssemblyName>
     <DefineConstants>EXTENSIONTYPING;COMPILER;INCLUDE_METADATA_READER;INCLUDE_METADATA_WRITER;EXTENSIBLE_DUMPER;TYPE_PROVIDER_SECURITY;$(DefineConstants)</DefineConstants>
-    <NoWarn>$(NoWarn);44;62;9</NoWarn>
+    <NoWarn>$(NoWarn);62;9</NoWarn>
     <ProjectGuid>{2E4D67B4-522D-4CF7-97E4-BA940F0B18F3}</ProjectGuid>
     <AllowCrossTargeting>true</AllowCrossTargeting>
     <TargetFrameworkVersion Condition="'$(TargetFramework)'=='net40'">v4.5</TargetFrameworkVersion>
@@ -143,6 +143,12 @@
     <Compile Include="..\TraceCall.fs">
       <Link>Utilities\TraceCall.fs</Link>
     </Compile>
+    <Compile Include="..\rational.fsi">
+      <Link>ErrorLogging\rational.fsi</Link>
+    </Compile>
+    <Compile Include="..\rational.fs">
+      <Link>ErrorLogging\rational.fs</Link>
+    </Compile>
     <Compile Include="..\range.fsi">
       <Link>ErrorLogging\range.fsi</Link>
     </Compile>
@@ -249,6 +255,16 @@
     <Compile Include="..\..\ilx\cu_erase.fs">
       <Link>ILXErase\cu_erase.fs</Link>
     </Compile>
+    <FsLex Include="..\pplex.fsl">
+      <OtherFlags>--lexlib Internal.Utilities.Text.Lexing</OtherFlags>
+      <Link>ParserAndUntypedAST\pplex.fsl</Link>
+    </FsLex>
+    <FsYacc Include="..\pppars.fsy">
+      <Module>Microsoft.FSharp.Compiler.PPParser</Module>
+      <Open>Microsoft.FSharp.Compiler</Open>
+      <OtherFlags>--internal --lexlib Internal.Utilities.Text.Lexing --parslib Internal.Utilities.Text.Parsing</OtherFlags>
+      <Link>ParserAndUntypedAST\pppars.fsy</Link>
+    </FsYacc>
     <FsLex Include="..\lex.fsl">
       <OtherFlags>--lexlib Internal.Utilities.Text.Lexing</OtherFlags>
       <Link>ParserAndUntypedAST\lex.fsl</Link>
@@ -274,6 +290,9 @@
     <Compile Include="..\ast.fs">
       <Link>ParserAndUntypedAST\ast.fs</Link>
     </Compile>
+    <Compile Include="pppars.fs">
+      <Link>ParserAndUntypedAST\pppars.fs</Link>
+    </Compile>
     <Compile Include="pars.fs">
       <Link>ParserAndUntypedAST\pars.fs</Link>
     </Compile>
@@ -282,6 +301,9 @@
     </Compile>
     <Compile Include="..\lexhelp.fs">
       <Link>ParserAndUntypedAST\lexhelp.fs</Link>
+    </Compile>
+    <Compile Include="pplex.fs">
+      <Link>ParserAndUntypedAST\pplex.fs</Link>
     </Compile>
     <Compile Include="lex.fs">
       <Link>ParserAndUntypedAST\lex.fs</Link>
@@ -509,6 +531,7 @@
     <Reference Include="mscorlib" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Numerics" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Runtime.Remoting" />

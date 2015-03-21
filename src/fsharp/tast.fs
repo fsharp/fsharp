@@ -21,6 +21,7 @@ open Microsoft.FSharp.Compiler.Lib
 open Microsoft.FSharp.Compiler.PrettyNaming
 open Microsoft.FSharp.Compiler.QuotationPickler
 open Microsoft.FSharp.Core.Printf
+open Microsoft.FSharp.Compiler.Rational
 
 #if EXTENSIONTYPING
 open Microsoft.FSharp.Compiler.ExtensionTyping
@@ -470,18 +471,7 @@ type Entity =
 
     member x.GetDisplayName(withStaticParameters, withUnderscoreTypars) = 
         let nm = x.LogicalName
-#if EXTENSIONTYPING
-        if x.IsProvidedErasedTycon then 
-            let nm,args = PrettyNaming.demangleProvidedTypeName nm
-            if withStaticParameters && args.Length > 0 then 
-                nm + "<" + String.concat "," (Array.map snd args) + ">"
-            else
-                nm
-        else
-#else
-        if false then nm 
-        else
-#endif
+        let getName () =
             match x.TyparsNoRange with 
             | [] -> nm
             | tps -> 
@@ -490,6 +480,20 @@ type Entity =
                     nm + "<" + String.concat "," (Array.create tps.Length "_") + ">"
                 else
                     nm
+
+#if EXTENSIONTYPING
+        if x.IsProvidedErasedTycon then 
+            let nm,args = PrettyNaming.demangleProvidedTypeName nm
+            if withStaticParameters && args.Length > 0 then 
+                nm + "<" + String.concat "," (Array.map snd args) + ">"
+            else
+                nm
+        else
+            getName ()
+#else
+        ignore withStaticParameters
+        getName ()
+#endif
 
 
     /// The code location where the module, namespace or type is defined.
@@ -2917,6 +2921,9 @@ and MeasureExpr =
     /// The unit of measure '1', e.g. float = float<1>
     | MeasureOne
 
+    /// Raising a measure to a rational power 
+    | MeasureRationalPower of MeasureExpr * Rational
+
 and 
     [<NoEquality; NoComparison>]
     CcuData = 
@@ -2950,8 +2957,8 @@ and
       ImportProvidedType : Tainted<ProvidedType> -> TType 
       
 #endif
-      /// Indicates that this DLL uses quotation literals somewhere. This is used to implement a restriction on static linking
-      mutable UsesQuotations : bool
+      /// Indicates that this DLL uses pre-F#-4.0 quotation literals somewhere. This is used to implement a restriction on static linking
+      mutable UsesFSharp20PlusQuotations : bool
       
       /// A handle to the full specification of the contents of the module contained in this ccu
       // NOTE: may contain transient state during typechecking 
@@ -3011,10 +3018,10 @@ and CcuThunk =
             let path = System.String.Join(".", requiringPath)
             raise(UnresolvedPathReferenceNoRange(ccu.name,path))
             
-    /// Indicates that this DLL uses quotation literals somewhere. This is used to implement a restriction on static linking
-    member ccu.UsesQuotations 
-        with get() = ccu.Deref.UsesQuotations 
-        and set v = ccu.Deref.UsesQuotations <- v
+    /// Indicates that this DLL uses F# 2.0+ quotation literals somewhere. This is used to implement a restriction on static linking.
+    member ccu.UsesFSharp20PlusQuotations 
+        with get() = ccu.Deref.UsesFSharp20PlusQuotations 
+        and set v = ccu.Deref.UsesFSharp20PlusQuotations <- v
     member ccu.AssemblyName        = ccu.name
     /// Holds the data indicating how this assembly/module is referenced from the code being compiled. 
     member ccu.ILScopeRef          = ccu.Deref.ILScopeRef
@@ -3358,10 +3365,10 @@ and
     /// A few of intrinsics (TOp_try, TOp.While, TOp.For) expect arguments kept in a normal form involving lambdas 
     | Op of TOp * TypeInst * Exprs * range
 
-    // Expr.Quote(quotedExpr, savedPickledAstInfoOption, isFromQueryExpression, fullRange, quotedType)
+    // Expr.Quote(quotedExpr, (referencedTypes, spliceTypes, spliceExprs, data) option ref, isFromQueryExpression, fullRange, quotedType)
     //
     // Indicates the expression is a quoted expression tree. 
-    | Quote of Expr * (TTypes * Exprs * ExprData) option ref * bool * range * TType  
+    | Quote of Expr * (ILTypeRef list * TTypes * Exprs * ExprData) option ref * bool * range * TType  
     
     /// Typechecking residue: Indicates a free choice of typars that arises due to 
     /// minimization of polymorphism at let-rec bindings.  These are 
@@ -4128,7 +4135,8 @@ let accessSubstPaths (newPath,oldPath) (TAccess paths) =
 let compPathOfCcu (ccu:CcuThunk) = CompPath(ccu.ILScopeRef,[]) 
 let taccessPublic = TAccess []
 let taccessPrivate accessPath = TAccess [accessPath]
-let taccessInternal = TAccess [CompPath(ILScopeRef.Local,[])]
+let compPathInternal = CompPath(ILScopeRef.Local,[])
+let taccessInternal = TAccess [compPathInternal]
 let combineAccess (TAccess a1) (TAccess a2) = TAccess(a1@a2)
 
 //---------------------------------------------------------------------------

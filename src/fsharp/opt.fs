@@ -1680,7 +1680,7 @@ let rec OptimizeExpr cenv (env:IncrementalOptimizationEnv) expr =
     | Expr.Const (c,m,ty) -> OptimizeConst cenv env expr (c,m,ty)
     | Expr.Val (v,_vFlags,m) -> OptimizeVal cenv env expr (v,m)
     | Expr.Quote(ast,splices,isFromQueryExpression,m,ty) -> 
-          let splices = ref (splices.Value |> Option.map (map2Of3 (List.map (OptimizeExpr cenv env >> fst))))
+          let splices = ref (splices.Value |> Option.map (map3Of4 (List.map (OptimizeExpr cenv env >> fst))))
           Expr.Quote(ast,splices,isFromQueryExpression,m,ty),
           { TotalSize = 10;
             FunctionSize = 1;
@@ -2470,7 +2470,7 @@ and TryDevirtualizeApplication cenv env (f,tyargs,args,m) =
     // target type isn't 'NullNotLiked', i.e. that the target type is not an F# union, record etc. 
     // Note UnboxFast is just the .NET IL 'unbox.any' instruction. 
     | Expr.Val(v,_,_),[ty],_ when valRefEq cenv.g v cenv.g.unbox_vref && 
-                                   canUseUnboxFast cenv.g ty ->
+                                   canUseUnboxFast cenv.g m ty ->
 
         Some(DevirtualizeApplication cenv env cenv.g.unbox_fast_vref ty tyargs args m)
         

@@ -51,7 +51,7 @@ type XmlDocCollector() =
         lazy (savedLines.ToArray() |> Array.sortWith (fun (_,p1) (_,p2) -> posCompare p1 p2))
 
     let check() = 
-        assert (not savedLinesAsArray.IsValueCreated && "can't add more XmlDoc elements to XmlDocCOllector after extracting first XmlDoc from the overall results" <> "")
+        assert (not savedLinesAsArray.IsValueCreated && "can't add more XmlDoc elements to XmlDocCollector after extracting first XmlDoc from the overall results" <> "")
 
     member x.AddGrabPoint(pos) = 
         check()
@@ -258,10 +258,19 @@ and
     | Product of SynMeasure * SynMeasure * range
     | Seq of SynMeasure list * range
     | Divide of SynMeasure * SynMeasure * range
-    | Power of SynMeasure * int * range
+    | Power of SynMeasure * SynRationalConst * range
     | One 
     | Anon of range
     | Var of SynTypar * range
+
+and
+    [<NoEquality; NoComparison; RequireQualifiedAccess>]
+    /// The unchecked abstract syntax tree of F# unit of measure exponents. 
+    SynRationalConst = 
+    | Integer of int32
+    | Rational of int32 * int32 * range
+    | Negate of SynRationalConst
+
 
 //------------------------------------------------------------------------
 //  AST: the grammar of types, expressions, declarations etc.
@@ -426,8 +435,8 @@ and
     | HashConstraint of SynType * range
     /// F# syntax : for units of measure e.g. m / s 
     | MeasureDivide of SynType * SynType * range       
-    /// F# syntax : for units of measure e.g. m^3 
-    | MeasurePower of SynType * int * range      
+    /// F# syntax : for units of measure e.g. m^3, kg^1/2
+    | MeasurePower of SynType * SynRationalConst * range      
     /// F# syntax : 1, "abc" etc, used in parameters to type providers
     /// For the dimensionless units i.e. 1 , and static parameters to provided types
     | StaticConstant of SynConst * range          
@@ -1700,7 +1709,6 @@ let ParseAssemblyCodeType s m =
       IL.EcmaILGlobals.typ_Object
 #endif
 
-
 //------------------------------------------------------------------------
 // AST constructors
 //------------------------------------------------------------------------
@@ -1736,7 +1744,7 @@ let mkSynDotBrackSeqSliceGet  m mDot arr (argslist:list<SynIndexerArg>) =
                        | SynIndexerArg.One x -> yield x
                        | _ -> () ]
     if notsliced.Length = argslist.Length then
-        SynExpr.DotIndexedGet(arr,[SynIndexerArg.One (SynExpr.Tuple(notsliced,[],unionRanges (Seq.head notsliced).Range (Seq.last notsliced).Range))],mDot,m)
+        SynExpr.DotIndexedGet(arr,[SynIndexerArg.One (SynExpr.Tuple(notsliced,[],unionRanges (List.head notsliced).Range (List.last notsliced).Range))],mDot,m)
     else
         SynExpr.DotIndexedGet(arr,argslist,mDot,m)
 
@@ -2010,7 +2018,19 @@ type LexerEndlineContinuation =
       match x with 
       | LexerEndlineContinuation.Token(ifd) 
       | LexerEndlineContinuation.Skip(ifd, _, _) -> ifd
-          
+
+type LexerIfdefExpression =
+    | IfdefAnd          of LexerIfdefExpression*LexerIfdefExpression
+    | IfdefOr           of LexerIfdefExpression*LexerIfdefExpression
+    | IfdefNot          of LexerIfdefExpression
+    | IfdefId           of string
+
+let rec LexerIfdefEval (lookup : string -> bool) = function
+    | IfdefAnd (l,r)    -> (LexerIfdefEval lookup l) && (LexerIfdefEval lookup r)
+    | IfdefOr (l,r)     -> (LexerIfdefEval lookup l) || (LexerIfdefEval lookup r)
+    | IfdefNot e        -> not (LexerIfdefEval lookup e)
+    | IfdefId id        -> lookup id
+
 /// The parser defines a number of tokens for whitespace and
 /// comments eliminated by the lexer.  These carry a specification of
 /// a continuation for the lexer for continued processing after we've dealt with

@@ -20,7 +20,10 @@ open Microsoft.FSharp.Compiler.Lib
 let mkRLinear mk (vs,body) = List.foldBack (fun v acc -> mk (v,acc)) vs body 
 
 type TypeVarData = { tvName: string; }
-type NamedTypeData = { tcName: string; tcAssembly:  string }
+
+type NamedTypeData = 
+    | Idx of int
+    | Named of (* tcName: *) string *  (* tcAssembly:  *) string 
 
 type TypeCombOp = 
     | ArrayTyOp  of int (* rank *) 
@@ -116,12 +119,14 @@ type ExprData =
     | LambdaExpr of VarData * ExprData
     | HoleExpr   of TypeData * int
     | ThisVarExpr  of TypeData 
+    | QuoteRawExpr  of ExprData 
   
 let mkVar v = VarExpr v 
 let mkHole (v,idx) = HoleExpr (v ,idx)
 let mkApp (a,b) = CombExpr(AppOp, [], [a; b]) 
 let mkLambda (a,b) = LambdaExpr (a,b) 
-let mkQuote (a) = QuoteExpr (a) 
+let mkQuote (a) = QuoteExpr (a)  
+let mkQuoteRaw40 (a) = QuoteRawExpr (a)
 
 let mkCond (x1,x2,x3)          = CombExpr(CondOp,[], [x1;x2;x3])  
 let mkModuleValueApp (tcref,nm,isProp,tyargs,args: ExprData list list) = CombExpr(ModuleValueOp(tcref,nm,isProp),tyargs,List.concat args)
@@ -187,7 +192,7 @@ let isAttributedExpression e = match e with AttrExpr(_, _) -> true | _ -> false
 // compatible with those read by Microsoft.FSharp.Quotations
 //--------------------------------------------------------------------------- 
 
-let pickledDefinitionsResourceNameBase = "ReflectedDefinitions"
+let SerializedReflectedDefinitionsResourceNameBase = "ReflectedDefinitions"
 
 let freshVar (n, ty, mut) = { vText=n; vType=ty; vMutable=mut }
 
@@ -309,7 +314,10 @@ open SimplePickle
 
 let p_assref x st = p_string x st
 
-let p_NamedType x st = p_tup2 p_string p_assref (x.tcName, x.tcAssembly) st
+let p_NamedType x st = 
+    match x with 
+    | Idx n -> p_tup2 p_string p_assref (string n, "") st
+    | Named (nm,ass) -> p_tup2 p_string p_assref (nm, ass) st
 
 let p_tycon x st = 
     match x with
@@ -399,6 +407,7 @@ let rec p_expr x st =
     | QuoteExpr(tm)       -> p_byte 4 st; p_expr tm st
     | AttrExpr(e,attrs)   -> p_byte 5 st; p_tup2 p_expr (p_list p_expr) (e,attrs) st
     | ThisVarExpr(ty)     -> p_byte 6 st; p_type ty st
+    | QuoteRawExpr(tm)    -> p_byte 7 st; p_expr tm st
   
 type ModuleDefnData = 
     { Module: NamedTypeData;

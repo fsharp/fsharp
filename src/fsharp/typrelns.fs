@@ -25,6 +25,7 @@ open Microsoft.FSharp.Compiler.Lib
 open Microsoft.FSharp.Compiler.Infos
 open Microsoft.FSharp.Compiler.PrettyNaming
 open Microsoft.FSharp.Compiler.Infos.AccessibilityLogic
+open Microsoft.FSharp.Compiler.Nameres
 
 #if EXTENSIONTYPING
 open Microsoft.FSharp.Compiler.ExtensionTyping
@@ -461,8 +462,8 @@ module SignatureConformance = begin
                 elif fNull && not aNull then 
                   errorR(err(FSComp.SR.DefinitionsInSigAndImplNotCompatibleSignatureSaysNull))
 
-                let aNull2 = TypeNullIsExtraValue g (generalizedTyconRef (mkLocalTyconRef implTycon))
-                let fNull2 = TypeNullIsExtraValue g (generalizedTyconRef (mkLocalTyconRef implTycon))
+                let aNull2 = TypeNullIsExtraValue g m (generalizedTyconRef (mkLocalTyconRef implTycon))
+                let fNull2 = TypeNullIsExtraValue g m (generalizedTyconRef (mkLocalTyconRef implTycon))
                 if aNull2 && not fNull2 then 
                     errorR(err(FSComp.SR.DefinitionsInSigAndImplNotCompatibleImplementationSaysNull2))
                 elif fNull2 && not aNull2 then 
@@ -1281,7 +1282,7 @@ module DispatchSlotChecking =
         // This contains the list of required members and the list of available members
         [ for (_,reqdTy,reqdTyRange,impliedTys) in reqdTyInfos do
 
-            // Build a table of the implied interface types, for quicker lookup
+            // Build a set of the implied interface types, for quicker lookup, by nominal type
             let isImpliedInterfaceTable = 
                 impliedTys 
                 |> List.filter (isInterfaceTy g) 
@@ -1498,11 +1499,18 @@ type CalledArg =
       IsParamArray : bool
       OptArgInfo : OptionalArgInfo
       IsOutArg: bool
+      ReflArgInfo: ReflectedArgInfo
       NameOpt: string option
       CalledArgumentType : TType }
 
-let CalledArg(pos,isParamArray,optArgInfo,isOutArg,nameOpt,calledArgTy) =
-    { Position=pos; IsParamArray=isParamArray; OptArgInfo =optArgInfo; IsOutArg=isOutArg; NameOpt=nameOpt; CalledArgumentType = calledArgTy}
+let CalledArg(pos,isParamArray,optArgInfo,isOutArg,nameOpt,reflArgInfo,calledArgTy) =
+    { Position=pos
+      IsParamArray=isParamArray
+      OptArgInfo =optArgInfo
+      IsOutArg=isOutArg
+      ReflArgInfo=reflArgInfo
+      NameOpt=nameOpt
+      CalledArgumentType = calledArgTy }
 
 /// Represents a match between a caller argument and a called argument, arising from either
 /// a named argument or an unnamed argument.
@@ -1578,6 +1586,7 @@ let AdjustCalledArgType (infoReader:InfoReader) isConstraint (calledArg: CalledA
 
             if isDelegateTy g calledArgTy && isFunTy g callerArgTy then 
                 adjustDelegateTy calledArgTy
+
             elif isLinqExpressionTy g calledArgTy && isFunTy g callerArgTy then 
                 let origArgTy = calledArgTy
                 let calledArgTy = destLinqExpressionTy g calledArgTy
@@ -1586,6 +1595,10 @@ let AdjustCalledArgType (infoReader:InfoReader) isConstraint (calledArg: CalledA
                 else
                     // BUG 435170: called arg is Expr<'t> where 't is not delegate - such conversion is not legal -> return original type
                     origArgTy
+
+            elif calledArg.ReflArgInfo.AutoQuote && isQuotedExprTy g calledArgTy && not (isQuotedExprTy g callerArgTy) then 
+                destQuotedExprTy g calledArgTy
+
             else calledArgTy
 
         // Adjust the called argument type to take into account whether the caller's argument is M(?arg=Some(3)) or M(arg=1) 
@@ -1621,8 +1634,14 @@ type CalledMethArgSet<'T> =
 let MakeCalledArgs amap m (minfo:MethInfo) minst =
     // Mark up the arguments with their position, so we can sort them back into order later 
     let paramDatas = minfo.GetParamDatas(amap, m, minst)
-    paramDatas |> List.mapiSquared (fun i j (ParamData(isParamArrayArg,isOutArg,optArgInfo,nmOpt,typeOfCalledArg))  -> 
-      { Position=(i,j); IsParamArray=isParamArrayArg; OptArgInfo=optArgInfo; IsOutArg=isOutArg; NameOpt=nmOpt; CalledArgumentType=typeOfCalledArg })
+    paramDatas |> List.mapiSquared (fun i j (ParamData(isParamArrayArg,isOutArg,optArgInfo,nmOpt,reflArgInfo,typeOfCalledArg))  -> 
+      { Position=(i,j)
+        IsParamArray=isParamArrayArg
+        OptArgInfo=optArgInfo
+        IsOutArg=isOutArg
+        ReflArgInfo=reflArgInfo
+        NameOpt=nmOpt
+        CalledArgumentType=typeOfCalledArg })
 
 /// Represents the syntactic matching between a caller of a method and the called method.
 ///
@@ -1630,6 +1649,7 @@ let MakeCalledArgs amap m (minfo:MethInfo) minst =
 /// and returns a CalledMeth object for further analysis.
 type CalledMeth<'T>
       (infoReader:InfoReader,
+       nameEnv: Microsoft.FSharp.Compiler.Nameres.NameResolutionEnv option,
        isCheckingAttributeCall, 
        freshenMethInfo,// a function to help generate fresh type variables the property setters methods in generic classes 
        m, 
@@ -1641,7 +1661,8 @@ type CalledMeth<'T>
        callerObjArgTys: TType list,   // the types of the actual object argument, if any 
        curriedCallerArgs: (CallerArg<'T> list * CallerNamedArg<'T> list) list,     // the data about any arguments supplied by the caller 
        allowParamArgs:bool,       // do we allow the use of a param args method in its "expanded" form?
-       allowOutAndOptArgs: bool)  // do we allow the use of the transformation that converts out arguments as tuple returns?
+       allowOutAndOptArgs: bool,  // do we allow the use of the transformation that converts out arguments as tuple returns?
+       tyargsOpt : TType option) // method parameters
     =
     let g = infoReader.g
     let methodRetTy = minfo.GetFSharpReturnTy(infoReader.amap, m, calledTyArgs)
@@ -1718,7 +1739,7 @@ type CalledMeth<'T>
                 let returnedObjTy = if minfo.IsConstructor then minfo.EnclosingType else methodRetTy
                 unassignedNamedItem |> List.splitChoose (fun (CallerNamedArg(id,e) as arg) -> 
                     let nm = id.idText
-                    let pinfos = GetIntrinsicPropInfoSetsOfType infoReader (Some(nm),ad,AllowMultiIntfInstantiations.No) IgnoreOverrides id.idRange returnedObjTy
+                    let pinfos = GetIntrinsicPropInfoSetsOfType infoReader (Some(nm),ad,AllowMultiIntfInstantiations.Yes) IgnoreOverrides id.idRange returnedObjTy
                     let pinfos = pinfos |> ExcludeHiddenOfPropInfos g infoReader.amap m 
                     match pinfos with 
                     | [pinfo] when pinfo.HasSetter && not pinfo.IsIndexer -> 
@@ -1726,15 +1747,31 @@ type CalledMeth<'T>
                         let pminst = freshenMethInfo m pminfo
                         Choice1Of2(AssignedItemSetter(id,AssignedPropSetter(pinfo,pminfo, pminst), e))
                     | _ ->
-                        match infoReader.GetILFieldInfosOfType(Some(nm),ad,m,returnedObjTy) with
-                        | finfo :: _ -> 
-                            Choice1Of2(AssignedItemSetter(id,AssignedILFieldSetter(finfo), e))
-                        | _ ->              
-                          match infoReader.TryFindRecdOrClassFieldInfoOfType(nm,m,returnedObjTy) with
-                          | Some rfinfo -> 
-                              Choice1Of2(AssignedItemSetter(id,AssignedRecdFieldSetter(rfinfo), e))
-                          | None -> 
-                              Choice2Of2(arg))
+                        let epinfos = 
+                            match nameEnv with  
+                            | Some(ne) ->  ExtensionPropInfosOfTypeInScope infoReader ne (Some(nm), ad) m returnedObjTy
+                            | _ -> []
+                        match epinfos with 
+                        | [pinfo] when pinfo.HasSetter && not pinfo.IsIndexer -> 
+                            let pminfo = pinfo.SetterMethod
+                            let pminst = match minfo with
+                                         | MethInfo.FSMeth(_,TType.TType_app(_,types),_,_) -> types
+                                         | _ -> freshenMethInfo m pminfo
+
+                            let pminst = match tyargsOpt with
+                                          | Some(TType.TType_app(_, types)) -> types
+                                          | _ -> pminst
+                            Choice1Of2(AssignedItemSetter(id,AssignedPropSetter(pinfo,pminfo, pminst), e))
+                        |  _ ->    
+                            match infoReader.GetILFieldInfosOfType(Some(nm),ad,m,returnedObjTy) with
+                            | finfo :: _ -> 
+                                Choice1Of2(AssignedItemSetter(id,AssignedILFieldSetter(finfo), e))
+                            | _ ->              
+                              match infoReader.TryFindRecdOrClassFieldInfoOfType(nm,m,returnedObjTy) with
+                              | Some rfinfo -> 
+                                  Choice1Of2(AssignedItemSetter(id,AssignedRecdFieldSetter(rfinfo), e))
+                              | None -> 
+                                  Choice2Of2(arg))
 
             let names = namedCallerArgs |> List.map (fun (CallerNamedArg(nm,_)) -> nm.idText) 
 
@@ -2166,7 +2203,7 @@ let BuildMethodCall tcVal g amap isMutable m isProp minfo valUseFlags minst objA
 
         // Build a 'call' to a struct default constructor 
         | DefaultStructCtor (g,typ) -> 
-            if not (TypeHasDefaultValue g typ) then 
+            if not (TypeHasDefaultValue g m typ) then 
                 errorR(Error(FSComp.SR.tcDefaultStructConstructorCall(),m))
             mkDefault (m,typ), typ)
 

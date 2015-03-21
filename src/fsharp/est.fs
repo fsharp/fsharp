@@ -412,11 +412,11 @@ module internal ExtensionTyping =
             try
                 st.PApplyArray(f, memberName,m)
             with :? TypeProviderError as tpe ->
-                tpe.Iter (fun e -> errorR(Error(FSComp.SR.etUnexpectedExceptionFromProvidedTypeMember(fullName,memberName,e.ContextualErrorMessage),m)))
+                tpe.Iter (fun e -> error(Error(FSComp.SR.etUnexpectedExceptionFromProvidedTypeMember(fullName,memberName,e.ContextualErrorMessage),m)))
                 [||]
 
         match result with 
-        | null -> errorR(Error(FSComp.SR.etUnexpectedNullFromProvidedTypeMember(fullName,memberName),m)); [||]
+        | null -> error(Error(FSComp.SR.etUnexpectedNullFromProvidedTypeMember(fullName,memberName),m)); [||]
         | r -> r
 
     /// Try to access a member on a provided type, catching and reporting errors and checking the result is non-null, 
@@ -547,7 +547,7 @@ module internal ExtensionTyping =
         member __.IsErased = (x.Attributes &&& enum (int32 TypeProviderTypeAttributes.IsErased)) <> enum 0  
         member __.IsGenericType = x.IsGenericType
         member __.Namespace = x.Namespace
-        member pt.FullName = x.FullName
+        member __.FullName = x.FullName
         member __.IsArray = x.IsArray
         member __.Assembly = x.Assembly |> ProvidedAssembly.Create ctxt
         member __.GetInterfaces() = x.GetInterfaces() |> ProvidedType.CreateArray ctxt
@@ -611,7 +611,7 @@ module internal ExtensionTyping =
         abstract GetDefinitionLocationAttribute : provider:ITypeProvider -> (string * int * int) option 
         abstract GetXmlDocAttributes : provider:ITypeProvider -> string[]
         abstract GetHasTypeProviderEditorHideMethodsAttribute : provider:ITypeProvider -> bool
-        abstract GetAttributeConstructorArgs: provider:ITypeProvider * attribName:string -> obj option list option
+        abstract GetAttributeConstructorArgs: provider:ITypeProvider * attribName:string -> (obj option list * (string * obj option) list) option
 
     and ProvidedCustomAttributeProvider =
         static member Create (attributes :(ITypeProvider -> System.Collections.Generic.IList<CustomAttributeData>)) : IProvidedCustomAttributeProvider = 
@@ -624,9 +624,15 @@ module internal ExtensionTyping =
                       attributes(provider) 
                         |> Seq.tryFind (findAttribByName  attribName)  
                         |> Option.map (fun a -> 
-                            a.ConstructorArguments 
-                            |> Seq.toList 
-                            |> List.map (function Arg null -> None | Arg obj -> Some obj | _ -> None))
+                            let ctorArgs = 
+                                a.ConstructorArguments 
+                                |> Seq.toList 
+                                |> List.map (function Arg null -> None | Arg obj -> Some obj | _ -> None)
+                            let namedArgs = 
+                                a.NamedArguments 
+                                |> Seq.toList 
+                                |> List.map (fun arg -> arg.MemberName, match arg.TypedValue with Arg null -> None | Arg obj -> Some obj | _ -> None)
+                            ctorArgs, namedArgs)
 
                   member __.GetHasTypeProviderEditorHideMethodsAttribute provider = 
                       attributes(provider) 
@@ -1193,7 +1199,7 @@ module internal ExtensionTyping =
 
         // Try to find the type in the given provided namespace
         let rec tryNamespace (providedNamespace: Tainted<IProvidedNamespace>) = 
-            
+
             // Get the provided namespace name
             let providedNamespaceName = providedNamespace.PUntaint((fun providedNamespace -> providedNamespace.NamespaceName), range=m)
 
@@ -1214,7 +1220,7 @@ module internal ExtensionTyping =
                     Some result
             else
                 // Note: This eagerly explores all provided namespaces even if there is no match of even a prefix in the
-                // namespace names.  
+                // namespace names. 
                 let providedNamespaces = providedNamespace.PApplyArray((fun providedNamespace -> providedNamespace.GetNestedNamespaces()), "GetNestedNamespaces", range=m)
                 tryNamespaces providedNamespaces
 
@@ -1258,16 +1264,7 @@ module internal ExtensionTyping =
             staticParams.PApply((fun ps ->  ps |> Array.map (fun sp -> sp.Name, (if sp.IsOptional then Some (string sp.RawDefaultValue) else None ))),range=m)
 
         let defaultArgValues = defaultArgValues.PUntaint(id,m)
-
-        let nonDefaultArgs = 
-            (staticArgs,defaultArgValues) 
-            ||> Array.zip 
-            |> Array.choose (fun (staticArg, (defaultArgName, defaultArgValue)) -> 
-                let actualArgValue = string  staticArg 
-                match defaultArgValue with 
-                | Some v when v = actualArgValue -> None
-                | _ -> Some (defaultArgName, actualArgValue))
-        PrettyNaming.mangleProvidedTypeName (nm, nonDefaultArgs)
+        PrettyNaming.computeMangledNameWithoutDefaultArgValues(nm,staticArgs,defaultArgValues)
 
     /// Apply the given provided method to the given static arguments (the arguments are assumed to have been sorted into application order)
     let TryApplyProvidedMethod(methBeforeArgs:Tainted<ProvidedMethodBase>, staticArgs:obj[], m:range) =

@@ -14,6 +14,7 @@ open Microsoft.FSharp.Compiler.AbstractIL.Internal
 open Microsoft.FSharp.Compiler.AbstractIL.Internal.Library
 open Microsoft.FSharp.Compiler 
 open Microsoft.FSharp.Compiler.Range
+open Microsoft.FSharp.Compiler.Rational
 open Microsoft.FSharp.Compiler.Ast
 open Microsoft.FSharp.Compiler.ErrorLogger
 open Microsoft.FSharp.Compiler.Tast
@@ -64,7 +65,6 @@ type ValMap<'T>(imap: StampMap<'T>) =
     static member Empty = ValMap<'T> Map.empty
     member m.IsEmpty = imap.IsEmpty
     static member OfList vs = (vs, ValMap<'T>.Empty) ||> List.foldBack (fun (x,y) acc -> acc.Add x y) 
-
 
 //--------------------------------------------------------------------------
 // renamings
@@ -190,6 +190,7 @@ and remapMeasureAux tyenv unt =
         | Some tcr ->  MeasureCon tcr
         | None -> unt
     | MeasureProd(u1,u2) -> MeasureProd(remapMeasureAux tyenv u1, remapMeasureAux tyenv u2)
+    | MeasureRationalPower(u,q) -> MeasureRationalPower(remapMeasureAux tyenv u, q)
     | MeasureInv u -> MeasureInv(remapMeasureAux tyenv u)
     | MeasureVar tp as unt -> 
       match tp.Solution with
@@ -388,31 +389,33 @@ let stripUnitEqnsFromMeasure m = stripUnitEqnsFromMeasureAux false m
 // Basic unit stuff
 //---------------------------------------------------------------------------
 
-
 /// What is the contribution of unit-of-measure constant ucref to unit-of-measure expression measure? 
 let rec MeasureConExponent g abbrev ucref unt =
     match (if abbrev then stripUnitEqnsFromMeasure unt else stripUnitEqns unt) with
-    | MeasureCon ucref' -> if tyconRefEq g ucref' ucref then 1 else 0
-    | MeasureInv unt' -> -(MeasureConExponent g abbrev ucref unt')
-    | MeasureProd(unt1,unt2) -> MeasureConExponent g abbrev ucref unt1 + MeasureConExponent g abbrev ucref unt2
-    | _ -> 0
+    | MeasureCon ucref' -> if tyconRefEq g ucref' ucref then OneRational else ZeroRational
+    | MeasureInv unt' -> NegRational(MeasureConExponent g abbrev ucref unt')
+    | MeasureProd(unt1,unt2) -> AddRational(MeasureConExponent g abbrev ucref unt1) (MeasureConExponent g abbrev ucref unt2)
+    | MeasureRationalPower(unt',q) -> MulRational (MeasureConExponent g abbrev ucref unt') q
+    | _ -> ZeroRational
 
 /// What is the contribution of unit-of-measure constant ucref to unit-of-measure expression measure
 /// after remapping tycons? 
 let rec MeasureConExponentAfterRemapping g r ucref unt =
     match stripUnitEqnsFromMeasure unt with
-    | MeasureCon ucref' -> if tyconRefEq g (r ucref') ucref then 1 else 0
-    | MeasureInv unt' -> -(MeasureConExponentAfterRemapping g r ucref unt')
-    | MeasureProd(unt1,unt2) -> MeasureConExponentAfterRemapping g r ucref unt1 + MeasureConExponentAfterRemapping g r ucref unt2
-    | _ -> 0
+    | MeasureCon ucref' -> if tyconRefEq g (r ucref') ucref then OneRational else ZeroRational
+    | MeasureInv unt' -> NegRational(MeasureConExponentAfterRemapping g r ucref unt')
+    | MeasureProd(unt1,unt2) -> AddRational(MeasureConExponentAfterRemapping g r ucref unt1) (MeasureConExponentAfterRemapping g r ucref unt2)
+    | MeasureRationalPower(unt',q) -> MulRational (MeasureConExponentAfterRemapping g r ucref unt') q
+    | _ -> ZeroRational
 
 /// What is the contribution of unit-of-measure variable tp to unit-of-measure expression unt? 
 let rec MeasureVarExponent tp unt =
     match stripUnitEqnsFromMeasure unt with
-    | MeasureVar tp' -> if typarEq tp tp' then 1 else 0
-    | MeasureInv unt' -> -(MeasureVarExponent tp unt')
-    | MeasureProd(unt1,unt2) -> MeasureVarExponent tp unt1 + MeasureVarExponent tp unt2
-    | _ -> 0
+    | MeasureVar tp' -> if typarEq tp tp' then OneRational else ZeroRational
+    | MeasureInv unt' -> NegRational(MeasureVarExponent tp unt')
+    | MeasureProd(unt1,unt2) -> AddRational(MeasureVarExponent tp unt1) (MeasureVarExponent tp unt2)
+    | MeasureRationalPower(unt',q) -> MulRational (MeasureVarExponent tp unt') q
+    | _ -> ZeroRational
 
 /// List the *literal* occurrences of unit variables in a unit expression, without repeats  
 let ListMeasureVarOccs unt =
@@ -420,6 +423,7 @@ let ListMeasureVarOccs unt =
         match stripUnitEqnsFromMeasure unt with
           MeasureVar tp -> if List.exists (typarEq tp) acc then acc else tp::acc
         | MeasureProd(unt1,unt2) -> gather (gather acc unt1) unt2
+        | MeasureRationalPower(unt',_) -> gather acc unt'
         | MeasureInv unt' -> gather acc unt'
         | _ -> acc   
     gather [] unt
@@ -429,9 +433,10 @@ let ListMeasureVarOccsWithNonZeroExponents untexpr =
     let rec gather acc unt =  
         match stripUnitEqnsFromMeasure unt with
           MeasureVar tp -> if List.exists (fun (tp', _) -> typarEq tp tp') acc then acc 
-                           else let e = MeasureVarExponent tp untexpr in if e=0 then acc else (tp,e)::acc
+                           else let e = MeasureVarExponent tp untexpr in if e = ZeroRational then acc else (tp,e)::acc
         | MeasureProd(unt1,unt2) -> gather (gather acc unt1) unt2
         | MeasureInv unt' -> gather acc unt'
+        | MeasureRationalPower(unt',_) -> gather acc unt'
         | _ -> acc   
     gather [] untexpr
 
@@ -440,9 +445,10 @@ let ListMeasureConOccsWithNonZeroExponents g eraseAbbrevs untexpr =
     let rec gather acc unt =  
         match (if eraseAbbrevs then stripUnitEqnsFromMeasure unt else stripUnitEqns unt) with
         | MeasureCon c -> if List.exists (fun (c', _) -> tyconRefEq g c c') acc then acc 
-                          else let e = MeasureConExponent g eraseAbbrevs c untexpr in if e=0 then acc else (c,e)::acc
+                          else let e = MeasureConExponent g eraseAbbrevs c untexpr in if e = ZeroRational then acc else (c,e)::acc
         | MeasureProd(unt1,unt2) -> gather (gather acc unt1) unt2
         | MeasureInv unt' -> gather acc unt'
+        | MeasureRationalPower(unt',_) -> gather acc unt'
         | _ -> acc  
     gather [] untexpr
 
@@ -453,17 +459,17 @@ let ListMeasureConOccsAfterRemapping g r unt =
         match (stripUnitEqnsFromMeasure unt) with
         | MeasureCon c -> if List.exists (tyconRefEq g (r c)) acc then acc else r c::acc
         | MeasureProd(unt1,unt2) -> gather (gather acc unt1) unt2
+        | MeasureRationalPower(unt',_) -> gather acc unt'
         | MeasureInv unt' -> gather acc unt'
         | _ -> acc
    
     gather [] unt
 
 /// Construct a measure expression representing the n'th power of a measure
-let rec MeasurePower u n = 
+let MeasurePower u n = 
     if n=0 then MeasureOne
     elif n=1 then u
-    elif n<0 then MeasureInv (MeasurePower u (-n))
-    else MeasureProd (u, MeasurePower u (n-1))
+    else MeasureRationalPower (u, intToRational n)
 
 let MeasureProdOpt m1 m2 =
   match m1, m2 with
@@ -486,7 +492,7 @@ let destUnitParMeasure g unt =
     let vs = ListMeasureVarOccsWithNonZeroExponents unt
     let cs = ListMeasureConOccsWithNonZeroExponents g true unt
     match vs, cs with
-    | [(v,1)], [] -> v
+    | [(v,e)], [] when e = OneRational -> v
     | _, _ -> failwith "destUnitParMeasure: not a unit-of-measure parameter"
 
 let isUnitParMeasure g unt =
@@ -494,7 +500,7 @@ let isUnitParMeasure g unt =
     let cs = ListMeasureConOccsWithNonZeroExponents g true unt
  
     match vs, cs with
-    | [(_,1)], [] -> true
+    | [(_,e)], [] when e = OneRational -> true
     | _,   _ -> false
 
 let normalizeMeasure g ms =
@@ -502,8 +508,8 @@ let normalizeMeasure g ms =
     let cs = ListMeasureConOccsWithNonZeroExponents g false ms
     match vs, cs with
     | [],[] -> MeasureOne
-    | [(v,1)], [] -> MeasureVar v
-    | vs, cs -> List.foldBack (fun (v,e) -> fun m -> MeasureProd (MeasurePower (MeasureVar v) e, m)) vs (List.foldBack (fun (c,e) -> fun m -> MeasureProd (MeasurePower (MeasureCon c) e, m)) cs MeasureOne)
+    | [(v,e)], [] when e = OneRational -> MeasureVar v
+    | vs, cs -> List.foldBack (fun (v,e) -> fun m -> MeasureProd (MeasureRationalPower (MeasureVar v, e), m)) vs (List.foldBack (fun (c,e) -> fun m -> MeasureProd (MeasureRationalPower (MeasureCon c, e), m)) cs MeasureOne)
  
 let tryNormalizeMeasureInType g ty =
     match ty with
@@ -520,6 +526,7 @@ let rec sizeMeasure g ms =
   | MeasureVar _ -> 1
   | MeasureCon _ -> 1
   | MeasureProd (ms1,ms2) -> sizeMeasure g ms1 + sizeMeasure g ms2
+  | MeasureRationalPower (ms,_) -> sizeMeasure g ms
   | MeasureInv ms -> sizeMeasure g ms
   | MeasureOne -> 1
 
@@ -1239,6 +1246,7 @@ type TyconRefMultiMap<'T>(contents: TyconRefMap<'T list>) =
     member m.Find v = if contents.ContainsKey v then contents.[v] else []
     member m.Add (v, x) = TyconRefMultiMap<'T>(contents.Add v (x :: m.Find v))
     static member Empty = TyconRefMultiMap<'T>(TyconRefMap<_>.Empty)
+    static member OfList vs = (vs, TyconRefMultiMap<'T>.Empty) ||> List.foldBack (fun (x,y) acc -> acc.Add (x, y)) 
 
 
 //--------------------------------------------------------------------------
@@ -2346,6 +2354,7 @@ type DisplayEnv =
       suppressNestedTypes: bool;
       maxMembers : int option;
       showObsoleteMembers: bool; 
+      showHiddenMembers: bool; 
       showTyparBinding: bool; 
       showImperativeTyparAnnotations: bool;
       suppressInlineKeyword: bool;
@@ -2376,7 +2385,8 @@ type DisplayEnv =
         shortTypeNames=false;
         suppressNestedTypes=false;
         maxMembers=None;
-        showObsoleteMembers=true;
+        showObsoleteMembers=false;
+        showHiddenMembers=false;
         showTyparBinding = false;
         showImperativeTyparAnnotations=false;
         suppressInlineKeyword=false;
@@ -2530,11 +2540,14 @@ let (|AttribInt16Arg|_|) = function AttribExpr(_,Expr.Const (Const.Int16(n),_,_)
 let (|AttribBoolArg|_|) = function AttribExpr(_,Expr.Const (Const.Bool(n),_,_)) -> Some(n) | _ -> None
 let (|AttribStringArg|_|) = function AttribExpr(_,Expr.Const (Const.String(n),_,_)) -> Some(n) | _ -> None
 
-let TryFindFSharpBoolAttribute g nm attrs = 
+let TryFindFSharpBoolAttributeWithDefault dflt g nm attrs = 
     match TryFindFSharpAttribute g nm attrs with
-    | Some(Attrib(_,_,[ ],_,_,_,_)) -> Some(true)
+    | Some(Attrib(_,_,[ ],_,_,_,_)) -> Some(dflt)
     | Some(Attrib(_,_,[ AttribBoolArg(b) ],_,_,_,_)) -> Some(b)
     | _ -> None
+
+let TryFindFSharpBoolAttribute g nm attrs = TryFindFSharpBoolAttributeWithDefault true g nm attrs
+let TryFindFSharpBoolAttributeAssumeFalse g nm attrs = TryFindFSharpBoolAttributeWithDefault false g nm attrs
 
 let TryFindFSharpInt32Attribute g nm attrs = 
     match TryFindFSharpAttribute g nm attrs with
@@ -2553,6 +2566,68 @@ let TryFindILAttributeOpt attr attrs =
     match attr with
     | Some (AttribInfo (atref,_)) -> HasILAttribute atref attrs
     | _ -> false
+
+/// Analyze three cases for attributes declared on type definitions: IL-declared attributes, F#-declared attributes and
+/// provided attributes.
+//
+// This is used for AttributeUsageAttribute, DefaultMemberAttribute and ConditionalAttribute (on attribute types)
+let TryBindTyconRefAttribute g (m:range) (AttribInfo (atref,_) as args) (tcref:TyconRef) f1 f2 f3 = 
+    ignore m; ignore f3
+    match metadataOfTycon tcref.Deref with 
+#if EXTENSIONTYPING
+    | ProvidedTypeMetadata info -> 
+        let provAttribs = info.ProvidedType.PApply((fun a -> (a :> IProvidedCustomAttributeProvider)),m)
+        match provAttribs.PUntaint((fun a -> a.GetAttributeConstructorArgs(provAttribs.TypeProvider.PUntaintNoFailure(id), atref.FullName)),m) with
+        | Some args -> f3 args
+        | None -> None
+#endif
+    | ILTypeMetadata (_,tdef) -> 
+        match TryDecodeILAttribute g atref (Some(atref.Scope)) tdef.CustomAttrs with 
+        | Some attr -> f1 attr
+        | _ -> None
+    | FSharpOrArrayOrByrefOrTupleOrExnTypeMetadata -> 
+        match TryFindFSharpAttribute g args tcref.Attribs with 
+        | Some attr -> f2 attr
+        | _ -> None
+
+let TryFindTyconRefBoolAttribute g m attribSpec tcref  =
+    TryBindTyconRefAttribute g m attribSpec tcref 
+                (function 
+                   | ([ ],_) -> Some true
+                   | ([ILAttribElem.Bool (v) ],_) -> Some v 
+                   | _ -> None)
+                (function 
+                   | (Attrib(_,_,[ ],_,_,_,_))  -> Some true
+                   | (Attrib(_,_,[ AttribBoolArg v ],_,_,_,_))  -> Some v 
+                   | _ -> None)
+                (function 
+                   | ([ ],_) -> Some true
+                   | ([ Some ((:? bool as v) : obj) ],_) -> Some v 
+                   | _ -> None)
+
+let TryFindAttributeUsageAttribute g m tcref  =
+    TryBindTyconRefAttribute g m g.attrib_AttributeUsageAttribute tcref 
+                (fun (_,named)             -> named |> List.tryPick (function ("AllowMultiple",_,_,ILAttribElem.Bool res) -> Some res | _ -> None))
+                (fun (Attrib(_,_,_,named,_,_,_)) -> named |> List.tryPick (function AttribNamedArg("AllowMultiple",_,_,AttribBoolArg(res) ) -> Some res | _ -> None))
+                (fun (_,named)             -> named |> List.tryPick (function ("AllowMultiple", Some ((:? bool as res) : obj)) -> Some res | _ -> None))
+
+
+/// Try to find a specific attribute on a type definition, where the attribute accepts a string argument.
+///
+/// This is used to detect the 'DefaultMemberAttribute' and 'ConditionalAttribute' attributes (on type definitions)
+let TryFindTyconRefStringAttribute g m attribSpec tcref  =
+    TryBindTyconRefAttribute g m attribSpec tcref 
+                (function ([ILAttribElem.String (Some(msg)) ],_) -> Some msg | _ -> None)
+                (function (Attrib(_,_,[ AttribStringArg(msg) ],_,_,_,_))  -> Some msg | _ -> None)
+                (function ([ Some ((:? string as msg) : obj) ], _) -> Some msg | _ -> None)
+
+/// Check if a type definition has a specific attribute
+let TyconRefHasAttribute g m attribSpec tcref  =
+    TryBindTyconRefAttribute g m attribSpec tcref 
+                    (fun _ -> Some ()) 
+                    (fun _ -> Some ())
+                    (fun _ -> Some ())
+        |> Option.isSome
 
 //-------------------------------------------------------------------------
 // List and reference types...
@@ -2786,16 +2861,18 @@ module DebugPrint = begin
           (match !global_g with
            | None -> wordL "<no global g>"
            | Some g -> 
-             let sortVars (vs:(Typar * int) list) = vs |> List.sortBy (fun (v,_) -> v.DisplayName) 
-             let sortCons (cs:(TyconRef * int) list) = cs |> List.sortBy (fun (c,_) -> c.DisplayName) 
-             let negvs,posvs = ListMeasureVarOccsWithNonZeroExponents         unt |> sortVars |> List.partition (fun (_,e) -> e<0)
-             let negcs,poscs = ListMeasureConOccsWithNonZeroExponents g false unt |> sortCons |> List.partition (fun (_,e) -> e<0)
+             let sortVars (vs:(Typar * Rational) list) = vs |> List.sortBy (fun (v,_) -> v.DisplayName) 
+             let sortCons (cs:(TyconRef * Rational) list) = cs |> List.sortBy (fun (c,_) -> c.DisplayName) 
+             let negvs,posvs = ListMeasureVarOccsWithNonZeroExponents         unt |> sortVars |> List.partition (fun (_,e) -> SignRational e < 0)
+             let negcs,poscs = ListMeasureConOccsWithNonZeroExponents g false unt |> sortCons |> List.partition (fun (_,e) -> SignRational e < 0)
              let unparL (uv:Typar) = wordL ("'" ^  uv.DisplayName)
              let unconL tc = layoutTyconRef tc
-             let prefix = spaceListL  (List.map (fun (v,e) -> if e=1  then unparL v else unparL v -- wordL (sprintf "^ %d" e)) posvs @
-                                       List.map (fun (c,e) -> if e=1  then unconL c else unconL c -- wordL (sprintf "^ %d" e)) poscs)
-             let postfix = spaceListL (List.map (fun (v,e) -> if e= -1 then unparL v else unparL v -- wordL (sprintf "^ %d" (-e))) negvs @
-                                       List.map (fun (c,e) -> if e= -1 then unconL c else unconL c -- wordL (sprintf "^ %d" (-e))) negcs)
+             let rationalL e = wordL (RationalToString e)
+             let measureToPowerL x e = if e = OneRational then x else x -- wordL "^" -- rationalL e
+             let prefix = spaceListL  (List.map (fun (v,e) -> measureToPowerL (unparL v) e) posvs @
+                                       List.map (fun (c,e) -> measureToPowerL (unconL c) e) poscs)
+             let postfix = spaceListL (List.map (fun (v,e) -> measureToPowerL (unparL v) (NegRational e)) negvs @
+                                       List.map (fun (c,e) -> measureToPowerL (unconL c) (NegRational e)) negcs)
              match (negvs,negcs) with 
              | [],[] -> prefix 
              | _ -> prefix ^^ sepL "/" ^^ postfix) ^^
@@ -3993,7 +4070,7 @@ and accFreeInExprNonLinear opts x acc =
     | Expr.Const _ -> acc
     | Expr.Val (lvr,flags,_) ->  
         accFreeInValFlags opts flags (accFreeValRef opts lvr acc)
-    | Expr.Quote (ast,{contents=Some(argTypes,argExprs,_data)},_,_,ty) ->  
+    | Expr.Quote (ast,{contents=Some(_,argTypes,argExprs,_data)},_,_,ty) ->  
         accFreeInExpr opts ast 
             (accFreeInExprs opts argExprs
                (accFreeVarsInTys opts argTypes
@@ -4456,10 +4533,10 @@ and remapExpr g (compgen:ValCopyFlag) (tmenv:Remap) x =
         let vf' = remapValFlags tmenv vf
         if vr === vr' && vf === vf' then x 
         else Expr.Val (vr',vf',m)
-    | Expr.Quote (a,{contents=Some(argTypes,argExprs,data)},isFromQueryExpression,m,ty) ->  
+    | Expr.Quote (a,{contents=Some(typeDefs,argTypes,argExprs,data)},isFromQueryExpression,m,ty) ->  
         // fix value of compgen for both original expression and pickled AST
         let compgen = fixValCopyFlagForQuotations compgen
-        Expr.Quote (remapExpr g compgen tmenv a,{contents=Some(remapTypesAux tmenv argTypes,remapExprs g compgen tmenv  argExprs,data)},isFromQueryExpression,m,remapType tmenv ty)
+        Expr.Quote (remapExpr g compgen tmenv a,{contents=Some(typeDefs,remapTypesAux tmenv argTypes,remapExprs g compgen tmenv  argExprs,data)},isFromQueryExpression,m,remapType tmenv ty)
     | Expr.Quote (a,{contents=None},isFromQueryExpression,m,ty) ->  
         Expr.Quote (remapExpr g (fixValCopyFlagForQuotations compgen) tmenv a,{contents=None},isFromQueryExpression,m,remapType tmenv ty)
     | Expr.Obj (_,typ,basev,basecall,overrides,iimpls,m) -> 
@@ -4989,6 +5066,9 @@ let ComputeFieldName tycon f =
 // Helpers for building code contained in the initial environment
 //------------------------------------------------------------------------- 
 
+let isQuotedExprTy g ty =  match ty with AppTy g (tcref,_) -> tyconRefEq g tcref g.expr_tcr | _ -> false
+let destQuotedExprTy g ty =  match ty with AppTy g (_,[ty]) -> ty | _ -> failwith "destQuotedExprTy"
+
 let mkQuotedExprTy g ty =  TType_app(g.expr_tcr,[ty])
 let mkRawQuotedExprTy g =  TType_app(g.raw_expr_tcr,[])
 
@@ -5410,6 +5490,8 @@ let mkRecdFieldSet g (e,fref:RecdFieldRef,tinst,e2,m) =
     let wrap,e' = mkExprAddrOfExpr g fref.Tycon.IsStructOrEnumTycon false DefinitelyMutates e None m
     wrap (mkRecdFieldSetViaExprAddr(e',fref,tinst,e2,m))
 
+let mkArray (argty, args, m) = Expr.Op(TOp.Array, [argty],args,m)
+
 //---------------------------------------------------------------------------
 // Compute fixups for letrec's.
 //
@@ -5557,7 +5639,7 @@ let mkFolders (folders : _ ExprFolder) =
                 let z = dtreeF z dtree
                 let z = Array.fold targetF z targets
                 z
-            | Expr.Quote(_e,{contents=Some(_argTypes,argExprs,_)},_,_,_)  -> exprsF z argExprs
+            | Expr.Quote(_e,{contents=Some(_typeDefs,_argTypes,argExprs,_)},_,_,_)  -> exprsF z argExprs
             | Expr.Quote(_e,{contents=None},_,_m,_) -> z
             | Expr.Obj (_n,_typ,_basev,basecall,overrides,iimpls,_m)    -> 
                 let z = exprF z basecall
@@ -5922,15 +6004,38 @@ let mkCallSeqSingleton g m ty1 arg1 =
 let mkCallSeqEmpty g m ty1 = 
     mkApps g (typedExprForIntrinsic g m g.seq_empty_info, [[ty1]], [ ],  m) 
                  
-let mkCallUnpickleQuotation g m e1 e2 e3 e4 = 
+let mkCallDeserializeQuotationFSharp20Plus g m e1 e2 e3 e4 = 
     let args = [ e1; e2; e3; e4 ]
-    mkApps g (typedExprForIntrinsic g m g.unpickle_quoted_info, [], [ mkTupledNoTypes g m args ],  m)
+    mkApps g (typedExprForIntrinsic g m g.deserialize_quoted_FSharp_20_plus_info, [], [ mkTupledNoTypes g m args ],  m)
+
+let mkCallDeserializeQuotationFSharp40Plus g m e1 e2 e3 e4 e5 = 
+    let args = [ e1; e2; e3; e4; e5 ]
+    mkApps g (typedExprForIntrinsic g m g.deserialize_quoted_FSharp_40_plus_info, [], [ mkTupledNoTypes g m args ],  m)
 
 let mkCallCastQuotation g m ty e1 = 
     mkApps g (typedExprForIntrinsic g m g.cast_quotation_info, [[ty]], [ e1 ],  m)
 
-let mkCallLiftValue g m ty e1 = 
-    mkApps g (typedExprForIntrinsic g m g.lift_value_info , [[ty]], [ e1],  m)
+let mkCallLiftValueWithName g m ty nm e1 = 
+    let vref = ValRefForIntrinsic g.lift_value_with_name_info 
+    // Use "Expr.ValueWithName" if it exists in FSharp.Core
+    match vref.TryDeref with
+    | Some _ ->
+        mkApps g (typedExprForIntrinsic g m g.lift_value_with_name_info , [[ty]], [mkTupledNoTypes g m [e1; mkString g m nm]],  m)
+    | None ->
+        mkApps g (typedExprForIntrinsic g m g.lift_value_info , [[ty]], [e1],  m)
+
+let mkCallLiftValueWithDefn g m qty e1 = 
+    assert isQuotedExprTy g qty
+    let ty = destQuotedExprTy g qty
+    let vref = ValRefForIntrinsic g.lift_value_with_defn_info 
+    // Use "Expr.WithValue" if it exists in FSharp.Core
+    match vref.TryDeref with
+    | Some _ ->
+        let copyOfExpr = copyExpr g ValCopyFlag.CloneAll e1
+        let quoteOfCopyOfExpr = Expr.Quote(copyOfExpr, ref None, false, m, qty)
+        mkApps g (typedExprForIntrinsic g m g.lift_value_with_defn_info , [[ty]], [mkTupledNoTypes g m [e1; quoteOfCopyOfExpr]],  m)
+    | None ->
+        Expr.Quote(e1, ref None, false, m, qty)
 
 let mkCallCheckThis g m ty e1 = 
     mkApps g (typedExprForIntrinsic g m g.check_this_info, [[ty]], [e1],  m)
@@ -6021,6 +6126,12 @@ let mkCompilationArgumentCountsAttr g nums =
 let mkCompilationSourceNameAttr g n = 
     mkILCustomAttribute g.ilg (tref_CompilationSourceNameAttr g, [  g.ilg.typ_String ],
                                [ILAttribElem.String(Some n)],
+                               [])
+
+let mkCompilationMappingAttrForQuotationResource g (nm, tys: ILTypeRef list) = 
+    mkILCustomAttribute g.ilg (tref_CompilationMappingAttr g, 
+                               [ g.ilg.typ_String; mkILArr1DTy g.ilg.typ_Type ],
+                               [ ILAttribElem.String (Some nm); ILAttribElem.Array (g.ilg.typ_Type, [ for ty in tys -> ILAttribElem.TypeRef (Some ty) ]) ],
                                [])
 
 #if EXTENSIONTYPING
@@ -6841,28 +6952,34 @@ let TypeNullNever g ty =
     (isStructTy g underlyingTy) ||
     (isByrefTy g underlyingTy)
 
-let TypeNullIsExtraValue g ty = 
-    isILReferenceTy g ty ||
-    isDelegateTy g ty ||
-    (not (TypeNullNever g ty) && 
-     isAppTy g ty && 
-     TryFindFSharpBoolAttribute  g g.attrib_AllowNullLiteralAttribute (tyconOfAppTy g ty).Attribs = Some(true))
+
+
+/// Indicates if the type admits the use of 'null' as a value
+let TypeNullIsExtraValue g m ty = 
+    if isILReferenceTy g ty || isDelegateTy g ty then
+        // Putting AllowNullLiteralAttribute(false) on an IL or provided type means 'null' can't be used with that type
+        not (isAppTy g ty && TryFindTyconRefBoolAttribute g m g.attrib_AllowNullLiteralAttribute (tcrefOfAppTy g ty) = Some(false))
+    elif TypeNullNever g ty then 
+        false
+    else 
+        // Putting AllowNullLiteralAttribute(true) on an F# type means 'null' can be used with that type
+        isAppTy g ty && TryFindTyconRefBoolAttribute g m g.attrib_AllowNullLiteralAttribute (tcrefOfAppTy g ty) = Some(true)
 
 let TypeNullIsTrueValue g ty = 
     (isAppTy g ty && IsUnionTypeWithNullAsTrueValue g (tyconOfAppTy g ty))  ||
     (isUnitTy g ty)
 
-let TypeNullNotLiked g ty = 
-       not (TypeNullIsExtraValue g ty) 
+let TypeNullNotLiked g m ty = 
+       not (TypeNullIsExtraValue g m ty) 
     && not (TypeNullIsTrueValue g ty) 
     && not (TypeNullNever g ty) 
 
-let TypeSatisfiesNullConstraint g ty = 
-    TypeNullIsExtraValue g ty  
+let TypeSatisfiesNullConstraint g m ty = 
+    TypeNullIsExtraValue g m ty  
 
-let rec TypeHasDefaultValue g ty = 
+let rec TypeHasDefaultValue g m ty = 
     let ty = stripTyEqnsAndMeasureEqns g ty
-    TypeSatisfiesNullConstraint g ty  
+    TypeSatisfiesNullConstraint g m ty  
     || (isStructTy g ty &&
         // Is it an F# struct type?
         (if isFSharpStructTy g ty then 
@@ -6873,9 +6990,9 @@ let rec TypeHasDefaultValue g ty =
                   // We can ignore fields with the DefaultValue(false) attribute 
                   |> List.filter (fun fld -> not (TryFindFSharpBoolAttribute g g.attrib_DefaultValueAttribute fld.FieldAttribs = Some(false)))
 
-            flds |> List.forall (actualTyOfRecdField (mkTyconRefInst tcref tinst) >> TypeHasDefaultValue g)
+            flds |> List.forall (actualTyOfRecdField (mkTyconRefInst tcref tinst) >> TypeHasDefaultValue g m)
          elif isTupleStructTy g ty then 
-            destTupleTy g ty |> List.forall (TypeHasDefaultValue g)
+            destTupleTy g ty |> List.forall (TypeHasDefaultValue g m)
          else
             // All struct types defined in other .NET languages have a DefaultValue regardless of their
             // instantiation
@@ -6909,9 +7026,9 @@ let canUseTypeTestFast g ty =
      not (TypeNullNever g ty)
 
 // Can we use the fast helper for the 'LanguagePrimitives.IntrinsicFunctions.UnboxGeneric'? 
-let canUseUnboxFast g ty = 
+let canUseUnboxFast g m ty = 
      not (isTyparTy g ty) && 
-     not (TypeNullNotLiked g ty)
+     not (TypeNullNotLiked g m ty)
      
      
 //--------------------------------------------------------------------------
@@ -7172,8 +7289,8 @@ and rewriteExprStructure env expr =
       if f0 === f0' && args === args' then expr
       else Expr.App(f0',f0ty,tyargs,args',m)
 
-  | Expr.Quote(ast,{contents=Some(argTypes,argExprs,data)},isFromQueryExpression,m,ty) -> 
-      Expr.Quote((if env.IsUnderQuotations then RewriteExpr env ast else ast),{contents=Some(argTypes,rewriteExprs env argExprs,data)},isFromQueryExpression,m,ty)
+  | Expr.Quote(ast,{contents=Some(typeDefs,argTypes,argExprs,data)},isFromQueryExpression,m,ty) -> 
+      Expr.Quote((if env.IsUnderQuotations then RewriteExpr env ast else ast),{contents=Some(typeDefs,argTypes,rewriteExprs env argExprs,data)},isFromQueryExpression,m,ty)
   | Expr.Quote(ast,{contents=None},isFromQueryExpression,m,ty) -> 
       Expr.Quote((if env.IsUnderQuotations then RewriteExpr env ast else ast),{contents=None},isFromQueryExpression,m,ty)
 

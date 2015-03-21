@@ -11,6 +11,7 @@ open Microsoft.FSharp.Compiler.AbstractIL.IL
 open Microsoft.FSharp.Compiler.AbstractIL.Internal 
 open Microsoft.FSharp.Compiler 
 open Microsoft.FSharp.Compiler.Range
+open Microsoft.FSharp.Compiler.Rational
 open Microsoft.FSharp.Compiler.Ast
 open Microsoft.FSharp.Compiler.ErrorLogger
 open Microsoft.FSharp.Compiler.Tast
@@ -278,6 +279,7 @@ type TyconRefMultiMap<'T> =
     member Find : TyconRef -> 'T list
     member Add : TyconRef * 'T -> TyconRefMultiMap<'T>
     static member Empty : TyconRefMultiMap<'T>
+    static member OfList : (TyconRef * 'T) list -> TyconRefMultiMap<'T>
 
 
 //-------------------------------------------------------------------------
@@ -532,12 +534,15 @@ val getErasedTypes            : TcGlobals -> TType -> TType list
 //-------------------------------------------------------------------------
 // Unit operations
 //------------------------------------------------------------------------- 
+
 val MeasurePower : MeasureExpr -> int -> MeasureExpr
-val ListMeasureVarOccsWithNonZeroExponents : MeasureExpr -> (Typar * int) list
-val ListMeasureConOccsWithNonZeroExponents : TcGlobals -> bool -> MeasureExpr -> (TyconRef * int) list
+val ListMeasureVarOccsWithNonZeroExponents : MeasureExpr -> (Typar * Rational) list
+val ListMeasureConOccsWithNonZeroExponents : TcGlobals -> bool -> MeasureExpr -> (TyconRef * Rational) list
 val ProdMeasures : MeasureExpr list -> MeasureExpr
-val MeasureVarExponent : Typar -> MeasureExpr -> int
-val MeasureConExponent : TcGlobals -> bool -> TyconRef -> MeasureExpr -> int
+val MeasureVarExponent : Typar -> MeasureExpr -> Rational
+val MeasureConExponent : TcGlobals -> bool -> TyconRef -> MeasureExpr -> Rational
+val normalizeMeasure : TcGlobals -> MeasureExpr -> MeasureExpr
+
 
 //-------------------------------------------------------------------------
 // Members 
@@ -587,6 +592,7 @@ type DisplayEnv =
       suppressNestedTypes: bool;
       maxMembers : int option;
       showObsoleteMembers: bool; 
+      showHiddenMembers: bool; 
       showTyparBinding: bool;
       showImperativeTyparAnnotations: bool;
       suppressInlineKeyword:bool;
@@ -999,13 +1005,13 @@ val ModuleNameIsMangled : TcGlobals -> Attribs -> bool
 
 val CompileAsEvent : TcGlobals -> Attribs -> bool
 
-val TypeNullIsExtraValue : TcGlobals -> TType -> bool
+val TypeNullIsExtraValue : TcGlobals -> range -> TType -> bool
 val TypeNullIsTrueValue : TcGlobals -> TType -> bool
-val TypeNullNotLiked : TcGlobals -> TType -> bool
+val TypeNullNotLiked : TcGlobals -> range -> TType -> bool
 val TypeNullNever : TcGlobals -> TType -> bool
 
-val TypeSatisfiesNullConstraint : TcGlobals -> TType -> bool
-val TypeHasDefaultValue : TcGlobals -> TType -> bool
+val TypeSatisfiesNullConstraint : TcGlobals -> range -> TType -> bool
+val TypeHasDefaultValue : TcGlobals -> range -> TType -> bool
 
 val isAbstractTycon : Tycon -> bool
 
@@ -1094,6 +1100,8 @@ val destInt32 : Expr -> int32 option
 // Primitives associated with quotations
 //------------------------------------------------------------------------- 
  
+val isQuotedExprTy : TcGlobals -> TType -> bool
+val destQuotedExprTy : TcGlobals -> TType -> TType
 val mkQuotedExprTy : TcGlobals -> TType -> TType
 val mkRawQuotedExprTy : TcGlobals -> TType
 val mspec_Type_GetTypeFromHandle : ILGlobals ->  ILMethodSpec
@@ -1112,7 +1120,7 @@ val mkCallGetGenericEREqualityComparer : TcGlobals -> range -> Expr
 val mkCallGetGenericPEREqualityComparer : TcGlobals -> range -> Expr
 
 val mkCallUnboxFast  : TcGlobals -> range -> TType -> Expr -> Expr
-val canUseUnboxFast  : TcGlobals -> TType -> bool
+val canUseUnboxFast  : TcGlobals -> range -> TType -> bool
 
 val mkCallDispose     : TcGlobals -> range -> TType -> Expr -> Expr
 val mkCallSeq         : TcGlobals -> range -> TType -> Expr -> Expr
@@ -1139,9 +1147,11 @@ val mkCallSubtractionOperator                : TcGlobals -> range -> TType -> Ex
 val mkCallGenericEqualityWithComparerOuter   : TcGlobals -> range -> TType -> Expr -> Expr -> Expr -> Expr
 val mkCallGenericHashWithComparerOuter       : TcGlobals -> range -> TType -> Expr -> Expr -> Expr
 
-val mkCallUnpickleQuotation  : TcGlobals -> range -> Expr -> Expr -> Expr -> Expr -> Expr
+val mkCallDeserializeQuotationFSharp20Plus  : TcGlobals -> range -> Expr -> Expr -> Expr -> Expr -> Expr
+val mkCallDeserializeQuotationFSharp40Plus : TcGlobals -> range -> Expr -> Expr -> Expr -> Expr -> Expr -> Expr
 val mkCallCastQuotation      : TcGlobals -> range -> TType -> Expr -> Expr 
-val mkCallLiftValue          : TcGlobals -> range -> TType -> Expr -> Expr
+val mkCallLiftValueWithName          : TcGlobals -> range -> TType -> string -> Expr -> Expr
+val mkCallLiftValueWithDefn          : TcGlobals -> range -> TType -> Expr -> Expr
 val mkCallSeqCollect         : TcGlobals -> range -> TType  -> TType -> Expr -> Expr -> Expr
 val mkCallSeqUsing           : TcGlobals -> range -> TType  -> TType -> Expr -> Expr -> Expr
 val mkCallSeqDelay           : TcGlobals -> range -> TType  -> Expr -> Expr
@@ -1168,6 +1178,8 @@ val mkCallQuoteToLinqLambdaExpression : TcGlobals -> range -> TType -> Expr -> E
 val mkCallGetQuerySourceAsEnumerable : TcGlobals -> range -> TType -> TType -> Expr -> Expr
 val mkCallNewQuerySource : TcGlobals -> range -> TType -> TType -> Expr -> Expr
 
+val mkArray : TType * Exprs * range -> Expr
+
 //-------------------------------------------------------------------------
 // operations primarily associated with the optimization to fix
 // up loops to generate .NET code that does not include array bound checks
@@ -1193,8 +1205,23 @@ val HasFSharpAttributeOpt          : TcGlobals -> Env.BuiltinAttribInfo option -
 val TryFindFSharpAttribute         : TcGlobals -> Env.BuiltinAttribInfo -> Attribs -> Attrib option
 val TryFindFSharpAttributeOpt      : TcGlobals -> Env.BuiltinAttribInfo option -> Attribs -> Attrib option
 val TryFindFSharpBoolAttribute     : TcGlobals -> Env.BuiltinAttribInfo -> Attribs -> bool option
+val TryFindFSharpBoolAttributeAssumeFalse : TcGlobals -> Env.BuiltinAttribInfo -> Attribs -> bool option
 val TryFindFSharpStringAttribute   : TcGlobals -> Env.BuiltinAttribInfo -> Attribs -> string option
 val TryFindFSharpInt32Attribute    : TcGlobals -> Env.BuiltinAttribInfo -> Attribs -> int32 option
+
+/// Try to find a specific attribute on a type definition, where the attribute accepts a string argument.
+///
+/// This is used to detect the 'DefaultMemberAttribute' and 'ConditionalAttribute' attributes (on type definitions)
+val TryFindTyconRefStringAttribute : TcGlobals -> range -> Env.BuiltinAttribInfo -> TyconRef -> string option
+
+/// Try to find a specific attribute on a type definition, where the attribute accepts a bool argument.
+val TryFindTyconRefBoolAttribute : TcGlobals -> range -> Env.BuiltinAttribInfo -> TyconRef -> bool option
+
+/// Try to find a specific attribute on a type definition
+val TyconRefHasAttribute : TcGlobals -> range -> Env.BuiltinAttribInfo -> TyconRef -> bool
+
+/// Try to find the AttributeUsage attribute, looking for the value of the AllowMultiple named parameter
+val TryFindAttributeUsageAttribute : TcGlobals -> range -> TyconRef -> bool option
 
 #if EXTENSIONTYPING
 /// returns Some(assemblyName) for success
@@ -1210,6 +1237,7 @@ val IsMatchingSignatureDataVersionAttr : IL.ILGlobals -> ILVersionInfo -> ILAttr
 val mkCompilationMappingAttr                         : TcGlobals -> int -> ILAttribute
 val mkCompilationMappingAttrWithSeqNum               : TcGlobals -> int -> int -> ILAttribute
 val mkCompilationMappingAttrWithVariantNumAndSeqNum  : TcGlobals -> int -> int -> int             -> ILAttribute
+val mkCompilationMappingAttrForQuotationResource     : TcGlobals -> string * ILTypeRef list -> ILAttribute
 val mkCompilationArgumentCountsAttr                  : TcGlobals -> int list -> ILAttribute
 val mkCompilationSourceNameAttr                      : TcGlobals -> string -> ILAttribute
 val mkSignatureDataVersionAttr                       : TcGlobals -> ILVersionInfo -> ILAttribute

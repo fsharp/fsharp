@@ -1,6 +1,5 @@
 // Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
-#nowarn "44" // This construct is deprecated. please use Seq.item
 namespace FSharp.Core.Unittests.FSharp_Core.Microsoft_FSharp_Collections
 
 open System
@@ -68,11 +67,11 @@ type SeqModule2() =
         let resultInt = Seq.tail <| seq { 1..10 }        
         Assert.AreEqual(Array.ofSeq (seq { 2..10 }), Array.ofSeq resultInt)
         
-        // string seq    
+        // string seq
         let resultStr = Seq.tail <| seq { yield "a"; yield "b"; yield "c"; yield "d" }      
         Assert.AreEqual(Array.ofSeq (seq { yield "b";  yield "c" ; yield "d" }), Array.ofSeq resultStr)
         
-        // 1-element seq    
+        // 1-element seq
         let resultStr2 = Seq.tail <| seq { yield "a" }      
         Assert.AreEqual(Array.ofSeq (Seq.empty : seq<string>), Array.ofSeq resultStr2)
 
@@ -893,35 +892,6 @@ type SeqModule2() =
         // null Seq
         let nullSeq:seq<'a> = null 
         CheckThrowsArgumentNullException (fun () -> Seq.min nullSeq |> ignore)
-        
-        ()
-
-
-    [<Test>]
-    member this.Nth() =
-         
-        // Negative index
-        for i = -1 downto -10 do
-           CheckThrowsArgumentException (fun () -> Seq.nth i { 10 .. 20 } |> ignore)
-            
-        // Out of range
-        for i = 11 to 20 do
-           CheckThrowsArgumentException (fun () -> Seq.nth i { 10 .. 20 } |> ignore)
-         
-         // integer Seq
-        let resultInt = Seq.nth 3 { 10..20 } 
-        Assert.AreEqual(13, resultInt)
-        
-        // string Seq
-        let resultStr = Seq.nth 3 (seq ["Lists"; "Are";  "nthString" ; "List" ])
-        Assert.AreEqual("List",resultStr)
-          
-        // empty Seq
-        CheckThrowsArgumentException(fun () -> Seq.nth 0 (Seq.empty : seq<decimal>) |> ignore)
-       
-        // null Seq
-        let nullSeq:seq<'a> = null 
-        CheckThrowsArgumentNullException (fun () ->Seq.nth 3 nullSeq |> ignore)
         
         ()
 

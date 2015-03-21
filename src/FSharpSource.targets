@@ -100,6 +100,17 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <DefineConstants>CROSS_PLATFORM_COMPILER;$(DefineConstants)</DefineConstants>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <DefineConstants>$(DefineConstants);OPEN_BUILD</DefineConstants>
+  </PropertyGroup>  
+  
+  <PropertyGroup>
+    <NUnitVersion>2.6.4</NUnitVersion>
+    <NUnitFullVersion>2.6.4.14350</NUnitFullVersion>
+    <NUnitLibDir>$(FSharpSourcesRoot)\..\packages\NUnit.$(NUnitVersion)\lib\</NUnitLibDir>
+    <NunitToolsLibDir>$(FSharpSourcesRoot)\..\packages\NUnit.Runners.$(NUnitVersion)\tools\lib\</NunitToolsLibDir>
+  </PropertyGroup>
+
   <!-- v2.0-specific flags -->
   <PropertyGroup Condition="'$(TargetFramework)'=='net20'">
     <!-- If 3.5 is not configured explicitly, use 2.0 -->
@@ -131,7 +142,7 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <!-- An additional back version qualification is added further below. -->
     <TargetFrameworkOutputDirectory Condition="'$(FSharpCoreBackVersion)' != ''">$(TargetFramework)</TargetFrameworkOutputDirectory>
     <DefineConstants>$(DefineConstants);FSHARP_CORE_4_5</DefineConstants>
-    <DefineConstants>$(DefineConstants);FX_ATLEAST_45</DefineConstants>
+    <DefineConstants  Condition="'$(Configuration)'!='Proto'">$(DefineConstants);FX_ATLEAST_45</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_ATLEAST_40</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_ATLEAST_35</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_ATLEAST_LINQ</DefineConstants>
@@ -891,6 +902,21 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
 
   <Import Project="$(LkgPath)\FSharp.SRGen.targets" />
 
+  <!-- This build step copies files to the output folder while replacing build variables in the text of
+             those file. -->
+  <Target
+          Name="CustomCopyLocalFiles"
+          Inputs="@(CustomCopyLocal)"
+          Outputs="@(CustomCopyLocal->'$(OutDir)%(TargetFilename)')"
+          Condition="'$(targetCLIDir)'!='Silverlight/4.0/'"
+                >
+    <Exec Command="$(FSharpSourcesRoot)\fsharp\FSharp.Build\subst.exe &quot;%(CustomCopyLocal.FullPath)&quot; {VisualStudioVersion} $(VisualStudioVersion) {FinalDir} &quot;$([System.IO.Path]::GetFullPath('$(OutputPath)'))\&quot; {LkgVersion} $(LkgVersion) {BuildSuffix} &quot;$(FsBuildSuffix)&quot; {FSharpTargetsDir} &quot;%24(MSBuildThisFileDirectory)&quot; &gt; $(OutDir)%(CustomCopyLocal.TargetFilename)  "/>
+    <!-- Make sure it will get cleaned  -->
+    <CreateItem Include="$(OutDir)%(CustomCopyLocal.TargetFilename)">
+      <Output TaskParameter="Include" ItemName="FileWrites"/>
+    </CreateItem>
+  </Target>
+
   <Target Name="ReorderCompileItems"
       BeforeTargets="CoreCompile"
       Condition="'$(GenerateTargetFrameworkAttribute)' == 'true' AND '$(AssemblyName)' == 'FSharp.Core'">  
@@ -899,5 +925,12 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
         <CompileAfter Include="@(CompileBefore)"/>
         <CompileBefore Remove="@(CompileBefore)"/>   
     </ItemGroup>
+  </Target>
+  <PropertyGroup>
+    <SolutionDir>$(FSharpSourcesRoot)\..\</SolutionDir>
+  </PropertyGroup>
+  <Import Project="$(FSharpSourcesRoot)\..\.nuget\NuGet.targets" />
+  <Target Name="BeforeBuild" BeforeTargets="Build">
+    <Exec Command="$(NuGetCommand) restore packages.config -PackagesDirectory packages" WorkingDirectory="$(FSharpSourcesRoot)\.."/>
   </Target>
 </Project>

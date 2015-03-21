@@ -3,16 +3,16 @@
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <FSharpSourcesRoot>$(MSBuildProjectDirectory)\..\..</FSharpSourcesRoot>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
   </PropertyGroup>
   <Import Project="$(FSharpSourcesRoot)\FSharpSource.Settings.targets" />
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{DED3BBD7-53F4-428A-8C9F-27968E768605}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AssemblyName>FSharp.Core</AssemblyName>
     <DefineConstants>RUNTIME;$(DefineConstants)</DefineConstants>
-    <NoWarn>44;45;55;62;75;1204</NoWarn>
+    <NoWarn>$(NoWarn);45;55;62;75;1204</NoWarn>
     <BaseAddress>0x05000000</BaseAddress>
     <CompilingFsLib>true</CompilingFsLib>
     <AllowCrossTargeting>true</AllowCrossTargeting>
@@ -25,6 +25,7 @@
   <!-- MonoDevelop likes these here to recognise the configurations -->
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' " />
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' " />
+
   <ItemGroup>
     <EmbeddedResource Include="FSCore.resx">
       <Link>FSCore.resx</Link>
@@ -225,6 +226,7 @@
     <Reference Include="System.Observable" Condition="'$(TargetFramework)' == 'sl3-wp' " >
       <Private>false</Private>
     </Reference>
+    <Reference Include="System.Observable" Condition="'$(TargetFramework)' == 'sl3-wp' "/>
     <Reference Include="System.Core" Condition="'$(TargetFramework)' == 'sl5' OR 
                                                 '$(TargetFramework)' == 'sl5-compiler' OR 
                                                 '$(TargetFramework)' == 'XNA\5.0' OR 
@@ -237,9 +239,10 @@
       <Private>false</Private>
     </Reference>
   </ItemGroup>
+
   <!-- References -->
   <Import Project="$(FSharpSourcesRoot)\FSharpSource.targets" />
-  <Import Project="$(MSBuildExtensionsPath)\Microsoft\XNA Game Studio\Microsoft.Xna.GameStudio.targets" Condition="'$(TargetFramework)'=='net40-xna40-xbox360'"/>
+
   <!-- Hook compilation phase to do custom work -->
   <PropertyGroup>
     <PrepareForRunDependsOn>$(PrepareForRunDependsOn);CopyToBuiltBin</PrepareForRunDependsOn>

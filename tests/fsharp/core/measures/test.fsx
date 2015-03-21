@@ -81,6 +81,8 @@ module FLOAT =
  let x6 = - (2.0<m>)
  let x7 = abs (-2.0<m>)
  let x8 = sqrt (4.0<sqrm>)
+ let x8a = sqrt (4.0<m>)
+ let x8b = sqrt (4.0</m>)
  let x9 = [ 1.0<m> .. 1.0<m> .. 4.0<m> ]
  let x10 = sign (3.0<m/s>)
  let x11 = atan2 4.4<s^3> 5.4<s^3>
@@ -154,6 +156,8 @@ module FLOAT =
  test "x6" (x6 = -2.0<m>)
  test "x7" (x7 = 2.0<m>)
  test "x8" (x8 = 2.0<m>)
+ test "x8a" (x8a = 2.0<m^(1/2)>)
+ test "x8b" (x8b = 2.0<m^(-1/2)>)
  test "x9" (x9 = [1.0<m>; 2.0<m>; 3.0<m>; 4.0<m>])
  test "x10" (x10 = 1)
  test "x12" (x12 = 5.0<m^2>)
@@ -511,9 +515,14 @@ module MembersTest =
     let s = 2.0f<kg>
     let d = 2.0M<kg>
 
+#if !NetCore
+    let tmpCulture = System.Threading.Thread.CurrentThread.CurrentCulture
+    System.Threading.Thread.CurrentThread.CurrentCulture <- System.Globalization.CultureInfo("en-US")
     test "f" (f.ToString().Equals("2"))
     test "s" (s.ToString().Equals("2"))
     test "d" (d.ToString().Equals("2.0"))
+    System.Threading.Thread.CurrentThread.CurrentCulture <- tmpCulture
+#endif
 
     let fc = (f :> System.IComparable<float<kg>>).CompareTo(f+f)
     let sc = (s :> System.IComparable<float32<kg>>).CompareTo(s+s)

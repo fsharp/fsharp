@@ -16,6 +16,7 @@ open Microsoft.FSharp.Compiler.Tastops
 open Microsoft.FSharp.Compiler.Lib
 open Microsoft.FSharp.Compiler.Lib.Bits
 open Microsoft.FSharp.Compiler.Range
+open Microsoft.FSharp.Compiler.Rational
 open Microsoft.FSharp.Compiler.Ast
 open Microsoft.FSharp.Compiler.Tast
 open Microsoft.FSharp.Compiler.ErrorLogger
@@ -1064,6 +1065,10 @@ let [<Literal>] itag_ldelem_any    = 59
 let [<Literal>] itag_stelem_any    = 60
 let [<Literal>] itag_unbox_any     = 61
 let [<Literal>] itag_ldlen_multi   = 62
+let [<Literal>] itag_initobj       = 63   // currently unused, added for forward compat, see https://visualfsharp.codeplex.com/SourceControl/network/forks/jackpappas/fsharpcontrib/contribution/7134
+let [<Literal>] itag_initblk       = 64   // currently unused, added for forward compat   
+let [<Literal>] itag_cpobj         = 65   // currently unused, added for forward compat   
+let [<Literal>] itag_cpblk         = 66   // currently unused, added for forward compat  
 
 let simple_instrs = 
     [ itag_add,        AI_add;
@@ -1098,7 +1103,11 @@ let simple_instrs =
       itag_localloc,   I_localloc;
       itag_throw,      I_throw;
       itag_ldlen,      I_ldlen;
-      itag_rethrow,    I_rethrow;    ]
+      itag_rethrow,    I_rethrow;    
+      itag_rethrow,    I_rethrow;   
+      itag_initblk,    I_initblk (Aligned,Nonvolatile);   
+      itag_cpblk,      I_cpblk (Aligned,Nonvolatile);  
+    ]
 
 let encode_table = Dictionary<_,_>(300, HashIdentity.Structural)
 let _ = List.iter (fun (icode,i) -> encode_table.[i] <- icode) simple_instrs
@@ -1134,7 +1143,11 @@ let decoders =
      itag_stobj,       u_ILType                            >> (fun c -> I_stobj (Aligned,Nonvolatile,c));
      itag_sizeof,      u_ILType                            >> I_sizeof;
      itag_ldlen_multi, u_tup2 u_int32 u_int32              >> (fun (a,b) -> EI_ldlen_multi (a,b));
-     itag_ilzero,      u_ILType                            >> EI_ilzero; ] 
+     itag_ilzero,      u_ILType                            >> EI_ilzero; 
+     itag_ilzero,      u_ILType                            >> EI_ilzero;   
+     itag_initobj,     u_ILType                            >> I_initobj;   
+     itag_cpobj,       u_ILType                            >> I_cpobj; 
+   ]   
 
 let decode_tab = 
     let tab = Array.init 256 (fun n -> (fun st -> ufailwith st ("no decoder for instruction "+string n)))
@@ -1179,6 +1192,8 @@ let p_ILInstr x st =
     | I_sizeof  ty                    -> p_byte itag_sizeof st;      p_ILType ty st
     | EI_ldlen_multi (n,m)            -> p_byte itag_ldlen_multi st; p_tup2 p_int32 p_int32 (n,m) st
     | EI_ilzero a                     -> p_byte itag_ilzero st;      p_ILType a st
+    | I_initobj c                     -> p_byte itag_initobj st;     p_ILType c st   
+    | I_cpobj c                       -> p_byte itag_cpobj st;       p_ILType c st  
     | i -> pfailwith st (sprintf "the IL instruction '%+A' cannot be emitted" i) 
 #endif
 
@@ -1394,15 +1409,64 @@ let u_trait st =
     TTrait (a,b,c,d,e,ref f)
 
 #if INCLUDE_METADATA_WRITER
-let rec p_measure_expr unt st =
-    let unt = stripUnitEqnsAux false unt 
-    match unt with 
-    | MeasureCon tcref   -> p_byte 0 st; p_tcref "measure" tcref st
-    | MeasureInv x       -> p_byte 1 st; p_measure_expr x st
-    | MeasureProd(x1,x2) -> p_byte 2 st; p_measure_expr x1 st; p_measure_expr x2 st
-    | MeasureVar(v)      -> p_byte 3 st; p_tpref v st
-    | MeasureOne         -> p_byte 4 st
+
+let p_rational q st = p_int32 (GetNumerator q) st; p_int32 (GetDenominator q) st
+
+let p_measure_con tcref st = p_byte 0 st; p_tcref "measure" tcref st
+let p_measure_var v st = p_byte 3 st; p_tpref v st
+let p_measure_one = p_byte 4
+
+// Pickle a unit-of-measure variable or constructor
+let p_measure_varcon unt st =
+     match unt with 
+     | MeasureCon tcref   -> p_measure_con tcref st
+     | MeasureVar v       -> p_measure_var v st
+     | _                  -> pfailwith st ("p_measure_varcon: expected measure variable or constructor")
+
+// Pickle a positive integer power of a unit-of-measure variable or constructor
+let rec p_measure_pospower unt n st =
+  if n = 1 
+  then p_measure_varcon unt st
+  else p_byte 2 st; p_measure_varcon unt st; p_measure_pospower unt (n-1) st
+
+// Pickle a non-zero integer power of a unit-of-measure variable or constructor
+let p_measure_intpower unt n st =
+  if n < 0
+  then p_byte 1 st; p_measure_pospower unt (-n) st
+  else p_measure_pospower unt n st
+
+// Pickle a rational power of a unit-of-measure variable or constructor
+let rec p_measure_power unt q st =
+  if q = ZeroRational then p_measure_one st
+  elif GetDenominator q = 1 
+  then p_measure_intpower unt (GetNumerator q) st 
+  else p_byte 5 st; p_measure_varcon unt st; p_rational q st
+
+// Pickle a normalized unit-of-measure expression
+// Normalized means of the form cv1 ^ q1 * ... * cvn ^ qn 
+// where q1, ..., qn are non-zero, and cv1, ..., cvn are distinct unit-of-measure variables or constructors
+let rec p_normalized_measure unt st =
+     let unt = stripUnitEqnsAux false unt 
+     match unt with 
+     | MeasureCon tcref   -> p_measure_con tcref st
+     | MeasureInv x       -> p_byte 1 st; p_normalized_measure x st
+     | MeasureProd(x1,x2) -> p_byte 2 st; p_normalized_measure x1 st; p_normalized_measure x2 st
+     | MeasureVar v       -> p_measure_var v st
+     | MeasureOne         -> p_measure_one st
+     | MeasureRationalPower(x,q) -> p_measure_power x q st
+
+// By normalizing the unit-of-measure and treating integer powers as a special case, 
+// we ensure that the pickle format for rational powers of units (byte 5 followed by 
+// numerator and denominator) is used only when absolutely necessary, maintaining 
+// compatibility of formats with versions prior to F# 4.0.
+//
+// See https://github.com/Microsoft/visualfsharp/issues/69
+let p_measure_expr unt st = p_normalized_measure (normalizeMeasure st.oglobals unt) st
+
 #endif
+
+let u_rational st =
+  let a,b = u_tup2 u_int32 u_int32 st in DivRational (intToRational a) (intToRational b)
 
 let rec u_measure_expr st =
     let tag = u_byte st
@@ -1412,6 +1476,7 @@ let rec u_measure_expr st =
     | 2 -> let a,b = u_tup2 u_measure_expr u_measure_expr st in MeasureProd (a,b)
     | 3 -> let a = u_tpref st in MeasureVar a
     | 4 -> MeasureOne
+    | 5 -> let a = u_measure_expr st in let b = u_rational st in MeasureRationalPower (a,b)
     | _ -> ufailwith st "u_measure_expr"
 
 #if INCLUDE_METADATA_WRITER

@@ -13,7 +13,13 @@ open Microsoft.FSharp.Compiler.Lib
 
 type TypeData 
 type TypeVarData =  { tvName: string }
-type NamedTypeData = { tcName: string; tcAssembly:  string }
+
+type NamedTypeData = 
+    /// Indicates an F# 4.0+ reference into the supplied table of type definition references, ultimately resolved by TypeRef/TypeDef data 
+    | Idx of int
+    /// Indicates an F# 3.0+ reference to a named type in an assembly loaded by name
+    | Named of (* tcName: *) string *  (* tcAssembly:  *) string 
+
 
 val mkVarTy : int -> TypeData 
 val mkFunTy : (TypeData * TypeData) -> TypeData
@@ -55,6 +61,7 @@ val mkHole   : TypeData * int -> ExprData
 val mkApp    : ExprData * ExprData -> ExprData 
 val mkLambda : VarData * ExprData -> ExprData 
 val mkQuote  : ExprData -> ExprData 
+val mkQuoteRaw40  : ExprData -> ExprData  // only available for FSharp.Core 4.4.0.0+
 val mkCond   : ExprData * ExprData * ExprData -> ExprData 
 val mkModuleValueApp : NamedTypeData * string * bool * TypeData list * ExprData list list -> ExprData 
 val mkLetRec : (VarData * ExprData) list * ExprData -> ExprData 
@@ -106,6 +113,6 @@ val pickle : (ExprData -> byte[])
 val isAttributedExpression : ExprData -> bool
     
 val PickleDefns : ((MethodBaseData * ExprData) list -> byte[]) 
-val pickledDefinitionsResourceNameBase : string
+val SerializedReflectedDefinitionsResourceNameBase : string
 val freshVar : string * TypeData * bool -> VarData
 

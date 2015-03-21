@@ -88,6 +88,33 @@ module LeafExpressionEvaluationTests =
 
     let _ = 1
     checkEval "2ver9ewve" (<@ () @>) ()
+    check "2ver9ewvr1" (Eval <@ (fun x -> NonStructuralComparison.(>) x 1) @> 3) true
+    check "2ver9ewvr1" (Eval <@ (fun x -> NonStructuralComparison.(>) x 4) @> 3) false
+    check "2ver9ewvr1" (Eval <@ (fun x -> NonStructuralComparison.(>) x 3) @> 3) false
+
+    check "2ver9ewvr2" (Eval <@ (fun x -> NonStructuralComparison.(<) x 1) @> 3) false
+    check "2ver9ewvr2" (Eval <@ (fun x -> NonStructuralComparison.(<) x 3) @> 3) false
+    check "2ver9ewvr2" (Eval <@ (fun x -> NonStructuralComparison.(<) x 4) @> 3) true
+
+    check "2ver9ewvr2" (Eval <@ (fun x -> NonStructuralComparison.(>=) x 1) @> 3) true
+    check "2ver9ewvr2" (Eval <@ (fun x -> NonStructuralComparison.(>=) x 3) @> 3) true
+    check "2ver9ewvr2" (Eval <@ (fun x -> NonStructuralComparison.(>=) x 4) @> 3) false
+
+    check "2ver9ewvr2" (Eval <@ (fun x -> NonStructuralComparison.(<=) x 1) @> 3) false
+    check "2ver9ewvr2" (Eval <@ (fun x -> NonStructuralComparison.(<=) x 3) @> 3) true
+    check "2ver9ewvr2" (Eval <@ (fun x -> NonStructuralComparison.(<=) x 4) @> 3) true
+
+    check "2ver9ewvr2" (Eval <@ (fun x -> NonStructuralComparison.(=) x 3) @> 3) true
+    check "2ver9ewvr2" (Eval <@ (fun x -> NonStructuralComparison.(=) x 4) @> 3) false
+    check "2ver9ewvr2" (Eval <@ (fun x -> NonStructuralComparison.(=) x 1) @> 3) false
+
+    check "2ver9ewvr2" (Eval <@ (fun x -> NonStructuralComparison.(<>) x 4) @> 3) true
+    check "2ver9ewvr2" (Eval <@ (fun x -> NonStructuralComparison.(<>) x 3) @> 3) false
+    check "2ver9ewvr2" (Eval <@ (fun x -> NonStructuralComparison.(<>) x 1) @> 3) true
+
+    check "2ver9ewvr" (Eval <@ (fun x -> x + 1) @> (3)) 4
+    check "2ver9ewvr" (Eval <@ (fun x -> x + 1) @> (3)) 4
+    check "2ver9ewvr" (Eval <@ (fun x -> x + 1) @> (3)) 4
     check "2ver9ewvr" (Eval <@ (fun x -> x + 1) @> (3)) 4
     check "2ver9ewvt" (Eval <@ (fun (x,y) -> x + 1) @> (3,4)) 4
     check "2ver9ewvy" (Eval <@ (fun (x1,x2,x3) -> x1 + x2 + x3) @> (3,4,5)) (3+4+5)
@@ -814,6 +841,14 @@ module LeafExpressionEvaluationTests =
         checkEval "clkedw2" (<@ let x : int option = Some 1 in x.Value @>) 1
         checkEval "clkedw3" (<@ let x : int option = Some 1 in x.ToString() @>) "Some(1)"
 
+    module NestedQuotes = 
+
+        open Microsoft.FSharp.Linq.NullableOperators
+
+        checkEval "feoewjewjlejf1" <@ <@@ 1 @@> @> <@@ 1 @@> 
+        checkEval "feoewjewjlejf2" <@ <@ 1 @> @> <@ 1 @> 
+        checkEval "feoewjewjlejf3" <@ <@@ 1 @@>, <@ 2 @> @> (<@@ 1 @@> , <@ 2 @>)
+
     module Extensions = 
         type System.Object with 
             member x.ExtensionMethod0()  = 3
@@ -958,7 +993,9 @@ module LeafExpressionEvaluationTests =
         open Microsoft.FSharp.Data.UnitSystems.SI.UnitSymbols
 
         checkEval "opp2oin209v3041" <@ Nullable.byte (Nullable 2) @> (Nullable 2uy)
+        checkEval "opp2oin209v3041" <@ Nullable.uint8  (Nullable 2) @> (Nullable 2uy)
         checkEval "opp2oin209v3042" <@ Nullable.sbyte (Nullable 2) @> (Nullable 2y)
+        checkEval "opp2oin209v3042" <@ Nullable.int8 (Nullable 2) @> (Nullable 2y)
         checkEval "opp2oin209v3043" <@ Nullable.uint16(Nullable 2 )@> (Nullable 2us)
         checkEval "opp2oin209v3044" <@ Nullable.int16(Nullable 2 )@> (Nullable 2s)
         checkEval "opp2oin209v3045" <@ Nullable.uint32 (Nullable 2s) @> (Nullable 2u)
@@ -970,11 +1007,14 @@ module LeafExpressionEvaluationTests =
         checkEval "opp2oin209v304w" <@ Nullable.enum(Nullable 2 ): System.Nullable<System.DayOfWeek> @> (Nullable System.DayOfWeek.Tuesday )
 
         checkEval "opp2oin209v304e" <@ Nullable.sbyte (Nullable 2<kg>) @> (Nullable 2y)
+        checkEval "opp2oin209v304e" <@ Nullable.int8 (Nullable 2<kg>) @> (Nullable 2y)
         checkEval "opp2oin209v304r" <@ Nullable.int16 (Nullable 2<kg>) @> (Nullable 2s)
         checkEval "opp2oin209v304t" <@ Nullable.int32 (Nullable 2s<kg>) @> (Nullable 2)
         checkEval "opp2oin209v304y" <@ Nullable.int64 (Nullable 2<kg>) @> (Nullable 2L)
         checkEval "opp2oin209v304u" <@ Nullable.float (Nullable 2<kg>) @> (Nullable 2.0)
+        checkEval "opp2oin209v304u" <@ Nullable.double (Nullable 2<kg>) @> (Nullable 2.0)
         checkEval "opp2oin209v304i" <@ Nullable.float32 (Nullable 2<kg>) @> (Nullable 2.0f)
+        checkEval "opp2oin209v304i" <@ Nullable.single (Nullable 2<kg>) @> (Nullable 2.0f)
 
 
 
@@ -1112,5 +1152,6 @@ let aa =
   | _ -> 
       stdout.WriteLine "Test Failed"
       exit 1
+
 #endif
 

@@ -293,7 +293,9 @@ module NullableConversions =
     open Microsoft.FSharp.Data.UnitSystems.SI.UnitSymbols
 
     check "opp2oin209v3041" (Nullable.byte (Nullable 2)) (Nullable 2uy)
+    check "opp2oin209v3041" (Nullable.uint8 (Nullable 2)) (Nullable 2uy)
     check "opp2oin209v3042" (Nullable.sbyte (Nullable 2)) (Nullable 2y)
+    check "opp2oin209v3042" (Nullable.int8 (Nullable 2)) (Nullable 2y)
     check "opp2oin209v3043" (Nullable.uint16(Nullable 2 )) (Nullable 2us)
     check "opp2oin209v3044" (Nullable.int16(Nullable 2 )) (Nullable 2s)
     check "opp2oin209v3045" (Nullable.uint32 (Nullable 2s)) (Nullable 2u)
@@ -305,11 +307,14 @@ module NullableConversions =
     check "opp2oin209v304w" (Nullable.enum(Nullable 2 ): System.Nullable<System.DayOfWeek>) (Nullable System.DayOfWeek.Tuesday )
 
     check "opp2oin209v304e" (Nullable.sbyte (Nullable 2<kg>)) (Nullable 2y)
+    check "opp2oin209v304e" (Nullable.int8  (Nullable 2<kg>)) (Nullable 2y)
     check "opp2oin209v304r" (Nullable.int16 (Nullable 2<kg>)) (Nullable 2s)
     check "opp2oin209v304t" (Nullable.int32 (Nullable 2s<kg>)) (Nullable 2)
     check "opp2oin209v304y" (Nullable.int64 (Nullable 2<kg>)) (Nullable 2L)
     check "opp2oin209v304u" (Nullable.float (Nullable 2<kg>)) (Nullable 2.0)
+    check "opp2oin209v304u" (Nullable.double (Nullable 2<kg>)) (Nullable 2.0)
     check "opp2oin209v304i" (Nullable.float32 (Nullable 2<kg>)) (Nullable 2.0f)
+    check "opp2oin209v304i" (Nullable.single (Nullable 2<kg>)) (Nullable 2.0f)
 
 
 #if ALL_IN_ONE
