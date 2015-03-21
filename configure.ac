@@ -20,15 +20,15 @@ fi
 AC_MSG_NOTICE("pkg-config: $PKG_CONFIG")
 AC_MSG_NOTICE("PKG_CONFIG_LIBDIR: $PKG_CONFIG_LIBDIR")
 
-MONO_REQUIRED_VERSION=3.0
-MONO_RECOMMENDED_VERSION=3.2
+MONO_REQUIRED_VERSION=4.0
+MONO_RECOMMENDED_VERSION=4.0
 
 if ! $PKG_CONFIG --atleast-version=$MONO_REQUIRED_VERSION mono; then
 	AC_MSG_ERROR("You need mono $MONO_REQUIRED_VERSION")
 fi
 
 if ! $PKG_CONFIG --atleast-version=$MONO_RECOMMENDED_VERSION mono; then
-	AC_MSG_WARN([Mono $MONO_RECOMMENDED_VERSION or higher is recommended, for better GC performance])
+	AC_MSG_WARN([Mono $MONO_RECOMMENDED_VERSION or higher is recommended])
 fi
 
 # Checks for libraries.
