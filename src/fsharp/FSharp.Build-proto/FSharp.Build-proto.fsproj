@@ -21,6 +21,7 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' " />
   <ItemGroup>
 	  <FsSrGen Include="..\FSharp.Build\FSBuild.txt">
+		  <Link>FSBuild.txt</Link>
 	  </FsSrGen>
     <Compile Include="..\..\utils\CompilerLocationUtils.fs">
       <Link>CompilerLocationUtils.fs</Link>
@@ -49,9 +50,9 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Numerics" />
+    <Reference Include="Microsoft.Build.Framework"/>
     <Reference Include="Microsoft.Build.Engine" />
     <Reference Include="Microsoft.Build"/>
-    <Reference Include="Microsoft.Build.Framework"/>
     <Reference Include="Microsoft.Build.Utilities.v4.0"/>
     <Reference Include="Microsoft.Build.Tasks.v4.0"/>
   </ItemGroup>

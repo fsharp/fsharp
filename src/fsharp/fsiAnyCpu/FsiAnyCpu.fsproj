@@ -43,12 +43,13 @@
     <Compile Include="..\fsi\fsi.fs">
       <Link>fsi.fs</Link>
     </Compile>
+    <None Include="fsiAnyCpu.exe.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>fsiAnyCpu.exe.config</Link>
+    </None>
     <Compile Include="..\fsi\fsimain.fs">
       <Link>fsimain.fs</Link>
     </Compile>
-    <None Include="fsiAnyCpu.exe.config">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
   <ItemGroup>
     <Reference Include="mscorlib" />
