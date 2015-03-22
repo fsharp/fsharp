@@ -1,7 +1,7 @@
 (cd Sample_MonoDevelop_3_2_8_Console && xbuild) &&
-(cd Sample_VS2010_FSharp_ConsoleApp_net35 && xbuild) &&
+#(cd Sample_VS2010_FSharp_ConsoleApp_net35 && xbuild) &&
 (cd Sample_VS2010_FSharp_ConsoleApp_net40 && xbuild) &&
-(cd Sample_VS2012_FSharp_ConsoleApp_net35 && xbuild) &&
+#(cd Sample_VS2012_FSharp_ConsoleApp_net35 && xbuild) &&
 (cd Sample_VS2012_FSharp_ConsoleApp_net40 && xbuild) &&
 (cd Sample_VS2012_FSharp_ConsoleApp_net45 && xbuild) &&
 (cd Sample_VS2012_FSharp_ConsoleApp_net45_with_resource && xbuild) &&

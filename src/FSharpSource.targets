@@ -54,7 +54,8 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
 
   <PropertyGroup Condition="('$(Configuration)'=='Debug' OR '$(Configuration)'=='Release') AND ('$(AssemblyName)'=='FSharp.Core')">
     <DefineConstants>STRONG_NAME_AND_DELAY_SIGN_FSHARP_COMPILER_WITH_MSFT_KEY;$(DefineConstants)</DefineConstants>
-    <OtherFlags>$(OtherFlags) --delaysign+ --keyfile:"$(FSharpSourcesRoot)\fsharp\msft.pubkey"</OtherFlags>
+    <OtherFlags Condition="'$(KeyFile)' != ''">$(OtherFlags) --keyfile:"$(KeyFile)"</OtherFlags>
+    <OtherFlags Condition="'$(KeyFile)' == ''">$(OtherFlags) --delaysign+ --keyfile:"$(FSharpSourcesRoot)\fsharp\msft.pubkey"</OtherFlags>
     <StrongNames>true</StrongNames>
   </PropertyGroup>
 
@@ -144,10 +145,10 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <DefineConstants  Condition="'$(Configuration)'!='Proto'">$(DefineConstants);FX_ATLEAST_45</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_ATLEAST_40</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_ATLEAST_35</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_ATLEAST_LINQ</DefineConstants>
     <DefineConstants>$(DefineConstants);BE_SECURITY_TRANSPARENT</DefineConstants>
     <DefineConstants>$(DefineConstants);QUERIES_IN_FSLIB</DefineConstants>
     <DefineConstants>$(DefineConstants);PUT_TYPE_PROVIDERS_IN_FSCORE;</DefineConstants>
-    <DefineConstants>$(DefineConstants);FX_ATLEAST_LINQ</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_BIGINT_CULTURE_PARSE</DefineConstants>
     <TargetFrameworkProfile></TargetFrameworkProfile>
     <!-- MSbuild works out the assembly references -->
@@ -155,37 +156,40 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
 
   <!-- Target MonoAndroid -->
   <PropertyGroup Condition="'$(TargetFramework)'=='monodroid'">
-    <TargetFrameworkVersion>v2.1</TargetFrameworkVersion>
+    <!--<TargetFrameworkVersion>v1.0</TargetFrameworkVersion>-->
+    <!-- <TargetFrameworkIdentifier>MonoAndroid</TargetFrameworkIdentifier> -->
     <TargetFrameworkOutputDirectory>$(TargetFramework)</TargetFrameworkOutputDirectory>
-    <DefineConstants>$(DefineConstants);FX_NO_STRUCTURAL_EQUALITY</DefineConstants>
-    <DefineConstants>$(DefineConstants);FX_NO_CUSTOMATTRIBUTEDATA</DefineConstants>
-    <DefineConstants>$(DefineConstants);FX_NO_BIGINT_CULTURE_PARSE</DefineConstants>
-    <DefineConstants>$(DefineConstants);FX_NO_EXCEPTIONDISPATCHINFO</DefineConstants>
+    <DefineConstants>$(DefineConstants);FSHARP_CORE_4_5</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_ATLEAST_45</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_ATLEAST_40</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_ATLEAST_35</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_ATLEAST_LINQ</DefineConstants>
-    <DefineConstants>$(DefineConstants);FX_NO_BIGINT</DefineConstants>
     <DefineConstants>$(DefineConstants);QUERIES_IN_FSLIB</DefineConstants>
     <DefineConstants>$(DefineConstants);PUT_TYPE_PROVIDERS_IN_FSCORE;</DefineConstants>
-    <AssemblySearchPaths>$(FSharpSourcesRoot)\..\dependencies\mono\2.1;$(AssemblySearchPaths)</AssemblySearchPaths>
+    <!-- Although Reflection Emit is available on MonoAndroid, we don't use it for FSharp.Core -->
+    <!-- because we want the FSharp.Core DLLs to be identical for MonoAndroid and MonoTouch -->
+    <DefineConstants>$(DefineConstants);FX_NO_REFLECTION_EMIT</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_BIGINT</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_STRUCTURAL_EQUALITY</DefineConstants>
+    <AssemblySearchPaths>$(FSharpSourcesRoot)\..\dependencies\mono\2.1\MonoAndroid;$(AssemblySearchPaths)</AssemblySearchPaths>
   </PropertyGroup>
 
-  <!-- Target MonoTouch -->
+  <!-- Target MonoTouch (should be identical to MonoAndroid configurations, though we sanity check --> 
+  <!-- by building against the MonoTouch mscorlib) -->
   <PropertyGroup Condition="'$(TargetFramework)'=='monotouch'">
-    <TargetFrameworkVersion>v2.1</TargetFrameworkVersion>
+    <!--<TargetFrameworkVersion>v1.0</TargetFrameworkVersion>-->
+    <!-- <TargetFrameworkIdentifier>MonoTouch</TargetFrameworkIdentifier> --> 
     <TargetFrameworkOutputDirectory>$(TargetFramework)</TargetFrameworkOutputDirectory>
-    <DefineConstants>$(DefineConstants);FX_NO_STRUCTURAL_EQUALITY</DefineConstants>
-    <DefineConstants>$(DefineConstants);FX_NO_CUSTOMATTRIBUTEDATA</DefineConstants>
-    <DefineConstants>$(DefineConstants);FX_NO_BIGINT_CULTURE_PARSE</DefineConstants>
-    <DefineConstants>$(DefineConstants);FX_NO_EXCEPTIONDISPATCHINFO</DefineConstants>
+    <DefineConstants>$(DefineConstants);FSHARP_CORE_4_5</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_ATLEAST_45</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_ATLEAST_40</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_ATLEAST_35</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_ATLEAST_LINQ</DefineConstants>
-    <DefineConstants>$(DefineConstants);FX_NO_BIGINT</DefineConstants>
-    <DefineConstants>$(DefineConstants);FX_NO_REFLECTION_EMIT</DefineConstants>
     <DefineConstants>$(DefineConstants);QUERIES_IN_FSLIB</DefineConstants>
     <DefineConstants>$(DefineConstants);PUT_TYPE_PROVIDERS_IN_FSCORE;</DefineConstants>
-    <OtherFlags>$(OtherFlags) --simpleresolution -r:"$(FSharpSourcesRoot)\..\dependencies\mono\2.1\MonoTouch\mscorlib-runtime.dll"</OtherFlags>
+    <DefineConstants>$(DefineConstants);FX_NO_REFLECTION_EMIT</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_BIGINT</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_STRUCTURAL_EQUALITY</DefineConstants>
     <AssemblySearchPaths>$(FSharpSourcesRoot)\..\dependencies\mono\2.1\MonoTouch;$(AssemblySearchPaths)</AssemblySearchPaths>
   </PropertyGroup>
 
