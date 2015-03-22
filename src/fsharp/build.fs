@@ -2079,7 +2079,7 @@ type TcConfigBuilder =
           printSignatureFile = ""
           xmlDocOutputFile = None
           stats = false
-          generateFilterBlocks = false (* don't generate filter blocks *)
+          generateFilterBlocks = true
 
           signer = None
           container = None
