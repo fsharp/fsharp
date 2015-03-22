@@ -419,6 +419,18 @@ namespace Microsoft.FSharp.Collections
         [<CompiledName("Filter")>]
         let filter f x = Microsoft.FSharp.Primitives.Basics.List.filter f x
 
+        [<CompiledName("Except")>]
+        let except itemsToExclude list =
+            match box itemsToExclude with
+            | null -> nullArg "itemsToExclude"
+            | _ -> ()
+
+            match list with
+            | [] -> list
+            | _ ->
+                let cached = HashSet(itemsToExclude, HashIdentity.Structural)
+                list |> filter cached.Add
+
         [<CompiledName("Where")>]
         let where f x = Microsoft.FSharp.Primitives.Basics.List.filter f x
 
@@ -458,6 +470,12 @@ namespace Microsoft.FSharp.Collections
 
         [<CompiledName("Windowed")>]
         let windowed n x = Microsoft.FSharp.Primitives.Basics.List.windowed n x
+
+        [<CompiledName("ChunkBySize")>]
+        let chunkBySize chunkSize list = Microsoft.FSharp.Primitives.Basics.List.chunkBySize chunkSize list
+
+        [<CompiledName("SplitInto")>]
+        let splitInto count list = Microsoft.FSharp.Primitives.Basics.List.splitInto count list
 
         [<CompiledName("Zip")>]
         let zip x1 x2 =  Microsoft.FSharp.Primitives.Basics.List.zip x1 x2

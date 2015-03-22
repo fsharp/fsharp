@@ -226,7 +226,6 @@
     <Reference Include="System.Observable" Condition="'$(TargetFramework)' == 'sl3-wp' " >
       <Private>false</Private>
     </Reference>
-    <Reference Include="System.Observable" Condition="'$(TargetFramework)' == 'sl3-wp' "/>
     <Reference Include="System.Core" Condition="'$(TargetFramework)' == 'sl5' OR 
                                                 '$(TargetFramework)' == 'sl5-compiler' OR 
                                                 '$(TargetFramework)' == 'XNA\5.0' OR 

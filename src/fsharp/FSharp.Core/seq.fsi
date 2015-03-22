@@ -129,6 +129,15 @@ namespace Microsoft.FSharp.Collections
         [<CompiledName("Choose")>]
         val choose: chooser:('T -> 'U option) -> source:seq<'T> -> seq<'U>
 
+        /// <summary>Divides the input sequence into chunks of size at most <c>chunkSize</c>.</summary>
+        /// <param name="chunkSize">The maximum size of each chunk.</param>
+        /// <param name="source">The input sequence.</param>
+        /// <returns>The sequence divided into chunks.</returns>
+        /// <exception cref="System.ArgumentNullException">Thrown when the input sequence is null.</exception>
+        /// <exception cref="System.ArgumentException">Thrown when <c>chunkSize</c> is not positive.</exception>
+        [<CompiledName("ChunkBySize")>]
+        val chunkBySize: chunkSize:int -> source:seq<'T> -> seq<'T[]>
+
         /// <summary>Applies the given function to each element of the sequence and concatenates all the
         /// results.</summary>
         ///
@@ -236,12 +245,41 @@ namespace Microsoft.FSharp.Collections
         [<CompiledName("DistinctBy")>]
         val distinctBy: projection:('T -> 'Key) -> source:seq<'T> -> seq<'T> when 'Key : equality
 
+        /// <summary>Splits the input sequence into at most <c>count</c> chunks.</summary>
+        /// <remarks>This function returns a sequence that digests the whole initial sequence as soon as that
+        /// sequence is iterated. As a result this function should not be used with large or infinite sequences.</remarks>
+        /// <param name="count">The maximum number of chunks.</param>
+        /// <param name="source">The input sequence.</param>
+        /// <returns>The sequence split into chunks.</returns>
+        /// <exception cref="System.ArgumentNullException">Thrown when the input sequence is null.</exception>
+        /// <exception cref="System.ArgumentException">Thrown when <c>count</c> is not positive.</exception>
+        [<CompiledName("SplitInto")>]
+        val splitInto: count:int -> source:seq<'T> -> seq<'T[]>
+
         /// <summary>Creates an empty sequence.</summary>
         ///
         /// <returns>An empty sequence.</returns>
         [<GeneralizableValueAttribute>]
         [<CompiledName("Empty")>]
         val empty<'T> : seq<'T>
+
+        /// <summary>Returns a new sequence with the distinct elements of the second sequence which do not apear in the first sequence,
+        /// using generic hash and equality comparisons to compare values.</summary>
+        ///
+        /// <remarks>Note that this function returns a sequence that digests the whole of the first input sequence as soon as
+        /// the result sequence is iterated. As a result this function should not be used with
+        /// large or infinite sequences in the first parameter. The function makes no assumption on the ordering of the first input
+        /// sequence.</remarks>
+        ///
+        /// <param name="itemsToExclude">A sequence whose elements that also occur in the second sequence will cause those elements to be
+        /// removed from the returned sequence.</param>
+        /// <param name="source">A sequence whose elements that are not also in first will be returned.</param>
+        ///
+        /// <returns>A sequence that contains the set difference of the elements of two sequences.</returns>
+        ///
+        /// <exception cref="System.ArgumentNullException">Thrown when either of the two input sequences is null.</exception>
+        [<CompiledName("Except")>]
+        val except: itemsToExclude:seq<'T> -> source:seq<'T> -> seq<'T> when 'T : equality
 
         /// <summary>Tests if any element of the sequence satisfies the given predicate.</summary>
         ///

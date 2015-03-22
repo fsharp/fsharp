@@ -174,6 +174,15 @@ namespace Microsoft.FSharp.Collections
         [<CompiledName("Choose")>]
         val choose: chooser:('T -> 'U option) -> array:'T[] -> 'U[]
 
+        /// <summary>Divides the input array into chunks of size at most <c>chunkSize</c>.</summary>
+        /// <param name="chunkSize">The maximum size of each chunk.</param>
+        /// <param name="array">The input array.</param>
+        /// <returns>The array divided into chunks.</returns>
+        /// <exception cref="System.ArgumentNullException">Thrown when the input array is null.</exception>
+        /// <exception cref="System.ArgumentException">Thrown when <c>chunkSize</c> is not positive.</exception>
+        [<CompiledName("ChunkBySize")>]
+        val chunkBySize: chunkSize:int -> array:'T[] -> 'T[][]
+
         /// <summary>Returns an array that contains no duplicate entries according to generic hash and
         /// equality comparisons on the entries.
         /// If an element occurs multiple times in the array then the later occurrences are discarded.</summary>
@@ -199,6 +208,15 @@ namespace Microsoft.FSharp.Collections
         [<CompiledName("DistinctBy")>]
         val distinctBy: projection:('T -> 'Key) -> array:'T[] -> 'T[] when 'Key : equality
 
+        /// <summary>Splits the input array into at most <c>count</c> chunks.</summary>
+        /// <param name="count">The maximum number of chunks.</param>
+        /// <param name="array">The input array.</param>
+        /// <returns>The array split into chunks.</returns>
+        /// <exception cref="System.ArgumentNullException">Thrown when the input array is null.</exception>
+        /// <exception cref="System.ArgumentException">Thrown when <c>count</c> is not positive.</exception>
+        [<CompiledName("SplitInto")>]
+        val splitInto: count:int -> array:'T[] -> 'T[][]
+
         /// <summary>Returns an empty array of the given type.</summary>
         /// <returns>The empty array.</returns>
         [<GeneralizableValue>]
@@ -215,6 +233,19 @@ namespace Microsoft.FSharp.Collections
         /// <exception cref="System.ArgumentException">Thrown when the input does not have precisely one element.</exception>
         [<CompiledName("ExactlyOne")>]
         val exactlyOne: array:'T[] -> 'T
+
+        /// <summary>Returns a new list with the distinct elements of the input array which do not appear in the itemsToExclude sequence,
+        /// using generic hash and equality comparisons to compare values.</summary>
+        ///
+        /// <param name="itemsToExclude">A sequence whose elements that also occur in the input array will cause those elements to be
+        /// removed from the result.</param>
+        /// <param name="array">An array whose elements that are not also in itemsToExclude will be returned.</param>
+        ///
+        /// <returns>An array that contains the distinct elements of <c>array</c> that do not appear in <c>itemsToExclude</c>.</returns>
+        ///
+        /// <exception cref="System.ArgumentNullException">Thrown when either itemsToExclude or array is null.</exception>
+        [<CompiledName("Except")>]
+        val except: itemsToExclude:seq<'T> -> array:'T[] -> 'T[] when 'T : equality
 
         /// <summary>Tests if any element of the array satisfies the given predicate.</summary>
         ///

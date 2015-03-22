@@ -145,6 +145,57 @@ type ArrayModule() =
         ()
 
     [<Test>]
+    member this.ChunkBySize() =
+
+        // int Seq
+        Assert.AreEqual([| [|1..4|]; [|5..8|] |], Array.chunkBySize 4 [|1..8|])
+        Assert.AreEqual([| [|1..4|]; [|5..8|]; [|9..10|] |], Array.chunkBySize 4 [|1..10|])
+        Assert.AreEqual([| [|1|]; [|2|]; [|3|]; [|4|] |], Array.chunkBySize 1 [|1..4|])
+
+        // string Seq
+        Assert.AreEqual([| [|"a"; "b"|]; [|"c";"d"|]; [|"e"|] |], Array.chunkBySize 2 [|"a";"b";"c";"d";"e"|])
+
+        // empty Seq
+        Assert.AreEqual([||], Array.chunkBySize 3 [||])
+
+        // null Seq
+        let nullArr:_[] = null
+        CheckThrowsArgumentNullException (fun () -> Array.chunkBySize 3 nullArr |> ignore)
+
+        // invalidArg
+        CheckThrowsArgumentException (fun () -> Array.chunkBySize 0 [|1..10|] |> ignore)
+        CheckThrowsArgumentException (fun () -> Array.chunkBySize -1 [|1..10|] |> ignore)
+
+        ()
+
+    [<Test>]
+    member this.SplitInto() =
+
+        // int array
+        Assert.AreEqual([| [|1..4|]; [|5..7|]; [|8..10|] |], Array.splitInto 3 [|1..10|])
+        Assert.AreEqual([| [|1..4|]; [|5..8|]; [|9..11|] |], Array.splitInto 3 [|1..11|])
+        Assert.AreEqual([| [|1..4|]; [|5..8|]; [|9..12|] |], Array.splitInto 3 [|1..12|])
+
+        Assert.AreEqual([| [|1..2|]; [|3|]; [|4|]; [|5|] |], Array.splitInto 4 [|1..5|])
+        Assert.AreEqual([| [|1|]; [|2|]; [|3|]; [|4|] |], Array.splitInto 20 [|1..4|])
+
+        // string array
+        Assert.AreEqual([| [|"a"; "b"|]; [|"c";"d"|]; [|"e"|] |], Array.splitInto 3 [|"a";"b";"c";"d";"e"|])
+
+        // empty array
+        Assert.AreEqual([| |], Array.splitInto 3 [| |])
+
+        // null array
+        let nullArr:_[] = null
+        CheckThrowsArgumentNullException (fun () -> Array.splitInto 3 nullArr |> ignore)
+
+        // invalidArg
+        CheckThrowsArgumentException (fun () -> Array.splitInto 0 [|1..10|] |> ignore)
+        CheckThrowsArgumentException (fun () -> Array.splitInto -1 [|1..10|] |> ignore)
+
+        ()
+
+    [<Test>]
     member this.distinct() =
         // distinct should work on empty array
         Assert.AreEqual([||], Array.distinct [||])
@@ -185,7 +236,39 @@ type ArrayModule() =
         Assert.AreEqual([|null|], Array.distinctBy id [|null|])
         let list = new System.Collections.Generic.List<int>()
         Assert.AreEqual([|null, list|], Array.distinctBy id [|null, list|])
-        
+
+    [<Test>]
+    member this.Except() =
+        // integer array
+        let intArr1 = [| yield! {1..100}
+                         yield! {1..100} |]
+        let intArr2 = [| 1 .. 10 |]
+        let expectedIntArr = [| 11 .. 100 |]
+
+        Assert.AreEqual(expectedIntArr, Array.except intArr2 intArr1)
+
+        // string array
+        let strArr1 = [| "a"; "b"; "c"; "d"; "a" |]
+        let strArr2 = [| "b"; "c" |]
+        let expectedStrArr = [| "a"; "d" |]
+
+        Assert.AreEqual(expectedStrArr, Array.except strArr2 strArr1)
+
+        // empty array
+        let emptyIntArr = [| |]
+        Assert.AreEqual([|1..100|], Array.except emptyIntArr intArr1)
+        Assert.AreEqual(emptyIntArr, Array.except intArr1 emptyIntArr)
+        Assert.AreEqual(emptyIntArr, Array.except emptyIntArr emptyIntArr)
+        Assert.AreEqual(emptyIntArr, Array.except intArr1 intArr1)
+
+        // null array
+        let nullArr : int [] = null
+        CheckThrowsArgumentNullException(fun () -> Array.except nullArr emptyIntArr |> ignore)
+        CheckThrowsArgumentNullException(fun () -> Array.except emptyIntArr nullArr |> ignore)
+        CheckThrowsArgumentNullException(fun () -> Array.except nullArr nullArr |> ignore)
+
+        ()
+
     [<Test>]
     member this.Take() =
         Assert.AreEqual([||],Array.take 0 [||])
