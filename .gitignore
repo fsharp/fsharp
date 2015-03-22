@@ -149,3 +149,4 @@ FSharp.Core.Nuget/*.nupkg
 *.jrs
 *.chk
 *.bak
+*.orig

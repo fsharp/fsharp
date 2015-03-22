@@ -2711,9 +2711,19 @@ type TcConfig private (data : TcConfigBuilder,validate:bool) =
         let isNetModule = String.Compare(ext,".netmodule",StringComparison.OrdinalIgnoreCase)=0 
         if String.Compare(ext,".dll",StringComparison.OrdinalIgnoreCase)=0 
            || String.Compare(ext,".exe",StringComparison.OrdinalIgnoreCase)=0 
-           || isNetModule then 
+           || isNetModule then
 
-            let resolved = TryResolveFileUsingPaths(tcConfig.SearchPathsForLibraryFiles,m,nm)
+            let searchPaths =
+                // if this is a #r reference (not from dummy range), make sure the directory of the declaring
+                // file is included in the search path. This should ideally already be one of the search paths, but
+                // during some global checks it won't be.  We append to the end of the search list so that this is the last
+                // place that is checked.
+                if m <> range0 && m <> rangeStartup && m <> rangeCmdArgs && FileSystem.IsPathRootedShim m.FileName then
+                    tcConfig.SearchPathsForLibraryFiles @ [Path.GetDirectoryName(m.FileName)]
+                else    
+                    tcConfig.SearchPathsForLibraryFiles
+
+            let resolved = TryResolveFileUsingPaths(searchPaths,m,nm)
             match resolved with 
             | Some(resolved) -> 
                 let sysdir = tcConfig.IsSystemAssembly resolved
@@ -3183,7 +3193,7 @@ let ParseInput (lexer,errorLogger:ErrorLogger,lexbuf:UnicodeLexing.Lexbuf,defaul
                 let intfs = Parser.signatureFile lexer lexbuf 
                 PostParseModuleSpecs (defaultNamespace,filename,isLastCompiland,intfs)
             else 
-                errorLogger.Error(InternalError(FSComp.SR.buildUnknownFileSuffix(filename),Range.rangeStartup))
+                errorLogger.Error(Error(FSComp.SR.buildInvalidSourceFileExtension(filename),Range.rangeStartup))
         filteringErrorLogger.ScopedPragmas <- GetScopedPragmasForInput input
         input
     finally

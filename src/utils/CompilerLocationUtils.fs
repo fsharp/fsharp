@@ -13,8 +13,19 @@ open System.Runtime.InteropServices
 module internal FSharpEnvironment =
 
     /// The F# version reported in the banner
+<<<<<<< HEAD
 #if NO_STRONG_NAMES
     let DotNetBuildString = "(private)"
+=======
+#if OPEN_BUILD
+    let DotNetBuildString = "(private)"
+#else
+    /// The .NET runtime version that F# was built against (e.g. "v4.0.21104")
+    let DotNetRuntime = sprintf "v%s.%s.%s" Microsoft.BuildSettings.Version.Major Microsoft.BuildSettings.Version.Minor Microsoft.BuildSettings.Version.ProductBuild
+
+    /// The .NET build string that F# was built against (e.g. "4.0.21104.0")
+    let DotNetBuildString = Microsoft.BuildSettings.Version.OfFile
+>>>>>>> 34f300dcaa32a404ede70a3d5f19cc5f3b3022d2
 #endif
 #if STRONG_NAME_AND_DELAY_SIGN_FSHARP_COMPILER_WITH_MSFT_KEY
     let DotNetBuildString = "(Open Source Edition)"
@@ -238,8 +249,15 @@ module internal FSharpEnvironment =
                 
                     // On windows the location of the compiler is via a registry key
 
+<<<<<<< HEAD
                     // Note: If the keys below change, be sure to update code in:
                     // Property pages (ApplicationPropPage.vb)
+=======
+                // On windows the location of the compiler is via a registry key
+
+                // Note: If the keys below change, be sure to update code in:
+                // Property pages (ApplicationPropPage.vb)
+>>>>>>> 34f300dcaa32a404ede70a3d5f19cc5f3b3022d2
 
                     let key20 = @"Software\Microsoft\.NETFramework\AssemblyFolders\Microsoft.FSharp-" + FSharpTeamVersionNumber 
                     let key40 = @"Software\Microsoft\FSharp\4.0\Runtime\v4.0"
@@ -251,6 +269,7 @@ module internal FSharpEnvironment =
                     let result = tryRegKey key1
                     match result with 
                     | Some _ ->  result 
+<<<<<<< HEAD
                     | None -> 
                         let result =  tryRegKey key2
                         match result with 
@@ -287,12 +306,28 @@ module internal FSharpEnvironment =
                                     // This was failing on rolling build for staging because the prototype compiler doesn't have the key. Disable there.
                                     // For the prototype compiler, we can just use the current domain
                                     tryCurrentDomain()
+=======
+                    | None ->
+
+                        // This was failing on rolling build for staging because the prototype compiler doesn't have the key. Disable there.
+#if FX_ATLEAST_40_COMPILER_LOCATION
+                        System.Diagnostics.Debug.Assert(result<>None, sprintf "Could not find location of compiler at '%s' or '%s'" key1 key2)
+#endif
+
+                        // For the prototype compiler, we can just use the current domain
+                        tryCurrentDomain()
+>>>>>>> 34f300dcaa32a404ede70a3d5f19cc5f3b3022d2
         with e -> 
             System.Diagnostics.Debug.Assert(false, "Error while determining default location of F# compiler")
             None
 
+<<<<<<< HEAD
 
 #if FX_ATLEAST_45_COMPILER_LOCATION
+=======
+#if FX_ATLEAST_45
+
+>>>>>>> 34f300dcaa32a404ede70a3d5f19cc5f3b3022d2
     // Apply the given function to the registry entry corresponding to the subkey.
     // The reg key is dispoed at the end of the scope.
     let useKey subkey f =

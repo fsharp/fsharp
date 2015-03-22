@@ -107,7 +107,50 @@ type ListModule() =
         Assert.AreEqual(22.476666666666666666666666667M, averageOfDecimal)
             
         ()
-        
+
+    [<Test>]
+    member this.ChunkBySize() =
+
+        // int list
+        Assert.AreEqual([ [1..4]; [5..8] ], List.chunkBySize 4 [1..8])
+        Assert.AreEqual([ [1..4]; [5..8]; [9..10] ], List.chunkBySize 4 [1..10])
+        Assert.AreEqual([ [1]; [2]; [3]; [4] ], List.chunkBySize 1 [1..4])
+
+        // string list
+        Assert.AreEqual([ ["a"; "b"]; ["c";"d"]; ["e"] ], List.chunkBySize 2 ["a";"b";"c";"d";"e"])
+
+        // empty list
+        Assert.AreEqual([], List.chunkBySize 3 [])
+
+        // invalidArg
+        CheckThrowsArgumentException (fun () -> List.chunkBySize 0 [1..10] |> ignore)
+        CheckThrowsArgumentException (fun () -> List.chunkBySize -1 [1..10] |> ignore)
+
+        ()
+
+    [<Test>]
+    member this.SplitInto() =
+
+        // int list
+        Assert.AreEqual([ [1..4]; [5..7]; [8..10] ], List.splitInto 3 [1..10])
+        Assert.AreEqual([ [1..4]; [5..8]; [9..11] ], List.splitInto 3 [1..11])
+        Assert.AreEqual([ [1..4]; [5..8]; [9..12] ], List.splitInto 3 [1..12])
+
+        Assert.AreEqual([ [1..2]; [3]; [4]; [5] ], List.splitInto 4 [1..5])
+        Assert.AreEqual([ [1]; [2]; [3]; [4] ], List.splitInto 20 [1..4])
+
+        // string list
+        Assert.AreEqual([ ["a"; "b"]; ["c";"d"]; ["e"] ], List.splitInto 3 ["a";"b";"c";"d";"e"])
+
+        // empty list
+        Assert.AreEqual([], List.splitInto 3 [])
+
+        // invalidArg
+        CheckThrowsArgumentException (fun () -> List.splitInto 0 [1..10] |> ignore)
+        CheckThrowsArgumentException (fun () -> List.splitInto -1 [1..10] |> ignore)
+
+        ()
+
     [<Test>]
     member this.distinct() = 
         // distinct should work on empty list
@@ -273,6 +316,35 @@ type ListModule() =
         // countBy should count by the given key function
         Assert.AreEqual([5,1; 2,2; 3,2],List.countBy id [5;2;2;3;3])
         Assert.AreEqual([3,3; 2,2; 1,3],List.countBy (fun x -> if x < 3 then x else 3) [5;2;1;2;3;3;1;1])
+
+    [<Test>]
+    member this.Except() =
+        // integer list
+        let intList1 = [ yield! {1..100}
+                         yield! {1..100} ]
+        let intList2 = [1..10]
+        let expectedIntList = [11..100]
+
+        Assert.AreEqual(expectedIntList, List.except intList2 intList1)
+
+        // string list
+        let strList1 = ["a"; "b"; "c"; "d"; "a"]
+        let strList2 = ["b"; "c"]
+        let expectedStrList = ["a"; "d"]
+
+        Assert.AreEqual(expectedStrList, List.except strList2 strList1)
+
+        // empty list
+        let emptyIntList = []
+        Assert.AreEqual([1..100], List.except emptyIntList intList1)
+        Assert.AreEqual(emptyIntList, List.except intList1 emptyIntList)
+        Assert.AreEqual(emptyIntList, List.except emptyIntList emptyIntList)
+        Assert.AreEqual(emptyIntList, List.except intList1 intList1)
+
+        // null seq
+        let nullSeq : int [] = null
+        CheckThrowsArgumentNullException(fun () -> List.except nullSeq emptyIntList |> ignore)
+        ()
 
     [<Test>]
     member this.Exists() =
