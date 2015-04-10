@@ -23,6 +23,8 @@
     <AssemblyVersion Condition="'$(TargetFramework)' == 'portable47' ">2.3.5.1</AssemblyVersion>
     <AssemblyVersion Condition="'$(TargetFramework)' == 'monodroid' ">2.3.98.1</AssemblyVersion>
     <AssemblyVersion Condition="'$(TargetFramework)' == 'monotouch' ">2.3.98.1</AssemblyVersion>
+    <AssemblyVersion Condition="'$(TargetFramework)' == 'xamarinmacmobile' ">2.3.99.1</AssemblyVersion>
+    <AssemblyVersion Condition="'$(TargetFramework)' == 'xamarinmacfull' ">2.3.100.1</AssemblyVersion>
     <AssemblyVersion Condition="'$(TargetFramework)' == 'portable7'">3.3.1.0</AssemblyVersion>
     <AssemblyVersion Condition="'$(TargetFramework)' == 'portable78'">3.78.3.1</AssemblyVersion>
     <AssemblyVersion Condition="'$(TargetFramework)' == 'portable259'">3.259.3.1</AssemblyVersion>
@@ -175,6 +177,32 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <DefineConstants>$(DefineConstants);FX_NO_BIGINT</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_STRUCTURAL_EQUALITY</DefineConstants>
     <AssemblySearchPaths>$(FSharpSourcesRoot)\..\dependencies\mono\2.1\MonoTouch;$(AssemblySearchPaths)</AssemblySearchPaths>
+  </PropertyGroup>
+
+  <!-- Target xamarinmacmobile similar to monotouch configurations, with Reflection.emit, structural equality, and BigInt --> 
+  <PropertyGroup Condition="'$(TargetFramework)'=='xamarinmacmobile'">
+    <TargetFrameworkOutputDirectory>$(TargetFramework)</TargetFrameworkOutputDirectory>
+    <DefineConstants>$(DefineConstants);FSHARP_CORE_4_5</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_ATLEAST_45</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_ATLEAST_40</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_ATLEAST_35</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_ATLEAST_LINQ</DefineConstants>
+    <DefineConstants>$(DefineConstants);QUERIES_IN_FSLIB</DefineConstants>
+    <DefineConstants>$(DefineConstants);PUT_TYPE_PROVIDERS_IN_FSCORE;</DefineConstants>
+    <AssemblySearchPaths>$(FSharpSourcesRoot)\..\dependencies\mono\2.1\XamarinMac;$(AssemblySearchPaths)</AssemblySearchPaths>
+  </PropertyGroup>
+
+  <!-- Target xamarinmacfull should be identical to desktop with missing System.Config, System.Drawing etc --> 
+  <PropertyGroup Condition="'$(TargetFramework)'=='xamarinmacfull'">
+    <TargetFrameworkOutputDirectory>$(TargetFramework)</TargetFrameworkOutputDirectory>
+    <DefineConstants>$(DefineConstants);FSHARP_CORE_4_5</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_ATLEAST_45</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_ATLEAST_40</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_ATLEAST_35</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_ATLEAST_LINQ</DefineConstants>
+    <DefineConstants>$(DefineConstants);QUERIES_IN_FSLIB</DefineConstants>
+    <DefineConstants>$(DefineConstants);PUT_TYPE_PROVIDERS_IN_FSCORE;</DefineConstants>
+    <AssemblySearchPaths>$(FSharpSourcesRoot)\..\dependencies\mono\4.5\XamarinMac;$(AssemblySearchPaths)</AssemblySearchPaths>
   </PropertyGroup>
 
 

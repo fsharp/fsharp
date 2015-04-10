@@ -23,6 +23,7 @@ pclenabled78 := @PCLENABLED78@
 pclenabled259 := @PCLENABLED259@
 monotouchenabled := @MONOTOUCHENABLED@
 monodroidenabled := @MONODROIDENABLED@
+xamarinmacenabled := @XAMARINMACENABLED@
 
 gacdir := ${libdir}mono
 
@@ -57,6 +58,16 @@ endif
 ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-monotouch-)
 VERSION = 2.3.98.1
 TARGET = monotouch
+endif
+
+ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-xamarinmacmobile-)
+VERSION = 2.3.99.1
+TARGET = xamarinmacmobile
+endif
+
+ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-xamarinmacfull-)
+VERSION = 2.3.100.1
+TARGET = xamarinmacfull
 endif
 
 ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-portable47-)
