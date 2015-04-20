@@ -12,7 +12,7 @@ all:
 
 # We need the bootstrap's FSharp.Core to run the proto
 build-proto: $(bootstrapdir)FSharp.Core.dll $(bootstrapdir)FSharp.Core.sigdata $(bootstrapdir)FSharp.Core.optdata
-	@-mkdir $(protodir)
+	@-mkdir -p $(protodir)
 	cp -p $(bootstrapdir)FSharp.Core.dll $(protodir)FSharp.Core.dll
 	cp -p $(bootstrapdir)FSharp.Core.sigdata $(protodir)FSharp.Core.sigdata
 	cp -p $(bootstrapdir)FSharp.Core.optdata $(protodir)FSharp.Core.optdata
