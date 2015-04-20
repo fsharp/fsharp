@@ -210,7 +210,9 @@
     </Reference>
     <Reference Include="System.Numerics" Condition="'$(TargetFramework)' == 'net40' OR 
                                                     '$(TargetFramework)' == 'monotouch' OR 
-                                                    '$(TargetFramework)' == 'monodroid'" >
+                                                    '$(TargetFramework)' == 'monodroid' OR
+                                                    '$(TargetFramework)' == 'xamarinmacmobile' OR
+                                                    '$(TargetFramework)' == 'xamarinmacfull'" >
       <Private>false</Private>
     </Reference>
     <Reference Include="System.Net" Condition="'$(TargetFramework)' == 'sl5' OR 
@@ -219,7 +221,9 @@
                                                '$(TargetFramework)' == 'sl3-wp' OR 
                                                '$(TargetFramework)' == 'portable47' OR 
                                                '$(TargetFramework)' == 'net40-xna40-xbox360' OR 
-                                               '$(TargetFramework)' == 'portable7'" >
+                                               '$(TargetFramework)' == 'portable7' OR
+                                               '$(TargetFramework)' == 'xamarinmacmobile' OR
+                                               '$(TargetFramework)' == 'xamarinmacfull'" >
       <Private>false</Private>
     </Reference>
     <Reference Include="System.Observable" Condition="'$(TargetFramework)' == 'sl3-wp' " >
@@ -233,7 +237,9 @@
                                                 '$(TargetFramework)' == 'monodroid' OR 
                                                 '$(TargetFramework)' == 'portable47' OR 
                                                 '$(TargetFramework)' == 'net40-xna40-xbox360' OR 
-                                                '$(TargetFramework)' == 'portable7'" >
+                                                '$(TargetFramework)' == 'portable7' OR
+                                                '$(TargetFramework)' == 'xamarinmacmobile' OR
+                                                '$(TargetFramework)' == 'xamarinmacfull'" >
       <Private>false</Private>
     </Reference>
   </ItemGroup>
