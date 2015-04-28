@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata>
+    <id>FSharp.Tools</id>
+    <version>3.1.2.2</version>
+    <title>FSharp.Tools for F# 3.1</title>
+    <authors>F# Software Foundation</authors>
+    <owners>F# Software Foundation</owners>
+    <licenseUrl>https://github.com/fsharp/fsharp/blob/master/LICENSE</licenseUrl>
+    <projectUrl>https://github.com/fsharp/fsharp</projectUrl>
+    <iconUrl>http://fsharp.org/img/logo.png</iconUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>
+      FSharp.Tools for F# 3.1
+
+      FSharp.Tools built by F# Software Foundation
+    </description>
+    <summary>FSharp.Tools for F# 3.1</summary>
+    <tags>F#, FSharp, FSharp.Core, fsi, fsc</tags>
+  </metadata>
+  <files>
+    <file src="..\lib\release\FSharp.Core.dll" target="tools\FSharp.Core.dll" />
+    <file src="..\lib\release\FSharp.Core.optdata" target="tools\FSharp.Core.optdata" />
+    <file src="..\lib\release\FSharp.Core.sigdata" target="tools\FSharp.Core.sigdata" />
+    <file src="..\lib\release\FSharp.Core.xml" target="tools\FSharp.Core.xml" />
+    <file src="..\lib\release\fsc.exe" target="tools\fsc.exe" />
+    <file src="..\lib\release\fsc.exe.config" target="tools\fsc.exe.config" />
+    <file src="..\lib\release\fsc.xml" target="tools\fsc.xml" />
+    <file src="..\lib\release\fsi.exe" target="tools\fsi.exe" />
+    <file src="..\lib\release\fsi.exe.config" target="tools\fsi.exe.config" />
+    <file src="..\lib\release\fsi.xml" target="tools\fsi.xml" />
+    <file src="..\lib\release\FSharp.Compiler.dll" target="tools\FSharp.Compiler.dll" />
+    <file src="..\lib\release\FSharp.Compiler.xml" target="tools\FSharp.Compiler.xml" />
+    <file src="..\lib\release\FSharp.Compiler.Server.Shared.dll" target="tools\FSharp.Compiler.Server.Shared.dll" />
+    <file src="..\lib\release\FSharp.Compiler.Server.Shared.xml" target="tools\FSharp.Compiler.Server.Shared.xml" />
+    <file src="..\lib\release\FSharp.Compiler.Interactive.Settings.dll" target="tools\FSharp.Compiler.Interactive.Settings.dll" />
+    <file src="..\lib\release\FSharp.Compiler.Interactive.Settings.xml" target="tools\FSharp.Compiler.Interactive.Settings.xml" />
+    <file src="..\lib\release\fsiAnyCpu.exe" target="tools\fsiAnyCpu.exe" />
+    <file src="..\lib\release\fsiAnyCpu.exe.config" target="tools\fsiAnyCpu.exe.config" />
+    <file src="..\lib\release\fsiAnyCpu.xml" target="tools\fsiAnyCpu.xml" />
+    <file src="..\lib\release\FSharp.Build.dll" target="tools\FSharp.Build.dll" />
+    <file src="..\lib\release\FSharp.Build.xml" target="tools\FSharp.Build.xml" />
+    <file src="..\lib\release\Microsoft.FSharp.Targets" target="tools\Microsoft.FSharp.Targets" />
+  </files>
+</package>
