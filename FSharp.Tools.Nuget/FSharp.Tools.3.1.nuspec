@@ -14,8 +14,9 @@
       FSharp.Tools for F# 3.1
 
       FSharp.Tools built by F# Software Foundation
+      This package includes the F# compiler and the F# Interactive.
     </description>
-    <summary>FSharp.Tools for F# 3.1</summary>
+    <summary>FSharp.Tools for F# 3.1 - This package includes the F# compiler and the F# Interactive.</summary>
     <tags>F#, FSharp, FSharp.Core, fsi, fsc</tags>
   </metadata>
   <files>
@@ -41,5 +42,9 @@
     <file src="..\lib\release\FSharp.Build.dll" target="tools\FSharp.Build.dll" />
     <file src="..\lib\release\FSharp.Build.xml" target="tools\FSharp.Build.xml" />
     <file src="..\lib\release\Microsoft.FSharp.Targets" target="tools\Microsoft.FSharp.Targets" />
+    <file src="..\lib\release\Microsoft.Build.Engine.dll" target="tools\Microsoft.Build.Engine.dll" />
+    <file src="..\lib\release\Microsoft.Build.Framework.dll" target="tools\Microsoft.Build.Framework.dll" />
+    <file src="..\lib\release\Microsoft.Build.Tasks.v12.0.dll" target="tools\Microsoft.Build.Tasks.v12.0.dll" />
+    <file src="..\lib\release\Microsoft.Build.Utilities.v12.0.dll" target="tools\Microsoft.Build.Utilities.v12.0.dll" />
   </files>
 </package>
