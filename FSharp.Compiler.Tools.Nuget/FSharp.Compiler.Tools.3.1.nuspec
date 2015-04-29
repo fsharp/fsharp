@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
   <metadata>
-    <id>FSharp.Tools</id>
+    <id>FSharp.Compiler.Tools</id>
     <version>3.1.2.2</version>
-    <title>FSharp.Tools for F# 3.1</title>
+    <title>FSharp.Compiler.Tools for F# 3.1</title>
     <authors>F# Software Foundation</authors>
     <owners>F# Software Foundation</owners>
     <licenseUrl>https://github.com/fsharp/fsharp/blob/master/LICENSE</licenseUrl>
@@ -11,12 +11,12 @@
     <iconUrl>http://fsharp.org/img/logo.png</iconUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>
-      FSharp.Tools for F# 3.1
+      FSharp.Compiler.Tools for F# 3.1
 
-      FSharp.Tools built by F# Software Foundation
+      FSharp.Compiler.Tools built by F# Software Foundation
       This package includes the F# compiler and the F# Interactive.
     </description>
-    <summary>FSharp.Tools for F# 3.1 - This package includes the F# compiler and the F# Interactive.</summary>
+    <summary>FSharp.Compiler.Tools for F# 3.1 - This package includes the F# compiler and the F# Interactive.</summary>
     <tags>F#, FSharp, FSharp.Core, fsi, fsc</tags>
   </metadata>
   <files>
