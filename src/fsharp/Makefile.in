@@ -82,6 +82,16 @@ ifeq ("$(xamarinmacenabled)", "yes")
 	$(MAKE) -C FSharp.Core TargetFramework=xamarinmacfull build
 endif
 
+all-monotouch-xamarinmac:
+	$(MAKE) build-proto
+ifeq ("$(monotouchenabled)", "yes")
+	$(MAKE) -C FSharp.Core TargetFramework=monotouch build
+endif
+ifeq ("$(xamarinmacenabled)", "yes")
+	$(MAKE) -C FSharp.Core TargetFramework=xamarinmacmobile build
+	$(MAKE) -C FSharp.Core TargetFramework=xamarinmacfull build
+endif
+
 all-monotouch-monodroid:
 	$(MAKE) build-proto
 ifeq ("$(monodroidenabled)", "yes")
