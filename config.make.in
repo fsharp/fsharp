@@ -55,6 +55,11 @@ VERSION = 3.98.4.0
 TARGET = monotouch
 endif
 
+ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-xamarinwatchos-)
+VERSION = 3.98.4.0
+TARGET = xamarinwatchos
+endif
+
 ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-xamarinmacmobile-)
 VERSION = 3.99.4.0
 TARGET = xamarinmacmobile
