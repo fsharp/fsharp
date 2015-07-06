@@ -2180,6 +2180,8 @@ namespace Microsoft.FSharp.Control
                     result  = (fun args      -> args.Result)
                 )
 
+#if FX_NO_WEBCLIENT_DOWNLOADDATACOMPLETED
+#else
             [<CompiledName("AsyncDownloadData")>] // give the extension member a 'nice', unmangled compiled name, unique within this module
             member this.AsyncDownloadData (address:Uri) : Async<byte[]> =
                 this.Download(
@@ -2197,6 +2199,7 @@ namespace Microsoft.FSharp.Control
                     start   = (fun userToken -> this.DownloadFileAsync(address, fileName, userToken)),
                     result  = (fun _         -> ())
                 )
+#endif
 #endif
 
 
