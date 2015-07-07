@@ -1014,26 +1014,24 @@ namespace Microsoft.FSharp.Core
         /// <returns>The division result.</returns>
         val inline DivideByInt< ^T >  : x:^T -> y:int -> ^T when ^T : (static member DivideByInt : ^T * int -> ^T) 
 
-        /// <summary>For internal use only</summary>
-        [<Sealed>]
-        type (* internal *) ErrorStrings = 
+        /// <summary>For compiler use only</summary>
+        module (* internal *) ErrorStrings = 
 
             [<CompilerMessage("This value is for use by compiled F# code and should not be used directly", 1204, IsHidden=true)>]
-            static member InputSequenceEmptyString : string with get
+            val InputSequenceEmptyString : string
 
             [<CompilerMessage("This value is for use by compiled F# code and should not be used directly", 1204, IsHidden=true)>]
-            static member InputArrayEmptyString : string with get
+            val InputArrayEmptyString : string
         
             [<CompilerMessage("This value is for use by compiled F# code and should not be used directly", 1204, IsHidden=true)>]
-            static member AddressOpNotFirstClassString : string with get
+            val AddressOpNotFirstClassString : string
 
             [<CompilerMessage("This value is for use by compiled F# code and should not be used directly", 1204, IsHidden=true)>]
-            static member NoNegateMinValueString : string with get
+            val NoNegateMinValueString : string
                 
             [<CompilerMessage("This value is for use by compiled F# code and should not be used directly", 1204, IsHidden=true)>]
-            static member InputMustBeNonNegativeString : string with get
+            val InputMustBeNonNegativeString : string
                 
-
         //-------------------------------------------------------------------------
 
         /// <summary>The F# compiler emits calls to some of the functions in this module as part of the compiled form of some language constructs</summary>
