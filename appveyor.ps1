@@ -2,9 +2,18 @@
 # the version under development, update after a release
 $version = '3.1.2.3'
 
+function isVersionTag($tag){
+    $v = New-Object Version
+    [Version]::TryParse($tag, [ref]$v)
+}
+
 # append the AppVeyor build number as the pre-release version
 if ($env:appveyor){
     $version = $version + '-b' + [int]::Parse($env:appveyor_build_number).ToString('000')
+    if ($env:appveyor_repo_tag -eq 'true' -and (isVersionTag($env:appveyor_repo_tag_name))){
+        $version = $env:appveyor_repo_tag_name
+    }
+    Update-AppveyorBuild -Version $version
 } else {
     $version = $version + '-b001'
 }
