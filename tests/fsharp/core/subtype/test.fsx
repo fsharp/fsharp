@@ -1708,6 +1708,15 @@ module RecordPropertyConstraintTests =
     check "ckjwnewk" (f10()) "Gary"
 
 
+// See https://github.com/Microsoft/visualfsharp/issues/238
+module GenericPropertyConstraintSolvedByRecord = 
+
+    type hober<'a> = { foo : 'a }
+
+    let inline print_foo_memb x = box (^a : (member foo : 'b) x)
+
+    let v = print_foo_memb { foo=1 } 
+
 #if ALL_IN_ONE
 let RUN() = !failures
 #else

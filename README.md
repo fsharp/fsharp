@@ -29,7 +29,6 @@ If you don't have access to Windows in order to run final tests at step 4. If yo
 Contributions specifically related to the packaging of the Open Edition should be made here.
 
 
-
 ## Status
 
 
