@@ -1,6 +1,6 @@
 
 # the version under development, update after a release
-$version = '3.1.2.3'
+$version = '4.0.0.1'
 
 # append the AppVeyor build number as the pre-release version
 if ($env:appveyor){
@@ -19,5 +19,5 @@ function pack($nuspec){
     popd
 }
 
-pack(gi .\FSharp.Core.Nuget\FSharp.Core.3.1.nuspec)
-pack(gi .\FSharp.Compiler.Tools.Nuget\FSharp.Compiler.Tools.3.1.nuspec)
+pack(gi .\FSharp.Core.Nuget\FSharp.Core.4.0.nuspec)
+pack(gi .\FSharp.Compiler.Tools.Nuget\FSharp.Compiler.Tools.4.0.nuspec)
