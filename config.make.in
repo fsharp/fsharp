@@ -56,12 +56,12 @@ TARGET = monotouch
 endif
 
 ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-xamarinmacmobile-)
-VERSION = 2.3.99.1
+VERSION = 3.99.4.0
 TARGET = xamarinmacmobile
 endif
 
 ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-xamarinmacfull-)
-VERSION = 2.3.100.1
+VERSION = 3.100.4.0
 TARGET = xamarinmacfull
 endif
 
@@ -127,6 +127,17 @@ endif
 ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-monotouch-3.1)
 VERSION = 2.3.98.1
 TARGET = fsharp31/monotouch
+endif
+
+
+ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-xamarinmacmobile-3.1)
+VERSION = 2.3.99.1
+TARGET = fsharp31/xamarinmacmobile
+endif
+
+ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-xamarinmacfull-3.1)
+VERSION = 2.3.100.1
+TARGET = fsharp31/xamarinmacfull
 endif
 
 
