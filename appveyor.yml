@@ -2,10 +2,11 @@ init:
   - git config --global core.autocrlf input
 build_script:
   - cmd: build.bat
-  - cmd: FSharp.Core.Nuget\build.cmd
+  - ps: appveyor.ps1
 test: off
 version: '{build}'
 artifacts:
   - path: lib\release
     name: release
   - path: FSharp.Core.Nuget\*.nupkg
+  - path: FSharp.Compiler.Tools.Nuget\*.nupkg

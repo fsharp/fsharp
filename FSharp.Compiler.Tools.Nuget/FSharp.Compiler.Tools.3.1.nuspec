@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
   <metadata>
     <id>FSharp.Compiler.Tools</id>
-    <version>3.1.2.2</version>
+    <version>0.0.0</version>
     <title>FSharp.Compiler.Tools for F# 3.1</title>
     <authors>F# Software Foundation</authors>
     <owners>F# Software Foundation</owners>
