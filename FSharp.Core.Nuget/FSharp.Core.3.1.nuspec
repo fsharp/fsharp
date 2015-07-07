@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
   <metadata>
     <id>FSharp.Core</id>
-    <version>3.1.2.2</version>
+    <version>0.0.0</version>
     <title>FSharp.Core for F# 3.1</title>
     <authors>F# Software Foundation</authors>
     <owners>F# Software Foundation</owners>
@@ -15,6 +15,7 @@
 
       FSharp.Core redistributables from Visual F# 3.1.2
 
+      .NET 2.0
       .NET 4.0
       .NET Portable Profile 7 (portable-net45+netcore45)
       .NET Portable Profile 47 (portable-net45+sl5+netcore45)
@@ -29,6 +30,11 @@
     <tags>F#, FSharp, FSharp.Core</tags>
   </metadata>
   <files>
+    <!-- .NET 2.0 -->
+    <file src="..\lib\bootstrap\signed\.NETFramework\v2.0\2.3.0.0\FSharp.Core.dll" target="lib\net20\FSharp.Core.dll" />
+    <file src="..\lib\bootstrap\signed\.NETFramework\v2.0\2.3.0.0\FSharp.Core.optdata" target="lib\net20\FSharp.Core.optdata" />
+    <file src="..\lib\bootstrap\signed\.NETFramework\v2.0\2.3.0.0\FSharp.Core.sigdata" target="lib\net20\FSharp.Core.sigdata" />
+    <file src="..\lib\bootstrap\signed\.NETFramework\v2.0\2.3.0.0\FSharp.Core.xml" target="lib\net20\FSharp.Core.xml" />
 
     <!-- .NET 4.0 -->
     <file src="..\lib\bootstrap\signed\.NETFramework\v4.0\4.3.1.0\FSharp.Core.dll" target="lib\net40\FSharp.Core.dll" />
@@ -59,12 +65,11 @@
     <file src="..\lib\bootstrap\signed\.NETCore\3.259.3.1\FSharp.Core.optdata" target="lib\portable-net45+netcore45+wpa81+wp8\FSharp.Core.optdata" />
     <file src="..\lib\bootstrap\signed\.NETCore\3.259.3.1\FSharp.Core.sigdata" target="lib\portable-net45+netcore45+wpa81+wp8\FSharp.Core.sigdata" />
     <file src="..\lib\bootstrap\signed\.NETCore\3.259.3.1\FSharp.Core.xml" target="lib\portable-net45+netcore45+wpa81+wp8\FSharp.Core.xml" />
-
+    
     <!-- MonoAndroid, MonoTouch, Xamarin.iOS -->
     <file src="..\lib\release\monotouch\FSharp.Core.dll" target="lib\portable-net45+monoandroid1+monotouch1+xamarinios1\FSharp.Core.dll" />
     <file src="..\lib\release\monotouch\FSharp.Core.optdata" target="lib\portable-net45+monoandroid1+monotouch1+xamarinios1\FSharp.Core.optdata" />
     <file src="..\lib\release\monotouch\FSharp.Core.sigdata" target="lib\portable-net45+monoandroid1+monotouch1+xamarinios1\FSharp.Core.sigdata" />
     <file src="..\lib\release\monotouch\FSharp.Core.xml" target="lib\portable-net45+monoandroid1+monotouch1+xamarinios1\FSharp.Core.xml" />
-    
   </files>
 </package>
