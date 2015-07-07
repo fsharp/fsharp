@@ -5,12 +5,16 @@ $version = '3.1.2.3'
 # append the AppVeyor build number as the pre-release version
 if ($env:appveyor){
     $version = $version + '-b' + [int]::Parse($env:appveyor_build_number).ToString('000')
+} else {
+    $version = $version + '-b001'
 }
 
 $nuget = (gi .\FSharp.Core.Nuget\.nuget\NuGet.exe).FullName
 
 function pack($nuspec){
-    pushd([IO.Path]::GetDirectoryName($nuspec))
+    $dir = [IO.Path]::GetDirectoryName($nuspec)
+    rm "$dir\*.nupkg"
+    pushd $dir
     & $nuget pack $nuspec -Version $version -NoDefaultExcludes
     popd
 }
