@@ -1591,10 +1591,9 @@ let DefaultBasicReferencesForOutOfProjectSources =
           yield "System.Core" 
 
 #if CROSS_PLATFORM_COMPILER
-      // Mono doesn't have System.Runtime available on all versions.  
-      // This is a workaround for that issue.
-      if (try System.Reflection.Assembly.Load "System.Runtime, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" |> ignore; true with _ -> false) then 
-          yield "System.Runtime"
+      // Mono doesn't have System.Runtime available on all versions, or at least the
+      // reference is not foun by reference resolution. This is a temporary 
+      // but inadequate workaround for that issue.
 #else
       yield "System.Runtime"
 #endif
