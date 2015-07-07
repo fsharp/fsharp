@@ -1631,7 +1631,7 @@ namespace Microsoft.FSharp.Control
                     // callback will be executed on the thread pool so we need to use TrampolineHolder.Protect to install trampoline
                     try
 #if FX_NO_TASK
-                        ThreadPool.QueueUserWorkItem((fun _ ->
+                        ThreadPool.QueueUserworkItem((fun _ ->
                             let asyncResult = WaitHandleIAsyncResult(waitHandle) :> System.IAsyncResult
                             if asyncResult.IsCompleted then
                                 if latch.Enter() then

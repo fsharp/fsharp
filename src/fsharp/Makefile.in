@@ -12,7 +12,7 @@ all:
 
 # We need the bootstrap's FSharp.Core to run the proto
 build-proto: $(bootstrapdir)FSharp.Core.dll $(bootstrapdir)FSharp.Core.sigdata $(bootstrapdir)FSharp.Core.optdata
-	@-mkdir $(protodir)
+	@-mkdir -p $(protodir)
 	cp -p $(bootstrapdir)FSharp.Core.dll $(protodir)FSharp.Core.dll
 	cp -p $(bootstrapdir)FSharp.Core.sigdata $(protodir)FSharp.Core.sigdata
 	cp -p $(bootstrapdir)FSharp.Core.optdata $(protodir)FSharp.Core.optdata
@@ -47,12 +47,7 @@ build clean install:
 	$(MAKE) -C policy.2.0.FSharp.Core TargetFramework=net20 $@
 	$(MAKE) -C policy.2.3.FSharp.Core TargetFramework=net20 $@
 	if test -e $MONOGACDIR20/mscorlib.dll; then $(MAKE) -C FSharp.Core TargetFramework=net20 $@;fi
-ifeq ("$(monodroidenabled)", "yes")
-	$(MAKE) -C FSharp.Core TargetFramework=monodroid $@
-endif
-ifeq ("$(monotouchenabled)", "yes")
-	$(MAKE) -C FSharp.Core TargetFramework=monotouch $@
-endif
+	$(MAKE) only-monotouch only-monodroid only-xamarinmac
 	$(MAKE) -C FSharp.Core FSharpCoreBackVersion=3.0 TargetFramework=net40 $@
 	$(MAKE) -C FSharp.Core FSharpCoreBackVersion=3.1 TargetFramework=net40 $@
 	if test -e $MONOGACDIR20/mscorlib.dll; then $(MAKE) -C FSharp.Core FSharpCoreBackVersion=3.0 TargetFramework=net20 $@;fi
@@ -74,26 +69,50 @@ ifeq ("$(pclenabled259)", "yes")
 	$(MAKE) -C FSharp.Core FSharpCoreBackVersion=3.1 TargetFramework=portable259 $@
 endif
 
+all-monotouch-monodroid-xamarinmac:
+	$(MAKE) build-proto
+	$(MAKE) only-monotouch only-monodroid only-xamarinmac
+
+all-monotouch-xamarinmac:
+	$(MAKE) build-proto
+	$(MAKE) only-monotouch only-xamarinmac
+
 all-monotouch-monodroid:
 	$(MAKE) build-proto
-ifeq ("$(monodroidenabled)", "yes")
-	$(MAKE) -C FSharp.Core TargetFramework=monodroid build
-endif
-ifeq ("$(monotouchenabled)", "yes")
-	$(MAKE) -C FSharp.Core TargetFramework=monotouch build
-endif
+	$(MAKE) only-monotouch only-monodroid
 
 all-monotouch:
 	$(MAKE) build-proto
+	$(MAKE) only-monotouch
+
+only-monotouch:
 ifeq ("$(monotouchenabled)", "yes")
 	$(MAKE) -C FSharp.Core TargetFramework=monotouch build
 endif
 
 all-monodroid:
 	$(MAKE) build-proto
+	$(MAKE) only-monodroid
+
+only-monodroid:
 ifeq ("$(monodroidenabled)", "yes")
 	$(MAKE) -C FSharp.Core TargetFramework=monodroid build
 endif
 
+all-xamarinmac:
+	$(MAKE) build-proto
+	$(MAKE) only-xamarinmac
+
+only-xamarinmac: only-xamarinmacmobile only-xamarinmacfull
+
+only-xamarinmacmobile:
+ifeq ("$(xamarinmacenabled)", "yes")
+	$(MAKE) -C FSharp.Core TargetFramework=xamarinmacmobile build
+endif
+
+only-xamarinmacfull:
+ifeq ("$(xamarinmacenabled)", "yes")
+	$(MAKE) -C FSharp.Core TargetFramework=xamarinmacfull build
+endif
 
 
