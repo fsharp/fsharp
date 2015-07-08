@@ -11,7 +11,7 @@ Copyright (C) Microsoft Corporation. All rights reserved.
 -->
 
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-
+  
     <!-- Try Microsoft\Portable\Microsoft.Portable.Core.props + Microsoft.FSharp.Targets + Microsoft.Portable.Core.targets -->
 
 	<Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\Microsoft.Portable.Core.props" 
