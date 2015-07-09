@@ -29,7 +29,7 @@ Contributions specifically related to the packaging of the Open Edition should b
 
 ## Status
 
-The `master` branch is for the latest version of F# (currently F# 3.1).
+The `master` branch is for F# 3.1. The `fsahrp4` branch is for F# 4.0.
 
 To bootstrap the compiler, binaries built from an earlier version of this project are used.
 
@@ -37,22 +37,28 @@ This codebase uses the Apache 2.0 license.
 
 ## Current Build Status
 
-Head (F# 3.1) (branch ``master``), Mono 3.x, OSX + some unit tests (Travis) [![Build Status](https://travis-ci.org/fsharp/fsharp.png?branch=master)](https://travis-ci.org/fsharp/fsharp/branches)
+F# 3.1 (branch ``master``), Mono 3.x, OSX + some unit tests (Travis) [![Build Status](https://travis-ci.org/fsharp/fsharp.png?branch=master)](https://travis-ci.org/fsharp/fsharp/branches)
+
+F# 4.0 (branch ``fsharp4``, Mono 3.x, OSX + some unit tests (Travis) [![Build Status](https://travis-ci.org/fsharp/fsharp.png?branch=fsharp4)](https://travis-ci.org/fsharp/fsharp/branches)
 
 F# 3.0 (branch ``fsharp_30``), Mono 3.x, OSX + some unit tests (Travis) [![Build Status](https://travis-ci.org/fsharp/fsharp.png?branch=fsharp_30)](https://travis-ci.org/fsharp/fsharp/branches)
 
-F# 4.0 work-in-progress (branch ``fsharp4``, Mono 3.x, OSX + some unit tests (Travis) [![Build Status](https://travis-ci.org/fsharp/fsharp.png?branch=fsharp4)](https://travis-ci.org/fsharp/fsharp/branches)
-
 Head (branch ``master``), Windows Server 2012 (AppVeyor)  [![Build status](https://ci.appveyor.com/api/projects/status/7m5e2yr0snbbr7t9)](https://ci.appveyor.com/project/fsgit/fsharp)
 
-## NuGet Feed
+## NuGet Feed of FSharp.Core and FSharp.Compiler.Tools packages
+
+This repo is curently used to make two NuGet pacakges - FSharp.Core and FSharp.Compiler.Tools.
 
 Stable builds are available in the NuGet Gallery:
-[http://www.nuget.org/packages/FSharp.Core](http://www.nuget.org/packages/FSharp.Core)
+[http://www.nuget.org/packages/FSharp.Core](http://www.nuget.org/packages/FSharp.Core) and [http://www.nuget.org/packages/FSharp.Compiler.Tools](http://www.nuget.org/packages/FSharp.Compiler.Tools).
 
-The NuGet package includes all of the FSharp.Core redistributables from Visual F#. In addition, they include assemblies for MonoAndroid and MonoTouch built from this repository.
 
-All AppVeyor builds are available using the NuGet feed: https://ci.appveyor.com/nuget/fsgit-fsharp
+The FSharp.Core NuGet package includes all of the FSharp.Core redistributables from Visual F#. In addition, they include assemblies for MonoAndroid and MonoTouch built from this repository.
+
+The FSharp.Compiler.Tools package includes the F# compiler `fsc.exe`, F# Interactive `fsi.exe`, build support,
+a copy of FSharp.Core used to run the tools, and related DLLs.
+
+A feed of nuget packages from builds is available fro  AppVeyor using the NuGet feed: https://ci.appveyor.com/nuget/fsgit-fsharp
 
 If using Paket, add the source at the top of `paket.dependencies`.
 
