@@ -141,7 +141,6 @@ vsintegration/src/vs/FsPkgs/FSharp.Project/FS/ctofiles/
 tests/fsharpqa/Source/CodeGen/EmittedIL/QueryExpressionStepping/Utils.dll
 tests/fsharpqa/Source/CodeGen/EmittedIL/ComputationExpressions/ComputationExprLibrary.dll
 packages
-<<<<<<< HEAD
 FSharp.Core.Nuget/*.nupkg
 *.csproj.user
 
@@ -150,8 +149,6 @@ FSharp.Core.Nuget/*.nupkg
 *.jrs
 *.chk
 *.bak
-=======
 FSharp.Compiler.Tools.Nuget/*.nupkg
 FSharp.Core.Nuget/*.nupkg
->>>>>>> d5f1c5676cc7c68b7d32a32cc0aaf8c90a709f6f
 *.orig
