@@ -61,7 +61,7 @@ source https://www.nuget.org/api/v2
 source https://ci.appveyor.com/nuget/fsgit-fsharp
 ```
 
-Add the dependency on `FSharp.Core` and run `paket install`. See the AppVeyor [build history](https://ci.appveyor.com/project/fsgit/fsharp/history) for a list of available versions. Here are some options for specifying the dependency:
+Add the dependency on `FSharp.Core` and run `paket update`. See the AppVeyor [build history](https://ci.appveyor.com/project/fsgit/fsharp/history) for a list of available versions. Here are some options for specifying the dependency:
 
 ```
 nuget FSharp.Core
