@@ -58,7 +58,7 @@ The FSharp.Core NuGet package includes all of the FSharp.Core redistributables f
 The FSharp.Compiler.Tools package includes the F# compiler `fsc.exe`, F# Interactive `fsi.exe`, build support,
 a copy of FSharp.Core used to run the tools, and related DLLs.
 
-A feed of nuget packages from builds is available fro  AppVeyor using the NuGet feed: https://ci.appveyor.com/nuget/fsgit-fsharp
+A feed of nuget packages from builds is available from AppVeyor using the NuGet feed: https://ci.appveyor.com/nuget/fsgit-fsharp
 
 If using Paket, add the source at the top of `paket.dependencies`.
 
