@@ -28,10 +28,5 @@ function pack($nuspec){
     popd
 }
 
-<<<<<<< HEAD
 pack(gi .\FSharp.Core.Nuget\FSharp.Core.4.0.nuspec)
 pack(gi .\FSharp.Compiler.Tools.Nuget\FSharp.Compiler.Tools.4.0.nuspec)
-=======
-pack(gi .\FSharp.Core.Nuget\FSharp.Core.3.1.nuspec)
-pack(gi .\FSharp.Compiler.Tools.Nuget\FSharp.Compiler.Tools.3.1.nuspec)
->>>>>>> 6381a58af8bc2e88455edf89af58d7a7cd6be049
