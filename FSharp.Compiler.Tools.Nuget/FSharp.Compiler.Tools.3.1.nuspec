@@ -20,10 +20,11 @@
     <tags>F#, FSharp, FSharp.Core, fsi, fsc</tags>
   </metadata>
   <files>
-    <file src="..\lib\release\FSharp.Core.dll" target="tools\FSharp.Core.dll" />
-    <file src="..\lib\release\FSharp.Core.optdata" target="tools\FSharp.Core.optdata" />
-    <file src="..\lib\release\FSharp.Core.sigdata" target="tools\FSharp.Core.sigdata" />
-    <file src="..\lib\release\FSharp.Core.xml" target="tools\FSharp.Core.xml" />
+    <!-- use signed FSharp.Core in package -->
+    <file src="..\lib\bootstrap\signed\.NETFramework\v4.0\4.3.1.0\FSharp.Core.dll" target="tools\FSharp.Core.dll" />
+    <file src="..\lib\bootstrap\signed\.NETFramework\v4.0\4.3.1.0\FSharp.Core.optdata" target="tools\FSharp.Core.optdata" />
+    <file src="..\lib\bootstrap\signed\.NETFramework\v4.0\4.3.1.0\FSharp.Core.sigdata" target="tools\FSharp.Core.sigdata" />
+    <file src="..\lib\bootstrap\signed\.NETFramework\v4.0\4.3.1.0\FSharp.Core.xml" target="tools\FSharp.Core.xml" />
     <file src="..\lib\release\fsc.exe" target="tools\fsc.exe" />
     <file src="..\lib\release\fsc.exe.config" target="tools\fsc.exe.config" />
     <file src="..\lib\release\fsc.xml" target="tools\fsc.xml" />
