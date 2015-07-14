@@ -3,10 +3,10 @@ SOURCES := $(patsubst $(srcdir)$(tmpdir)%,$(tmpdir)%,$(patsubst %,$(srcdir)%,$(s
 .PHONY: install install-lib-net20 install-lib-monodroid install-lib-net40
 
 build:
-	MONO_ENV_OPTIONS=$(monoopts) xbuild /p:Configuration=$(Configuration) /p:TargetFramework=$(TargetFramework) /p:MonoLibDir40=$(monogacdir40) /p:FSharpCoreBackVersion=$(FSharpCoreBackVersion)
+	MONO_ENV_OPTIONS=$(monoopts) $(XBUILD) /p:Configuration=$(Configuration) /p:TargetFramework=$(TargetFramework) /p:MonoLibDir40=$(monogacdir40) /p:FSharpCoreBackVersion=$(FSharpCoreBackVersion)
 
 clean:
-	xbuild /p:Configuration=$(Configuration) /p:TargetFramework=$(TargetFramework) /t:Clean
+	$(XBUILD) /p:Configuration=$(Configuration) /p:TargetFramework=$(TargetFramework) /t:Clean
 
 # Install the library binaries in the GAC and the framework directory, 
 # Install .optdata/.sigdata if they exist (they go alongside FSharp.Core)
