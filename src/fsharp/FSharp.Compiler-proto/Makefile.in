@@ -6,6 +6,6 @@ srcdir := @abs_srcdir@/
 include @abs_top_builddir@/config.make
 
 build-proto:
-	MONO_ENV_OPTIONS=$(monoopts) xbuild /p:Configuration=Proto
+	MONO_ENV_OPTIONS=$(monoopts) $(XBUILD) /p:Configuration=Proto
 
 include $(topdir)/src/fsharp/targets.make
