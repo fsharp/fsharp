@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
   <metadata>
     <id>FSharp.Core</id>
@@ -36,17 +36,11 @@
     <file src="..\lib\bootstrap\signed\.NETFramework\v2.0\2.3.0.0\FSharp.Core.sigdata" target="lib\net20\FSharp.Core.sigdata" />
     <file src="..\lib\bootstrap\signed\.NETFramework\v2.0\2.3.0.0\FSharp.Core.xml" target="lib\net20\FSharp.Core.xml" />
 
-    <!-- .NET 4.0 (F# 3.1 was last to support this) -->
-    <file src="..\lib\bootstrap\signed\.NETFramework\v4.0\4.3.1.0\FSharp.Core.dll" target="lib\net40\FSharp.Core.dll" />
-    <file src="..\lib\bootstrap\signed\.NETFramework\v4.0\4.3.1.0\FSharp.Core.optdata" target="lib\net40\FSharp.Core.optdata" />
-    <file src="..\lib\bootstrap\signed\.NETFramework\v4.0\4.3.1.0\FSharp.Core.sigdata" target="lib\net40\FSharp.Core.sigdata" />
-    <file src="..\lib\bootstrap\signed\.NETFramework\v4.0\4.3.1.0\FSharp.Core.xml" target="lib\net40\FSharp.Core.xml" />
-
-    <!-- .NET 4.5 -->
-    <file src="..\lib\bootstrap\signed\.NETFramework\v4.5\4.4.0.0\FSharp.Core.dll" target="lib\net45\FSharp.Core.dll" />
-    <file src="..\lib\bootstrap\signed\.NETFramework\v4.5\4.4.0.0\FSharp.Core.optdata" target="lib\net45\FSharp.Core.optdata" />
-    <file src="..\lib\bootstrap\signed\.NETFramework\v4.5\4.4.0.0\FSharp.Core.sigdata" target="lib\net45\FSharp.Core.sigdata" />
-    <file src="..\lib\bootstrap\signed\.NETFramework\v4.5\4.4.0.0\FSharp.Core.xml" target="lib\net45\FSharp.Core.xml" />
+    <!-- .NET 4.0 -->
+    <file src="..\lib\bootstrap\signed\.NETFramework\v4.0\4.4.0.0\FSharp.Core.dll" target="lib\net40\FSharp.Core.dll" />
+    <file src="..\lib\bootstrap\signed\.NETFramework\v4.0\4.4.0.0\FSharp.Core.optdata" target="lib\net40\FSharp.Core.optdata" />
+    <file src="..\lib\bootstrap\signed\.NETFramework\v4.0\4.4.0.0\FSharp.Core.sigdata" target="lib\net40\FSharp.Core.sigdata" />
+    <file src="..\lib\bootstrap\signed\.NETFramework\v4.0\4.4.0.0\FSharp.Core.xml" target="lib\net40\FSharp.Core.xml" />
 
     <!-- .NET Portable Profile 7 -->
     <file src="..\lib\bootstrap\signed\.NETCore\3.7.4.0\FSharp.Core.dll" target="lib\portable-net45+netcore45\FSharp.Core.dll" />
