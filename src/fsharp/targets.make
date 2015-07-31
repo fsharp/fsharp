@@ -41,6 +41,7 @@ install-lib:
 	    echo " --> $(DESTDIR)$(gacdir)/Microsoft\ SDKs/F#/3.1/Framework/v4.0/"; \
 	    echo " --> $(DESTDIR)$(gacdir)/Microsoft\ SDKs/F#/4.0/Framework/v4.0/"; \
 	    echo " --> $(DESTDIR)$(gacdir)/xbuild/Microsoft/VisualStudio/v/FSharp/"; \
+	    echo " --> $(DESTDIR)$(gacdir)/xbuild/Microsoft/VisualStudio/v11.0/FSharp/"; \
 	    echo " --> $(DESTDIR)$(gacdir)/xbuild/Microsoft/VisualStudio/v12.0/FSharp/"; \
 	    echo " --> $(DESTDIR)$(gacdir)/xbuild/Microsoft/VisualStudio/v14.0/FSharp/"; \
 	    \
@@ -50,6 +51,7 @@ install-lib:
 	    mkdir -p $(DESTDIR)$(gacdir)/Microsoft\ SDKs/F#/3.1/Framework/v4.0/; \
 	    mkdir -p $(DESTDIR)$(gacdir)/Microsoft\ SDKs/F#/4.0/Framework/v4.0/; \
 	    mkdir -p $(DESTDIR)$(gacdir)/xbuild/Microsoft/VisualStudio/v/FSharp/; \
+	    mkdir -p $(DESTDIR)$(gacdir)/xbuild/Microsoft/VisualStudio/v11.0/FSharp/; \
 	    mkdir -p $(DESTDIR)$(gacdir)/xbuild/Microsoft/VisualStudio/v12.0/FSharp/; \
 	    mkdir -p $(DESTDIR)$(gacdir)/xbuild/Microsoft/VisualStudio/v14.0/FSharp/; \
 	    \
@@ -64,6 +66,7 @@ install-lib:
 	    $(INSTALL_LIB) $(tmpdir)Microsoft.FSharp.Targets $(DESTDIR)$(gacdir)/Microsoft\ SDKs/F#/3.1/Framework/v4.0/; \
 	    $(INSTALL_LIB) $(tmpdir)Microsoft.FSharp.Targets $(DESTDIR)$(gacdir)/Microsoft\ SDKs/F#/4.0/Framework/v4.0/; \
 	    $(INSTALL_LIB) $(tmpdir)Microsoft.FSharp.Targets $(DESTDIR)$(gacdir)/xbuild/Microsoft/VisualStudio/v/FSharp/; \
+	    $(INSTALL_LIB) $(tmpdir)Microsoft.FSharp.Targets $(DESTDIR)$(gacdir)/xbuild/Microsoft/VisualStudio/v11.0/FSharp/; \
 	    $(INSTALL_LIB) $(tmpdir)Microsoft.FSharp.Targets $(DESTDIR)$(gacdir)/xbuild/Microsoft/VisualStudio/v12.0/FSharp/; \
 	    $(INSTALL_LIB) $(tmpdir)Microsoft.FSharp.Targets $(DESTDIR)$(gacdir)/xbuild/Microsoft/VisualStudio/v14.0/FSharp/; \
 	    \
@@ -75,6 +78,7 @@ install-lib:
 	    $(INSTALL_LIB) $(tmpdir)Microsoft.Portable.FSharp.Targets $(DESTDIR)$(gacdir)/Microsoft\ SDKs/F#/3.1/Framework/v4.0/; \
 	    $(INSTALL_LIB) $(tmpdir)Microsoft.Portable.FSharp.Targets $(DESTDIR)$(gacdir)/Microsoft\ SDKs/F#/4.0/Framework/v4.0/; \
 	    $(INSTALL_LIB) $(tmpdir)Microsoft.Portable.FSharp.Targets $(DESTDIR)$(gacdir)/xbuild/Microsoft/VisualStudio/v/FSharp/; \
+	    $(INSTALL_LIB) $(tmpdir)Microsoft.Portable.FSharp.Targets $(DESTDIR)$(gacdir)/xbuild/Microsoft/VisualStudio/v11.0/FSharp/; \
 	    $(INSTALL_LIB) $(tmpdir)Microsoft.Portable.FSharp.Targets $(DESTDIR)$(gacdir)/xbuild/Microsoft/VisualStudio/v12.0/FSharp/; \
 	    $(INSTALL_LIB) $(tmpdir)Microsoft.Portable.FSharp.Targets $(DESTDIR)$(gacdir)/xbuild/Microsoft/VisualStudio/v14.0/FSharp/; \
 	    \
