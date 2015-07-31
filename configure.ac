@@ -20,6 +20,18 @@ fi
 AC_MSG_NOTICE("pkg-config: $PKG_CONFIG")
 AC_MSG_NOTICE("PKG_CONFIG_LIBDIR: $PKG_CONFIG_LIBDIR")
 
+# On OSX El Capitan, xbuild is no longer in PATH, so we need to use the full path.
+AC_PATH_PROG(XBUILD, xbuild, no)
+osx_xbuild=/Library/Frameworks/Mono.framework/Versions/Current/bin/xbuild
+if test "x$XBUILD" == "xno"; then
+  if test -e $osx_xbuild; then
+    XBUILD=$osx_xbuild
+  else
+    AC_MSG_ERROR([Could not find xbuild])
+  fi
+fi
+AC_MSG_NOTICE(xbuild: $XBUILD)
+
 MONO_REQUIRED_VERSION=3.0
 MONO_RECOMMENDED_VERSION=3.2
 
