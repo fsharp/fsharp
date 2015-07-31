@@ -31,7 +31,7 @@ Contributions specifically related to the packaging of the Open Edition should b
 
 ## Status
 
-The `master` branch is for F# 3.1. The `fsahrp4` branch is for F# 4.0.
+The `master` branch is for F# 4.x. The `fsharp4` branch archives F# 4.0, the `fsharp31` branch archives F# 3.1.
 
 To bootstrap the compiler, binaries built from an earlier version of this project are used.
 
@@ -39,9 +39,11 @@ This codebase uses the Apache 2.0 license.
 
 ## Current Build Status
 
-F# 3.1 (branch ``master``), Mono 3.x, OSX + some unit tests (Travis) [![Build Status](https://travis-ci.org/fsharp/fsharp.png?branch=master)](https://travis-ci.org/fsharp/fsharp/branches)
+F# 4.0+ (branch ``master``, Mono 3.x, OSX + some unit tests (Travis) [![Build Status](https://travis-ci.org/fsharp/fsharp.png?branch=master)](https://travis-ci.org/fsharp/fsharp/branches)
 
 F# 4.0 (branch ``fsharp4``, Mono 3.x, OSX + some unit tests (Travis) [![Build Status](https://travis-ci.org/fsharp/fsharp.png?branch=fsharp4)](https://travis-ci.org/fsharp/fsharp/branches)
+
+F# 3.1 (branch ``fsharp31``), Mono 3.x, OSX + some unit tests (Travis) [![Build Status](https://travis-ci.org/fsharp/fsharp.png?branch=fsharp31)](https://travis-ci.org/fsharp/fsharp/branches)
 
 F# 3.0 (branch ``fsharp_30``), Mono 3.x, OSX + some unit tests (Travis) [![Build Status](https://travis-ci.org/fsharp/fsharp.png?branch=fsharp_30)](https://travis-ci.org/fsharp/fsharp/branches)
 
