@@ -1,3 +1,9 @@
+4.0.0.3
+  * Fix build problems
+
+4.0.0.1
+  * Integrate F# 4.0
+
 3.1.1.25
   * Upstream fix: implement correct version number scheme for new PCL profiles
   
