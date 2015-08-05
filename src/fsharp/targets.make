@@ -17,15 +17,25 @@ clean:
 #     /usr/lib/mono/Microsoft SDKs/F#/3.0/Framework/v4.0/Microsoft.FSharp.Targets
 # For F# 3.1 project files this is
 #     /usr/lib/mono/xbuild/Microsoft/VisualStudio/v12.0/FSharp/Microsoft.FSharp.Targets
+# For F# 4.0 project files this is
+#     /usr/lib/mono/xbuild/Microsoft/VisualStudio/v14.0/FSharp/Microsoft.FSharp.Targets
 # 
-# Here 12.0 is 'VisualStudioVersion'. xbuild should set this to 12.0, copying MSBuild.
+# Here 12.0/14.0 is 'VisualStudioVersion'. xbuild should set this to 11.0/12.0/14.0, copying MSBuild.
 #
-# We put the F# 3.1 targets and link the SDK DLLs for all three locations
+# We put the F# targets and link the SDK DLLs for all these locations
 #
 # We put a forwarding targets file into all three locations. We also put one in 
 #     .../lib/mono/xbuild/Microsoft/VisualStudio/v12.0/FSharp/Microsoft.FSharp.Targets
 # since this is the correct location, and 'xbuild' may in future start setting VisualStudioVersion to this value.
-
+#
+# Add appropriate softlinks under 
+#     ...Reference Assemblies/Microsoft/FSharp/.NETCore/...
+#     ...Reference Assemblies/Microsoft/FSharp/.NETFramework/...
+#     ...Reference Assemblies/Microsoft/FSharp/.NETPortable/...
+# And for VS2012 Profile47 compat under
+#     ...Reference Assemblies/Microsoft/FSharp/3.0/Runtime/.NETPortable
+#
+# 
 install-lib:
 	@echo "Installing $(ASSEMBLY)"
 	@mkdir -p $(DESTDIR)$(gacdir)/$(TARGET)
@@ -86,43 +96,74 @@ install-lib:
 	    $(INSTALL_LIB) $(outdir)$(ASSEMBLY) $(DESTDIR)$(gacdir)/$(TARGET); \
 	    $(INSTALL_LIB) $(outdir)$(NAME).xml $(DESTDIR)$(gacdir)/$(TARGET); \
 	else \
-	    echo "Installing $(outdir)$(ASSEMBLY) into GAC root $(DESTDIR)$(libdir) as package $(TARGET)"; \
-	    gacutil -i $(outdir)$(ASSEMBLY) -root $(DESTDIR)$(libdir) -package $(TARGET); \
+	    if test -e $(outdir)$(NAME).dll; then \
+			if test x-$(PKGINSTALL) = x-yes; then \
+				echo "Using gacutil to install $(outdir)$(ASSEMBLY) into GAC root $(DESTDIR)$(libdir) as package $(TARGET)"; \
+				gacutil -i $(outdir)$(ASSEMBLY) -root $(DESTDIR)$(libdir) -package $(TARGET); \
+			else \
+				echo "Installing $(outdir)$(NAME).dll to $(DESTDIR)$(gacdir)/gac/$(NAME)/$(VERSION)__$(TOKEN)/"; \
+				mkdir -p $(DESTDIR)$(gacdir)/gac/$(NAME)/$(VERSION)__$(TOKEN)/; \
+				$(INSTALL_LIB) $(outdir)$(NAME).dll $(DESTDIR)$(gacdir)/gac/$(NAME)/$(VERSION)__$(TOKEN)/; \
+			fi; \
+		fi; \
 	    if test -e $(outdir)$(NAME).xml; then \
 			echo "Installing $(outdir)$(NAME).xml into $(DESTDIR)$(gacdir)/gac/$(NAME)/$(VERSION)__$(TOKEN)/"; \
+			mkdir -p $(DESTDIR)$(gacdir)/gac/$(NAME)/$(VERSION)__$(TOKEN)/; \
 			$(INSTALL_LIB) $(outdir)$(NAME).xml $(DESTDIR)$(gacdir)/gac/$(NAME)/$(VERSION)__$(TOKEN)/; \
-			ln -fs  ../gac/$(NAME)/$(VERSION)__$(TOKEN)/$(NAME).xml $(DESTDIR)$(gacdir)/$(TARGET)/$(NAME).xml; \
+			if test x-$(PKGINSTALL) = x-yes; then \
+				echo "Using linking to ../gac/$(NAME)/$(VERSION)__$(TOKEN)/$(NAME).xml to install $(DESTDIR)$(gacdir)/$(TARGET)/$(NAME).xml"; \
+				ln -fs  ../gac/$(NAME)/$(VERSION)__$(TOKEN)/$(NAME).xml $(DESTDIR)$(gacdir)/$(TARGET)/$(NAME).xml; \
+			fi; \
 	    fi; \
-	fi
-	@if test -e $(outdir)$(NAME).sigdata; then \
-		echo "Installing $(outdir)$(NAME).sigdata into $(DESTDIR)$(gacdir)/gac/$(NAME)/$(VERSION)__$(TOKEN)/"; \
-		$(INSTALL_LIB) $(outdir)$(NAME).sigdata $(DESTDIR)$(gacdir)/gac/$(NAME)/$(VERSION)__$(TOKEN)/; \
-		ln -fs  ../gac/$(NAME)/$(VERSION)__$(TOKEN)/$(NAME).sigdata $(DESTDIR)$(gacdir)/$(TARGET)/$(NAME).sigdata; \
-		echo "Installing $(outdir)$(NAME).optdata into $(DESTDIR)$(gacdir)/gac/$(NAME)/$(VERSION)__$(TOKEN)/"; \
-		$(INSTALL_LIB) $(outdir)$(NAME).optdata $(DESTDIR)$(gacdir)/gac/$(NAME)/$(VERSION)__$(TOKEN)/; \
-		ln -fs ../gac/$(NAME)/$(VERSION)__$(TOKEN)/$(NAME).optdata $(DESTDIR)$(gacdir)/$(TARGET)/$(NAME).optdata; \
-	fi
-	@if test x-$(PCLPATH) != x- &&  test x-$(NAME) = x-FSharp.Core; then \
-	    echo "Installing FSharp.Core $(VERSION) PCL assembly into install location matching Visual Studio"; \
-	    echo " --> $(DESTDIR)$(gacdir)/Reference\ Assemblies/Microsoft/FSharp/$(PCLPATH)/$(VERSION)"; \
-	    mkdir -p $(DESTDIR)$(gacdir)/Reference\ Assemblies/Microsoft/FSharp/$(PCLPATH)/$(VERSION); \
-	    $(INSTALL_LIB) $(outdir)$(NAME).xml $(DESTDIR)$(gacdir)/Reference\ Assemblies/Microsoft/FSharp/$(PCLPATH)/$(VERSION)/$(NAME).xml; \
-	    $(INSTALL_LIB) $(outdir)$(NAME).sigdata $(DESTDIR)$(gacdir)/Reference\ Assemblies/Microsoft/FSharp/$(PCLPATH)/$(VERSION)/$(NAME).sigdata; \
-	    $(INSTALL_LIB) $(outdir)$(NAME).optdata $(DESTDIR)$(gacdir)/Reference\ Assemblies/Microsoft/FSharp/$(PCLPATH)/$(VERSION)/$(NAME).optdata; \
-	    $(INSTALL_LIB) $(outdir)$(NAME).dll $(DESTDIR)$(gacdir)/Reference\ Assemblies/Microsoft/FSharp/$(PCLPATH)/$(VERSION)/$(NAME).dll; \
-	fi
-	@if test x-$(PCLPATH) != x- &&  test x-$(NAME) = x-FSharp.Core && test x-$(FSharpCoreBackVersion) = x-3.0 ; then \
-	    echo "Installing FSharp.Core $(VERSION) PCL assembly into install location matching Visual Studio 2012"; \
-	    echo " --> $(DESTDIR)$(gacdir)/Reference\ Assemblies/Microsoft/FSharp/3.0/Runtime/$(PCLPATH)"; \
-	    mkdir -p $(DESTDIR)$(gacdir)/Reference\ Assemblies/Microsoft/FSharp/3.0/Runtime/$(PCLPATH); \
-	    $(INSTALL_LIB) $(outdir)$(NAME).xml $(DESTDIR)$(gacdir)/Reference\ Assemblies/Microsoft/FSharp/3.0/Runtime/$(PCLPATH)/$(NAME).xml; \
-	    $(INSTALL_LIB) $(outdir)$(NAME).sigdata $(DESTDIR)$(gacdir)/Reference\ Assemblies/Microsoft/FSharp/3.0/Runtime/$(PCLPATH)/$(NAME).sigdata; \
-	    $(INSTALL_LIB) $(outdir)$(NAME).optdata $(DESTDIR)$(gacdir)/Reference\ Assemblies/Microsoft/FSharp/3.0/Runtime/$(PCLPATH)/$(NAME).optdata; \
-	    $(INSTALL_LIB) $(outdir)$(NAME).dll $(DESTDIR)$(gacdir)/Reference\ Assemblies/Microsoft/FSharp/3.0/Runtime/$(PCLPATH)/$(NAME).dll; \
+		if test -e $(outdir)$(NAME).sigdata; then \
+			echo "Installing $(outdir)$(NAME).sigdata into $(DESTDIR)$(gacdir)/gac/$(NAME)/$(VERSION)__$(TOKEN)/"; \
+			mkdir -p $(DESTDIR)$(gacdir)/gac/$(NAME)/$(VERSION)__$(TOKEN)/; \
+			$(INSTALL_LIB) $(outdir)$(NAME).sigdata $(DESTDIR)$(gacdir)/gac/$(NAME)/$(VERSION)__$(TOKEN)/; \
+			if test x-$(PKGINSTALL) = x-yes; then \
+				echo "Using linking to ../gac/$(NAME)/$(VERSION)__$(TOKEN)/$(NAME).sigdata to install $(DESTDIR)$(gacdir)/$(TARGET)/$(NAME).sigdata"; \
+				ln -fs  ../gac/$(NAME)/$(VERSION)__$(TOKEN)/$(NAME).sigdata $(DESTDIR)$(gacdir)/$(TARGET)/$(NAME).sigdata; \
+		    fi; \
+	    fi; \
+		if test -e $(outdir)$(NAME).optdata; then \
+			echo "Installing $(outdir)$(NAME).optdata into $(DESTDIR)$(gacdir)/gac/$(NAME)/$(VERSION)__$(TOKEN)/"; \
+			mkdir -p $(DESTDIR)$(gacdir)/gac/$(NAME)/$(VERSION)__$(TOKEN)/; \
+			$(INSTALL_LIB) $(outdir)$(NAME).optdata $(DESTDIR)$(gacdir)/gac/$(NAME)/$(VERSION)__$(TOKEN)/; \
+			if test x-$(PKGINSTALL) = x-yes; then \
+				echo "Using linking to ../gac/$(NAME)/$(VERSION)__$(TOKEN)/$(NAME).optdata to install $(DESTDIR)$(gacdir)/$(TARGET)/$(NAME).optdata"; \
+				ln -fs ../gac/$(NAME)/$(VERSION)__$(TOKEN)/$(NAME).optdata $(DESTDIR)$(gacdir)/$(TARGET)/$(NAME).optdata; \
+		    fi; \
+		fi; \
+		if test x-$(NAME) = x-FSharp.Core && test x-$(REFASSEMPATH) != x-; then \
+			echo "Installing FSharp.Core $(VERSION) reference assembly into install location matching Visual Studio"; \
+			echo " --> $(DESTDIR)$(gacdir)/Reference\ Assemblies/Microsoft/FSharp/$(REFASSEMPATH)/$(VERSION)"; \
+			mkdir -p $(DESTDIR)$(gacdir)/Reference\ Assemblies/Microsoft/FSharp/$(REFASSEMPATH)/$(VERSION); \
+			ln -fs ../../../../../../gac/$(NAME)/$(VERSION)__$(TOKEN)/$(NAME).xml $(DESTDIR)$(gacdir)/Reference\ Assemblies/Microsoft/FSharp/$(REFASSEMPATH)/$(VERSION)/$(NAME).xml; \
+			ln -fs ../../../../../../gac/$(NAME)/$(VERSION)__$(TOKEN)/$(NAME).sigdata $(DESTDIR)$(gacdir)/Reference\ Assemblies/Microsoft/FSharp/$(REFASSEMPATH)/$(VERSION)/$(NAME).sigdata; \
+			ln -fs ../../../../../../gac/$(NAME)/$(VERSION)__$(TOKEN)/$(NAME).optdata $(DESTDIR)$(gacdir)/Reference\ Assemblies/Microsoft/FSharp/$(REFASSEMPATH)/$(VERSION)/$(NAME).optdata; \
+			ln -fs ../../../../../../gac/$(NAME)/$(VERSION)__$(TOKEN)/$(NAME).dll $(DESTDIR)$(gacdir)/Reference\ Assemblies/Microsoft/FSharp/$(REFASSEMPATH)/$(VERSION)/$(NAME).dll; \
+		fi; \
+		if test x-$(NAME) = x-FSharp.Core && test x-$(PCLPATH) != x-; then \
+			echo "Installing FSharp.Core $(VERSION) reference assembly into install location matching Visual Studio"; \
+			echo " --> $(DESTDIR)$(gacdir)/Reference\ Assemblies/Microsoft/FSharp/$(PCLPATH)/$(VERSION)"; \
+			mkdir -p $(DESTDIR)$(gacdir)/Reference\ Assemblies/Microsoft/FSharp/$(PCLPATH)/$(VERSION); \
+			ln -fs ../../../../../gac/$(NAME)/$(VERSION)__$(TOKEN)/$(NAME).xml $(DESTDIR)$(gacdir)/Reference\ Assemblies/Microsoft/FSharp/$(PCLPATH)/$(VERSION)/$(NAME).xml; \
+			ln -fs ../../../../../gac/$(NAME)/$(VERSION)__$(TOKEN)/$(NAME).sigdata $(DESTDIR)$(gacdir)/Reference\ Assemblies/Microsoft/FSharp/$(PCLPATH)/$(VERSION)/$(NAME).sigdata; \
+			ln -fs ../../../../../gac/$(NAME)/$(VERSION)__$(TOKEN)/$(NAME).optdata $(DESTDIR)$(gacdir)/Reference\ Assemblies/Microsoft/FSharp/$(PCLPATH)/$(VERSION)/$(NAME).optdata; \
+			ln -fs ../../../../../gac/$(NAME)/$(VERSION)__$(TOKEN)/$(NAME).dll $(DESTDIR)$(gacdir)/Reference\ Assemblies/Microsoft/FSharp/$(PCLPATH)/$(VERSION)/$(NAME).dll; \
+		fi; \
+		if test x-$(NAME)-$(TargetFramework)-$(VERSION) = x-FSharp.Core-portable47-2.3.5.0; then \
+			echo "Installing FSharp.Core $(VERSION) reference assembly into install location matching Visual Studio"; \
+			echo "   ../gac/$(NAME)/$(VERSION)__$(TOKEN)/$(NAME).dll --> $(DESTDIR)$(gacdir)/Reference Assemblies/Microsoft/FSharp/3.0/Runtime/.NETPortable"; \
+			mkdir -p $(DESTDIR)$(gacdir)/Reference\ Assemblies/Microsoft/FSharp/3.0/Runtime/.NETPortable; \
+			ln -fs ../../../../../../gac/$(NAME)/$(VERSION)__$(TOKEN)/$(NAME).xml $(DESTDIR)$(gacdir)/Reference\ Assemblies/Microsoft/FSharp/3.0/Runtime/.NETPortable/$(NAME).xml; \
+			ln -fs ../../../../../../gac/$(NAME)/$(VERSION)__$(TOKEN)/$(NAME).sigdata $(DESTDIR)$(gacdir)/Reference\ Assemblies/Microsoft/FSharp/3.0/Runtime/.NETPortable/$(NAME).sigdata; \
+			ln -fs ../../../../../../gac/$(NAME)/$(VERSION)__$(TOKEN)/$(NAME).optdata $(DESTDIR)$(gacdir)/Reference\ Assemblies/Microsoft/FSharp/3.0/Runtime/.NETPortable/$(NAME).optdata; \
+			ln -fs ../../../../../../gac/$(NAME)/$(VERSION)__$(TOKEN)/$(NAME).dll $(DESTDIR)$(gacdir)/Reference\ Assemblies/Microsoft/FSharp/3.0/Runtime/.NETPortable/$(NAME).dll; \
+		fi; \
 	fi
 
 # Also place some .NET 4.5 libraries into .NET 4.0
-install-lib-net45: 
+install-lib-net40: 
 	@if test '$(TargetFramework)' = 'net40'; then \
 	  if test -e $(DESTDIR)$(gacdir)/4.0/; then \
 		ln -fs ../4.5/$(ASSEMBLY) $(DESTDIR)$(gacdir)/4.0/$(ASSEMBLY); \

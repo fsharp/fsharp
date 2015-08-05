@@ -37,118 +37,149 @@ outsuffix = $(TargetFramework)
 
 # Version number mappings for various versions of FSharp.Core
 
-
 ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-net40-)
 VERSION = 4.4.0.0
 TARGET = 4.5
+PKGINSTALL = yes
+REFASSEMPATH = .NETFramework/v4.0
 outsuffix = .
+endif
+
+ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-net20-)
+VERSION = 2.3.0.0
+TARGET = 2.0
+REFASSEMPATH = .NETFramework/v2.0
+outsuffix = $(TargetFramework)
 endif
 
 ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-monodroid-)
 VERSION = 3.98.4.0
-TARGET = monodroid
+TARGET = $(TargetFramework)
+outsuffix = $(TargetFramework)
 endif
 
 
 ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-monotouch-)
 VERSION = 3.98.4.0
-TARGET = monotouch
+TARGET = $(TargetFramework)
+outsuffix = $(TargetFramework)
 endif
 
 ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-xamarinwatchos-)
 VERSION = 3.98.4.0
-TARGET = xamarinwatchos
+TARGET = $(TargetFramework)
+outsuffix = $(TargetFramework)
 endif
 
 ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-xamarinmacmobile-)
 VERSION = 3.99.4.0
-TARGET = xamarinmacmobile
+TARGET = $(TargetFramework)
+outsuffix = $(TargetFramework)
 endif
 
 ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-xamarinmacfull-)
 VERSION = 3.100.4.0
-TARGET = xamarinmacfull
+TARGET = $(TargetFramework)
+outsuffix = $(TargetFramework)
 endif
 
 ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-portable47-)
 VERSION = 3.47.4.0
-TARGET = portable47
+TARGET = $(TargetFramework)
 PCLPATH = .NETPortable
+outsuffix = $(TargetFramework)
 endif
 
 ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-portable7-)
 VERSION = 3.7.4.0
-TARGET = portable7
+TARGET = $(TargetFramework)
 PCLPATH = .NETCore
+outsuffix = $(TargetFramework)
 endif
 
 ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-portable78-)
 VERSION = 3.78.4.0
-TARGET = portable78
+TARGET = $(TargetFramework)
 PCLPATH = .NETCore
+outsuffix = $(TargetFramework)
 endif
 
 ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-portable259-)
 VERSION = 3.259.4.0
-TARGET = portable259
+TARGET = $(TargetFramework)
 PCLPATH = .NETCore
+outsuffix = $(TargetFramework)
 endif
 
 # Version number mappings for various back versions of FSharp.Core (F# 3.0 versions of FSharp.Core)
 
 ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-net20-3.0)
 VERSION = 2.3.0.0
-TARGET = 2.0
+TARGET = fsharp30/2.0
+REFASSEMPATH = .NETFramework/v2.0
 outsuffix = fsharp30/$(TargetFramework)
 endif
 
 ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-net40-3.0)
 VERSION = 4.3.0.0
-TARGET = 4.5
+TARGET = fsharp30/4.5
+REFASSEMPATH = .NETFramework/v4.0
 outsuffix = fsharp30/$(TargetFramework)
 endif
 
 ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-portable47-3.0)
 VERSION = 2.3.5.0
-TARGET = portable47
+TARGET = fsharp30/$(TargetFramework)
 PCLPATH = .NETPortable
 outsuffix = fsharp30/$(TargetFramework)
 endif
 
 # Version number mappings for various back versions of FSharp.Core (F# 3.1 versions of FSharp.Core)
 
+ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-net20-3.1)
+VERSION = 2.3.1.0
+TARGET = fsharp31/2.0
+REFASSEMPATH = .NETFramework/v2.0
+outsuffix = fsharp31/$(TargetFramework)
+endif
+
 ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-net40-3.1)
 VERSION = 4.3.1.0
-TARGET = 4.5
+TARGET = fsharp31/4.5
+REFASSEMPATH = .NETFramework/v4.0
 outsuffix = fsharp31/$(TargetFramework)
 endif
 
 ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-monodroid-3.1)
 VERSION = 2.3.98.1
-TARGET = fsharp31/monodroid
+TARGET = fsharp31/$(TargetFramework)
+outsuffix = fsharp31/$(TargetFramework)
 endif
 
 
 ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-monotouch-3.1)
 VERSION = 2.3.98.1
-TARGET = fsharp31/monotouch
+TARGET = fsharp31/$(TargetFramework)
+outsuffix = fsharp31/$(TargetFramework)
 endif
 
 
 ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-xamarinmacmobile-3.1)
 VERSION = 2.3.99.1
-TARGET = fsharp31/xamarinmacmobile
+TARGET = fsharp31/$(TargetFramework)
+outsuffix = fsharp31/$(TargetFramework)
 endif
 
 ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-xamarinmacfull-3.1)
 VERSION = 2.3.100.1
-TARGET = fsharp31/xamarinmacfull
+TARGET = fsharp31/$(TargetFramework)
+outsuffix = fsharp31/$(TargetFramework)
 endif
 
 
 ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-portable7-3.1)
 VERSION = 3.3.1.0
-TARGET = portable7
+TARGET = fsharp31/$(TargetFramework)
 PCLPATH = .NETCore
 outsuffix = fsharp31/$(TargetFramework)
 endif
@@ -156,7 +187,7 @@ endif
 
 ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-portable47-3.1)
 VERSION = 2.3.5.1
-TARGET = portable47
+TARGET = fsharp31/$(TargetFramework)
 PCLPATH = .NETPortable
 outsuffix = fsharp31/$(TargetFramework)
 endif
@@ -165,21 +196,21 @@ endif
 
 ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-portable78-3.1)
 VERSION = 3.78.3.1
-TARGET = portable78
+TARGET = fsharp31/$(TargetFramework)
 PCLPATH = .NETCore
 outsuffix = fsharp31/$(TargetFramework)
 endif
 
 ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-portable259-3.1)
 VERSION = 3.259.3.1
-TARGET = portable259
+TARGET = fsharp31/$(TargetFramework)
 PCLPATH = .NETCore
 outsuffix = fsharp31/$(TargetFramework)
 endif
 
 
 
-DELAY_SIGN_TOKEN = b03f5f7f11d50a3a
+FSCORE_DELAY_SIGN_TOKEN = b03f5f7f11d50a3a
 SIGN_TOKEN = f536804aa0eb945b
 
 bootstrapdir = $(bootstrap)/4.0/

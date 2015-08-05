@@ -1,7 +1,7 @@
 NAME=FSharp.Core
 ASSEMBLY = $(NAME).dll
 DELAY_SIGN=1
-TOKEN=$(DELAY_SIGN_TOKEN)
+TOKEN=$(FSCORE_DELAY_SIGN_TOKEN)
 
 srcdir := @abs_srcdir@/
 
@@ -9,6 +9,6 @@ include @abs_top_builddir@/config.make
 
 include $(topdir)/src/fsharp/targets.make
 
-install: install-lib install-lib-net45 
+install: install-lib install-lib-net40 
 
 
