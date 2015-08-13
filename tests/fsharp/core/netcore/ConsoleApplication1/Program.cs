@@ -92,7 +92,7 @@ namespace PortableTestEntry
         }
 
         // execute and handle errors for individual test areas
-        static void RUN(string testArea, Action action)
+        static void Run(string testArea, Action action)
         {
             Console.WriteLine("RUNning area {0}", testArea);
 
