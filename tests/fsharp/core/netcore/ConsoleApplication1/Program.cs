@@ -18,40 +18,41 @@ namespace PortableTestEntry
         {
             SetHooks();
 
-            RUN("Core_access", () => { var x = Core_access.RUN(); });
-            RUN("Core_apporder", () => { var x = Core_apporder.RUN(); });
-            RUN("Core_array", () => { var x = Core_array.RUN(); });
-            RUN("Core_attributes", () => { var x = Core_attributes.RUN(); });
-            RUN("Core_comprehensions", () => { var x = Core_comprehensions.RUN(); });
-            RUN("Core_control", () => { var x = Core_control.RUN(); });
-            RUN("Core_controlChamenos", () => { var x = Core_controlChamenos.RUN(); });
-            RUN("Core_controlMailBox", () => { var x = Core_controlMailBox.RUN(); });
-            RUN("Core_controlStackOverflow", () => { var x = Core_controlStackOverflow.RUN(); });
-            RUN("Core_csext", () => { var x = Core_csext.RUN(); });
-            RUN("Core_innerpoly", () => { var x = Core_innerpoly.RUN(); });
-            RUN("Core_int32", () => { var x = Core_int32.RUN(); });
-            RUN("Core_lazy", () => { var x = Core_lazy.RUN(); });
-            RUN("Core_letrec", () => { var x = Core_letrec.RUN(); });
-            RUN("Core_libtest", () => { var x = Core_libtest.RUN(); });
-            RUN("Core_lift", () => { var x = Core_lift.RUN(); });
-            RUN("Core_longnames", () => { var x = Core_longnames.RUN(); });
-            RUN("Core_map", () => { var x = Core_map.RUN(); });
-            RUN("Core_measures", () => { var x = Core_measures.RUN(); });
-            RUN("Core_genericMeasures", () => { var x = Core_genericMeasures.RUN<int>(); });
-            RUN("Core_nested", () => { var x = Core_nested.RUN(); });
-            RUN("Core_patterns", () => { var x = Core_patterns.RUN(); });
-            RUN("Core_printf", () => { var x = Core_printf.RUN(); });
-            RUN("Core_queriesCustomQueryOps", () => { var x = Core_queriesCustomQueryOps.RUN(); });
-            RUN("Core_queriesLeafExpressionConvert", () => { var x = Core_queriesLeafExpressionConvert.RUN(); });
-            RUN("Core_queriesNullableOperators", () => { var x = Core_queriesNullableOperators.RUN(); });
-            RUN("Core_queriesOverIEnumerable", () => { var x = Core_queriesOverIEnumerable.RUN(); });
-            RUN("Core_queriesOverIQueryable", () => { var x = Core_queriesOverIQueryable.RUN(); });
-            RUN("Core_quotes", () => { var x = Core_quotes.RUN(); });
-            RUN("Core_seq", () => { var x = Core_seq.RUN(); });
-            RUN("Core_subtype", () => { var x = Core_subtype.RUN(); });
-            RUN("Core_syntax", () => { var x = Core_syntax.RUN(); });
-            RUN("Core_tlr", () => { var x = Core_tlr.RUN(); });
-            RUN("Core_unicode", () => { var x = Core_unicode.RUN(); });
+            Run("Core_access", () => { var x = Core_access.RUN(); });
+            Run("Core_apporder", () => { var x = Core_apporder.RUN(); });
+            Run("Core_array", () => { var x = Core_array.RUN(); });
+            Run("Core_attributes", () => { var x = Core_attributes.RUN(); });
+            Run("Core_comprehensions", () => { var x = Core_comprehensions.RUN(); });
+            Run("Core_control", () => { var x = Core_control.RUN(); });
+            Run("Core_controlChamenos", () => { var x = Core_controlChamenos.RUN(); });
+            Run("Core_controlMailBox", () => { var x = Core_controlMailBox.RUN(); });
+            Run("Core_controlStackOverflow", () => { var x = Core_controlStackOverflow.RUN(); });
+            Run("Core_csext", () => { var x = Core_csext.RUN(); });
+            Run("Core_forexpression", () => { var x = Core_forexpression.RUN(); });
+            Run("Core_innerpoly", () => { var x = Core_innerpoly.RUN(); });
+            Run("Core_int32", () => { var x = Core_int32.RUN(); });
+            Run("Core_lazy", () => { var x = Core_lazy.RUN(); });
+            Run("Core_letrec", () => { var x = Core_letrec.RUN(); });
+            Run("Core_libtest", () => { var x = Core_libtest.RUN(); });
+            Run("Core_lift", () => { var x = Core_lift.RUN(); });
+            Run("Core_longnames", () => { var x = Core_longnames.RUN(); });
+            Run("Core_map", () => { var x = Core_map.RUN(); });
+            Run("Core_measures", () => { var x = Core_measures.RUN(); });
+            Run("Core_genericMeasures", () => { var x = Core_genericMeasures.RUN(); });
+            Run("Core_nested", () => { var x = Core_nested.RUN(); });
+            Run("Core_patterns", () => { var x = Core_patterns.RUN(); });
+            Run("Core_printf", () => { var x = Core_printf.RUN(); });
+            Run("Core_queriesCustomQueryOps", () => { var x = Core_queriesCustomQueryOps.RUN(); });
+            Run("Core_queriesLeafExpressionConvert", () => { var x = Core_queriesLeafExpressionConvert.RUN(); });
+            Run("Core_queriesNullableOperators", () => { var x = Core_queriesNullableOperators.RUN(); });
+            Run("Core_queriesOverIEnumerable", () => { var x = Core_queriesOverIEnumerable.RUN(); });
+            Run("Core_queriesOverIQueryable", () => { var x = Core_queriesOverIQueryable.RUN(); });
+            Run("Core_quotes", () => { var x = Core_quotes.RUN(); });
+            Run("Core_seq", () => { var x = Core_seq.RUN(); });
+            Run("Core_subtype", () => { var x = Core_subtype.RUN(); });
+            Run("Core_syntax", () => { var x = Core_syntax.RUN(); });
+            Run("Core_tlr", () => { var x = Core_tlr.RUN(); });
+            Run("Core_unicode", () => { var x = Core_unicode.RUN(); });
 
             return returnCode;
         }
@@ -91,7 +92,7 @@ namespace PortableTestEntry
         }
 
         // execute and handle errors for individual test areas
-        static void RUN(string testArea, Action action)
+        static void Run(string testArea, Action action)
         {
             Console.WriteLine("RUNning area {0}", testArea);
 
