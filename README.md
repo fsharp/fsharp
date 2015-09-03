@@ -88,7 +88,7 @@ If using NuGet Package Manager, add the source to the list of available package 
 
 Requires mono 3.0 or higher.
 
-OS X requires automake 2.69. To install from [homebrew](http://mxcl.github.com/homebrew):
+OS X requires automake/autoconf 2.69. To install from [homebrew](http://mxcl.github.com/homebrew):
 
 	brew install automake
 
