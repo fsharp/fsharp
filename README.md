@@ -92,7 +92,7 @@ get a complaint in subsequent steps about `xbuild` being missing, it means
 you don't have Mono installed.
 
 Building on OS X requires several development tools that are not installed
-by default. Most can be installed via [homebrew](http://mxcl.github.com/homebrew):
+by default. Most can be installed via [Homebrew](http://brew.sh/):
 
 	brew install autoconf automake pkg-config
 
