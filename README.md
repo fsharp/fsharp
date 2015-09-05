@@ -100,7 +100,7 @@ Building on OS X also requires Xcode. If you don't want to install
 the full GUI development environment, the command line tools are sufficient.
 At a shell prompt, say:
 
-       xcode-select --install
+	xcode-select --install
 
 ## How to Build
 
