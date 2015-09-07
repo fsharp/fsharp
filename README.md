@@ -86,11 +86,21 @@ If using NuGet Package Manager, add the source to the list of available package 
 
 ## Build Requirements
 
-Requires mono 3.0 or higher.
+Building F# on Unix-type platforms requires
+[Mono](http://www.mono-project.com/download/) 3.0 or higher. If you
+get a complaint in subsequent steps about `xbuild` being missing, it means
+you don't have Mono installed.
 
-OS X requires automake/autoconf 2.69. To install from [homebrew](http://mxcl.github.com/homebrew):
+Building on OS X requires several development tools that are not installed
+by default. Most can be installed via [Homebrew](http://brew.sh/):
 
-	brew install automake
+	brew install autoconf automake pkg-config
+
+Building on OS X also requires Xcode. If you don't want to install
+the full GUI development environment, the command line tools are sufficient.
+At a shell prompt, say:
+
+	xcode-select --install
 
 ## How to Build
 
