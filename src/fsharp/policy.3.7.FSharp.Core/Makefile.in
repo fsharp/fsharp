@@ -14,7 +14,7 @@ include $(topdir)/src/fsharp/targets.make
 $(outdir)/$(NAME).dll: $(NAME).dll.config 
 	@mkdir -p $(@D)
 	cp $(NAME).dll.config $(@D)
-	al /link:$(NAME).dll.config /out:$@ /delaysign /keyfile:$(topdir)msfinal.pub
+	$(monobindir)/al /link:$(NAME).dll.config /out:$@ /delaysign /keyfile:$(topdir)msfinal.pub
 
 build: 
 	$(MAKE) $(outdir)/$(NAME).dll

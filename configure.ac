@@ -9,9 +9,13 @@ AC_PROG_MAKE_SET
 
 AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
 
-# On OSX use Mono's private copy of pkg-config if it exists, see https://github.com/fsharp/fsharp/issues/107
+# pkg-config precedence: 1) our prefix 2) the system Mono location 3) the PATH
+prefix_pkg_config="$prefix"/bin/pkg-config
 osx_pkg_config=/Library/Frameworks/Mono.framework/Versions/Current/bin/pkg-config
-if test -e $osx_pkg_config; then
+
+if test -e $prefix_pkg_config; then
+    PKG_CONFIG=$prefix_pkg_config
+elif test -e $osx_pkg_config; then
     PKG_CONFIG=$osx_pkg_config
 elif test "x$PKG_CONFIG" = "xno"; then
         AC_MSG_ERROR([You need to install pkg-config])
@@ -19,18 +23,6 @@ fi
 
 AC_MSG_NOTICE("pkg-config: $PKG_CONFIG")
 AC_MSG_NOTICE("PKG_CONFIG_LIBDIR: $PKG_CONFIG_LIBDIR")
-
-# On OSX El Capitan, xbuild is no longer in PATH, so we need to use the full path.
-AC_PATH_PROG(XBUILD, xbuild, no)
-osx_xbuild=/Library/Frameworks/Mono.framework/Versions/Current/bin/xbuild
-if test "x$XBUILD" == "xno"; then
-  if test -e $osx_xbuild; then
-    XBUILD=$osx_xbuild
-  else
-    AC_MSG_ERROR([Could not find xbuild])
-  fi
-fi
-AC_MSG_NOTICE(xbuild: $XBUILD)
 
 MONO_REQUIRED_VERSION=3.0
 MONO_RECOMMENDED_VERSION=3.2
@@ -64,7 +56,18 @@ AC_ARG_WITH([gacdir],
         )
 
 MONOPREFIX=$(cd `$PKG_CONFIG --variable=prefix mono` && pwd)
+MONOBINDIR="$MONOPREFIX"/bin
 MONOLIBDIR="$MONOPREFIX"/lib
+
+AC_PATH_PROG(XBUILD, xbuild, no)
+xbuild_from_pkg_config="$MONOBINDIR"/xbuild
+if test -e $xbuild_from_pkg_config; then
+    XBUILD=$xbuild_from_pkg_config
+elif test "x$XBUILD" == "xno"; then
+    AC_MSG_ERROR([Could not find xbuild])
+fi
+AC_MSG_NOTICE(xbuild: $XBUILD)
+
 MONOGACDIR="$MONOLIBDIR"/mono
 if ! test "x$with_gacdir" = "xno"; then
 	MONOGACDIR=$(cd "$with_gacdir/.." && pwd)
@@ -138,6 +141,7 @@ AC_SUBST(MONOTOUCHENABLED)
 AC_SUBST(MONODROIDENABLED)
 AC_SUBST(XAMARINMACENABLED)
 
+AC_SUBST(MONOBINDIR)
 AC_SUBST(MONOLIBDIR)
 AC_SUBST(MONOGACDIR)
 

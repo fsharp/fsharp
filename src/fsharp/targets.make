@@ -41,7 +41,7 @@ install-lib:
 	@mkdir -p $(DESTDIR)$(gacdir)/$(TARGET)
 	@if test "x$(DELAY_SIGN)" = "x1"; then \
 	    echo "Signing $(outdir)$(ASSEMBLY) with Mono key"; \
-	    sn -q -R $(outdir)$(ASSEMBLY) $(srcdir)../../../mono.snk; \
+	    $(monobindir)/sn -q -R $(outdir)$(ASSEMBLY) $(srcdir)../../../mono.snk; \
 	fi
 	@if test x-$(NAME) = x-FSharp.Build; then \
 	    echo "Installing Microsoft.FSharp.Targets and Microsoft.Portable.FSharp.Targets into install locations matching Visual Studio"; \
@@ -99,7 +99,7 @@ install-lib:
 	    if test -e $(outdir)$(NAME).dll; then \
 			if test x-$(PKGINSTALL) = x-yes; then \
 				echo "Using gacutil to install $(outdir)$(ASSEMBLY) into GAC root $(DESTDIR)$(libdir) as package $(TARGET)"; \
-				gacutil -i $(outdir)$(ASSEMBLY) -root $(DESTDIR)$(libdir) -package $(TARGET); \
+				$(monobindir)/gacutil -i $(outdir)$(ASSEMBLY) -root $(DESTDIR)$(libdir) -package $(TARGET); \
 			else \
 				echo "Installing $(outdir)$(NAME).dll to $(DESTDIR)$(gacdir)/gac/$(NAME)/$(VERSION)__$(TOKEN)/"; \
 				mkdir -p $(DESTDIR)$(gacdir)/gac/$(NAME)/$(VERSION)__$(TOKEN)/; \
@@ -186,7 +186,7 @@ install-lib-net40:
 # This also installs 'fsharpc' and 'fsharpi'
 install-bin:
 	chmod +x $(outdir)$(ASSEMBLY)
-	sed -e 's,[@]DIR[@],$(gacdir)/$(TARGET),g' -e 's,[@]TOOL[@],$(ASSEMBLY),g' < $(topdir)launcher > $(outdir)$(subst fs,fsharp,$(NAME))
+	sed -e 's,[@]DIR[@],$(gacdir)/$(TARGET),g' -e 's,[@]TOOL[@],$(ASSEMBLY),g' -e 's,[@]MONOBINDIR[@],$(monobindir),g' < $(topdir)launcher > $(outdir)$(subst fs,fsharp,$(NAME))
 	chmod +x $(outdir)$(subst fs,fsharp,$(NAME))
 	@mkdir -p $(DESTDIR)$(gacdir)/$(TARGET)
 	@mkdir -p $(DESTDIR)$(bindir)
