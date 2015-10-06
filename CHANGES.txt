@@ -1,3 +1,6 @@
+4.0.0.4
+  * Integrate Microsoft\visualfsharp to 2d413fb94. See CHANGELOG.md for changes from Microsoft\visualfsharp
+
 4.0.0.3
   * Fix build problems
 
