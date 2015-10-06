@@ -533,6 +533,17 @@ module TypedTest = begin
             |   _ -> false
         end
 
+#if Portable
+#else
+    test "check accesses to readonly fields in ReflectedDefinitions" 
+        begin
+            let c1 = Class1("a")
+            match <@ c1.myReadonlyField @> with
+            |   FieldGet(Some (ValueWithName (_, v, "c1")), field) -> (v.Name = "Class1") && (field.Name = "myReadonlyField")
+            |   _ -> false
+        end
+#endif
+
 end
 
 (*

@@ -138,7 +138,6 @@ let aa =
       exit 1
   else   
       stdout.WriteLine "Test Passed"
-      log "ALL OK, HAPPY HOLIDAYS, MERRY CHRISTMAS!"
       System.IO.File.WriteAllText("test.ok","ok")
       exit 0
 #endif
