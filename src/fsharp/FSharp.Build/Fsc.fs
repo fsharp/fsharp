@@ -149,7 +149,6 @@ type [<Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:Iden
     let mutable win32res : string = null
     let mutable win32manifest : string = null
     let mutable vserrors : bool = false
-    let mutable validateTypeProviders : bool = false
     let mutable vslcid : string = null
     let mutable utf8output : bool = false
     let mutable subsystemVersion : string = null
@@ -323,10 +322,6 @@ type [<Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:Iden
     member fsc.VisualStudioStyleErrors
         with get() = vserrors
         and set(p) = vserrors <- p
-
-    member fsc.ValidateTypeProviders
-        with get() = validateTypeProviders
-        and set(p) = validateTypeProviders <- p
 
     member fsc.LCID
         with get() = vslcid
@@ -508,10 +503,6 @@ type [<Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:Iden
         // VisualStudioStyleErrors 
         if vserrors then
             builder.AppendSwitch("--vserrors")      
-
-        // ValidateTypeProviders 
-        if validateTypeProviders then
-            builder.AppendSwitch("--validate-type-providers")           
 
         builder.AppendSwitchIfNotNull("--LCID:", vslcid)
         
