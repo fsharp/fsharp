@@ -59,7 +59,7 @@ exception Deprecated of string * range
 exception Experimental of string * range
 exception PossibleUnverifiableCode of range
 
-// Range\NoRange Duals
+// Range/NoRange Duals
 exception UnresolvedReferenceNoRange of (*assemblyname*) string 
 exception UnresolvedReferenceError of (*assemblyname*) string * range
 exception UnresolvedPathReferenceNoRange of (*assemblyname*) string * (*path*) string
@@ -273,7 +273,7 @@ module ErrorLoggerExtensions =
     open System.Reflection
 
     // Instruct the exception not to reset itself when thrown again.
-    // Why don?t we just not catch these in the first place? Because we made the design choice to ask the user to send mail to fsbugs@microsoft.com. 
+    // Why don't we just not catch these in the first place? Because we made the design choice to ask the user to send mail to fsbugs@microsoft.com. 
     // To achieve this, we need to catch the exception, report the email address and stack trace, and then reraise. 
     let PreserveStackTrace(exn) =
         try 
