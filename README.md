@@ -226,6 +226,10 @@ plus scripts
 
 ## Development Notes
 
+### Submitting Pull Requests
+
+Feel free to send in-progress Pull Requests to ask for clarification or direction for a feature or task. 
+
 ### Integrating changes from 'visualfsharp'
 
 To integrate latest changes from https://github.com/Microsoft/visualfsharp, use
@@ -233,6 +237,14 @@ To integrate latest changes from https://github.com/Microsoft/visualfsharp, use
 git remote add visualfsharp https://github.com/Microsoft/visualfsharp
 git pull visualfsharp master
 ```
+
+There are certain guidelines that need to be followed when integrating changes from upstream:
+* this repository does not undergo the QA test process that upstream does, so the `tests/fsharpqa` folder and all files within should be removed when merging
+* this repository does not contain any of the Visual Studio tooling or integrations, so the `vsintegration` directory and all files within should be removed when merging
+* anything referencing `FSharp.LaunguageService.Compiler` is a Microsoft-internal version of the open FSharp.Compiler.Service repository, and as such should be removed when merging
+* Windows-specific `update.cmd` and `runtests.cmd` aren't used in this repository, and so should be removed when merging
+* anything that references the `Salsa` testing library is used by Microsoft to test the Visual Studio integrations, and as such should be removed when merging
+* the foremost example of the above is the `root/unittests` folder, which contains tests for the Visual Studio integration using Salsa, and as such should be removed when merging
 
 ### Continuous Integration Build
 
