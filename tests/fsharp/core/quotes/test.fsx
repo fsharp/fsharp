@@ -536,7 +536,7 @@ module TypedTest = begin
             |   _ -> false
         end
 
-#if FSHARP_CORE_31
+#if Portable
 #else
     test "check accesses to readonly fields in ReflectedDefinitions" 
         begin
