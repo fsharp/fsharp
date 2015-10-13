@@ -295,3 +295,12 @@ sudo apt-get install dos2unix autoconf
 make
 sudo make install
 ```
+
+
+Maintainers
+-----------
+
+Tha maintainers of this repository appointed by the F# Core Engineering Group are:
+
+ - [Tomas Petricek](http://github.com/tpetricek), [Robin Neatherway](https://github.com/rneatherway)
+ - with help and guidance from [Don Syme](http://github.com/dsyme), [Cameron Taggart](http://github.com/ctaggart), [Dave Thomas](http://github.com/7sharp9), [Jo Shields](http://github.com/directhex), [Lincoln Atkinson](http://github.com/latkin), [Kevin Ransom](http://github.com/KevinRansom) and [Henrik Feldt](http://github.com/haf)
