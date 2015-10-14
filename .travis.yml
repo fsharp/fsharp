@@ -9,6 +9,9 @@ mono:
 
 install:
 
+before_script:
+  - chmod +x travis-autogen.sh
+
 script: 
   - ./travis-autogen.sh
   - make 
