@@ -10,7 +10,7 @@ mono:
 install:
 
 script: 
-  - ./autogen.sh
+  - ./travis-autogen.sh
   - make 
   - sudo make install
   - xbuild ./src/fsharp-library-unittests-build.proj /p:TargetFramework=net40 /p:Configuration=Release
