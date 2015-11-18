@@ -25,6 +25,7 @@
     <AssemblyVersion Condition="'$(TargetFramework)' == 'monodroid' ">3.98.4.0</AssemblyVersion>
     <AssemblyVersion Condition="'$(TargetFramework)' == 'monotouch' ">3.98.4.0</AssemblyVersion>
     <AssemblyVersion Condition="'$(TargetFramework)' == 'xamarinwatchos' ">3.98.4.0</AssemblyVersion>
+    <AssemblyVersion Condition="'$(TargetFramework)' == 'xamarintvos' ">3.98.4.0</AssemblyVersion>
     <AssemblyVersion Condition="'$(TargetFramework)' == 'xamarinmacmobile' ">3.99.4.0</AssemblyVersion>
     <AssemblyVersion Condition="'$(TargetFramework)' == 'xamarinmacfull' ">3.100.4.0</AssemblyVersion>
 
@@ -217,6 +218,25 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <DefineConstants>$(DefineConstants);FX_NO_BIGINT</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_STRUCTURAL_EQUALITY</DefineConstants>
     <AssemblySearchPaths>$(FSharpSourcesRoot)\..\dependencies\mono\2.1\XamarinWatchOS;$(AssemblySearchPaths)</AssemblySearchPaths>
+  </PropertyGroup>
+
+  <!-- Target XamarinTVOS (should be identical to MonoTouch configurations, though we sanity check --> 
+  <!-- by building against the Xamarin.TVOS mscorlib) -->
+  <PropertyGroup Condition="'$(TargetFramework)'=='xamarintvos'">
+    <!--<TargetFrameworkVersion>v1.0</TargetFrameworkVersion>-->
+    <!-- <TargetFrameworkIdentifier>Xamarin.TVOS</TargetFrameworkIdentifier> --> 
+    <TargetFrameworkOutputDirectory>$(TargetFramework)</TargetFrameworkOutputDirectory>
+    <DefineConstants>$(DefineConstants);FSHARP_CORE_4_5</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_ATLEAST_45</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_ATLEAST_40</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_ATLEAST_35</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_ATLEAST_LINQ</DefineConstants>
+    <DefineConstants>$(DefineConstants);QUERIES_IN_FSLIB</DefineConstants>
+    <DefineConstants>$(DefineConstants);PUT_TYPE_PROVIDERS_IN_FSCORE;</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_REFLECTION_EMIT</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_BIGINT</DefineConstants>
+    <DefineConstants>$(DefineConstants);FX_NO_STRUCTURAL_EQUALITY</DefineConstants>
+    <AssemblySearchPaths>$(FSharpSourcesRoot)\..\dependencies\mono\2.1\XamarinTVOS;$(AssemblySearchPaths)</AssemblySearchPaths>
   </PropertyGroup>
 
   <!-- Target xamarinmacmobile similar to monotouch configurations, with Reflection.emit, structural equality, and BigInt --> 
