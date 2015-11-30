@@ -6,6 +6,7 @@ os:
 
 mono:
   - latest
+  - 4.0.5
 
 install:
 
