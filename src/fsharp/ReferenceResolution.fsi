@@ -27,7 +27,6 @@ module internal MSBuildResolver =
         | RuntimeLike      // Don't allow stubbed-out reference assemblies
         | DesigntimeLike 
 
-
     /// Get the Reference Assemblies directory for the .NET Framework on Window
     val DotNetFrameworkReferenceAssembliesRootDirectoryOnWindows : string
 
