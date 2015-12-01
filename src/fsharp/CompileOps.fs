@@ -4235,9 +4235,16 @@ type TcImports(tcConfigP:TcConfigProvider, initialResolutions:TcAssemblyResoluti
             | None ->      
                                   
                 if tcConfigP.Get().useMonoResolution then
-                    let resolved = [tcConfig.ResolveLibWithDirectories CcuLoadFailureAction.RaiseError assemblyReference |> Option.get]
-                    resolutions <- resolutions.AddResolutionResults resolved
-                    ResultD resolved
+                    let action = 
+                        match mode with 
+                        | ResolveAssemblyReferenceMode.ReportErrors -> CcuLoadFailureAction.RaiseError
+                        | ResolveAssemblyReferenceMode.Speculative -> CcuLoadFailureAction.ReturnNone
+                    match tcConfig.ResolveLibWithDirectories action assemblyReference with 
+                    | Some resolved -> 
+                        resolutions <- resolutions.AddResolutionResults [resolved]
+                        ResultD [resolved]
+                    | None -> 
+                        ErrorD(AssemblyNotResolved(assemblyReference.Text,assemblyReference.Range))
                 else 
                     // This is a previously unencounterd assembly. Resolve it and add it to the list.
                     // But don't cache resolution failures because the assembly may appear on the disk later.
