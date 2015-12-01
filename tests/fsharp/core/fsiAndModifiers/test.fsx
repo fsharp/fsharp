@@ -86,19 +86,6 @@ module TestPack4 =
     printfn "got %A" got
     if got <> expected then fail (sprintf "TestPack4: got %A, expected %A" got expected)
 
-// See https://github.com/fsharp/fsharp/issues/483
-module TestFsiLoadOfNonExistentAssembly = 
-    let test() = 
-      try 
-        let log4netType = System.Type.GetType("ThisTypeDoes.Not.Exist, thisAssemblyDoesNotExist")
-        let exists = log4netType <> null
-        if exists then fail (sprintf "type existed!")
-        do printfn "%A" exists
-       with e -> 
-         fail (sprintf "exception unexpected: %s" e.Message)
-
-    do test()
-
 if errors.IsEmpty then 
     System.IO.File.WriteAllText("test.ok", "")
 else 
