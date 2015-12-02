@@ -39,15 +39,13 @@ This codebase uses the Apache 2.0 license.
 
 ## Current Build Status
 
-F# 4.0+ (branch ``master``, Mono 3.x, OSX + some unit tests (Travis) [![Build Status](https://travis-ci.org/fsharp/fsharp.png?branch=master)](https://travis-ci.org/fsharp/fsharp/branches)
+| F#   | Branch        | OSX/Linux | Windows |
+|------|---------------|-----------|---------|
+| 4.0+ | ``master``    | [![Build Status](https://travis-ci.org/fsharp/fsharp.png?branch=master)](https://travis-ci.org/fsharp/fsharp/branches) | [![Build status](https://ci.appveyor.com/api/projects/status/7m5e2yr0snbbr7t9)](https://ci.appveyor.com/project/fsgit/fsharp) |
+| 4.0  | ``fsharp4``   | [![Build Status](https://travis-ci.org/fsharp/fsharp.png?branch=fsharp4)](https://travis-ci.org/fsharp/fsharp/branches) |
+| 3.1  | ``fsharp31``  | [![Build Status](https://travis-ci.org/fsharp/fsharp.png?branch=fsharp31)](https://travis-ci.org/fsharp/fsharp/branches) |
+| 3.0  | ``fsharp_30`` | [![Build Status](https://travis-ci.org/fsharp/fsharp.png?branch=fsharp_30)](https://travis-ci.org/fsharp/fsharp/branches) |
 
-F# 4.0 (branch ``fsharp4``, Mono 3.x, OSX + some unit tests (Travis) [![Build Status](https://travis-ci.org/fsharp/fsharp.png?branch=fsharp4)](https://travis-ci.org/fsharp/fsharp/branches)
-
-F# 3.1 (branch ``fsharp31``), Mono 3.x, OSX + some unit tests (Travis) [![Build Status](https://travis-ci.org/fsharp/fsharp.png?branch=fsharp31)](https://travis-ci.org/fsharp/fsharp/branches)
-
-F# 3.0 (branch ``fsharp_30``), Mono 3.x, OSX + some unit tests (Travis) [![Build Status](https://travis-ci.org/fsharp/fsharp.png?branch=fsharp_30)](https://travis-ci.org/fsharp/fsharp/branches)
-
-Head (branch ``master``), Windows Server 2012 (AppVeyor)  [![Build status](https://ci.appveyor.com/api/projects/status/7m5e2yr0snbbr7t9)](https://ci.appveyor.com/project/fsgit/fsharp)
 
 ## NuGet Feed of FSharp.Core and FSharp.Compiler.Tools packages
 
