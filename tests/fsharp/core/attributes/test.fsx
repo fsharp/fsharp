@@ -1342,6 +1342,20 @@ module ParamArrayNullAttribute =
     check "vwcewecioj9" (test3()) "Attr(<null>)"
  
 
+// See https://github.com/fsharp/fsharp/issues/483
+// We do not expect an exception
+module TestFsiLoadOfNonExistentAssembly = 
+    let test() = 
+      try 
+        let log4netType = System.Type.GetType("ThisTypeDoes.Not.Exist, thisAssemblyDoesNotExist")
+        let exists = log4netType <> null
+        if exists then report_failure (sprintf "type existed!")
+        do printfn "%A" exists
+       with e -> 
+         report_failure (sprintf "exception unexpected: %s" e.Message)
+
+    do test()
+
 
 (*-------------------------------------------------------------------------
 !* Test passed?
