@@ -68,7 +68,7 @@ Copyright (C) Microsoft Corporation. Apache 2.0 License.
 
   <PropertyGroup>
     <UsingXBuild>false</UsingXBuild>
-    <UsingXBuild Condition="Exists('$(MSBuildExtensionsPath32)\..\4.0\Mono.Posix.dll')">true</UsingXBuild>
+    <UsingXBuild Condition="$(MSBuildExtensionsPath32.Contains('xbuild'))">true</UsingXBuild>
   </PropertyGroup>
 
     <Target
