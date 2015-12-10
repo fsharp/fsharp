@@ -18,7 +18,7 @@ if ($env:appveyor){
     $version = $version + '-b001'
 }
 
-$nuget = (gi .\FSharp.Core.Nuget\.nuget\NuGet.exe).FullName
+$nuget = (gi .\.nuget\NuGet.exe).FullName
 
 function pack($nuspec){
     $dir = [IO.Path]::GetDirectoryName($nuspec)
