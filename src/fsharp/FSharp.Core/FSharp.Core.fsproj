@@ -212,6 +212,7 @@
     <Reference Include="System.Numerics" Condition="'$(TargetFramework)' == 'net40' OR 
                                                     '$(TargetFramework)' == 'monotouch' OR 
                                                     '$(TargetFramework)' == 'xamarinwatchos' OR 
+                                                    '$(TargetFramework)' == 'xamarintvos' OR 
                                                     '$(TargetFramework)' == 'monodroid' OR
                                                     '$(TargetFramework)' == 'xamarinmacmobile' OR
                                                     '$(TargetFramework)' == 'xamarinmacfull'" >
@@ -237,6 +238,7 @@
                                                 '$(TargetFramework)' == 'sl3-wp' OR 
                                                 '$(TargetFramework)' == 'monotouch' OR 
                                                 '$(TargetFramework)' == 'xamarinwatchos' OR 
+                                                '$(TargetFramework)' == 'xamarintvos' OR 
                                                 '$(TargetFramework)' == 'monodroid' OR 
                                                 '$(TargetFramework)' == 'portable47' OR 
                                                 '$(TargetFramework)' == 'net40-xna40-xbox360' OR 
