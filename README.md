@@ -5,6 +5,17 @@ and core tools for use across multiple platforms.
 
 
 ### Contributing to the F# Compiler, Core Library and Tools
+=======
+## Windows build
+
+| |Release|
+|:--:|:--:|
+|**master**| [![Build status](https://img.shields.io/appveyor/ci/KevinRansom/visualfsharp-radou/master.svg)](https://ci.appveyor.com/project/KevinRansom/visualfsharp-radou/branch/master) |
+|**vs2015**| [![Build status](https://img.shields.io/appveyor/ci/KevinRansom/visualfsharp-radou/vs2015.svg)](https://ci.appveyor.com/project/KevinRansom/visualfsharp-radou/branch/vs2015) |
+|**coreclr**| [![Build status](https://img.shields.io/appveyor/ci/KevinRansom/visualfsharp-radou/coreclr.svg)](https://ci.appveyor.com/project/KevinRansom/visualfsharp-radou/branch/coreclr) |
+
+###Contributing to the F# Language, Library, and Tools
+>>>>>>> 6bff0d341bc442b8b5dbc4cfca9683cc123d3737
 
 Most contributions to the F# compiler/library/tools go first via the  
 repository at https://github.com/Microsoft/visualfsharp.  This ensures that the main
@@ -57,6 +68,7 @@ Stable builds are available in the NuGet Gallery:
 
 The FSharp.Core NuGet package includes all of the FSharp.Core redistributables from Visual F#. In addition, they include assemblies for MonoAndroid and MonoTouch built from this repository.
 
+<<<<<<< HEAD
 The FSharp.Compiler.Tools package includes the F# compiler `fsc.exe`, F# Interactive `fsi.exe`, build support,
 a copy of FSharp.Core used to run the tools, and related DLLs.
 
