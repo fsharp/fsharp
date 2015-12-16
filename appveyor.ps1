@@ -1,6 +1,6 @@
 
 # the version under development, update after a release
-$version = '4.0.1.1'
+$version = '4.0.1.2'
 
 function isVersionTag($tag){
     $v = New-Object Version
@@ -18,7 +18,7 @@ if ($env:appveyor){
     $version = $version + '-b001'
 }
 
-$nuget = (gi .\FSharp.Core.Nuget\.nuget\NuGet.exe).FullName
+$nuget = (gi .\.nuget\NuGet.exe).FullName
 
 function pack($nuspec){
     $dir = [IO.Path]::GetDirectoryName($nuspec)

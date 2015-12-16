@@ -1,3 +1,9 @@
+4.0.1.1
+  * Integrate Microsoft\visualfsharp to 8111c63. See CHANGELOG-visualfsharp.md for changes from Microsoft\visualfsharp
+  * 04cd959 - fix problem with loop optimization
+  * d995c59 - Assume we are inside XBuild when 4.5/Mono.Posix.dll exists
+  * Fix [#483](https://github.com/fsharp/fsharp/issues/483) - Call to Type.GetType for a missing type causes FSI on Mono to produce an erroneous error
+
 4.0.0.4
   * Integrate Microsoft\visualfsharp to 2d413fb94. See CHANGELOG.md for changes from Microsoft\visualfsharp
 

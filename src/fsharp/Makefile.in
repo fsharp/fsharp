@@ -69,19 +69,19 @@ endif
 
 all-monotouch-monodroid-xamarinmac:
 	$(MAKE) build-proto
-	$(MAKE) only-monotouch only-monodroid only-xamarinmac only-xamarinwatchos
+	$(MAKE) only-monotouch only-monodroid only-xamarinmac only-xamarinwatchos only-xamarintvos
 
 all-monotouch-xamarinmac:
 	$(MAKE) build-proto
-	$(MAKE) only-monotouch only-xamarinmac only-xamarinwatchos
+	$(MAKE) only-monotouch only-xamarinmac only-xamarinwatchos only-xamarintvos
 
 all-monotouch-monodroid:
 	$(MAKE) build-proto
-	$(MAKE) only-monotouch only-monodroid only-xamarinwatchos
+	$(MAKE) only-monotouch only-monodroid only-xamarinwatchos only-xamarintvos
 
 all-monotouch:
 	$(MAKE) build-proto
-	$(MAKE) only-monotouch only-xamarinwatchos
+	$(MAKE) only-monotouch only-xamarinwatchos only-xamarintvos
 
 only-monotouch:
 ifeq ("$(monotouchenabled)", "yes")
@@ -91,6 +91,11 @@ endif
 only-xamarinwatchos:
 ifeq ("$(monotouchenabled)", "yes")
 	$(MAKE) -C FSharp.Core TargetFramework=xamarinwatchos build
+endif
+
+only-xamarintvos:
+ifeq ("$(monotouchenabled)", "yes")
+	$(MAKE) -C FSharp.Core TargetFramework=xamarintvos build
 endif
 
 all-monodroid:

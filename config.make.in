@@ -72,6 +72,12 @@ TARGET = $(TargetFramework)
 outsuffix = $(TargetFramework)
 endif
 
+ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-xamarintvos-)
+VERSION = 3.98.4.0
+TARGET = $(TargetFramework)
+outsuffix = $(TargetFramework)
+endif
+
 ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-xamarinmacmobile-)
 VERSION = 3.99.4.0
 TARGET = $(TargetFramework)
