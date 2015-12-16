@@ -57,7 +57,6 @@ Stable builds are available in the NuGet Gallery:
 
 The FSharp.Core NuGet package includes all of the FSharp.Core redistributables from Visual F#. In addition, they include assemblies for MonoAndroid and MonoTouch built from this repository.
 
-<<<<<<< HEAD
 The FSharp.Compiler.Tools package includes the F# compiler `fsc.exe`, F# Interactive `fsi.exe`, build support,
 a copy of FSharp.Core used to run the tools, and related DLLs.
 
