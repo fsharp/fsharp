@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.61])
-AC_INIT([fsharp], [3.1], [https://github.com/fsharp/fsharp/issues])
+AC_INIT([fsharp], [4.0], [https://github.com/fsharp/fsharp/issues])
 
 # Checks for programs.
 AC_PROG_MAKE_SET
@@ -24,8 +24,8 @@ fi
 AC_MSG_NOTICE("pkg-config: $PKG_CONFIG")
 AC_MSG_NOTICE("PKG_CONFIG_LIBDIR: $PKG_CONFIG_LIBDIR")
 
-MONO_REQUIRED_VERSION=3.0
-MONO_RECOMMENDED_VERSION=3.2
+MONO_REQUIRED_VERSION=4.0
+MONO_RECOMMENDED_VERSION=4.2
 
 if ! $PKG_CONFIG --atleast-version=$MONO_REQUIRED_VERSION mono; then
 	AC_MSG_ERROR("You need mono $MONO_REQUIRED_VERSION")
