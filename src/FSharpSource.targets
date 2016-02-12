@@ -965,8 +965,8 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
   <PropertyGroup>
     <SolutionDir>$(FSharpSourcesRoot)\..\</SolutionDir>
   </PropertyGroup>
-  <Import Project="$(SolutionDir)\.nuget\NuGet.targets" />
+  <Import Project="$(FSharpSourcesRoot)\..\.nuget\NuGet.targets" />
   <Target Name="BeforeBuild" BeforeTargets="Build">
-    <Exec Command="$(NuGetCommand) restore packages.config -PackagesDirectory packages -ConfigFile $(SolutionDir).nuget\NuGet.Config" WorkingDirectory="$(FSharpSourcesRoot)\.."/>
+    <Exec Command="$(NuGetCommand) restore packages.config -PackagesDirectory packages -ConfigFile $(FSharpSourcesRoot)\..\.nuget\NuGet.Config" WorkingDirectory="$(FSharpSourcesRoot)\.."/>
   </Target>
 </Project>
