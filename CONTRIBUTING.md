@@ -5,15 +5,17 @@ See [contributing guide][fsharp-contributing-guide] for more info
 ### First, check if this is the right repository
 
 The https://github.com/fsharp/fsharp repository is for cross platform packaging only.
-The development of compiler and core library it's in the [Microsoft/visualfsharp][Microsoft/visualfsharp] repository
+The development of the compiler and core library is at [Microsoft/visualfsharp][Microsoft/visualfsharp].
 
-* **Do you think it's specific of Mono or OSX/Linux?** That's the right repository
+* **Is this a language suggestion?** Use the [F# Language User Voice](http://fslang.uservoice.com)
 
-* **It's about Windows or Visual Studio?** You should go to the [Microsoft/visualfsharp][Microsoft/visualfsharp] repository
+* **Is the issue specific to F# on Mono/OSX/Linux?** This might be the right repository.
 
-* **It's a general bug/feature in compiler/core library?** You should go to the [Microsoft/visualfsharp][Microsoft/visualfsharp] repository
+* **Is the issue a bug in Mono?** Please report to [Mono Bugzilla](https://bugzilla.xamarin.com/)
 
-* **Not sure?** You should go to the [Microsoft/visualfsharp][Microsoft/visualfsharp] repository
+* **Is the issue specific to F# on Windows or Visual Studio?** Use the [Microsoft/visualfsharp][Microsoft/visualfsharp] repository
+
+* **Is the issue a general bug in the F# compiler/core library?** Use the  [Microsoft/visualfsharp][Microsoft/visualfsharp] repository
 
 #### **Did you find a bug?**
 
