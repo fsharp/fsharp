@@ -33,7 +33,7 @@ The development of the compiler and core library is at [Microsoft/visualfsharp][
 
 #### **Do you intend to add a new feature or change an existing one?**
 
-* It's about about the future evolution of the F# Language or Core Library? Suggest your change in the [F# Language Design User Voice site](https://fslang.uservoice.com/forums/245727-f-language).
+* Is the issue about the future evolution of the F# Language or Core Library? Suggest your change in the [F# Language Design User Voice site](https://fslang.uservoice.com/forums/245727-f-language).
   After a feature/change is "approved-in-principle", it's discussed in the [F# language design repository](https://github.com/fsharp/FSharpLangDesign/issues)
   and implemented as Github pull request in the [Microsoft/visualfsharp][Microsoft/visualfsharp] repository
   
@@ -41,7 +41,7 @@ The development of the compiler and core library is at [Microsoft/visualfsharp][
 
 #### **Do you have questions about the source code?**
 
-* Ask any question about how to use F# in the [F# mailing list](https://groups.google.com/forum/m/#!forum/fsharp-opensource) 
+* Ask any question about how to use F# in the [F# mailing list](https://groups.google.com/forum/m/#!forum/fsharp-opensource) or on stackoverflow.
 
 * Check the Contribute section in the [fsharp.org site](http://fsharp.org/) for more info
 
