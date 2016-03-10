@@ -49,7 +49,7 @@ This codebase uses the Apache 2.0 license.
 
 ## NuGet Feed of FSharp.Core and FSharp.Compiler.Tools packages
 
-This repo is curently used to make two NuGet packages - FSharp.Core and FSharp.Compiler.Tools.
+This repo is currently used to make two NuGet packages - FSharp.Core and FSharp.Compiler.Tools.
 
 Stable builds are available in the NuGet Gallery:
 [http://www.nuget.org/packages/FSharp.Core](http://www.nuget.org/packages/FSharp.Core) and [http://www.nuget.org/packages/FSharp.Compiler.Tools](http://www.nuget.org/packages/FSharp.Compiler.Tools).
