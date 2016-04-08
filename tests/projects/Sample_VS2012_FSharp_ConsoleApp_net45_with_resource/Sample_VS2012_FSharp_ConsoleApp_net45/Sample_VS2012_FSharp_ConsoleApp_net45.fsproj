@@ -59,12 +59,18 @@
     <Compile Include="Program.fs" />
     <None Include="App.config" />
     <EmbeddedResource Include="ResxResource.resx" />
+	<EmbeddedResource Include="ResxResourceWithExplicitManifestResourceName.resx">
+		<LogicalName>The.Explicit.Name.Of.ResxResourceWithExplicitManifestResourceName</LogicalName>
+	</EmbeddedResource>
     <EmbeddedResource Include="NonResxResource.txt" />
     <Content Include="content.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-	  <EmbeddedResource Include="SubDir\NonResxResourceInSubDir.txt" />
+	<EmbeddedResource Include="SubDir\NonResxResourceInSubDir.txt" />
     <EmbeddedResource Include="SubDir\ResxResourceInSubDir.resx" />
+    <EmbeddedResource Include="SubDir\ResxResourceWithExplicitManifestResourceName.resx">
+	  <LogicalName>The.Explicit.Name.Of.ResxResourceWithExplicitManifestResourceName</LogicalName>
+	</EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FSharp.Core, Version=$(TargetFSharpCoreVersion), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
