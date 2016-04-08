@@ -30,6 +30,34 @@ type CreateFSharpManifestResourceName public () =
         // is created and used - who knows, the code is not easy to understand despite it doing something very simple. That's
         // the nature of MSBuild/XBuild....
         //
+        //
+        // In F# (Windows):
+        // 
+        // --resource:obj\Debug\SubDir.ResxResourceInSubDir.resources 
+        // --resource:obj\Debug\ResxResource.resources
+        // --resource:SubDir\NonResxResourceInSubDir.txt 
+        // --resource:NonResxResource.txt
+        // 
+        // Giving .NET Binary:
+        //   .mresource public SubDir.ResxResourceInSubDir.resources
+        //   .mresource public ResxResource.resources
+        //   .mresource public NonResxResourceInSubDir.txt
+        //   .mresource public NonResxResource.txt
+        // 
+        // Note how "SubDir." is missing for NonResxResourceInSubDir
+        //
+        // In C# (Windows):
+        // 
+        // /resource:obj\Debug\TestResources.ResxResource.resources 
+        // /resource:obj\Debug\TestResources.SubDir.ResxResourceInSubDir.resources 
+        // /resource:NonResxResource.txt,TestResources.NonResxResource.txt
+        // /resource:SubDir\NonResxResourceInSubDir.txt,TestResources.SubDir.NonResxResourceInSubDir.txt 
+        //
+        // Note that C# adds the default namespace (TestResources) and for SubDir\NonResxResourceInSubDir
+        // generates a resouce name that includes SubDir (TestResources.SubDir.NonResxResourceInSubDir.txt)
+        //
+        // Anyway, dropping the directory name seems like a mistake. But we attempt to replicate the behaviour in the Mono
+        // edition of F#.
         // Anyway, dropping the directory name seems like a mistake. But we attempt to replicate the behaviour here
         // for consistency with Visual FSharp. This may not be the right place to do this and this many not be consistent
         // when cultures are used - that case has not been tested.
