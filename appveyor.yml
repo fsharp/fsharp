@@ -3,8 +3,9 @@ init:
   - git config --global core.autocrlf input
 
 build_script: 
-  - cmd: build.cmd %BUILD_PROFILE%
+  - cmd: build.bat
   - ps: .\appveyor.ps1
+
 test: off
 version: '{build}'
 artifacts:
