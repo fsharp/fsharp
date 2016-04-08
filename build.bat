@@ -12,6 +12,16 @@ del /F /S /Q lib\proto
 del /F /S /Q lib\release
 
 ::Build
+
+set msbuildflags=/maxcpucount
+set _ngenexe="%SystemRoot%\Microsoft.NET\Framework\v4.0.30319\ngen.exe"
+if not exist %_ngenexe% echo Error: Could not find ngen.exe. && goto :failure
+
+%_ngenexe% install .\.nuget\NuGet.exe 
+
+.\.nuget\NuGet.exe restore packages.config -PackagesDirectory packages -ConfigFile .nuget\nuget.config
+@if ERRORLEVEL 1 echo Error: Nuget restore failed  && goto :failure
+
 %_msbuildexe% src\fsharp-proto-build.proj
 ngen install lib\proto\fsc-proto.exe
 %_msbuildexe% src\fsharp-library-build.proj /p:TargetFramework=net40 /p:Configuration=Release

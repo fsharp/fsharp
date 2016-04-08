@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information. -->
+<!-- Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information. -->
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <!-- Tail calls on, even in debug -->
@@ -91,9 +91,8 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <ConfigurationOutputDirectory>release</ConfigurationOutputDirectory>
   </PropertyGroup>
 
-  <!-- Flags used to build the bootstrap compiler.
-        -->
-  <PropertyGroup Condition="'$(Configuration)'=='Proto'">
+	<!-- Flags used to build the bootstrap compiler. -->
+	<PropertyGroup Condition="'$(Configuration)'=='Proto'">
     <Optimize>true</Optimize>
     <DefineConstants>DEBUG;NO_STRONG_NAMES;$(DefineConstants)</DefineConstants>
     <DefineConstants Condition="'$(TargetFrameworkVersion)' == 'v4.5'">$(DefineConstants);FX_ATLEAST_45</DefineConstants>
@@ -117,6 +116,8 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <FsCheckVersion>2.0.3</FsCheckVersion>
     <FsCheckFullVersion>2.0.3.0</FsCheckFullVersion>
     <FsCheckLibDir>$(FSharpSourcesRoot)\..\packages\FsCheck.$(FsCheckVersion)\lib\</FsCheckLibDir>
+    <FsSrGenVersion>2.0.0</FsSrGenVersion>
+    <FsSrGenBuildTasksVersion>2.0.0</FsSrGenBuildTasksVersion>
   </PropertyGroup>
 
   <!-- v2.0-specific flags -->
@@ -914,7 +915,7 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
 
   <!-- Reference an existing FSI.EXE for use from within MSBuild -->
   <PropertyGroup>
-    <FsSrGenToolPath>$(LkgPath)</FsSrGenToolPath>
+    <FsSrGenToolPath>$(FSharpSourcesRoot)\..\packages\FsSrGen.$(FsSrGenVersion)\lib\net46</FsSrGenToolPath>
     <FsLexToolPath>$(LkgPath)</FsLexToolPath>
     <FsYaccToolPath>$(LkgPath)</FsYaccToolPath>
     <FsLexToolExe>fslex.exe</FsLexToolExe>
@@ -927,7 +928,6 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <CompileDependsOn>ValidateConfiguration;$(CompileDependsOn)</CompileDependsOn>
     <RootNamespace></RootNamespace>
     <DocumentationFile>$(OutputPath)$(AssemblyName).xml</DocumentationFile>
-    <EnsureThereAreNoUnusedFsSrGenResources>false</EnsureThereAreNoUnusedFsSrGenResources>
   </PropertyGroup>
 
   <Target Name="ValidateConfiguration">
@@ -953,6 +953,7 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     </CreateItem>
   </Target>
 
+  <Import Project="..\packages\FSharp.SRGen.Build.Tasks.$(FsSrGenBuildTasksVersion)\content\FSharp.SRGen.targets" />
   <Target Name="ReorderCompileItems"
       BeforeTargets="CoreCompile"
       Condition="'$(GenerateTargetFrameworkAttribute)' == 'true' AND '$(AssemblyName)' == 'FSharp.Core'">  

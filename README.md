@@ -11,8 +11,12 @@ repository at https://github.com/Microsoft/visualfsharp.  This ensures that the 
 packaging of F# on Windows (the Visual F# Tools) also includes any contributions that are made, and
 ensures that the versions do not diverge.
 
-If you are using Windows, you should fork that repo and contribute directly there. Your contributions will
+### Contributing on Windows
+
+If you are using Windows, you should fork the https://github.com/Microsoft/visualfsharp repo and contribute directly there. Your contributions will
 then be merged into this repo.
+
+### Contributing on Linux/OSX when using Mono
 
 If you are using Linux or OSX, you can prepare your contributions by forking this repository (the code is
 essentially the same). This will give you access to the cross-platform testing

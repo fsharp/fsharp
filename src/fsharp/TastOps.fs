@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
+// Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
 /// Defines derived expression manipulation and construction functions.
 module internal Microsoft.FSharp.Compiler.Tastops 
@@ -1566,7 +1566,7 @@ let isStructTy g ty =
     (isAppTy g ty && (tyconOfAppTy g ty).IsStructOrEnumTycon) || isTupleStructTy g ty
 
 // ECMA C# LANGUAGE SPECIFICATION, 27.2
-// An unmanaged-type is any type that isn’t a reference-type, a type-parameter, or a generic struct-type and
+// An unmanaged-type is any type that isn't a reference-type, a type-parameter, or a generic struct-type and
 // contains no fields whose type is not an unmanaged-type. In other words, an unmanaged-type is one of the
 // following:
 // - sbyte, byte, short, ushort, int, uint, long, ulong, char, float, double, decimal, or bool.
@@ -2282,8 +2282,9 @@ module PrettyTypes = begin
     let PrettifyTypes1   g x = PrettifyTypes g (fun f -> f) (fun f -> f) x
     let PrettifyTypes2   g x = PrettifyTypes g (fun f -> foldPair (f,f)) (fun f -> mapPair (f,f)) x
     let PrettifyTypesN   g x = PrettifyTypes g List.fold List.map   x
+    let PrettifyTypesNN   g x = PrettifyTypes g (fun f -> List.fold (List.fold f)) List.mapSquared   x
+    let PrettifyTypesNN1   g x = PrettifyTypes g (fun f -> foldPair (List.fold (List.fold f),f)) (fun f -> mapPair (List.mapSquared f,f)) x
     let PrettifyTypesN1  g (x:UncurriedArgInfos * TType) = PrettifyTypes g (fun f -> foldPair (List.fold (fold1Of2  f), f)) (fun f -> mapPair (List.map (map1Of2  f),f)) x
-    let PrettifyTypesNN1 g x = PrettifyTypes g (fun f -> foldTriple (List.fold f, List.fold (fold1Of2 f),f)) (fun f -> mapTriple (List.map f, List.map (map1Of2  f), f)) x
     let PrettifyTypesNM1 g (x:TType list * CurriedArgInfos * TType) = PrettifyTypes g (fun f -> foldTriple (List.fold f, List.fold (List.fold (fold1Of2 f)),f)) (fun f -> mapTriple (List.map f, List.mapSquared (map1Of2  f), f)) x
 
 end
@@ -4454,7 +4455,7 @@ and remapValData g tmenv d =
         val_type    = ty';
         val_actual_parent = d.val_actual_parent |> remapParentRef tmenv;
         val_repr_info = d.val_repr_info |> Option.map (remapValReprInfo g tmenv);
-        val_member_info   = d.val_member_info |> Option.map (remapMemberInfo g d.val_defn_range topValInfo ty ty' tmenv);
+        val_member_info   = d.val_member_info |> Option.map (remapMemberInfo g d.val_range topValInfo ty ty' tmenv);
         val_attribs       = d.val_attribs       |> remapAttribs g tmenv }
 
 and remapParentRef tyenv p =
@@ -6438,7 +6439,7 @@ let AdjustPossibleSubsumptionExpr g (expr: Expr) (suppliedArgs: Expr list) : (Ex
             let suppliedArgs, droppedSuppliedArgs = 
                 List.chop (min suppliedArgs.Length curriedNiceNames.Length) suppliedArgs
 
-            /// THe relevant range for any expressions and applications includes the arguments 
+            /// The relevant range for any expressions and applications includes the arguments 
             let appm = (m,suppliedArgs) ||> List.fold (fun m e -> unionRanges m (e.Range)) 
 
             // See if we have 'enough' suppliedArgs. If not, we have to build some lambdas, and,
@@ -6447,9 +6448,7 @@ let AdjustPossibleSubsumptionExpr g (expr: Expr) (suppliedArgs: Expr list) : (Ex
             // is a classic case. Here we generate
             //   let tmp = (effect;4) in 
             //   (fun v -> Seq.take tmp (v :> seq<_>))
-            let buildingLambdas = (suppliedArgs.Length <> curriedNiceNames.Length)
-            //printfn "buildingLambdas = %A" buildingLambdas
-            //printfn "suppliedArgs.Length = %d" suppliedArgs.Length 
+            let buildingLambdas = suppliedArgs.Length <> curriedNiceNames.Length
 
             /// Given a tuple of argument variables that has a tuple type that satisfies the input argument types,
             /// coerce it to a tuple that satisfies the matching coerced argument type(s).

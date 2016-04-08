@@ -1,8 +1,9 @@
 os: Visual Studio 2015
 init:
   - git config --global core.autocrlf input
-build_script:
-  - cmd: build.bat
+
+build_script: 
+  - cmd: build.cmd %BUILD_PROFILE%
   - ps: .\appveyor.ps1
 test: off
 version: '{build}'

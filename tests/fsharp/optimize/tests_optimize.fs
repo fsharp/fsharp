@@ -14,22 +14,22 @@ module Analyses =
 
     let ``fsc >a 2>&1`` cfg dir = 
         let ``exec >a 2>&1`` outFile p = 
-            Command.exec dir cfg.EnvironmentVariables { Output = OutputAndError(Overwrite(outFile)); Input = None; } p 
+            Command.exec dir cfg.EnvironmentVariables { Output = OutputAndErrorToSameFile(Overwrite(outFile)); Input = None; } p 
             >> checkResult
         Printf.ksprintf (fun flags sources out -> Commands.fsc (``exec >a 2>&1`` out) cfg.FSC flags sources)
 
-    let fsdiff cfg dir a b = processor {
+    let fsdiff cfg dir a b = attempt {
         let out = new ResizeArray<string>()
         let redirectOutputToFile path args =
             log "%s %s" path args
-            let toLog = redirectToLog ()
+            use toLog = redirectToLog ()
             Process.exec { RedirectOutput = Some (function null -> () | s -> out.Add(s)); RedirectError = Some toLog.Post; RedirectInput = None; } dir cfg.EnvironmentVariables path args
-        do! (Commands.fsdiff redirectOutputToFile cfg.FSDIFF true a b) |> (fun _ -> Success ())
+        do! (Commands.fsdiff redirectOutputToFile cfg.FSDIFF a b) |> (fun _ -> Success ())
         return out.ToArray() |> List.ofArray
         }
 
     [<Test; FSharpSuiteTest("optimize/analyses")>]
-    let functionSizes () = check (processor {
+    let functionSizes () = check (attempt {
         let { Directory = dir; Config = cfg } = testContext ()
 
         let getfullpath = Commands.getfullpath dir
@@ -55,7 +55,7 @@ module Analyses =
         })
 
     [<Test; FSharpSuiteTest("optimize/analyses")>]
-    let totalSizes () = check (processor {
+    let totalSizes () = check (attempt {
         let { Directory = dir; Config = cfg } = testContext ()
 
         let ``fsc >a 2>&1`` = ``fsc >a 2>&1`` cfg dir  
@@ -81,7 +81,7 @@ module Analyses =
         })
 
     [<Test; FSharpSuiteTest("optimize/analyses")>]
-    let hasEffect () = check (processor {
+    let hasEffect () = check (attempt {
         let { Directory = dir; Config = cfg } = testContext ()
 
         let ``fsc >a 2>&1`` = ``fsc >a 2>&1`` cfg dir  
@@ -107,7 +107,7 @@ module Analyses =
         })
 
     [<Test; FSharpSuiteTest("optimize/analyses")>]
-    let noNeedToTailcall () = check (processor {
+    let noNeedToTailcall () = check (attempt {
         let { Directory = dir; Config = cfg } = testContext ()
 
         let ``fsc >a 2>&1`` = ``fsc >a 2>&1`` cfg dir  
@@ -137,26 +137,33 @@ module Analyses =
 
 module Inline = 
 
-    let build cfg dir = processor {
+    let build cfg dir = attempt {
 
         let exec p = Command.exec dir cfg.EnvironmentVariables { Output = Inherit; Input = None; } p >> checkResult
         let fsc = Printf.ksprintf (Commands.fsc exec cfg.FSC)
 
-        // "%FSC%" %fsc_flags% -g --optimize- --target:library -o:lib.dll lib.fs
-        do! fsc "%s -g --optimize- --target:library -o:lib.dll" cfg.fsc_flags ["lib.fs"]
 
-        // "%FSC%" %fsc_flags% --optimize --target:library -o:lib--optimize.dll -g lib.fs
-        do! fsc "%s --optimize --target:library -o:lib--optimize.dll -g" cfg.fsc_flags ["lib.fs"]
+        // "%FSC%" %fsc_flags% -g --optimize- --target:library -o:lib.dll lib.fs lib2.fs
+        do! fsc "%s -g --optimize- --target:library -o:lib.dll" cfg.fsc_flags ["lib.fs"; "lib2.fs"]
 
-        // "%FSC%" %fsc_flags% -g --optimize- -o:test.exe test.fs -r:lib.dll
-        do! fsc "%s -g --optimize- -o:test.exe -r:lib.dll" cfg.fsc_flags ["test.fs "]
+        // "%FSC%" %fsc_flags% -g --optimize- --target:library -o:lib3.dll -r:lib.dll lib3.fs
+        do! fsc "%s -g --optimize- --target:library -o:lib3.dll -r:lib.dll " cfg.fsc_flags ["lib3.fs"]
 
-        // "%FSC%" %fsc_flags% --optimize -o:test--optimize.exe -g test.fs -r:lib--optimize.dll
-        do! fsc "%s --optimize -o:test--optimize.exe -g -r:lib--optimize.dll" cfg.fsc_flags ["test.fs "]
+        // "%FSC%" %fsc_flags% -g --optimize- -o:test.exe test.fs -r:lib.dll -r:lib3.dll
+        do! fsc "%s -g --optimize- -o:test.exe -r:lib.dll -r:lib3.dll" cfg.fsc_flags ["test.fs "]
+
+        // "%FSC%" %fsc_flags% --optimize --target:library -o:lib--optimize.dll -g lib.fs  lib2.fs
+        do! fsc "%s --optimize --target:library -o:lib--optimize.dll -g" cfg.fsc_flags ["lib.fs"; "lib2.fs"]
+
+        // "%FSC%" %fsc_flags% --optimize --target:library -o:lib3--optimize.dll -r:lib--optimize.dll -g lib3.fs  
+        do! fsc "%s --optimize --target:library -o:lib3--optimize.dll -r:lib--optimize.dll -g" cfg.fsc_flags ["lib3.fs"]
+
+        // "%FSC%" %fsc_flags% --optimize -o:test--optimize.exe -g test.fs -r:lib--optimize.dll  -r:lib3--optimize.dll
+        do! fsc "%s --optimize -o:test--optimize.exe -g -r:lib--optimize.dll  -r:lib3--optimize.dll" cfg.fsc_flags ["test.fs "]
 
         }
 
-    let run cfg dir = processor {
+    let run cfg dir = attempt {
 
         let exec p = Command.exec dir cfg.EnvironmentVariables { Output = Inherit; Input = None; } p >> checkResult
         let ildasm = Printf.ksprintf (Commands.ildasm exec cfg.ILDASM)
@@ -204,7 +211,7 @@ module Inline =
         }
 
     [<Test; FSharpSuiteTest("optimize/inline")>]
-    let ``inline`` () = check (processor {
+    let ``inline`` () = check (attempt {
         let { Directory = dir; Config = cfg } = testContext ()
 
         do! build cfg dir
@@ -216,7 +223,7 @@ module Inline =
 module Stats = 
 
     [<Test; FSharpSuiteTest("optimize/stats")>]
-    let stats () = check (processor {
+    let stats () = check (attempt {
         let { Directory = dir; Config = cfg } = testContext ()
 
         let exec p = Command.exec dir cfg.EnvironmentVariables { Output = Inherit; Input = None; } p >> checkResult
@@ -261,12 +268,6 @@ module Stats =
 
         log "now:"
         log "%s" m
-        log "old (from 'stats.txt'):"
-        log "%s" (File.ReadAllLines(getfullpath "stats.txt") |> Seq.where (String.IsNullOrWhiteSpace >> not) |> Seq.last)
-        
-        //REVIEW test add a line to a versioned file 'stats.txt', but is not maintained anymore?
-        ignore (fun () -> File.AppendAllLines(getfullpath "stats.txt", [ m ]) )
-
 
         //    )
         //   )
