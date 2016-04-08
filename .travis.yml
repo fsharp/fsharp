@@ -25,3 +25,4 @@ script:
 matrix:
   allow_failures:
     - mono: 4.2.2
+
