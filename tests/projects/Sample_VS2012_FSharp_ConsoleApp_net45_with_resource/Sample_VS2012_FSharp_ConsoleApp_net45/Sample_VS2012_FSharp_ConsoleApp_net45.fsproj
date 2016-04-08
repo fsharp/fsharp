@@ -62,14 +62,20 @@
     <EmbeddedResource Include="ResxResourceWithLogicalName.resx">
       <LogicalName>The.Explicit.Name.Of.ResxResourceWithLogicalName</LogicalName>
     </EmbeddedResource>
+    <EmbeddedResource Include="NonResxResourceWithLogicalName.txt">
+      <LogicalName>The.Explicit.Name.Of.NonResxResourceWithLogicalName</LogicalName>
+    </EmbeddedResource>
     <EmbeddedResource Include="NonResxResource.txt" />
     <Content Include="content.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <EmbeddedResource Include="SubDir\NonResxResourceInSubDir.txt" />
     <EmbeddedResource Include="SubDir\ResxResourceInSubDir.resx" />
-    <EmbeddedResource Include="SubDir\ResxResourceWithLogicalName.resx">
-      <LogicalName>The.Explicit.Name.Of.ResxResourceWithLogicalName</LogicalName>
+    <EmbeddedResource Include="SubDir\ResxResourceWithLogicalNameInSubDir.resx">
+      <LogicalName>The.Explicit.Name.Of.ResxResourceWithLogicalNameInSubDir</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="SubDir\NonResxResourceWithLogicalNameInSubDir.txt">
+      <LogicalName>The.Explicit.Name.Of.NonResxResourceWithLogicalNameInSubDir</LogicalName>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
