@@ -89,7 +89,7 @@
 		<Reference Include="System.Numerics" />
 	</ItemGroup>
 	<PropertyGroup>
-		<FsSrGenToolPath>tools</FsSrGenToolPath>
+		<FsSrGenToolPath>$(MSBuildProjectDirectory)\tools</FsSrGenToolPath>
 	</PropertyGroup>
 	<Import Project="tools\FSharp.SRGen.targets" />
 
