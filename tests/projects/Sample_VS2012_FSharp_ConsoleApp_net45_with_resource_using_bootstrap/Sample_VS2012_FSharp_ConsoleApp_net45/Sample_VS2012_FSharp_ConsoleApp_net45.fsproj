@@ -14,6 +14,7 @@
 		<ProductVersion>10.0.0</ProductVersion>
 		<UsePartialTypes>False</UsePartialTypes>
 		<TargetFSharpCoreVersion>4.3.0.0</TargetFSharpCoreVersion>
+		<LkgPath>$(MSBuildProjectDirectory)\..\..\..\..\lib\bootstrap\4.0</LkgPath>
 	</PropertyGroup>
 	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
 		<DebugSymbols>True</DebugSymbols>
@@ -42,19 +43,7 @@
 	<PropertyGroup>
 		<MinimumVisualStudioVersion Condition="'$(MinimumVisualStudioVersion)' == ''">11</MinimumVisualStudioVersion>
 	</PropertyGroup>
-	<Choose>
-		<When Condition="'$(VisualStudioVersion)' == '11.0'">
-			<PropertyGroup>
-				<FSharpTargetsPath>$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.0\Framework\v4.0\Microsoft.FSharp.Targets</FSharpTargetsPath>
-			</PropertyGroup>
-		</When>
-		<Otherwise>
-			<PropertyGroup>
-				<FSharpTargetsPath>$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\FSharp\Microsoft.FSharp.Targets</FSharpTargetsPath>
-			</PropertyGroup>
-		</Otherwise>
-	</Choose>
-	<Import Project="$(FSharpTargetsPath)" Condition="Exists('$(FSharpTargetsPath)')" />
+	<Import Project="$(LkgPath)\Microsoft.FSharp.Targets" />
 	<ItemGroup>
 		<Compile Include="Program.fs" />
 		<FsSrGen Include="FSComp.txt" />
