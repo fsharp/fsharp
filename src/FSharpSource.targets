@@ -6,6 +6,7 @@
     <Tailcalls>true</Tailcalls>
     <TargetFramework Condition="'$(TargetFramework)'==''">net40</TargetFramework>
     <LkgPath>$(FSharpSourcesRoot)\..\lib\bootstrap\4.0</LkgPath>
+    <LkgPath2>$(FSharpSourcesRoot)\..\packages\FSharp.Compiler.Tools.4.0.0.1\tools</LkgPath2>
     <FsLexUnicode>true</FsLexUnicode>
     <OtherFlags>$(OtherFlags) --times</OtherFlags>
     <NoWarn>$(NoWarn);69;65;54;61;75</NoWarn>
@@ -896,7 +897,7 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
 
   <!-- Include the bootstrap targets file when building the proto compiler using the bootstrap -->
   <!-- Also include it if Proto targets file doesn't exist, e.g. when cleaning the build with /t:Clean -->
-  <Import Project="$(LkgPath)\Microsoft.FSharp.Targets"
+  <Import Project="$(LkgPath2)\Microsoft.FSharp.Targets"
           Condition="(!Exists('..\lib\proto\Microsoft.FSharp-proto.targets')  OR '$(BuildWith)' == 'LKG') " />
 
   <!-- If compiling portable, then Microsoft.Portable.Core.targets -->
