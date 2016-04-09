@@ -34,8 +34,8 @@ type CreateFSharpManifestResourceName public () =
         // for consistency with Visual FSharp. This may not be the right place to do this and this many not be consistent
         // when cultures are used - that case has not been tested.
 
-        let fileName = if fileName.EndsWith(".resources", StringComparison.OrdinalIgnoreCase) then fileName else Path.GetFileName(fileName)
-        let linkFileName = if linkFileName.EndsWith(".resources", StringComparison.OrdinalIgnoreCase) then linkFileName else Path.GetFileName(linkFileName)
+        let fileName = if fileName.EndsWith(".resx", StringComparison.OrdinalIgnoreCase) then fileName else Path.GetFileName(fileName)
+        let linkFileName = if linkFileName.EndsWith(".resx", StringComparison.OrdinalIgnoreCase) then linkFileName else Path.GetFileName(linkFileName)
 
         let embeddedFileName = 
             match linkFileName with
