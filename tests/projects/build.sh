@@ -5,6 +5,7 @@
 (cd Sample_VS2012_FSharp_ConsoleApp_net40 && xbuild) &&
 (cd Sample_VS2012_FSharp_ConsoleApp_net45 && xbuild) &&
 (cd Sample_VS2012_FSharp_ConsoleApp_net45_with_resource && xbuild) &&
+(cd Sample_VS2012_FSharp_ConsoleApp_net45_with_resource_using_bootstrap && xbuild) &&
 (cd Sample_VS2012_FSharp_Portable_Library && xbuild) &&
 (cd Sample_VS2013_FSharp_ConsoleApp_net40 && xbuild) &&
 (cd Sample_VS2013_FSharp_ConsoleApp_net45 && xbuild) &&

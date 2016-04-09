@@ -68,6 +68,7 @@
 			<Link>FSCompLinkedInSubDir.txt</Link>
 		</FsSrGen>
 		<None Include="App.config" />
+		<EmbeddedResource Include="ExplicitCompiledResource.resources" />
 		<EmbeddedResource Include="ResxResource.resx" />
 		<EmbeddedResource Include="ResxResourceWithLogicalName.resx">
 			<LogicalName>The.Explicit.Name.Of.ResxResourceWithLogicalName</LogicalName>
@@ -79,6 +80,7 @@
 		<Content Include="content.txt">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
+		<EmbeddedResource Include="SubDir\ExplicitCompiledResourceInSubDir.resources" />
 		<EmbeddedResource Include="SubDir\NonResxResourceInSubDir.txt" />
 		<EmbeddedResource Include="SubDir\ResxResourceInSubDir.resx" />
 		<EmbeddedResource Include="SubDir\ResxResourceWithLogicalNameInSubDir.resx">
