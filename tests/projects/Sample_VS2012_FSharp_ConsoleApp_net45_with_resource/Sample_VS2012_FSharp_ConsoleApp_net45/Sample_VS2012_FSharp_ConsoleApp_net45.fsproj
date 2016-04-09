@@ -58,6 +58,15 @@
 	<ItemGroup>
 		<Compile Include="Program.fs" />
 		<FsSrGen Include="FSComp.txt" />
+		<FsSrGen Include="..\FSCompLinkedInSuperDir.txt">
+			<Link>FSCompLinkedInSuperDir.txt</Link>
+		</FsSrGen>
+		<FsSrGen Include="FSCompLinkedInSameDir.txt">
+			<Link>FSCompLinkedInSameDir.txt</Link>
+		</FsSrGen>
+		<FsSrGen Include="SubDir\FSCompLinkedInSubDir.txt">
+			<Link>FSCompLinkedInSubDir.txt</Link>
+		</FsSrGen>
 		<None Include="App.config" />
 		<EmbeddedResource Include="ResxResource.resx" />
 		<EmbeddedResource Include="ResxResourceWithLogicalName.resx">
