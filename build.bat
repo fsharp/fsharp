@@ -12,6 +12,7 @@ del /F /S /Q lib\proto
 del /F /S /Q lib\release
 
 ::Build
+.nuget\NuGet.exe restore -PackagesDirectory packages
 ngen install packages\FSharp.Compiler.Tools.4.0.0.1\tools\fsc.exe
 %_msbuildexe% src\fsharp-proto-build.proj
 ngen install lib\proto\fsc-proto.exe
