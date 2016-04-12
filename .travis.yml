@@ -24,4 +24,5 @@ script:
 
 matrix:
   allow_failures:
-    - mono: latest
+    - mono: 4.2.2
+
