@@ -87,25 +87,25 @@ Copyright (C) Microsoft Corporation. Apache 2.0 License.
   <!-- xbuild processes resource names -->
 
     <CreateFSharpManifestResourceName 
-         Condition="'@(ResxWithNoCulture)' != '' AND '$(UsingXBuild)' == 'true'"
+         Condition="'%(ResxWithNoCulture.ManifestResourceName)' == '' and '@(ResxWithNoCulture)' != '' AND '$(UsingXBuild)' == 'true'"
 	 ResourceFiles="@(ResxWithNoCulture)" RootNamespace="$(RootNamespace)">
       <Output TaskParameter = "ManifestResourceNames" ItemName = "ManifestResourceWithNoCultureName" />
     </CreateFSharpManifestResourceName>
 
     <CreateFSharpManifestResourceName 
-         Condition="'@(NonResxWithNoCulture)' != '' AND '$(UsingXBuild)' == 'true'"
+         Condition="'%(NonResxWithNoCulture.ManifestResourceName)' == '' and '@(NonResxWithNoCulture)' != '' AND '$(UsingXBuild)' == 'true'"
 	 ResourceFiles="@(NonResxWithNoCulture)" RootNamespace="$(RootNamespace)">
       <Output TaskParameter = "ManifestResourceNames" ItemName = "ManifestNonResxWithNoCulture" />
     </CreateFSharpManifestResourceName>
 
     <CreateFSharpManifestResourceName 
-         Condition="'@(ResxWithCulture)' != '' AND '$(UsingXBuild)' == 'true'"
+         Condition="'%(ResxWithCulture.ManifestResourceName)' == '' and '@(ResxWithCulture)' != '' AND '$(UsingXBuild)' == 'true'"
          ResourceFiles="@(ResxWithCulture)" RootNamespace="$(RootNamespace)">
       <Output TaskParameter = "ManifestResourceNames" ItemName = "ManifestResourceWithCultureName" />
     </CreateFSharpManifestResourceName>
 
     <CreateFSharpManifestResourceName 
-         Condition="'@(NonResxWithCulture)' != '' AND '$(UsingXBuild)' == 'true'"
+         Condition="'%(NonResxWithCulture.ManifestResourceName)' == '' and '@(NonResxWithCulture)' != '' AND '$(UsingXBuild)' == 'true'"
          ResourceFiles="@(NonResxWithCulture)" RootNamespace="$(RootNamespace)">
       <Output TaskParameter = "ManifestResourceNames" ItemName = "ManifestNonResxWithCulture" />
     </CreateFSharpManifestResourceName>
