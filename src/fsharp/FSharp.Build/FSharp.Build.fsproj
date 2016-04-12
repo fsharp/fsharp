@@ -47,13 +47,11 @@
     <Compile Include="CreateFSharpManifestResourceName.fs" >
       <Link>BuildTasks/CreateFSharpManifestResourceName.fs</Link>
     </Compile>
-    <None Include="Microsoft.FSharp.Targets">
-      <Link>Microsoft.FSharp.Targets</Link>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    <None Include="Microsoft.FSharp.targets">
+      <Link>Microsoft.FSharp.targets</Link>
     </None>
-    <None Include="Microsoft.Portable.FSharp.Targets">
-      <Link>Microsoft.Portable.FSharp.Targets</Link>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    <None Include="Microsoft.Portable.FSharp.targets">
+      <Link>Microsoft.Portable.FSharp.targets</Link>
     </None>
     <Compile Include="Fsc.fsi" />
     <Compile Include="Fsc.fs" />
@@ -84,5 +82,23 @@
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(FSharpSourcesRoot)\FSharpSource.targets" />
-  
+
+	  <!-- Hook compilation phase to do custom work -->
+  <PropertyGroup>
+    <PrepareForRunDependsOn>$(PrepareForRunDependsOn);CopyToBuiltBin</PrepareForRunDependsOn>
+  </PropertyGroup>
+
+	<!-- Microsoft.FSharp.Targets : Must be used un any distribution of F# for Mono+Linux or any case-sensitive file system using MSBuild --> 
+	<!-- Microsoft.FSharp.Targets or Microsoft.FSharp.targets : Used in the Visual F# Tools distribution (on Windows it doesn't matter). -->
+	<!-- Microsoft.FSharp.targets : Used in the source tree as of 08/04/2016 (prior this was Microsoft.FSharp.Targets) -->
+	
+	<Target Name="CopyToBuiltBin">
+    <Copy SourceFiles="Microsoft.FSharp.targets" DestinationFiles="Microsoft.FSharp.Targets" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true" >
+      <Output TaskParameter="DestinationFiles" ItemName="FileWrites" />
+    </Copy>
+	  <Copy SourceFiles="Microsoft.Portable.FSharp.targets" DestinationFiles="Microsoft.Portable.FSharp.Targets" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true" >
+		  <Output TaskParameter="DestinationFiles" ItemName="FileWrites" />
+	  </Copy>
+  </Target>
+
 </Project>
