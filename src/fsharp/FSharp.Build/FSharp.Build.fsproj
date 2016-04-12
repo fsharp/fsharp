@@ -93,10 +93,10 @@
 	<!-- Microsoft.FSharp.targets : Used in the source tree as of 08/04/2016 (prior this was Microsoft.FSharp.Targets) -->
 	
 	<Target Name="CopyToBuiltBin">
-    <Copy SourceFiles="Microsoft.FSharp.targets" DestinationFiles="Microsoft.FSharp.Targets" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true" >
+    <Copy SourceFiles="Microsoft.FSharp.targets" DestinationFiles="$(OutputPath)/Microsoft.FSharp.Targets" SkipUnchangedFiles="true" >
       <Output TaskParameter="DestinationFiles" ItemName="FileWrites" />
     </Copy>
-	  <Copy SourceFiles="Microsoft.Portable.FSharp.targets" DestinationFiles="Microsoft.Portable.FSharp.Targets" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true" >
+	  <Copy SourceFiles="Microsoft.Portable.FSharp.targets" DestinationFiles="$(OutputPath)/Microsoft.Portable.FSharp.Targets" SkipUnchangedFiles="true" >
 		  <Output TaskParameter="DestinationFiles" ItemName="FileWrites" />
 	  </Copy>
   </Target>
