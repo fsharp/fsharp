@@ -550,7 +550,6 @@
   </ItemGroup>
   <Import Project="$(FSharpSourcesRoot)\FSharpSource.targets" />
   <Import Project="$(LkgPath)\FsLexYacc.targets" />
-  <Import Project="$(LkgPath)\FSharp.SRGen.targets" />
   
   <Target Name="GatherBinariesToBeSigned" AfterTargets="Localize">
     <ItemGroup>

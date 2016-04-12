@@ -7,13 +7,14 @@
     <TargetFramework Condition="'$(TargetFramework)'==''">net40</TargetFramework>
     <LkgPath>$(FSharpSourcesRoot)\..\lib\bootstrap\4.0</LkgPath>
     <LkgPath2>$(FSharpSourcesRoot)\..\packages\FSharp.Compiler.Tools.4.0.0.1\tools</LkgPath2>
+    <SolutionDir>$(FSharpSourcesRoot)\..\</SolutionDir>
     <FsLexUnicode>true</FsLexUnicode>
     <OtherFlags>$(OtherFlags) --times</OtherFlags>
     <NoWarn>$(NoWarn);69;65;54;61;75</NoWarn>
     <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
 
-  <!-- We use the same versions as VS2012 (see strong naming below) -->
+  <!-- We use the same versions as Visual F# (see strong naming below) -->
   <PropertyGroup>
     <!-- Compute the assembly version numbers to use -->
     <AssemblyVersion>2.9.9.999</AssemblyVersion>
@@ -934,24 +935,7 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
   <Target Name="ValidateConfiguration">
     <Error
             Text="Configuration '$(Configuration)' is not one of the supported configurations: Debug, Release, Proto"
-            Condition="'$(Configuration)'!='Release' and '$(Configuration)'!='Debug' and '$(Configuration)'!='VSRelease' and '$(Configuration)'!='VSDebug' and '$(Configuration)'!='Proto'"/>
-  </Target>
-
-  <Import Project="$(LkgPath)\FSharp.SRGen.targets" />
-
-  <!-- This build step copies files to the output folder while replacing build variables in the text of
-             those file. -->
-  <Target
-          Name="CustomCopyLocalFiles"
-          Inputs="@(CustomCopyLocal)"
-          Outputs="@(CustomCopyLocal->'$(OutDir)%(TargetFilename)')"
-          Condition="'$(targetCLIDir)'!='Silverlight/4.0/'"
-                >
-    <Exec Command="$(FSharpSourcesRoot)\fsharp\FSharp.Build\subst.exe &quot;%(CustomCopyLocal.FullPath)&quot; {VisualStudioVersion} $(VisualStudioVersion) {FinalDir} &quot;$([System.IO.Path]::GetFullPath('$(OutputPath)'))\&quot; {LkgVersion} $(LkgVersion) {BuildSuffix} &quot;$(FsBuildSuffix)&quot; {FSharpTargetsDir} &quot;%24(MSBuildThisFileDirectory)&quot; {FSCoreVersion} &quot;$(FSCoreVersion)&quot; &gt; $(OutDir)%(CustomCopyLocal.TargetFilename)  "/>
-    <!-- Make sure it will get cleaned  -->
-    <CreateItem Include="$(OutDir)%(CustomCopyLocal.TargetFilename)">
-      <Output TaskParameter="Include" ItemName="FileWrites"/>
-    </CreateItem>
+            Condition="'$(Configuration)'!='Release' and '$(Configuration)'!='Debug' and '$(Configuration)'!='Proto'"/>
   </Target>
 
   <Import Project="..\packages\FSharp.SRGen.Build.Tasks.$(FsSrGenBuildTasksVersion)\content\FSharp.SRGen.targets" />
@@ -964,9 +948,6 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
         <CompileBefore Remove="@(CompileBefore)"/>   
     </ItemGroup>
   </Target>
-  <PropertyGroup>
-    <SolutionDir>$(FSharpSourcesRoot)\..\</SolutionDir>
-  </PropertyGroup>
   <Import Project="$(FSharpSourcesRoot)\..\.nuget\NuGet.targets" />
   <Target Name="BeforeBuild" BeforeTargets="Build">
     <Exec Command="$(NuGetCommand) restore packages.config -PackagesDirectory packages -ConfigFile $(FSharpSourcesRoot)\..\.nuget\NuGet.Config" WorkingDirectory="$(FSharpSourcesRoot)\.."/>
