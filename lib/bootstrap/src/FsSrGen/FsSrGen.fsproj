@@ -7,10 +7,9 @@
     <ProjectGuid>{1e299bf5-3064-4366-91b4-59f4885d5667}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <RootNamespace>FsSrGen</RootNamespace>
-    <AssemblyName>FsSrGen</AssemblyName>
+    <AssemblyName>fssrgen</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <Name>FsSrGen</Name>
     <OtherFlags>--standalone</OtherFlags>
     <PlatformTarget>x86</PlatformTarget>
     <TargetFSharpCoreVersion>4.3.0.0</TargetFSharpCoreVersion>
