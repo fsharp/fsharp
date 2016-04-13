@@ -2182,7 +2182,7 @@ type TcConfigBuilder =
           sqmSessionStartedTime = System.DateTime.Now.Ticks
           emitDebugInfoInQuotations = false
           exename = None
-          copyFSharpCore = true
+          copyFSharpCore = false
           shadowCopyReferences = false
         }
 
