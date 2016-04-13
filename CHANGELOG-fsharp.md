@@ -1,3 +1,12 @@
+4.0.1.2
+  * Integrate Microsoft\visualfsharp to 5d8126a. F# 4.1 work
+  *    FCS API integration and alignment
+  *    [#528 Compiler does not catch typing error in pattern matching when using literals](https://github.com/Microsoft/visualfsharp/issues/528)
+  *    [#659 Fsi fails to augment a type constructor](https://github.com/Microsoft/visualfsharp/issues/659)
+  *    [#807 Async.Choice](https://github.com/Microsoft/visualfsharp/pull/807)
+  *    [Response files for fsc/fsi](https://github.com/Microsoft/visualfsharp/pull/831)
+  *    [#919 Fix handling of optional IDispatch, IUnknown method args](https://github.com/Microsoft/visualfsharp/pull/919)
+
 4.0.1.1
   * Integrate Microsoft\visualfsharp to 8111c63. See CHANGELOG-visualfsharp.md for changes from Microsoft\visualfsharp
   * 04cd959 - fix problem with loop optimization
