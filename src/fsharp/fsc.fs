@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
+// Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
 // Driver for F# compiler. 
 // 
@@ -639,7 +639,7 @@ type ILResource with
         | ILResourceLocation.Local b -> b()
         | _-> error(InternalError("Bytes",rangeStartup))
 
-let EncodeInterfaceData(tcConfig:TcConfig,tcGlobals,exportRemapping,generatedCcu,outfile) = 
+let EncodeInterfaceData(tcConfig:TcConfig,tcGlobals,exportRemapping,generatedCcu,outfile,isIncrementalBuild) = 
       if GenerateInterfaceData(tcConfig) then 
         if verbose then dprintfn "Generating interface data attribute...";
         let resource = WriteSignatureData (tcConfig,tcGlobals,exportRemapping,generatedCcu,outfile)
@@ -647,7 +647,7 @@ let EncodeInterfaceData(tcConfig:TcConfig,tcGlobals,exportRemapping,generatedCcu
         // REVIEW: need a better test for this
         let outFileNoExtension = Filename.chopExtension outfile
         let isCompilerServiceDll = outFileNoExtension.Contains("FSharp.LanguageService.Compiler")
-        if tcConfig.useOptimizationDataFile || tcGlobals.compilingFslib || isCompilerServiceDll then 
+        if (tcConfig.useOptimizationDataFile || tcGlobals.compilingFslib || isCompilerServiceDll) && not isIncrementalBuild then 
             let sigDataFileName = (Filename.chopExtension outfile)+".sigdata"
             File.WriteAllBytes(sigDataFileName,resource.Bytes);
         let sigAttr = mkSignatureDataVersionAttr tcGlobals (IL.parseILVersion Internal.Utilities.FSharpEnvironment.FSharpBinaryMetadataFormatRevision) 
@@ -906,6 +906,11 @@ module AttributeHelpers =
         | Some (Attrib(_,_,[ AttribBoolArg(p) ],_,_,_,_)) -> Some (p)
         | _ -> None
 
+    let (|ILVersion|_|) (versionString: string) =
+        try Some(IL.parseILVersion versionString)
+        with e -> 
+            None
+
     // Try to find an AssemblyVersion attribute 
     let TryFindVersionAttribute tcGlobals attrib attribName attribs =
         match TryFindStringAttribute tcGlobals attrib attribs with
@@ -970,6 +975,39 @@ let createSystemNumericsExportList tcGlobals =
         Seq.toList
             
 module MainModuleBuilder = 
+
+    let fileVersion warn findStringAttr (assemblyVersion: ILVersionInfo) =
+        let attrName = "System.Reflection.AssemblyFileVersionAttribute"
+        match findStringAttr attrName with
+        | None -> assemblyVersion
+        | Some (AttributeHelpers.ILVersion(v)) -> v
+        | Some v -> 
+            warn(Error(FSComp.SR.fscBadAssemblyVersion(attrName, v),Range.rangeStartup))
+            //TODO compile error like c# compiler?
+            assemblyVersion
+
+    let productVersion warn findStringAttr (fileVersion: ILVersionInfo) =
+        let attrName = "System.Reflection.AssemblyInformationalVersionAttribute"
+        let toDotted (v1,v2,v3,v4) = sprintf "%d.%d.%d.%d" v1 v2 v3 v4
+        match findStringAttr attrName with
+        | None | Some "" -> fileVersion |> toDotted
+        | Some (AttributeHelpers.ILVersion(v)) -> v |> toDotted
+        | Some v -> 
+            warn(Error(FSComp.SR.fscBadAssemblyVersion(attrName, v),Range.rangeStartup))
+            v
+
+    let productVersionToILVersionInfo (version: string) : ILVersionInfo =
+        let parseOrZero v = match System.UInt16.TryParse v with (true, i) -> i | (false, _) -> 0us
+        let validParts =
+            version.Split('.')
+            |> Seq.map parseOrZero
+            |> Seq.takeWhile ((<>) 0us) 
+            |> Seq.toList
+        match validParts @ [0us; 0us; 0us; 0us] with
+        | major :: minor :: build :: rev :: _ -> (major, minor, build, rev)
+        | x -> failwithf "error converting product version '%s' to binary, tried '%A' " version x
+
+
     let CreateMainModule  
             (tcConfig:TcConfig,tcGlobals,
              pdbfile,assemblyName,outfile,topAttrs,
@@ -981,8 +1019,6 @@ module MainModuleBuilder =
         let ilTypeDefs = 
             //let topTypeDef = mkILTypeDefForGlobalFunctions tcGlobals.ilg (mkILMethods [], emptyILFields)
             mkILTypeDefs codegenResults.ilTypeDefs
-            
-
 
         let mainModule = 
             let hashAlg = AttributeHelpers.TryFindIntAttribute tcGlobals "System.Reflection.AssemblyAlgorithmIdAttribute" topAttrs.assemblyAttrs
@@ -1092,30 +1128,29 @@ module MainModuleBuilder =
                          Access=pub; 
                          CustomAttrs=emptyILCustomAttrs } ]
 
+        let assemblyVersion = 
+            match tcConfig.version with
+            | VersionNone -> assemVerFromAttrib
+            | _ -> Some(tcVersion)
+
+        let findAttribute name =
+            AttributeHelpers.TryFindStringAttribute tcGlobals name topAttrs.assemblyAttrs 
+
+
         //NOTE: the culture string can be turned into a number using this:
         //    sprintf "%04x" (CultureInfo.GetCultureInfo("en").KeyboardLayoutId )
-        let assemblyVersionResources =
-            let assemblyVersion = 
-                match tcConfig.version with
-                | VersionNone ->assemVerFromAttrib
-                | _ -> Some(tcVersion)
+        let assemblyVersionResources findAttr assemblyVersion =
             match assemblyVersion with 
             | None -> []
             | Some(assemblyVersion) ->
                 let FindAttribute key attrib = 
-                    match AttributeHelpers.TryFindStringAttribute tcGlobals attrib topAttrs.assemblyAttrs with
+                    match findAttr attrib with
                     | Some text  -> [(key,text)]
                     | _ -> []
 
-                let fileVersion = 
-                    match AttributeHelpers.TryFindVersionAttribute tcGlobals "System.Reflection.AssemblyFileVersionAttribute" "AssemblyFileVersionAttribute" topAttrs.assemblyAttrs with
-                    | Some v -> v
-                    | None -> assemblyVersion
+                let fileVersionInfo = fileVersion warning findAttr assemblyVersion
 
-                let productVersion = 
-                    match AttributeHelpers.TryFindVersionAttribute tcGlobals "System.Reflection.AssemblyInformationalVersionAttribute" "AssemblyInformationalVersionAttribute" topAttrs.assemblyAttrs with
-                    | Some v -> v
-                    | None -> assemblyVersion
+                let productVersionString = productVersion warning findAttr fileVersionInfo
 
                 let stringFileInfo = 
                      // 000004b0:
@@ -1123,8 +1158,8 @@ module MainModuleBuilder =
                      // Each Microsoft Standard Language identifier contains two parts: the low-order 10 bits specify the major language, and the high-order 6 bits specify the sublanguage. For a table of valid identifiers see Language Identifiers.                                           //
                      // see e.g. http://msdn.microsoft.com/en-us/library/aa912040.aspx 0000 is neutral and 04b0(hex)=1252(dec) is the code page.
                       [ ("000004b0", [ yield ("Assembly Version", (let v1,v2,v3,v4 = assemblyVersion in sprintf "%d.%d.%d.%d" v1 v2 v3 v4))
-                                       yield ("FileVersion", (let v1,v2,v3,v4 = fileVersion in sprintf "%d.%d.%d.%d" v1 v2 v3 v4))
-                                       yield ("ProductVersion", (let v1,v2,v3,v4 = productVersion in sprintf "%d.%d.%d.%d" v1 v2 v3 v4))
+                                       yield ("FileVersion", (let v1,v2,v3,v4 = fileVersionInfo in sprintf "%d.%d.%d.%d" v1 v2 v3 v4))
+                                       yield ("ProductVersion", productVersionString)
                                        yield! FindAttribute "Comments" "System.Reflection.AssemblyDescriptionAttribute" 
                                        yield! FindAttribute "FileDescription" "System.Reflection.AssemblyTitleAttribute" 
                                        yield! FindAttribute "ProductName" "System.Reflection.AssemblyProductAttribute" 
@@ -1160,7 +1195,7 @@ module MainModuleBuilder =
                     let dwFileType = 0x01 // REVIEW: HARDWIRED
                     let dwFileSubtype = 0x00 // REVIEW: HARDWIRED
                     let lwFileDate = 0x00L // REVIEW: HARDWIRED
-                    (fileVersion,productVersion,dwFileFlagsMask,dwFileFlags,dwFileOS,dwFileType,dwFileSubtype,lwFileDate)
+                    (fileVersionInfo,productVersionString |> productVersionToILVersionInfo,dwFileFlagsMask,dwFileFlags,dwFileOS,dwFileType,dwFileSubtype,lwFileDate)
 
                 let vsVersionInfoResource = 
                     VersionResourceFormat.VS_VERSION_INFO_RESOURCE(fixedFileInfo,stringFileInfo,varFileInfo)
@@ -1197,7 +1232,7 @@ module MainModuleBuilder =
                System.Runtime.InteropServices.RuntimeEnvironment.GetRuntimeDirectory() + @"default.win32manifest"
         
         let nativeResources = 
-            [ for av in assemblyVersionResources do
+            [ for av in assemblyVersionResources findAttribute assemblyVersion do
                   yield Lazy.CreateFromValue av
               if not(tcConfig.win32res = "") then
                   yield Lazy.CreateFromValue (FileSystem.ReadAllBytesShim tcConfig.win32res) 
@@ -1371,14 +1406,14 @@ module StaticLinker =
                 TypeDefs = 
                   mkILTypeDefs 
                       ([ for td in fakeModule.TypeDefs do 
-                              yield {td with 
+                            yield {td with 
                                       Methods =
-                                        mkILMethods (List.map (fun (md:ILMethodDef) ->
-                                                            {md with                                                            
-                                                              CustomAttrs = 
-                                                                mkILCustomAttrs (td.CustomAttrs.AsList |> List.filter (fun ilattr ->
-                                                                   ilattr.Method.EnclosingType.TypeRef.FullName <> "System.Runtime.TargetedPatchingOptOutAttribute")  )}) 
-                                                          (td.Methods.AsList))}])}
+                                        td.Methods.AsList
+                                        |> List.map (fun md ->
+                                            {md with CustomAttrs = 
+                                                        mkILCustomAttrs (td.CustomAttrs.AsList |> List.filter (fun ilattr ->
+                                                            ilattr.Method.EnclosingType.TypeRef.FullName <> "System.Runtime.TargetedPatchingOptOutAttribute")  )}) 
+                                        |> mkILMethods } ])}
             //ILAsciiWriter.output_module stdout fakeModule
             fakeModule.TypeDefs.AsList
 
@@ -1428,7 +1463,7 @@ module StaticLinker =
                                     | ResolvedCcu ccu -> Some ccu
                                     | UnresolvedCcu(_ccuName) -> None
 
-                                let modul = dllInfo.RawMetadata
+                                let modul = dllInfo.RawMetadata.TryGetRawILModule().Value
 
                                 let refs = 
                                     if ilAssemRef.Name = GetFSharpCoreLibraryName() then 
@@ -1497,7 +1532,7 @@ module StaticLinker =
                       | ResolvedCcu ccu -> Some ccu
                       | UnresolvedCcu(_ccuName) -> None
 
-                  let modul = dllInfo.RawMetadata
+                  let modul = dllInfo.RawMetadata.TryGetRawILModule().Value
                   yield (ccu, dllInfo.ILScopeRef, modul), (ilAssemRef.Name, provAssemStaticLinkInfo)
               | None -> () ]
 
@@ -1647,8 +1682,8 @@ module StaticLinker =
                               let rec rw enc (tdefs: ILTypeDefs) = 
                                   mkILTypeDefs
                                    [ for tdef in tdefs do 
-                                      let ilOrigTyRef = mkILNestedTyRef (ilOrigScopeRef, enc, tdef.Name)
-                                      if  not (ilOrigTyRefsForProviderGeneratedTypesToRelocate.ContainsKey ilOrigTyRef) then
+                                        let ilOrigTyRef = mkILNestedTyRef (ilOrigScopeRef, enc, tdef.Name)
+                                        if  not (ilOrigTyRefsForProviderGeneratedTypesToRelocate.ContainsKey ilOrigTyRef) then
                                           if debugStaticLinking then printfn "Keep provided type %s in place because it wasn't relocated" ilOrigTyRef.QualifiedName
                                           yield { tdef with NestedTypes = rw (enc@[tdef.Name]) tdef.NestedTypes  } ]
                               rw [] ilModule.TypeDefs
@@ -1770,7 +1805,27 @@ let ValidateKeySigningAttributes (tcConfig : TcConfig, tcGlobals, topAttrs) =
         | None -> tcConfig.container
     
     SigningInfo (delaysign,signer,container)
- 
+
+// If the --nocopyfsharpcore switch is not specified, this will:
+// 1) Look into the referenced assemblies, if FSharp.Core.dll is specified, it will copy it to output directory.
+// 2) If not, but FSharp.Core.dll exists beside the compiler binaries, it will copy it to output directory.
+// 3) If not, it will produce an error.
+let copyFSharpCore(outFile: string, referencedDlls: AssemblyReference list) =
+    let outDir = Path.GetDirectoryName(outFile)
+    let fsharpCoreAssemblyName = GetFSharpCoreLibraryName() + ".dll"
+    let fsharpCoreDestinationPath = Path.Combine(outDir, fsharpCoreAssemblyName)
+
+    if not (File.Exists(fsharpCoreDestinationPath)) then
+        match referencedDlls |> Seq.tryFind (fun dll -> String.Equals(Path.GetFileName(dll.Text), fsharpCoreAssemblyName, StringComparison.CurrentCultureIgnoreCase)) with
+        | Some referencedFsharpCoreDll -> File.Copy(referencedFsharpCoreDll.Text, fsharpCoreDestinationPath)
+        | None ->
+            let compilerLocation = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)
+            let compilerFsharpCoreDllPath = Path.Combine(compilerLocation, fsharpCoreAssemblyName)
+            if File.Exists(compilerFsharpCoreDllPath) then
+                File.Copy(compilerFsharpCoreDllPath, fsharpCoreDestinationPath)
+            else
+                errorR(Error(FSComp.SR.fsharpCoreNotFoundToBeCopied(), rangeCmdArgs))
+
 //----------------------------------------------------------------------------
 // main - split up to make sure that we can GC the
 // dead data at the end of each phase.  We explicitly communicate arguments
@@ -1876,7 +1931,7 @@ let main2(Args(tcConfig, tcImports, frameworkTcImports: TcImports, tcGlobals, er
     
     let sigDataAttributes,sigDataResources = 
       try
-        EncodeInterfaceData(tcConfig, tcGlobals, exportRemapping, generatedCcu, outfile)
+        EncodeInterfaceData(tcConfig, tcGlobals, exportRemapping, generatedCcu, outfile, false)
       with e -> 
         errorRecoveryNoRange e
         SqmLoggerWithConfig tcConfig errorLogger.ErrorNumbers errorLogger.WarningNumbers
@@ -1893,7 +1948,7 @@ let main2(Args(tcConfig, tcImports, frameworkTcImports: TcImports, tcGlobals, er
     let metadataVersion = 
         match tcConfig.metadataVersion with
         | Some(v) -> v
-        | _ -> match (frameworkTcImports.DllTable.TryFind tcConfig.primaryAssembly.Name) with | Some(ib) -> ib.RawMetadata.MetadataVersion | _ -> ""
+        | _ -> match (frameworkTcImports.DllTable.TryFind tcConfig.primaryAssembly.Name) with | Some(ib) -> ib.RawMetadata.TryGetRawILModule().Value.MetadataVersion | _ -> ""
     let optimizedImpls,optimizationData,_ = ApplyAllOptimizations (tcConfig, tcGlobals, (LightweightTcValForUsingInBuildMethodCall tcGlobals), outfile, importMap, false, optEnv0, generatedCcu, typedAssembly)
 
     AbortOnError(errorLogger,tcConfig,exiter)
@@ -1990,9 +2045,13 @@ let main4 (Args (tcConfig, errorLogger: ErrorLogger, ilGlobals, ilxMainModule, o
     FileWriter.EmitIL (tcConfig, ilGlobals, errorLogger, outfile, pdbfile, ilxMainModule, signingInfo, exiter)
 
     AbortOnError(errorLogger, tcConfig, exiter)
+
     if tcConfig.showLoadedAssemblies then
         for a in System.AppDomain.CurrentDomain.GetAssemblies() do
             dprintfn "%s" a.FullName
+
+    if tcConfig.copyFSharpCore then
+        copyFSharpCore(outfile, tcConfig.referencedDLLs)
 
     SqmLoggerWithConfig tcConfig errorLogger.ErrorNumbers errorLogger.WarningNumbers
 
@@ -2009,9 +2068,6 @@ let typecheckAndCompile(argv,bannerAlreadyPrinted,exiter:Exiter, errorLoggerProv
     |> main4
 
 let mainCompile (argv, bannerAlreadyPrinted, exiter:Exiter) = 
-    // Enabling batch latency mode currently overrides app config <gcConcurrent>.
-    // If batch mode is ever removed or changed, revisit use of <gcConcurrent>.
-    System.Runtime.GCSettings.LatencyMode <- System.Runtime.GCLatencyMode.Batch
     typecheckAndCompile(argv, bannerAlreadyPrinted, exiter, DefaultLoggerProvider())
 
 [<RequireQualifiedAccess>]

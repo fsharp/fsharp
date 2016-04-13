@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information. -->
+<!-- Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information. -->
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <FSharpSourcesRoot>$(MSBuildProjectDirectory)\..\..</FSharpSourcesRoot>
@@ -16,6 +16,14 @@
   <!-- MonoDevelop likes these here to recognise the configurations -->
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' " />
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' " />
+  <ItemGroup>
+    <FilesToLocalize Include="$(OutDir)$(AssemblyName).dll">
+      <TranslationFile>$(FSharpSourcesRoot)\..\loc\lcl\{Lang}\$(AssemblyName).dll.lcl</TranslationFile>
+      <LciCommentFile>$(FSharpSourcesRoot)\..\loc\lci\$(AssemblyName).dll.lci</LciCommentFile>
+      <HasLceComments>false</HasLceComments>
+	  <InProject>false</InProject>
+    </FilesToLocalize>
+  </ItemGroup>
   <ItemGroup>
     <FsSrGen Include="FSBuild.txt">
       <Link>FSBuild.txt</Link>
@@ -39,13 +47,11 @@
     <Compile Include="CreateFSharpManifestResourceName.fs" >
       <Link>BuildTasks/CreateFSharpManifestResourceName.fs</Link>
     </Compile>
-    <None Include="Microsoft.FSharp.Targets">
-      <Link>Microsoft.FSharp.Targets</Link>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    <None Include="Microsoft.FSharp.targets">
+      <Link>Microsoft.FSharp.targets</Link>
     </None>
-    <None Include="Microsoft.Portable.FSharp.Targets">
-      <Link>Microsoft.Portable.FSharp.Targets</Link>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    <None Include="Microsoft.Portable.FSharp.targets">
+      <Link>Microsoft.Portable.FSharp.targets</Link>
     </None>
     <Compile Include="Fsc.fsi" />
     <Compile Include="Fsc.fs" />
@@ -55,15 +61,44 @@
   <ItemGroup>
     <Reference Include="mscorlib" />
     <Reference Include="System" />
-    <Reference Include="Microsoft.Build.Framework" />
-    <Reference Include="Microsoft.Build.Engine" />
-    <Reference Include="Microsoft.Build" />
-    <Reference Include="Microsoft.Build.Utilities.v4.0" />
-    <Reference Include="Microsoft.Build.Tasks.v4.0" />
+    <Reference Include="Microsoft.Build.Framework, Version=12.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.Build.Engine, Version=12.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.Build, Version=12.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" >
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.Build.Utilities.v12.0">
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.Build.Tasks.v12.0">
+      <Private>True</Private>
+    </Reference>
     <ProjectReference Include="$(FSharpSourcesRoot)\fsharp\FSharp.Core\FSharp.Core.fsproj">
       <Project>{DED3BBD7-53F4-428A-8C9F-27968E768605}</Project>
       <Name>FSharp.Core</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(FSharpSourcesRoot)\FSharpSource.targets" />
+
+	  <!-- Hook compilation phase to do custom work -->
+  <PropertyGroup>
+    <PrepareForRunDependsOn>$(PrepareForRunDependsOn);CopyToBuiltBin</PrepareForRunDependsOn>
+  </PropertyGroup>
+
+	<!-- Microsoft.FSharp.Targets : Must be used un any distribution of F# for Mono+Linux or any case-sensitive file system using MSBuild --> 
+	<!-- Microsoft.FSharp.Targets or Microsoft.FSharp.targets : Used in the Visual F# Tools distribution (on Windows it doesn't matter). -->
+	<!-- Microsoft.FSharp.targets : Used in the source tree as of 08/04/2016 (prior this was Microsoft.FSharp.Targets) -->
+	
+	<Target Name="CopyToBuiltBin">
+    <Copy SourceFiles="Microsoft.FSharp.targets" DestinationFiles="$(OutputPath)/Microsoft.FSharp.Targets" SkipUnchangedFiles="true" >
+      <Output TaskParameter="DestinationFiles" ItemName="FileWrites" />
+    </Copy>
+	  <Copy SourceFiles="Microsoft.Portable.FSharp.targets" DestinationFiles="$(OutputPath)/Microsoft.Portable.FSharp.Targets" SkipUnchangedFiles="true" >
+		  <Output TaskParameter="DestinationFiles" ItemName="FileWrites" />
+	  </Copy>
+  </Target>
+
 </Project>

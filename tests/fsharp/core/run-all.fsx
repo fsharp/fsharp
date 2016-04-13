@@ -61,13 +61,13 @@ check "lift" Core_lift.RUN
 #load "members/ctree/test.fsx"
 #load "members/factors/test.fsx"
 #load "members/ops/test.fsx"
-#load "members/incremental/test-hw.fsx"
+#load "members/incremental-hw/test.fsx"
 #load "members/incremental/test.fsx"
 
 check "members/ctree/test.fsx" Core_members_ctree.RUN
 check "members/factors/test.fsx" Core_members_factors.RUN
 check "members/ops/test.fsx" Core_members_ops.RUN
-check "members/incremental/test-hw.fsx" Core_members_incremental_testhw.RUN
+check "members/incremental-hw/test-hw.fsx" Core_members_incremental_testhw.RUN
 check "members/incremental/test.fsx" Core_members_incremental.RUN
 
 

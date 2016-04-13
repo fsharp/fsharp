@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information. -->
+<!-- Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information. -->
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <FSharpSourcesRoot>$(MSBuildProjectDirectory)\..\..</FSharpSourcesRoot>
@@ -10,7 +10,10 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <OutputType>Library</OutputType>
     <AssemblyName>FSharp.Compiler</AssemblyName>
-    <DefineConstants>EXTENSIONTYPING;COMPILER;INCLUDE_METADATA_READER;INCLUDE_METADATA_WRITER;EXTENSIBLE_DUMPER;$(DefineConstants)</DefineConstants>
+    <DefineConstants>EXTENSIONTYPING;$(DefineConstants)</DefineConstants>
+    <DefineConstants>COMPILER;$(DefineConstants)</DefineConstants>
+    <DefineConstants>INCLUDE_METADATA_READER;$(DefineConstants)</DefineConstants>
+    <DefineConstants>INCLUDE_METADATA_WRITER;$(DefineConstants)</DefineConstants>
     <NoWarn>$(NoWarn);62;9</NoWarn>
     <ProjectGuid>{2E4D67B4-522D-4CF7-97E4-BA940F0B18F3}</ProjectGuid>
     <AllowCrossTargeting>true</AllowCrossTargeting>
@@ -25,6 +28,14 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <OutputPath>bin\Release</OutputPath>
   </PropertyGroup>
+  <ItemGroup>
+    <FilesToLocalize Include="$(OutDir)$(AssemblyName).dll">
+      <TranslationFile>$(FSharpSourcesRoot)\..\loc\lcl\{Lang}\$(AssemblyName).dll.lcl</TranslationFile>
+      <LciCommentFile>$(FSharpSourcesRoot)\..\loc\lci\$(AssemblyName).dll.lci</LciCommentFile>
+      <HasLceComments>false</HasLceComments>
+	  <InProject>false</InProject>
+    </FilesToLocalize>
+  </ItemGroup>
   <ItemGroup>
     <Compile Include="..\..\assemblyinfo\assemblyinfo.FSharp.Compiler.dll.fs">
       <Link>assemblyinfo.FSharp.Compiler.dll.fs</Link>
@@ -446,12 +457,6 @@
     <Compile Include="..\CompileOptions.fs">
       <Link>Driver\CompileOptions.fs</Link>
     </Compile>
-    <Compile Include="..\vs\IncrementalBuild.fsi">
-      <Link>Driver\IncrementalBuild.fsi</Link>
-    </Compile>
-    <Compile Include="..\vs\IncrementalBuild.fs">
-      <Link>Driver\IncrementalBuild.fs</Link>
-    </Compile>
     <Compile Include="..\fsc.fsi">
       <Link>Driver\fsc.fsi</Link>
     </Compile>
@@ -520,7 +525,6 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Numerics" />
-    <Reference Include="System.Drawing" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Runtime.Remoting" />
     <Reference Include="Microsoft.Build.Framework, Version=12.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
@@ -532,13 +536,13 @@
     <Reference Include="Microsoft.Build, Version=12.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" >
       <Private>True</Private>
     </Reference>
-    <Reference Include="Microsoft.Build.Utilities.v12.0">
-      <Private>True</Private>
-    </Reference>
     <Reference Include="Microsoft.Build.Tasks.v12.0">
       <Private>True</Private>
     </Reference>
-    <Reference Include="ISymWrapper, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" Condition="'$(TargetFramework)'=='net40'" />
+    <Reference Include="Microsoft.Build.Utilities.v12.0">
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="ISymWrapper, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
     <ProjectReference Include="$(FSharpSourcesRoot)\fsharp\FSharp.Core\FSharp.Core.fsproj">
       <Project>{DED3BBD7-53F4-428A-8C9F-27968E768605}</Project>
       <Name>FSharp.Core</Name>
@@ -546,4 +550,5 @@
   </ItemGroup>
   <Import Project="$(FSharpSourcesRoot)\FSharpSource.targets" />
   <Import Project="$(LkgPath)\FsLexYacc.targets" />
+  
 </Project>

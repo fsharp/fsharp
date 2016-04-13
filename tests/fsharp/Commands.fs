@@ -79,8 +79,9 @@ let ngen exec (ngenExe: FilePath) assemblies =
     List.concat [ queue; ["executeQueuedItems 1"] ]
     |> Seq.ofList
     |> Seq.map (fun args -> exec ngenExe args)
-    |> Seq.takeWhile (function ErrorLevel _ -> false | Ok -> true)
-    |> Seq.last
+    |> Seq.skipWhile (function ErrorLevel _ -> false | CmdResult.Success -> true)
+    |> Seq.tryHead
+    |> function None -> CmdResult.Success | Some res -> res
 
 let fsc exec (fscExe: FilePath) flags srcFiles =
     // "%FSC%" %fsc_flags% --define:COMPILING_WITH_EMPTY_SIGNATURE -o:tmptest2.exe tmptest2.mli tmptest2.ml
@@ -109,8 +110,8 @@ let internal quotepath (p: FilePath) =
 let ildasm exec ildasmExe flags assembly =
     exec ildasmExe (sprintf "%s %s" flags (quotepath assembly))
 
-let peverify exec peverifyExe path =
-    exec peverifyExe path
+let peverify exec peverifyExe flags path =
+    exec peverifyExe (sprintf "%s %s" (quotepath path) flags)
 
 let createTempDir () =
     let path = Path.GetTempFileName ()
@@ -142,9 +143,9 @@ let where envVars cmd =
     | ErrorLevel _ -> None
     | CmdResult.Success -> !result    
 
-let fsdiff exec fsdiffExe ignoreWhiteSpaceChanges file1 file2 =
+let fsdiff exec fsdiffExe file1 file2 =
     // %FSDIFF% %testname%.err %testname%.bsl
-    exec fsdiffExe (sprintf "%s%s %s" (if ignoreWhiteSpaceChanges then "-dew " else "") file1 file2)
+    exec fsdiffExe (sprintf "%s %s" file1 file2)
 
 let ``for /f`` path = 
     // FOR /F processing of a text file consists of reading the file, one line of text at a time and then breaking the line up into individual

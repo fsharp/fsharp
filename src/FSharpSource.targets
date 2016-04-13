@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information. -->
+<!-- Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information. -->
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <!-- Tail calls on, even in debug -->
@@ -7,13 +7,14 @@
     <TargetFramework Condition="'$(TargetFramework)'==''">net40</TargetFramework>
     <LkgPath>$(FSharpSourcesRoot)\..\lib\bootstrap\4.0</LkgPath>
     <LkgPath2>$(FSharpSourcesRoot)\..\packages\FSharp.Compiler.Tools.4.0.0.1\tools</LkgPath2>
+    <SolutionDir>$(FSharpSourcesRoot)\..\</SolutionDir>
     <FsLexUnicode>true</FsLexUnicode>
     <OtherFlags>$(OtherFlags) --times</OtherFlags>
     <NoWarn>$(NoWarn);69;65;54;61;75</NoWarn>
     <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
 
-  <!-- We use the same versions as VS2012 (see strong naming below) -->
+  <!-- We use the same versions as Visual F# (see strong naming below) -->
   <PropertyGroup>
     <!-- Compute the assembly version numbers to use -->
     <AssemblyVersion>2.9.9.999</AssemblyVersion>
@@ -92,9 +93,8 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <ConfigurationOutputDirectory>release</ConfigurationOutputDirectory>
   </PropertyGroup>
 
-  <!-- Flags used to build the bootstrap compiler.
-        -->
-  <PropertyGroup Condition="'$(Configuration)'=='Proto'">
+	<!-- Flags used to build the bootstrap compiler. -->
+	<PropertyGroup Condition="'$(Configuration)'=='Proto'">
     <Optimize>true</Optimize>
     <DefineConstants>DEBUG;NO_STRONG_NAMES;$(DefineConstants)</DefineConstants>
     <DefineConstants Condition="'$(TargetFrameworkVersion)' == 'v4.5'">$(DefineConstants);FX_ATLEAST_45</DefineConstants>
@@ -118,6 +118,8 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <FsCheckVersion>2.0.3</FsCheckVersion>
     <FsCheckFullVersion>2.0.3.0</FsCheckFullVersion>
     <FsCheckLibDir>$(FSharpSourcesRoot)\..\packages\FsCheck.$(FsCheckVersion)\lib\</FsCheckLibDir>
+    <FsSrGenVersion>3.0.0</FsSrGenVersion>
+    <FsSrGenBuildTasksVersion>3.0.0</FsSrGenBuildTasksVersion>
   </PropertyGroup>
 
   <!-- v2.0-specific flags -->
@@ -915,7 +917,7 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
 
   <!-- Reference an existing FSI.EXE for use from within MSBuild -->
   <PropertyGroup>
-    <FsSrGenToolPath>$(LkgPath)</FsSrGenToolPath>
+    <FsSrGenToolPath>$(FSharpSourcesRoot)\..\packages\fssrgen.$(FsSrGenVersion)\lib\net46</FsSrGenToolPath>
     <FsLexToolPath>$(LkgPath)</FsLexToolPath>
     <FsYaccToolPath>$(LkgPath)</FsYaccToolPath>
     <FsLexToolExe>fslex.exe</FsLexToolExe>
@@ -928,32 +930,15 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <CompileDependsOn>ValidateConfiguration;$(CompileDependsOn)</CompileDependsOn>
     <RootNamespace></RootNamespace>
     <DocumentationFile>$(OutputPath)$(AssemblyName).xml</DocumentationFile>
-    <EnsureThereAreNoUnusedFsSrGenResources>false</EnsureThereAreNoUnusedFsSrGenResources>
   </PropertyGroup>
 
   <Target Name="ValidateConfiguration">
     <Error
             Text="Configuration '$(Configuration)' is not one of the supported configurations: Debug, Release, Proto"
-            Condition="'$(Configuration)'!='Release' and '$(Configuration)'!='Debug' and '$(Configuration)'!='VSRelease' and '$(Configuration)'!='VSDebug' and '$(Configuration)'!='Proto'"/>
+            Condition="'$(Configuration)'!='Release' and '$(Configuration)'!='Debug' and '$(Configuration)'!='Proto'"/>
   </Target>
 
-  <Import Project="$(LkgPath)\FSharp.SRGen.targets" />
-
-  <!-- This build step copies files to the output folder while replacing build variables in the text of
-             those file. -->
-  <Target
-          Name="CustomCopyLocalFiles"
-          Inputs="@(CustomCopyLocal)"
-          Outputs="@(CustomCopyLocal->'$(OutDir)%(TargetFilename)')"
-          Condition="'$(targetCLIDir)'!='Silverlight/4.0/'"
-                >
-    <Exec Command="$(FSharpSourcesRoot)\fsharp\FSharp.Build\subst.exe &quot;%(CustomCopyLocal.FullPath)&quot; {VisualStudioVersion} $(VisualStudioVersion) {FinalDir} &quot;$([System.IO.Path]::GetFullPath('$(OutputPath)'))\&quot; {LkgVersion} $(LkgVersion) {BuildSuffix} &quot;$(FsBuildSuffix)&quot; {FSharpTargetsDir} &quot;%24(MSBuildThisFileDirectory)&quot; {FSCoreVersion} &quot;$(FSCoreVersion)&quot; &gt; $(OutDir)%(CustomCopyLocal.TargetFilename)  "/>
-    <!-- Make sure it will get cleaned  -->
-    <CreateItem Include="$(OutDir)%(CustomCopyLocal.TargetFilename)">
-      <Output TaskParameter="Include" ItemName="FileWrites"/>
-    </CreateItem>
-  </Target>
-
+  <Import Project="..\packages\FSharp.SRGen.Build.Tasks.$(FsSrGenBuildTasksVersion)\content\FSharp.SRGen.targets" />
   <Target Name="ReorderCompileItems"
       BeforeTargets="CoreCompile"
       Condition="'$(GenerateTargetFrameworkAttribute)' == 'true' AND '$(AssemblyName)' == 'FSharp.Core'">  
@@ -963,9 +948,6 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
         <CompileBefore Remove="@(CompileBefore)"/>   
     </ItemGroup>
   </Target>
-  <PropertyGroup>
-    <SolutionDir>$(FSharpSourcesRoot)\..\</SolutionDir>
-  </PropertyGroup>
   <Import Project="$(FSharpSourcesRoot)\..\.nuget\NuGet.targets" />
   <Target Name="BeforeBuild" BeforeTargets="Build">
     <Exec Command="$(NuGetCommand) restore packages.config -PackagesDirectory packages -ConfigFile $(FSharpSourcesRoot)\..\.nuget\NuGet.Config" WorkingDirectory="$(FSharpSourcesRoot)\.."/>
