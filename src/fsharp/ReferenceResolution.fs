@@ -4,9 +4,6 @@ namespace Microsoft.FSharp.Compiler
 
 module internal MSBuildResolver = 
 
-    open System
-    open System.IO
-    open System.Reflection
 
 #if FX_RESHAPED_REFLECTION
     open Microsoft.FSharp.Core.ReflectionAdapters
@@ -45,6 +42,7 @@ module internal MSBuildResolver =
     open Microsoft.Build.Framework
     open Microsoft.Build.BuildEngine
     open System.IO
+    open System.Reflection
 
     type ResolvedFile = 
         { /// Item specification
