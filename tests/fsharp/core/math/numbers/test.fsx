@@ -3,6 +3,10 @@
 module Core_math_numbers
 #endif
 
+#if CoreClr
+open CoreClrUtilities
+#endif
+
 #light
 #nowarn "49";;
 #nowarn "44";;

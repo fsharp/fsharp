@@ -147,15 +147,9 @@ You can also build FSharp.Core.dll for other profiles:
     msbuild src\fsharp-library-build.proj /p:TargetFramework=portable7 /p:Configuration=Release
     msbuild src\fsharp-library-build.proj /p:TargetFramework=portable78 /p:Configuration=Release
     msbuild src\fsharp-library-build.proj /p:TargetFramework=portable259 /p:Configuration=Release
-    msbuild src\fsharp-library-build.proj /p:TargetFramework=sl5 /p:Configuration=Release
 
     msbuild src\fsharp-library-build.proj /p:TargetFramework=monodroid /p:Configuration=Release
     msbuild src\fsharp-library-build.proj /p:TargetFramework=monotouch /p:Configuration=Release
-    msbuild src\fsharp-library-build.proj /p:TargetFramework=net40-xna40-xbox360 /p:Configuration=Release
-
-You can also build the FSharp.Core and FSharp.Compiler.Silverlight.dll for Silverlight 5.0:
-
-    msbuild src\fsharp-library-build.proj /p:TargetFramework=sl5-compiler  /p:Configuration=Release
 
 Change to ``` /p:Configuration=Debug``` for debug binaries.
 

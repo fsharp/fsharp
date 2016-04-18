@@ -17,8 +17,6 @@ let test (s : string) b =
 
 let check s b1 b2 = test s (b1 = b2)
 
-
-
 module TestNullIsGeneralizeable = begin
 
    open System.Collections.Generic

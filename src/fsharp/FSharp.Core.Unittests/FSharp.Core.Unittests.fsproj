@@ -12,7 +12,8 @@
     <SchemaVersion>2.0</SchemaVersion>
     <AllowCrossTargeting>true</AllowCrossTargeting>
     <ReferenceVsAssemblies>true</ReferenceVsAssemblies>
-    <OutputType>Library</OutputType>
+    <OutputType Condition="'$(TargetFramework)' == 'coreclr'">Exe</OutputType>
+    <OutputType Condition="'$(TargetFramework)' != 'coreclr'">Library</OutputType>
     <AssemblyName>FSharp.Core.Unittests</AssemblyName>
     <Name>SystematicUnitTests</Name>
     <TargetFrameworkVersion Condition=" '$(TargetFramework)' == 'net20' ">v3.5</TargetFrameworkVersion>
@@ -26,7 +27,10 @@
       {TargetFrameworkDirectory};
       {Registry:Software\Microsoft\.NETFramework,v4.5,AssemblyFoldersEx};
     </AssemblySearchPaths>
+    <TargetProfile Condition=" '$(TargetFramework)' == 'portable7' or '$(TargetFramework)' == 'portable78' or '$(TargetFramework)' == 'portable259' or '$(TargetFramework)' == 'coreclr' ">netcore</TargetProfile>
     <NoWarn>$(NoWarn);217</NoWarn>
+    <OutputPath Condition="'$(TargetFramework)' == 'coreclr'">$(FSharpSourcesRoot)\..\tests\testbin\$(Configuration)\coreclr\fsharp.core.unittests</OutputPath>
+    <CustomOutputPath Condition="'$(TargetFramework)' == 'coreclr'">true</CustomOutputPath>
   </PropertyGroup>
   <PropertyGroup>
     <DefineConstants Condition=" '$(TargetFramework)' == 'sl5' OR '$(TargetFramework)' == 'sl5-compiler' ">$(DefineConstants);SILVERLIGHT</DefineConstants>
@@ -37,6 +41,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <OutputPath>bin\Debug\</OutputPath>
+    <Optimize>false</Optimize>
     <DefineConstants>$(DefineConstants);DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>3</WarningLevel>
@@ -44,7 +49,6 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>$(DefineConstants);TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>3</WarningLevel>
@@ -52,45 +56,51 @@
   </PropertyGroup>
   <ItemGroup>
     <!-- need full name and SpecificVersion = true in order to convince msbuild to allow this reference when targeting portable47 -->
-    <Reference Include="nunit.framework, Version=$(NUnitFullVersion), Culture=neutral, PublicKeyToken=2638cd05610744eb" Condition="'$(TargetFramework)' != 'sl5' AND '$(TargetFramework)' != 'sl3-wp'">
+    <Reference Include="nunit.framework, Version=$(NUnitFullVersion), Culture=neutral, PublicKeyToken=2638cd05610744eb" Condition="'$(TargetFramework)' != 'coreclr'">
       <SpecificVersion>true</SpecificVersion>
       <Private>True</Private>
       <HintPath>$(NUnitLibDir)\nunit.framework.dll</HintPath>
     </Reference>
-    <Reference Include="FsCheck, Version=$(FsCheckFullVersion)" Condition="'$(TargetFramework)' != 'portable47' AND '$(TargetFramework)' != 'net20'">
+    <Reference Include="FsCheck, Version=$(FsCheckFullVersion)" Condition="'$(TargetFramework)' != 'portable47'">
       <SpecificVersion>true</SpecificVersion>
       <Private>True</Private>
       <HintPath Condition="'$(TargetFramework)' == 'net40'">$(FsCheckLibDir)\net45\FsCheck.dll</HintPath>
       <HintPath Condition="'$(TargetFramework)' == 'portable7'">$(FsCheckLibDir)\portable-net45+netcore45\FsCheck.dll</HintPath>
       <HintPath Condition="'$(TargetFramework)' == 'portable78'">$(FsCheckLibDir)\portable-net45+netcore45+wp8\FsCheck.dll</HintPath>
-      <HintPath Condition="'$(TargetFramework)' == 'portable259'">$(FsCheckLibDir)\portable-net45+netcore45+wpa81+wp8\FsCheck.dll</HintPath>
+      <HintPath Condition="'$(TargetFramework)' == 'portable259' OR '$(TargetFramework)' == 'coreclr'">$(FsCheckLibDir)\portable-net45+netcore45+wpa81+wp8\FsCheck.dll</HintPath>
     </Reference>
-    <Reference Include="NUnitFramework" Condition="'$(TargetFramework)' == 'sl5' OR '$(TargetFramework)' == 'sl3-wp'" />
     <ProjectReference Include="$(FSharpSourcesRoot)\fsharp\FSharp.Core\FSharp.Core.fsproj">
       <Project>{DED3BBD7-53F4-428A-8C9F-27968E768605}</Project>
       <Name>FSharp.Core</Name>
     </ProjectReference>
-    <Reference Include="nunit.framework" Condition="'$(TargetFramework)' != 'sl5' AND '$(TargetFramework)' != 'sl5-compiler' AND '$(TargetFramework)' != 'sl3-wp'" />
-    <Reference Include="NUnitFramework" Condition="'$(TargetFramework)' == 'sl5' OR '$(TargetFramework)' == 'sl3-wp' OR '$(TargetFramework)' == 'sl5-compiler'" />
+    <Reference Include="nunit.framework"/>
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'coreclr'">
+    <Reference Include="nunit.framework, Version=3.0.5797.27550, Culture=neutral, PublicKeyToken=2638cd05610744eb">
+        <SpecificVersion>true</SpecificVersion>
+        <Private>True</Private>
+        <HintPath>..\..\..\packages\NUnit.3.0.0\lib\portable-net45+win8+wp8+wpa81+Xamarin.Mac+MonoAndroid10+MonoTouch10+Xamarin.iOS10\nunit.framework.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup Condition="!('$(TargetFramework)' == 'portable47' or '$(TargetFramework)' == 'portable7' or '$(TargetFramework)' == 'portable78' or '$(TargetFramework)' == 'portable259' )">
+    <Reference Include="nunitlite, Version=3.0.5797.27550, Culture=neutral, PublicKeyToken=2638cd05610744eb">
+        <SpecificVersion>true</SpecificVersion>
+        <Private>True</Private>
+        <HintPath>..\..\..\packages\NUnitLite.3.0.0\lib\portable-net45+win8+wp8+wpa81+Xamarin.Mac\nunitlite.dll</HintPath>
+    </Reference>
+    <None Include="project.json" />
+  </ItemGroup>
+  <ItemGroup Condition="(!$(TargetFramework.Contains('portable'))) and '$(TargetFramework)' != 'coreclr'">
     <Reference Include="mscorlib" />
     <Reference Include="System" />
     <Reference Include="System.Numerics" Condition="'$(TargetFramework)' == 'net40'" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Net" Condition="'$(TargetFramework)' == 'sl5' " />
-    <Reference Include="System.Observable" Condition="'$(TargetFramework)' == 'sl3-wp' " />
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="NUnitFrameworkShims.fs" Condition="'$(TargetFramework)' == 'sl3-wp'" />
-    <Reference Include="System.Observable" Condition="'$(TargetFramework)' == 'sl3-wp' " />
     <ProjectReference Include="..\FSharp.Core\FSharp.Core.fsproj">
       <Project>{DED3BBD7-53F4-428A-8C9F-27968E768605}</Project>
       <Name>FSharp.Core</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="NUnitFrameworkShims.fs" Condition="'$(TargetFramework)' == 'sl3-wp'" />
     <Compile Include="LibraryTestFx.fs" />
     <Compile Include="FSharp.Core\Microsoft.FSharp.Collections\Utils.fs" Condition="'$(TargetFramework)' != 'portable47' AND '$(TargetFramework)' != 'net20'" />
     <Compile Include="FSharp.Core\Microsoft.FSharp.Collections\ArrayModule.fs" />
@@ -133,9 +143,9 @@
     <Compile Include="FSharp.Core\Microsoft.FSharp.Quotations\FSharpQuotations.fs" />
     <Compile Include="FSharp.Core\PrimTypes.fs" />
     <Compile Include="TypeForwarding.fs" />
-    <Compile Include="NUnitFrameworkShims.fs" Condition="'$(TargetFramework)' == 'sl3-wp'" />
     <!-- <Compile Include="SurfaceArea.4.0.fs" Condition="'$(TargetFramework)' == 'net40'"/> -->
     <Compile Include="SurfaceArea.$(TargetFramework).fs" />
+    <Compile Include="Program.fs" Condition="'$(TargetFramework)' == 'coreclr'" />
     <CustomCopyLocal Include="FSharp.Core.Unittests.dll.config">
       <TargetFilename>FSharp.Core.Unittests.dll.config</TargetFilename>
     </CustomCopyLocal>

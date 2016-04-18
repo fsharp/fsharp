@@ -20,9 +20,9 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' " />
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' " />
   <ItemGroup>
-	  <FsSrGen Include="..\FSharp.Build\FSBuild.txt">
-		  <Link>FSBuild.txt</Link>
-	  </FsSrGen>
+      <FsSrGen Include="..\FSharp.Build\FSBuild.txt">
+          <Link>FSBuild.txt</Link>
+      </FsSrGen>
     <Compile Include="..\..\utils\CompilerLocationUtils.fs">
       <Link>CompilerLocationUtils.fs</Link>
     </Compile>
