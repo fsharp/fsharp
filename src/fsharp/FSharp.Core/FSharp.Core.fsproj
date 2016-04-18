@@ -219,11 +219,17 @@
   <ItemGroup Condition="'$(TargetFramework)' != 'portable7' and '$(TargetFramework)' != 'coreclr'">
     <Reference Include="mscorlib" />
     <Reference Include="System" />
-    <Reference Include="System.Numerics" Condition="'$(TargetFramework)' == 'net40'" />
-    <Reference Include="System.Net" Condition="'$(TargetFramework)' == 'portable47' OR 
-                                               '$(TargetFramework)' == 'portable7' OR
-                                               '$(TargetFramework)' == 'xamarinmacmobile' OR
-                                               '$(TargetFramework)' == 'xamarinmacfull'" >
+    <Reference Include="System.Numerics" Condition="'$(TargetFramework)' == 'net40' OR 
+                                                    '$(TargetFramework)' == 'monotouch' OR 
+                                                    '$(TargetFramework)' == 'xamarinwatchos' OR 
+                                                    '$(TargetFramework)' == 'xamarintvos' OR 
+                                                    '$(TargetFramework)' == 'monodroid' OR
+                                                    '$(TargetFramework)' == 'xamarinmacmobile' OR
+                                                    '$(TargetFramework)' == 'xamarinmacfull'" >
+      <Private>false</Private>
+    </Reference>
+	<Reference Include="System.Net" Condition="'$(TargetFramework)' == 'portable47' OR 
+                                               '$(TargetFramework)' == 'portable7'" >
       <Private>false</Private>
     </Reference>
     <Reference Include="System.Core" Condition="'$(TargetFramework)' == 'monotouch' OR 
