@@ -578,7 +578,7 @@
 		<Private>True</Private>
 	</Reference>
 	<Reference Include="Microsoft.DiaSymReader">
-		<HintPath>..\..\..\packages\Microsoft.DiaSymReader\1.0.7\lib\portable-net45+win8\Microsoft.DiaSymReader.dll</HintPath>
+		<HintPath>..\..\..\packages\Microsoft.DiaSymReader.1.0.7\lib\portable-net45+win8\Microsoft.DiaSymReader.dll</HintPath>
 		<Private>True</Private>
 	</Reference>
 	<Reference Include="System.Reflection.Metadata">
