@@ -26,7 +26,9 @@ do()
 // Mark the main thread as STAThread since it is a GUI thread
 [<EntryPoint>]
 [<STAThread()>]
+#if !NO_LOADER_OPTIMIZATION
 [<LoaderOptimization(LoaderOptimization.MultiDomainHost)>]     
+#endif
 let FsiMain argv = 
     MainMain argv
 

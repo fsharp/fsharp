@@ -11,15 +11,7 @@ set msbuildflags=/maxcpucount
 set _ngenexe="%SystemRoot%\Microsoft.NET\Framework\v4.0.30319\ngen.exe"
 if not exist %_ngenexe% echo Note: Could not find ngen.exe. 
 
-::Clean
-del /F /S /Q lib\proto
-del /F /S /Q lib\release
-
 ::Build
-
-set msbuildflags=/maxcpucount
-set _ngenexe="%SystemRoot%\Microsoft.NET\Framework\v4.0.30319\ngen.exe"
-if not exist %_ngenexe% echo Error: Could not find ngen.exe. && goto :failure
 
 %_ngenexe% install .\.nuget\NuGet.exe 
 
@@ -29,17 +21,37 @@ if not exist %_ngenexe% echo Error: Could not find ngen.exe. && goto :failure
 %_ngenexe% install packages\FSharp.Compiler.Tools.4.0.0.1\tools\fsc.exe
 
 %_msbuildexe% src\fsharp-proto-build.proj
+@if ERRORLEVEL 1 echo Error: "%_msbuildexe% src\fsharp-proto-build.proj" failed  && goto :failure
+
 %_ngenexe% install lib\proto\fsc-proto.exe
+
 %_msbuildexe% %msbuildflags% src\fsharp-library-build.proj /p:TargetFramework=net40 /p:Configuration=Release
+@if ERRORLEVEL 1 echo Error: "%_msbuildexe% %msbuildflags% src\fsharp-library-build.proj /p:TargetFramework=net40 /p:Configuration=Release" failed  && goto :failure
+
 %_msbuildexe% %msbuildflags% src\fsharp-library-unittests-build.proj /p:TargetFramework=net40 /p:Configuration=Release
+@if ERRORLEVEL 1 echo Error: "%_msbuildexe% %msbuildflags% src\fsharp-library-unittests-build.proj /p:TargetFramework=net40 /p:Configuration=Release" failed  && goto :failure
+
 %_msbuildexe% %msbuildflags% src\fsharp-compiler-build.proj /p:TargetFramework=net40 /p:Configuration=Release
+@if ERRORLEVEL 1 echo Error: "%_msbuildexe% %msbuildflags% src\fsharp-compiler-build.proj /p:TargetFramework=net40 /p:Configuration=Release" failed  && goto :failure
+
 %_msbuildexe% %msbuildflags% src\fsharp-compiler-unittests-build.proj /p:TargetFramework=net40 /p:Configuration=Release
+@if ERRORLEVEL 1 echo Error: "%_msbuildexe% %msbuildflags% src\fsharp-compiler-unittests-build.proj /p:TargetFramework=net40 /p:Configuration=Release" failed  && goto :failure
+
 %_msbuildexe% %msbuildflags% src\fsharp-library-build.proj /p:TargetFramework=portable47 /p:Configuration=Release
+@if ERRORLEVEL 1 echo Error: "%_msbuildexe% %msbuildflags% src\fsharp-library-build.proj /p:TargetFramework=portable47 /p:Configuration=Release" failed  && goto :failure
+
 %_msbuildexe% %msbuildflags% src\fsharp-library-build.proj /p:TargetFramework=portable7 /p:Configuration=Release
+@if ERRORLEVEL 1 echo Error: "%_msbuildexe% %msbuildflags% src\fsharp-library-build.proj /p:TargetFramework=portable7 /p:Configuration=Release" failed  && goto :failure
+
 %_msbuildexe% %msbuildflags% src\fsharp-library-build.proj /p:TargetFramework=portable78 /p:Configuration=Release
+@if ERRORLEVEL 1 echo Error: "%_msbuildexe% %msbuildflags% src\fsharp-library-build.proj /p:TargetFramework=portable78 /p:Configuration=Release" failed  && goto :failure
+
 %_msbuildexe% %msbuildflags% src\fsharp-library-build.proj /p:TargetFramework=portable259 /p:Configuration=Release
-%_msbuildexe% %msbuildflags% src\fsharp-library-build.proj /p:TargetFramework=sl5 /p:Configuration=Release
+@if ERRORLEVEL 1 echo Error: "%_msbuildexe% %msbuildflags% src\fsharp-library-build.proj /p:TargetFramework=portable259 /p:Configuration=Release" failed  && goto :failure
+
 %_msbuildexe% %msbuildflags% src\fsharp-library-build.proj /p:TargetFramework=monotouch /p:Configuration=Release /p:KeyFile=..\..\..\mono.snk
+@if ERRORLEVEL 1 echo Error: "%_msbuildexe% %msbuildflags% src\fsharp-library-build.proj /p:TargetFramework=monotouch /p:Configuration=Release /p:KeyFile=..\..\..\mono.snk" failed  && goto :failure
+
 
 @echo "Finished"
 goto :eof

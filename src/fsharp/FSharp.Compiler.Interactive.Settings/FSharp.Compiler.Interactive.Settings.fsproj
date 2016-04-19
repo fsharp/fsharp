@@ -14,6 +14,7 @@
     <DefineConstants>EXTENSIONTYPING;$(DefineConstants)</DefineConstants>
     <AssemblyName>FSharp.Compiler.Interactive.Settings</AssemblyName>
     <FileAlignment>512</FileAlignment>
+    <OtherFlags Condition=" '$(TargetFramework)'=='coreclr'">$(OtherFlags) --targetprofile:netcore</OtherFlags>
   </PropertyGroup>
   <!-- MonoDevelop likes these here to recognise the configurations -->
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' " />
@@ -24,7 +25,10 @@
     </FsSrGen>
     <Compile Include="InternalsVisibleTo.fs"/>
     <Compile Include="..\..\assemblyinfo\assemblyinfo.FSharp.Compiler.Interactive.Settings.dll.fs">
-      <Link>Utilities/assemblyinfo.FSharp.Compiler.Interactive.Settings.dll.fs</Link>
+      <Link>assemblyinfo.FSharp.Compiler.Interactive.Settings.dll.fs</Link>
+    </Compile>
+    <Compile Include="..\..\utils\reshapedreflection.fs">
+      <Link>Reflection/reshapedreflection.fs</Link>
     </Compile>
     <Compile Include="..\fsiattrs.fs">
       <Link>Utilities/fsiattrs.fs</Link>
@@ -36,9 +40,14 @@
       <Link>InteractiveSettings/fsiaux.fs</Link>
     </Compile>
   </ItemGroup>
-  <ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'coreclr'">
+      <None Include="project.json" />
+  </ItemGroup>
+  <ItemGroup  Condition="'$(TargetFramework)' != 'coreclr'">
     <Reference Include="mscorlib" />
     <Reference Include="System" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="$(FSharpSourcesRoot)\fsharp\FSharp.Core\FSharp.Core.fsproj">
       <Project>{DED3BBD7-53F4-428A-8C9F-27968E768605}</Project>
       <Name>FSharp.Core</Name>
