@@ -32,26 +32,28 @@ module internal Microsoft.FSharp.Compiler.ConstraintSolver
 
 open Internal.Utilities
 open Internal.Utilities.Collections
+
+open Microsoft.FSharp.Compiler 
 open Microsoft.FSharp.Compiler.AbstractIL 
+open Microsoft.FSharp.Compiler.AbstractIL.Diagnostics 
 open Microsoft.FSharp.Compiler.AbstractIL.Internal 
 open Microsoft.FSharp.Compiler.AbstractIL.Internal.Library
-open Microsoft.FSharp.Compiler 
-
-open Microsoft.FSharp.Compiler.AbstractIL.Diagnostics 
-open Microsoft.FSharp.Compiler.Range
-open Microsoft.FSharp.Compiler.Rational
 open Microsoft.FSharp.Compiler.Ast
 open Microsoft.FSharp.Compiler.ErrorLogger
+open Microsoft.FSharp.Compiler.Infos
+open Microsoft.FSharp.Compiler.AccessibilityLogic
+open Microsoft.FSharp.Compiler.AttributeChecking
+open Microsoft.FSharp.Compiler.Lib
+open Microsoft.FSharp.Compiler.MethodCalls
+open Microsoft.FSharp.Compiler.PrettyNaming
+open Microsoft.FSharp.Compiler.Range
+open Microsoft.FSharp.Compiler.Rational
+open Microsoft.FSharp.Compiler.InfoReader
 open Microsoft.FSharp.Compiler.Tast
 open Microsoft.FSharp.Compiler.Tastops
 open Microsoft.FSharp.Compiler.Tastops.DebugPrint
 open Microsoft.FSharp.Compiler.TcGlobals
-open Microsoft.FSharp.Compiler.Lib
-open Microsoft.FSharp.Compiler.Infos
-open Microsoft.FSharp.Compiler.Infos.AccessibilityLogic
-open Microsoft.FSharp.Compiler.Infos.AttributeChecking
 open Microsoft.FSharp.Compiler.TypeRelations
-open Microsoft.FSharp.Compiler.PrettyNaming
 
 //-------------------------------------------------------------------------
 // Generate type variables and record them in within the scope of the
@@ -113,16 +115,26 @@ let FreshenMethInfo m (minfo:MethInfo) =
 // Subsumption of types: solve/record subtyping constraints
 //------------------------------------------------------------------------- 
 
+[<RequireQualifiedAccess>] 
+/// Information about the context of a type equation.
+type ContextInfo =
+/// No context was given.
+| NoContext
+/// The type equation comes from an omitted else branch.
+| OmittedElseBranch
+/// The type equation comes from an else branch that might have different type than the corresponding if branch.
+| ElseBranchWithDifferentType
+
 exception ConstraintSolverTupleDiffLengths of DisplayEnv * TType list * TType list * range  * range 
 exception ConstraintSolverInfiniteTypes of DisplayEnv * TType * TType * range * range
-exception ConstraintSolverTypesNotInEqualityRelation of DisplayEnv * TType * TType * range  * range 
+exception ConstraintSolverTypesNotInEqualityRelation of DisplayEnv * TType * TType * range * range 
 exception ConstraintSolverTypesNotInSubsumptionRelation of DisplayEnv * TType * TType * range  * range 
 exception ConstraintSolverMissingConstraint of DisplayEnv * Tast.Typar * Tast.TyparConstraint * range  * range 
 exception ConstraintSolverError of string * range * range
 exception ConstraintSolverRelatedInformation of string option * range * exn 
 
 exception ErrorFromApplyingDefault of TcGlobals * DisplayEnv * Tast.Typar * TType * exn * range
-exception ErrorFromAddingTypeEquation of TcGlobals * DisplayEnv * TType * TType * exn * range
+exception ErrorFromAddingTypeEquation of TcGlobals * DisplayEnv * TType * TType * exn * ContextInfo * range
 exception ErrorsFromAddingSubsumptionConstraint of TcGlobals * DisplayEnv * TType * TType * exn * range
 exception ErrorFromAddingConstraint of  DisplayEnv * exn * range
 exception PossibleOverload of DisplayEnv * string * exn * range
@@ -1290,7 +1302,7 @@ and MemberConstraintSolutionOfMethInfo css m minfo minst =
         let minst = []   // GENERIC TYPE PROVIDERS: for generics, we would have an minst here
         let allArgVars, allArgs = minfo.GetParamTypes(amap, m, minst) |> List.concat |> List.mapi (fun i ty -> mkLocal m ("arg"+string i) ty) |> List.unzip
         let objArgVars, objArgs = (if minfo.IsInstance then [mkLocal m "this" minfo.EnclosingType] else []) |> List.unzip
-        let callMethInfoOpt, callExpr,callExprTy = TypeRelations.ProvidedMethodCalls.BuildInvokerExpressionForProvidedMethodCall css.TcVal (g, amap, mi, objArgs, NeverMutates, false, ValUseFlag.NormalValUse, allArgs, m) 
+        let callMethInfoOpt, callExpr,callExprTy = ProvidedMethodCalls.BuildInvokerExpressionForProvidedMethodCall css.TcVal (g, amap, mi, objArgs, NeverMutates, false, ValUseFlag.NormalValUse, allArgs, m) 
         let closedExprSln = ClosedExprSln (mkLambdas m [] (objArgVars@allArgVars) (callExpr, callExprTy) )
         // If the call is a simple call to an IL method with all the arguments in the natural order, then revert to use ILMethSln.
         // This is important for calls to operators on generated provided types. There is an (unchecked) condition
@@ -1910,9 +1922,9 @@ and private SolveTypSubsumesTypWithReport (csenv:ConstraintSolverEnv) ndeep m tr
     TryD (fun () -> SolveTypSubsumesTypKeepAbbrevs csenv ndeep m trace ty1 ty2)
          (fun res -> ErrorD (ErrorsFromAddingSubsumptionConstraint(csenv.g,csenv.DisplayEnv,ty1,ty2,res,m)))
 
-and private SolveTypEqualsTypWithReport (csenv:ConstraintSolverEnv) ndeep  m trace ty1 ty2 = 
+and private SolveTypEqualsTypWithReport contextInfo (csenv:ConstraintSolverEnv) ndeep  m trace ty1 ty2 = 
     TryD (fun () -> SolveTypEqualsTypKeepAbbrevs csenv ndeep m trace ty1 ty2)
-         (fun res -> ErrorD (ErrorFromAddingTypeEquation(csenv.g,csenv.DisplayEnv,ty1,ty2,res,m)))
+         (fun res -> ErrorD (ErrorFromAddingTypeEquation(csenv.g,csenv.DisplayEnv,ty1,ty2,res,contextInfo,m)))
   
 and ArgsMustSubsumeOrConvert 
         (csenv:ConstraintSolverEnv)
@@ -1934,10 +1946,10 @@ and ArgsMustSubsumeOrConvert
         CompleteD)
 
 and MustUnify csenv ndeep trace ty1 ty2 = 
-    SolveTypEqualsTypWithReport csenv ndeep csenv.m trace ty1 ty2
+    SolveTypEqualsTypWithReport ContextInfo.NoContext csenv ndeep csenv.m trace ty1 ty2
 
 and MustUnifyInsideUndo csenv ndeep trace ty1 ty2 = 
-    SolveTypEqualsTypWithReport csenv ndeep csenv.m (WithTrace trace) ty1 ty2
+    SolveTypEqualsTypWithReport ContextInfo.NoContext csenv ndeep csenv.m (WithTrace trace) ty1 ty2
 
 and ArgsMustSubsumeOrConvertInsideUndo (csenv:ConstraintSolverEnv) ndeep trace isConstraint calledArg (CallerArg(callerArgTy,m,_,_) as callerArg) = 
     let calledArgTy = AdjustCalledArgType csenv.InfoReader isConstraint calledArg callerArg
@@ -2390,8 +2402,8 @@ let EliminateConstraintsForGeneralizedTypars csenv trace (generalizedTypars: Typ
 // No error recovery here : we do that on a per-expression basis.
 //------------------------------------------------------------------------- 
 
-let AddCxTypeEqualsType denv css m ty1 ty2 = 
-    SolveTypEqualsTypWithReport (MakeConstraintSolverEnv css m denv) 0 m NoTrace ty1 ty2
+let AddCxTypeEqualsType contextInfo denv css m ty1 ty2 = 
+    SolveTypEqualsTypWithReport contextInfo (MakeConstraintSolverEnv css m denv) 0 m NoTrace ty1 ty2
     |> RaiseOperationResult
 
 let UndoIfFailed f =
@@ -2539,7 +2551,7 @@ let CodegenWitnessThatTypSupportsTraitConstraint tcVal g amap m (traitInfo:Trait
                 let wrap,h' = mkExprAddrOfExpr g true false PossiblyMutates h None m 
                 ResultD (Some (wrap (Expr.Op(TOp.TraitCall(traitInfo), [], (h' :: t), m))))
             else        
-                ResultD (Some (Infos.MakeMethInfoCall amap m minfo methArgTys argExprs ))
+                ResultD (Some (MakeMethInfoCall amap m minfo methArgTys argExprs ))
 
         | Choice2Of4 (tinst,rfref,isSet) -> 
             let res = 
