@@ -573,21 +573,21 @@
     <Reference Include="System.Numerics" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Runtime.Remoting" />
-    <Reference Include="Microsoft.Build.Framework, Version=12.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="Microsoft.Build.Engine, Version=12.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="Microsoft.Build, Version=12.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" >
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="Microsoft.Build.Tasks.v12.0">
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="Microsoft.Build.Utilities.v12.0">
-      <Private>True</Private>
-    </Reference>
+    <Reference Include="Microsoft.Build.Framework, Version=$(MSBuildVersionFull), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+		<Private>True</Private>
+	</Reference>
+    <Reference Include="Microsoft.Build.Engine, Version=$(MSBuildVersionFull), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+		<Private>True</Private>
+	</Reference>
+    <Reference Include="Microsoft.Build, Version=$(MSBuildVersionFull), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+		<Private>True</Private>
+	</Reference>
+	<Reference Include="Microsoft.Build.Utilities.$(MSBuildVersionSuffix), Version=$(MSBuildVersionFull), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+		<Private>True</Private>
+	</Reference>
+    <Reference Include="Microsoft.Build.Tasks.$(MSBuildVersionSuffix), Version=$(MSBuildVersionFull), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+		<Private>True</Private>
+	</Reference>
     <Reference Include="ISymWrapper, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
 	<Reference Include="Microsoft.DiaSymReader.PortablePdb">
 		<HintPath>..\..\..\packages\Microsoft.DiaSymReader.PortablePdb.1.0.0-rc-60301\lib\portable-net45+win8\Microsoft.DiaSymReader.PortablePdb.dll</HintPath>

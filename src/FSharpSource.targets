@@ -9,6 +9,8 @@
     <LkgPath2>$(FSharpSourcesRoot)\..\packages\FSharp.Compiler.Tools.4.0.0.1\tools</LkgPath2>
     <SolutionDir>$(FSharpSourcesRoot)\..\</SolutionDir>
     <FsLexUnicode>true</FsLexUnicode>
+	<MSBuildVersionSuffix>v12.0</MSBuildVersionSuffix>
+	<MSBuildVersionFull>12.0.0.0</MSBuildVersionFull>
     <OtherFlags>$(OtherFlags) --times</OtherFlags>
     <NoWarn>$(NoWarn);69;65;54;61;75</NoWarn>
     <DebugSymbols>true</DebugSymbols>
