@@ -1717,6 +1717,39 @@ module QuotationConstructionTests =
     check "vcknwwe0ff" (match Expr.VarSet(Var.Global("i",typeof<int>), <@@ 4 @@>) with VarSet(v,q) -> v = Var.Global("i",typeof<int>) && q = <@@ 4 @@>  | _ -> false) true
     check "vcknwwe0gg" (match Expr.WhileLoop(<@@ true @@>, <@@ () @@>) with WhileLoop(g,b) -> g = <@@ true @@> && b = <@@ () @@>  | _ -> false) true
 
+module QuotationStructUnionTests = 
+
+    [<Struct>]
+    type T = | A of int
+        
+    test "check NewUnionCase"   (<@ A(1) @> |> (function NewUnionCase(unionCase,args) -> true | _ -> false))
+    
+    [<ReflectedDefinition>]
+    let foo v = match v with  | A(1) -> 0 | _ -> 1
+      
+    test "check TryGetReflectedDefinition (local f)" 
+        ((<@ foo (A(1)) @> |> (function Call(None,minfo,args) -> Quotations.Expr.TryGetReflectedDefinition(minfo).IsSome | _ -> false))) 
+
+    [<ReflectedDefinition>]
+    let test3297327 v = match v with  | A(1) -> 0 | _ -> 1
+      
+    test "check TryGetReflectedDefinition (local f)" 
+        ((<@ foo (A(1)) @> |> (function Call(None,minfo,args) -> Quotations.Expr.TryGetReflectedDefinition(minfo).IsSome | _ -> false))) 
+
+
+    [<Struct>]
+    type T2 = 
+        | A1 of int * int
+
+    test "check NewUnionCase"   (<@ A1(1,2) @> |> (function NewUnionCase(unionCase,[ Int32 1; Int32 2 ]) -> true | _ -> false))
+
+    //[<DefaultAugmentation(false); Struct>]
+    //type T3 = 
+    //    | A1 of int * int
+    //
+    //test "check NewUnionCase"   (<@ A1(1,2) @> |> (function NewUnionCase(unionCase,[ Int32 1; Int32 2 ]) -> true | _ -> false))
+
+
 module EqualityOnExprDoesntFail = 
     let q = <@ 1 @>
     check "we09ceo" (q.Equals(1)) false
@@ -2305,6 +2338,14 @@ module ReflectedDefinitionOnTypesWithImplicitCodeGen =
 #endif
           check "celnwer34" (Quotations.Expr.TryGetReflectedDefinition(m).IsNone) true
 
+      // This type has an implicit IComparable implementation, it is not accessible as a reflected definition
+      [<Struct>] type SR = { x:int; y:string; z:System.DateTime }
+#if NetCore
+      for m in typeof<SR>.GetMethods() do 
+#else
+      for m in typeof<SR>.GetMethods(System.Reflection.BindingFlags.DeclaredOnly) do 
+#endif
+          check "celnwer35" (Quotations.Expr.TryGetReflectedDefinition(m).IsNone) true
 
 #if Portable
 #else

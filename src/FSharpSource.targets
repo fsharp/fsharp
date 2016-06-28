@@ -134,8 +134,7 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
   <!-- v2.0-specific flags -->
   <PropertyGroup Condition="'$(TargetFramework)'=='net20'">
     <!-- If 3.5 is not configured explicitly, use 2.0 -->
-    <TargetFrameworkVersion Condition="'$(TargetFrameworkVersion)'==''">v2.0</TargetFrameworkVersion>
-    <TargetFrameworkOutputDirectory>net20</TargetFrameworkOutputDirectory>
+    <TargetFrameworkVersion Condition="'$(TargetFrameworkVersion)' == ''">v3.5</TargetFrameworkVersion>
     <DefineConstants>$(DefineConstants);FSHARP_CORE_2_0</DefineConstants>
     <DefineConstants>$(DefineConstants);RUNTIME</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_ATLEAST_35</DefineConstants>
@@ -179,7 +178,7 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <DefineConstants>$(DefineConstants);FX_RESX_RESOURCE_READER</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_RESIDENT_COMPILER</DefineConstants>
     <DefineConstants>$(DefineConstants);SHADOW_COPY_REFERENCES</DefineConstants>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion Condition="'$(TargetFrameworkVersion)' == ''">v4.5</TargetFrameworkVersion>
     <TargetFrameworkProfile></TargetFrameworkProfile>
     <!-- MSbuild works out the assembly references -->
   </PropertyGroup>
@@ -305,7 +304,7 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <DefineConstants>$(DefineConstants);I_DONT_KNOW_HOW_TO_DO_THIS_YET</DefineConstants>
     <OtherFlags>$(OtherFlags) --simpleresolution</OtherFlags>
     <TargetFrameworkProfile></TargetFrameworkProfile>                                   <!-- We are currently directly referencing corefx assemblies, so profile7 is not really true -->
-    <TargetFrameworkVersion>v5.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion Condition="'$(TargetFrameworkVersion)' == ''">v5.0</TargetFrameworkVersion>
     <ImplicitlyExpandTargetFramework>false</ImplicitlyExpandTargetFramework>            <!-- To stop msbuild being helpfull and referencing the dlls for the profile -->
     <PortableNuGetMode>true</PortableNuGetMode>
   </PropertyGroup>
@@ -371,6 +370,8 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
 
     <!-- An explicit search path seems to be needed on Mono 3.4.0 otherwise the reference assemblies for the profile aren't found -->
     <AssemblySearchPaths Condition="Exists('$(MSBuildExtensionsPath32)\..\xbuild-frameworks\.NETPortable\v4.0\mscorlib.dll')">$(MSBuildExtensionsPath32)\..\xbuild-frameworks\.NETPortable\v4.0</AssemblySearchPaths>
+    <TargetFrameworkProfile>Profile47</TargetFrameworkProfile>
+    <TargetFrameworkVersion Condition="'$(TargetFrameworkVersion)' == ''">v4.0</TargetFrameworkVersion>
   </PropertyGroup>
 
   <!-- Target Portable -->
@@ -410,10 +411,10 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <DefineConstants>$(DefineConstants);QUERIES_IN_FSLIB</DefineConstants>
     <TargetProfile>netcore</TargetProfile>
     <TargetFrameworkProfile>Profile7</TargetFrameworkProfile>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <!-- An explicit search path seems to be needed on Mono 3.4.0 otherwise the reference assemblies for the profile aren't found -->
     <AssemblySearchPaths Condition="Exists('$(MSBuildExtensionsPath32)\..\xbuild-frameworks\.NETPortable\v4.5\System.Runtime.dll')">$(MSBuildExtensionsPath32)\..\xbuild-frameworks\.NETPortable\v4.5</AssemblySearchPaths>
     <OtherFlags>$(OtherFlags) --targetprofile:netcore</OtherFlags>
+    <TargetFrameworkVersion Condition="'$(TargetFrameworkVersion)' == ''">v4.5</TargetFrameworkVersion>    
   </PropertyGroup>
 
   <!-- Target Portable Profile 78 -->
@@ -452,7 +453,7 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <DefineConstants>$(DefineConstants);FX_ATLEAST_LINQ</DefineConstants>
     <TargetProfile>netcore</TargetProfile>
     <TargetFrameworkProfile>Profile78</TargetFrameworkProfile>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion Condition="'$(TargetFrameworkVersion)' == ''">v4.5</TargetFrameworkVersion>
     <!-- An explicit search path seems to be needed on Mono 3.4.0 otherwise the reference assemblies for the profile aren't found -->
     <AssemblySearchPaths Condition="Exists('$(MSBuildExtensionsPath32)\..\xbuild-frameworks\.NETPortable\v4.5\System.Runtime.dll')">$(MSBuildExtensionsPath32)\..\xbuild-frameworks\.NETPortable\v4.5</AssemblySearchPaths>
     <OtherFlags>$(OtherFlags) --targetprofile:netcore</OtherFlags>    

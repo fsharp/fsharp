@@ -50,4 +50,15 @@
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(FSharpSourcesRoot)\FSharpSource.targets" />
+  
+  <Target Name="CopyFSharpCoreOptSigFiles" AfterTargets="Build">
+    <ItemGroup>
+        <FSharpCoreOptSigFiles Include="$(LkgPath)\FSharp.Core.dll" />
+        <FSharpCoreOptSigFiles Include="$(LkgPath)\FSharp.Core.optdata" />
+        <FSharpCoreOptSigFiles Include="$(LkgPath)\FSharp.Core.sigdata" />
+        <FSharpCoreOptSigFiles Include="$(LkgPath)\FSharp.Core.xml" />
+    </ItemGroup>
+    
+    <Copy SourceFiles="@(FSharpCoreOptSigFiles)" DestinationFolder="$(OutputPath)" />
+  </Target>
 </Project>
