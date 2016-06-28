@@ -468,7 +468,7 @@
   <ItemGroup>
     <Reference Include="mscorlib" />
     <Reference Include="FSharp.Core">
-      <HintPath>$(FSharpSourcesRoot)\..\lib\bootstrap\4.0\FSharp.Core.dll</HintPath>
+      <HintPath>$(LkgPath)\FSharp.Core.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -509,5 +509,5 @@
 	</Reference>
   </ItemGroup>
   <Import Project="$(FSharpSourcesRoot)\FSharpSource.targets" />
-  <Import Project="$(LkgPath)\FsLexYacc.targets" />
+  <Import Project="$(FsLexYaccpath)\FsLexYacc.targets" />
 </Project>

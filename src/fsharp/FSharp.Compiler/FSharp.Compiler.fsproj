@@ -614,6 +614,6 @@
   </ItemGroup>
   <Import Project="$(FSharpSourcesRoot)\.nuget\NuGet.targets" Condition="Exists('$(FSharpSourcesRoot)\.nuget\NuGet.targets')" />
   <Import Project="$(FSharpSourcesRoot)\FSharpSource.targets" />
-  <Import Project="$(LkgPath)\FsLexYacc.targets" />
+  <Import Project="$(FsLexYaccpath)\FsLexYacc.targets" />
   
 </Project>
