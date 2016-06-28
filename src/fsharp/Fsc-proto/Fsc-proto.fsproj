@@ -37,7 +37,7 @@
   <ItemGroup>
     <Reference Include="mscorlib" />
     <Reference Include="FSharp.Core">
-      <HintPath>$(FSharpSourcesRoot)\..\lib\bootstrap\4.0\FSharp.Core.dll</HintPath>
+      <HintPath>$(LkgPath)\FSharp.Core.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />

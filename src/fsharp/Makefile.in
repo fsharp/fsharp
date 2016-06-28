@@ -11,11 +11,11 @@ all:
 	$(MAKE) build
 
 # We need the bootstrap's FSharp.Core to run the proto
-build-proto: $(bootstrapdir)FSharp.Core.dll $(bootstrapdir)FSharp.Core.sigdata $(bootstrapdir)FSharp.Core.optdata
+build-proto: $(bootstrap)/FSharp.Core.dll $(bootstrap)/FSharp.Core.sigdata $(bootstrap)/FSharp.Core.optdata
 	@-mkdir -p $(protodir)
-	cp -p $(bootstrapdir)FSharp.Core.dll $(protodir)FSharp.Core.dll
-	cp -p $(bootstrapdir)FSharp.Core.sigdata $(protodir)FSharp.Core.sigdata
-	cp -p $(bootstrapdir)FSharp.Core.optdata $(protodir)FSharp.Core.optdata
+	cp -p $(bootstrap)/FSharp.Core.dll $(protodir)FSharp.Core.dll
+	cp -p $(bootstrap)/FSharp.Core.sigdata $(protodir)FSharp.Core.sigdata
+	cp -p $(bootstrap)/FSharp.Core.optdata $(protodir)FSharp.Core.optdata
 	$(MAKE) -C FSharp.Build-proto Configuration=proto $@
 	$(MAKE) -C FSharp.Compiler-proto Configuration=proto $@
 	$(MAKE) -C Fsc-proto Configuration=proto $@

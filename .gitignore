@@ -28,8 +28,6 @@ src/fsharp/FSharp.Compiler/*.sln
 src/fsharp/FSharp.Compiler/*.userprefs
 Debug
 Release
-vsdebug
-vsrelease
 Proto
 sign_temp
 .libs
@@ -149,3 +147,4 @@ FSharp.Core.Nuget/*.nupkg
 *.cto
 tests/**/FSharp.Core.dll
 project.lock.json
+Tools/

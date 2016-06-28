@@ -1853,6 +1853,8 @@ module CheckNoPumpingBecauseWeTrampolineSynchronousCode =
                 Application.Exit() } 
              |> Async.StartImmediate)
 
+    form.WindowState <- FormWindowState.Minimized
+    form.ShowInTaskbar <- false
     Application.Run form             
     // Set the synchronization context back to its original value
     System.Threading.SynchronizationContext.SetSynchronizationContext(null);

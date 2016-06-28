@@ -28,8 +28,6 @@ xamarinmacenabled := @XAMARINMACENABLED@
 
 gacdir := ${libdir}mono
 
-tooldir := $(topdir)lib/bootstrap/4.0/
-
 TargetFramework = net40
 CONFIG = release
 Configuration = Release
@@ -220,7 +218,6 @@ endif
 FSCORE_DELAY_SIGN_TOKEN = b03f5f7f11d50a3a
 SIGN_TOKEN = f536804aa0eb945b
 
-bootstrapdir = $(bootstrap)/4.0/
 tmpdir = .libs/$(CONFIG)/
 objdir = $(tmpdir)$(TARGET)/
 protodir = $(builddir)/lib/proto/
