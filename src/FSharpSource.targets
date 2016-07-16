@@ -114,7 +114,6 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
   </PropertyGroup>
 
   <PropertyGroup>
-    <DefineConstants>$(DefineConstants);OPEN_BUILD</DefineConstants>
     <!-- Disable uwa toolchain nuget package resolve logic. -->
     <NuGetTargets  Condition="'$(NuGetTargets)' == ''">false</NuGetTargets>
   </PropertyGroup>  
