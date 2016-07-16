@@ -2776,10 +2776,14 @@ type TcConfig private (data : TcConfigBuilder,validate:bool) =
                   let api = runtimeRootWithoutSlash + "-api"
                   if Directory.Exists(api) then
                      yield api
-                  let apiFacades = Path.Combine(api, "Facades")
-                  if Directory.Exists(apiFacades) then
-                     yield apiFacades
-                  yield runtimeRoot
+                     let facades = Path.Combine(api, "Facades")
+                     if Directory.Exists(facades) then
+                        yield facades
+                  else
+                     yield runtimeRoot
+                     let facades = Path.Combine(runtimeRoot, "Facades")
+                     if Directory.Exists(facades) then
+                        yield facades
                 ]
             else                                
 #endif
