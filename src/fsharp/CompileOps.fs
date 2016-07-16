@@ -1630,13 +1630,7 @@ let DefaultBasicReferencesForOutOfProjectSources =
       if (try System.Reflection.Assembly.Load(new System.Reflection.AssemblyName("System.Core, Version=3.5.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089")) |> ignore; true with _ -> false) then 
           yield "System.Core" 
 
-#if CROSS_PLATFORM_COMPILER
-      // Mono doesn't have System.Runtime available on all versions, or at least the
-      // reference is not foun by reference resolution. This is a temporary 
-      // but inadequate workaround for that issue.
-#else
       yield "System.Runtime"
-#endif
       yield "System.Web"
       yield "System.Web.Services"
       yield "System.Windows.Forms" ]

@@ -390,8 +390,6 @@ let GetTcImportsFromCommandLine
         AbortOnError(errorLogger, tcConfig, exiter)
 
     
-    ReportTime tcConfig "Import mscorlib"
-
     ReportTime tcConfig "Import mscorlib and FSharp.Core.dll"
     let foundationalTcConfigP = TcConfigProvider.Constant(tcConfig)
     let sysRes,otherRes,knownUnresolved = TcAssemblyResolutions.SplitNonFoundationalResolutions(tcConfig)

@@ -630,9 +630,6 @@ module rec Ok15 =
 
     test "lkneecec09iew15" (not (typeof<A.Dummy>.FullName.Contains("AModule") )) 
 
-let aa =
-  if !failures then (stdout.WriteLine "Test Failed"; exit 1) 
-
 #if ALL_IN_ONE
 let RUN() = !failures
 #else
