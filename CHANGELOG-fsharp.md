@@ -1,3 +1,7 @@
+4.0.1.3
+  * Integrate Microsoft\visualfsharp to 688c26bdbbfc766326fc45e4d918f87fcba1e7ba. F# 4.1 work
+  * [Inlined function causes "FS0078: Unable to find the file"](https://github.com/fsharp/fsharp/issues/584)
+
 4.0.1.2
   * Integrate Microsoft\visualfsharp to 5d8126a. F# 4.1 work
   *    FCS API integration and alignment

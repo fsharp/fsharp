@@ -1,6 +1,6 @@
 
 # the version under development, update after a release
-$version = '4.0.1.2'
+$version = '4.0.1.3'
 
 function isVersionTag($tag){
     $v = New-Object Version
