@@ -22,6 +22,7 @@ module internal FSharpEnvironment =
     let DotNetBuildString = "(Open Source Edition)"
 #endif
 
+    let FSharpBannerVersion = "4.1"
 
     let versionOf<'t> =
 #if FX_RESHAPED_REFLECTION
