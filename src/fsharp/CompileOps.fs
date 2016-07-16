@@ -2770,10 +2770,17 @@ type TcConfig private (data : TcConfigBuilder,validate:bool) =
             [tcConfig.MakePathAbsolute x]
         | None -> 
 #if ENABLE_MONO_SUPPORT
-            // When running on Mono we lead everyone to believe we're doing .NET 4.0 compilation 
-            // by default. Why? See https://github.com/fsharp/fsharp/issues/99
             if runningOnMono then 
-                [System.Runtime.InteropServices.RuntimeEnvironment.GetRuntimeDirectory()]
+                [ let runtimeRoot = System.Runtime.InteropServices.RuntimeEnvironment.GetRuntimeDirectory()
+                  let runtimeRootWithoutSlash = runtimeRoot.TrimEnd('/', '\\')
+                  let api = runtimeRootWithoutSlash + "-api"
+                  if Directory.Exists(api) then
+                     yield api
+                  let apiFacades = Path.Combine(api, "Facades")
+                  if Directory.Exists(apiFacades) then
+                     yield apiFacades
+                  yield runtimeRoot
+                ]
             else                                
 #endif
                 try 
