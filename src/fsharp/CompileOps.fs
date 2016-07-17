@@ -2176,11 +2176,7 @@ type TcConfigBuilder =
           resolutionAssemblyFoldersConditions = ""              
           platform = None
           prefer32Bit = false
-#if ENABLE_MONO_SUPPORT
-          useSimpleResolution = runningOnMono
-#else
           useSimpleResolution = false
-#endif
           target = ConsoleExe
           debuginfo = false
           testFlagEmitFeeFeeAs100001 = false

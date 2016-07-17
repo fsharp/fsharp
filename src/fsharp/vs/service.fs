@@ -2463,12 +2463,7 @@ type BackgroundCompiler(projectCacheSize, keepAssemblyContents, keepAllBackgroun
             let useFsiAuxLib = defaultArg useFsiAuxLib true
             // Do we use a "FSharp.Core, 4.3.0.0" reference by default?
             let otherFlags = defaultArg otherFlags [| |]
-            let useSimpleResolution = 
-#if ENABLE_MONO_SUPPORT
-                runningOnMono || otherFlags |> Array.exists (fun x -> x = "--simpleresolution")
-#else
-                true
-#endif
+            let useSimpleResolution = otherFlags |> Array.exists (fun x -> x = "--simpleresolution")
             let loadedTimeStamp = defaultArg loadedTimeStamp DateTime.MaxValue // Not 'now', we don't want to force reloading
             let applyCompilerOptions tcConfigB  = 
                 let collect _name = ()
