@@ -2779,24 +2779,28 @@ type TcConfig private (data : TcConfigBuilder,validate:bool) =
                      let facades = Path.Combine(api, "Facades")
                      if Directory.Exists(facades) then
                         yield facades
-                  else
-                     yield runtimeRoot
-                     let facades = Path.Combine(runtimeRoot, "Facades")
-                     if Directory.Exists(facades) then
-                        yield facades
+                  yield runtimeRoot // The defaut FSharp.Core is found in lib/mono/4.5
+                  let facades = Path.Combine(runtimeRoot, "Facades")
+                  if Directory.Exists(facades) then
+                     yield facades
                 ]
             else                                
 #endif
                 try 
+                  [ 
                     match tcConfig.resolutionEnvironment with
 #if FX_MSBUILDRESOLVER_RUNTIMELIKE
                     | MSBuildResolver.RuntimeLike ->
-                        [System.Runtime.InteropServices.RuntimeEnvironment.GetRuntimeDirectory()] 
+                        yield System.Runtime.InteropServices.RuntimeEnvironment.GetRuntimeDirectory() 
 #endif
                     | _ -> 
-                        let frameworkRoot = MSBuildResolver.DotNetFrameworkReferenceAssembliesRootDirectoryOnWindows
-                        let frameworkRootVersion = Path.Combine(frameworkRoot,tcConfig.targetFrameworkVersionMajorMinor)
-                        [frameworkRootVersion]
+                      let frameworkRoot = MSBuildResolver.DotNetFrameworkReferenceAssembliesRootDirectoryOnWindows
+                      let frameworkRootVersion = Path.Combine(frameworkRoot,tcConfig.targetFrameworkVersionMajorMinor)
+                      yield frameworkRootVersion
+                      let facades = Path.Combine(frameworkRootVersion, "Facades")
+                      if Directory.Exists(facades) then
+                         yield facades
+                  ]                    
                 with e -> 
                     errorRecovery e range0; [] 
 
