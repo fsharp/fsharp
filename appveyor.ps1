@@ -1,10 +1,10 @@
 
 # the version under development, update after a release
-$version = '4.0.1.4'
+$version = '4.0.1.7'
 
 function isVersionTag($tag){
     $v = New-Object Version
-    [Version]::TryParse($tag, [ref]$v)
+    [Version]::TryParse(($tag).Replace('-alpha','').Replace('-beta',''), [ref]$v)
 }
 
 # append the AppVeyor build number as the pre-release version
