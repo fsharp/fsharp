@@ -18,7 +18,7 @@ if not exist %_ngenexe% echo Note: Could not find ngen.exe.
 .\.nuget\NuGet.exe restore packages.config -PackagesDirectory packages -ConfigFile .nuget\nuget.config
 @if ERRORLEVEL 1 echo Error: Nuget restore failed  && goto :failure
 
-%_ngenexe% install packages\FSharp.Compiler.Tools.4.0.0.1\tools\fsc.exe
+%_ngenexe% install packages\FSharp.Compiler.Tools.4.0.1.3\tools\fsc.exe
 
 %_msbuildexe% src\fsharp-proto-build.proj
 @if ERRORLEVEL 1 echo Error: "%_msbuildexe% src\fsharp-proto-build.proj" failed  && goto :failure
