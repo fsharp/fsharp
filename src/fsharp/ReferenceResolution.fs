@@ -139,11 +139,13 @@ module internal MSBuildResolver =
     //[<Literal>]    
     //let private Net452 = "v4.5.2" // not available in Dev15 MSBuild version
 
+#if MSBUILD_AT_LEAST_14
     [<Literal>]    
     let private Net46 = "v4.6"
 
     [<Literal>]    
     let private Net461 = "v4.6.1"
+#endif
 
     /// Get the path to the .NET Framework implementation assemblies by using ToolLocationHelper.GetPathToDotNetFramework.
     /// This is only used to specify the "last resort" path for assembly resolution.
@@ -157,9 +159,11 @@ module internal MSBuildResolver =
             | Net40 ->  Some TargetDotNetFrameworkVersion.Version40
             | Net45 ->  Some TargetDotNetFrameworkVersion.Version45
             | Net451 -> Some TargetDotNetFrameworkVersion.Version451
+#if MSBUILD_AT_LEAST_14
             //| Net452 -> Some TargetDotNetFrameworkVersion.Version452 // not available in Dev15 MSBuild version
             | Net46 -> Some TargetDotNetFrameworkVersion.Version46
             | Net461 -> Some TargetDotNetFrameworkVersion.Version461
+#endif
             | _ -> assert false; None
         match v with
         | Some v -> 
@@ -175,11 +179,15 @@ module internal MSBuildResolver =
 
     /// Use MSBuild to determine the version of the highest installed framework.
     let HighestInstalledNetFrameworkVersionMajorMinor() =
+#if MSBUILD_AT_LEAST_14
         if box (ToolLocationHelper.GetPathToDotNetFramework(TargetDotNetFrameworkVersion.Version461)) <> null then 4, Net461
         elif box (ToolLocationHelper.GetPathToDotNetFramework(TargetDotNetFrameworkVersion.Version46)) <> null then 4, Net46
         // 4.5.2 enumeration is not available in Dev15 MSBuild version
         //elif box (ToolLocationHelper.GetPathToDotNetFramework(TargetDotNetFrameworkVersion.Version452)) <> null then 4, Net452 
         elif box (ToolLocationHelper.GetPathToDotNetFramework(TargetDotNetFrameworkVersion.Version451)) <> null then 4, Net451 
+#else
+        if box (ToolLocationHelper.GetPathToDotNetFramework(TargetDotNetFrameworkVersion.Version451)) <> null then 4, Net451 
+#endif
         elif box (ToolLocationHelper.GetPathToDotNetFramework(TargetDotNetFrameworkVersion.Version45)) <> null then 4, Net45 
         else 4, Net40 // version is 4.0 assumed since this code is running. 
 
