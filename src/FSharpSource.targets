@@ -6,7 +6,7 @@
     <Tailcalls>true</Tailcalls>
     <TargetFramework Condition="'$(TargetFramework)'==''">net40</TargetFramework>
     <FsLexYaccPath>$(FSharpSourcesRoot)\..\lib\bootstrap\4.0</FsLexYaccPath>
-    <LkgPath>$(FSharpSourcesRoot)\..\packages\FSharp.Compiler.Tools.4.0.0.1\tools</LkgPath>
+    <LkgPath>$(FSharpSourcesRoot)\..\packages\FSharp.Compiler.Tools.4.0.1.3\tools</LkgPath>
     <SolutionDir>$(FSharpSourcesRoot)\..\</SolutionDir>
     <FsLexUnicode>true</FsLexUnicode>
 	<MSBuildVersionSuffix>v12.0</MSBuildVersionSuffix>
