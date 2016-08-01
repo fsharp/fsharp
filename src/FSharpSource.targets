@@ -367,8 +367,6 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <DefineConstants>$(DefineConstants);PUT_TYPE_PROVIDERS_IN_FSCORE</DefineConstants>
     <DefineConstants>$(DefineConstants);QUERIES_IN_FSLIB</DefineConstants>
 
-    <!-- An explicit search path seems to be needed on Mono 3.4.0 otherwise the reference assemblies for the profile aren't found -->
-    <AssemblySearchPaths Condition="Exists('$(MSBuildExtensionsPath32)\..\xbuild-frameworks\.NETPortable\v4.0\mscorlib.dll')">$(MSBuildExtensionsPath32)\..\xbuild-frameworks\.NETPortable\v4.0</AssemblySearchPaths>
     <TargetFrameworkProfile>Profile47</TargetFrameworkProfile>
     <TargetFrameworkVersion Condition="'$(TargetFrameworkVersion)' == ''">v4.0</TargetFrameworkVersion>
   </PropertyGroup>
@@ -410,8 +408,6 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <DefineConstants>$(DefineConstants);QUERIES_IN_FSLIB</DefineConstants>
     <TargetProfile>netcore</TargetProfile>
     <TargetFrameworkProfile>Profile7</TargetFrameworkProfile>
-    <!-- An explicit search path seems to be needed on Mono 3.4.0 otherwise the reference assemblies for the profile aren't found -->
-    <AssemblySearchPaths Condition="Exists('$(MSBuildExtensionsPath32)\..\xbuild-frameworks\.NETPortable\v4.5\System.Runtime.dll')">$(MSBuildExtensionsPath32)\..\xbuild-frameworks\.NETPortable\v4.5</AssemblySearchPaths>
     <OtherFlags>$(OtherFlags) --targetprofile:netcore</OtherFlags>
     <TargetFrameworkVersion Condition="'$(TargetFrameworkVersion)' == ''">v4.5</TargetFrameworkVersion>    
   </PropertyGroup>
@@ -453,8 +449,6 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <TargetProfile>netcore</TargetProfile>
     <TargetFrameworkProfile>Profile78</TargetFrameworkProfile>
     <TargetFrameworkVersion Condition="'$(TargetFrameworkVersion)' == ''">v4.5</TargetFrameworkVersion>
-    <!-- An explicit search path seems to be needed on Mono 3.4.0 otherwise the reference assemblies for the profile aren't found -->
-    <AssemblySearchPaths Condition="Exists('$(MSBuildExtensionsPath32)\..\xbuild-frameworks\.NETPortable\v4.5\System.Runtime.dll')">$(MSBuildExtensionsPath32)\..\xbuild-frameworks\.NETPortable\v4.5</AssemblySearchPaths>
     <OtherFlags>$(OtherFlags) --targetprofile:netcore</OtherFlags>    
   </PropertyGroup>
 
@@ -495,8 +489,6 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <TargetProfile>netcore</TargetProfile>
     <TargetFrameworkProfile>Profile259</TargetFrameworkProfile>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
-    <!-- An explicit search path seems to be needed on Mono 3.4.0 otherwise the reference assemblies for the profile aren't found -->
-    <AssemblySearchPaths Condition="Exists('$(MSBuildExtensionsPath32)\..\xbuild-frameworks\.NETPortable\v4.5\System.Runtime.dll')">$(MSBuildExtensionsPath32)\..\xbuild-frameworks\.NETPortable\v4.5</AssemblySearchPaths>
     <OtherFlags>$(OtherFlags) --targetprofile:netcore</OtherFlags>    
   </PropertyGroup>
 
