@@ -75,7 +75,6 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
   </PropertyGroup>
 
 
-  <!-- For the proto build and exotic framework implementations, we don't use strong names. For non-exotic framework implementations, this gets adjusted below -->
   <PropertyGroup Condition="'$(StrongNames)' != 'true'">
     <DefineConstants>NO_STRONG_NAMES;$(DefineConstants)</DefineConstants>
   </PropertyGroup>
@@ -366,7 +365,7 @@ Some other NuGET monikers to support in the future, see http://docs.nuget.org/do
     <DefineConstants>$(DefineConstants);DONT_INCLUDE_DEPRECATED</DefineConstants>
     <DefineConstants>$(DefineConstants);PUT_TYPE_PROVIDERS_IN_FSCORE</DefineConstants>
     <DefineConstants>$(DefineConstants);QUERIES_IN_FSLIB</DefineConstants>
-
+    <DefineConstants>$(DefineConstants);FX_ASSEMBLYLOADBYSTRING</DefineConstants>
     <TargetFrameworkProfile>Profile47</TargetFrameworkProfile>
     <TargetFrameworkVersion Condition="'$(TargetFrameworkVersion)' == ''">v4.0</TargetFrameworkVersion>
   </PropertyGroup>

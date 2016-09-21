@@ -74,6 +74,13 @@
       <Name>FSharp.Core</Name>
     </ProjectReference>
     <Reference Include="nunit.framework"/>
+    <Reference Include="System.ValueTuple" Condition="'$(TargetFramework)' != 'portable47'">
+        <HintPath>..\..\..\packages\System.ValueTuple.4.0.0-rc3-24212-01\lib\netstandard1.1\System.ValueTuple.dll</HintPath>
+    </Reference>
+    <Reference Include="TupleSample" Condition="'$(TargetFramework)' != 'portable47'">
+        <Private>True</Private>
+        <HintPath>..\..\..\src\fsharp\FSharp.Core.Unittests\FSharp.Core\SampleTuples\TupleSample.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'coreclr'">
     <Reference Include="nunit.framework, Version=3.0.5797.27550, Culture=neutral, PublicKeyToken=2638cd05610744eb">
@@ -146,6 +153,7 @@
     <Compile Include="FSharp.Core\PrimTypes.fs" />
     <Compile Include="TypeForwarding.fs" />
     <!-- <Compile Include="SurfaceArea.4.0.fs" Condition="'$(TargetFramework)' == 'net40'"/> -->
+    <Compile Include="StructTuples.fs" Condition="'$(TargetFramework)' != 'portable47'" />
     <Compile Include="SurfaceArea.$(TargetFramework).fs" />
     <Compile Include="Program.fs" Condition="'$(TargetFramework)' == 'coreclr'" />
     <CustomCopyLocal Include="FSharp.Core.Unittests.dll.config">

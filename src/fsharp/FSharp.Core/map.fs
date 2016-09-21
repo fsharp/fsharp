@@ -7,9 +7,6 @@ namespace Microsoft.FSharp.Collections
     open System.Diagnostics
     open Microsoft.FSharp.Core
     open Microsoft.FSharp.Core.LanguagePrimitives.IntrinsicOperators
-    open Microsoft.FSharp.Core.Operators
-    open Microsoft.FSharp.Collections
-    open Microsoft.FSharp.Primitives.Basics
 
     [<CompilationRepresentation(CompilationRepresentationFlags.UseNullAsTrueValue)>]
     [<NoEquality; NoComparison>]
@@ -133,11 +130,11 @@ namespace Microsoft.FSharp.Collections
 
         let rec find (comparer: IComparer<'Value>) k m = 
             match m with 
-            | MapEmpty -> raise (System.Collections.Generic.KeyNotFoundException())
+            | MapEmpty -> raise (KeyNotFoundException())
             | MapOne(k2,v2) -> 
                 let c = comparer.Compare(k,k2) 
                 if c = 0 then v2
-                else raise (System.Collections.Generic.KeyNotFoundException())
+                else raise (KeyNotFoundException())
             | MapNode(k2,v2,l,r,_) -> 
                 let c = comparer.Compare(k,k2) 
                 if c < 0 then find comparer k l
@@ -381,8 +378,8 @@ namespace Microsoft.FSharp.Collections
           
         let mkIterator s = { stack = collapseLHS [s]; started = false }
 
-        let notStarted() = raise (new System.InvalidOperationException(SR.GetString(SR.enumerationNotStarted)))
-        let alreadyFinished() = raise (new System.InvalidOperationException(SR.GetString(SR.enumerationAlreadyFinished)))
+        let notStarted() = raise (InvalidOperationException(SR.GetString(SR.enumerationNotStarted)))
+        let alreadyFinished() = raise (InvalidOperationException(SR.GetString(SR.enumerationAlreadyFinished)))
 
         let current i =
             if i.started then
@@ -396,24 +393,24 @@ namespace Microsoft.FSharp.Collections
         let rec moveNext i =
           if i.started then
             match i.stack with
-              | MapOne _ :: rest -> i.stack <- collapseLHS rest;
+              | MapOne _ :: rest -> i.stack <- collapseLHS rest
                                     not i.stack.IsEmpty
               | [] -> false
               | _ -> failwith "Please report error: Map iterator, unexpected stack for moveNext"
           else
-              i.started <- true;  (* The first call to MoveNext "starts" the enumeration. *)
+              i.started <- true  (* The first call to MoveNext "starts" the enumeration. *)
               not i.stack.IsEmpty
 
         let mkIEnumerator s = 
           let i = ref (mkIterator s) 
           { new IEnumerator<_> with 
-                member self.Current = current !i
+                member __.Current = current !i
             interface System.Collections.IEnumerator with
-                member self.Current = box (current !i)
-                member self.MoveNext() = moveNext !i
-                member self.Reset() = i :=  mkIterator s
+                member __.Current = box (current !i)
+                member __.MoveNext() = moveNext !i
+                member __.Reset() = i :=  mkIterator s
             interface System.IDisposable with 
-                member self.Dispose() = ()}
+                member __.Dispose() = ()}
 
 
 
@@ -579,17 +576,17 @@ namespace Microsoft.FSharp.Collections
                 let rec loop () = 
                     let m1 = e1.MoveNext() 
                     let m2 = e2.MoveNext()
-                    (m1 = m2) && (not m1 || ((e1.Current.Key = e2.Current.Key) && (Unchecked.equals e1.Current.Value e2.Current.Value) && loop()))
+                    (m1 = m2) && (not m1 || let e1c, e2c = e1.Current, e2.Current in ((e1c.Key = e2c.Key) && (Unchecked.equals e1c.Value e2c.Value) && loop()))
                 loop()
             | _ -> false
 
         override this.GetHashCode() = this.ComputeHashCode()
 
         interface IEnumerable<KeyValuePair<'Key, 'Value>> with
-            member m.GetEnumerator() = MapTree.mkIEnumerator tree
+            member __.GetEnumerator() = MapTree.mkIEnumerator tree
 
         interface System.Collections.IEnumerable with
-            member m.GetEnumerator() = (MapTree.mkIEnumerator tree :> System.Collections.IEnumerator)
+            member __.GetEnumerator() = (MapTree.mkIEnumerator tree :> System.Collections.IEnumerator)
 
         interface IDictionary<'Key, 'Value> with 
             member m.Item 
@@ -608,11 +605,11 @@ namespace Microsoft.FSharp.Collections
             member s.Remove(k : 'Key) = ignore(k); (raise (NotSupportedException(SR.GetString(SR.mapCannotBeMutated))) : bool)
 
         interface ICollection<KeyValuePair<'Key, 'Value>> with 
-            member s.Add(x) = ignore(x); raise (NotSupportedException(SR.GetString(SR.mapCannotBeMutated)));
-            member s.Clear() = raise (NotSupportedException(SR.GetString(SR.mapCannotBeMutated)));
-            member s.Remove(x) = ignore(x); raise (NotSupportedException(SR.GetString(SR.mapCannotBeMutated)));
+            member __.Add(x) = ignore(x); raise (NotSupportedException(SR.GetString(SR.mapCannotBeMutated)));
+            member __.Clear() = raise (NotSupportedException(SR.GetString(SR.mapCannotBeMutated)));
+            member __.Remove(x) = ignore(x); raise (NotSupportedException(SR.GetString(SR.mapCannotBeMutated)));
             member s.Contains(x) = s.ContainsKey(x.Key) && Unchecked.equals s.[x.Key] x.Value
-            member s.CopyTo(arr,i) = MapTree.copyToArray tree arr i
+            member __.CopyTo(arr,i) = MapTree.copyToArray tree arr i
             member s.IsReadOnly = true
             member s.Count = s.Count
 
@@ -643,7 +640,7 @@ namespace Microsoft.FSharp.Collections
         [<Sealed>]
         MapDebugView<'Key,'Value when 'Key : comparison>(v: Map<'Key,'Value>)  =  
 
-         [<System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.RootHidden)>]
+         [<DebuggerBrowsable(DebuggerBrowsableState.RootHidden)>]
          member x.Items = v |> Seq.truncate 10000 |> Seq.toArray
 #endif
         
@@ -654,10 +651,8 @@ namespace Microsoft.FSharp.Collections
     open System.Diagnostics
     open System.Collections.Generic
     open Microsoft.FSharp.Core
-    open Microsoft.FSharp.Core.LanguagePrimitives.IntrinsicOperators
     open Microsoft.FSharp.Core.Operators
     open Microsoft.FSharp.Collections
-    open Microsoft.FSharp.Primitives.Basics
 
     [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
     [<RequireQualifiedAccess>]
@@ -688,7 +683,7 @@ namespace Microsoft.FSharp.Collections
         let tryPick f (m:Map<_,_>) = m.TryPick(f)
 
         [<CompiledName("Pick")>]
-        let pick f (m:Map<_,_>) = match tryPick f m with None -> raise (System.Collections.Generic.KeyNotFoundException()) | Some res -> res
+        let pick f (m:Map<_,_>) = match tryPick f m with None -> raise (KeyNotFoundException()) | Some res -> res
 
         [<CompiledName("Exists")>]
         let exists f (m:Map<_,_>) = m.Exists(f)

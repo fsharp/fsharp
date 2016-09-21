@@ -239,7 +239,10 @@ Copyright (C) Microsoft Corporation. Apache 2.0 License.
      <!-- These parameters are supported by F# 3.0 but not yet supported by the F# open source edition:
               Prefer32Bit="$(Actual32Bit)" 
               SubsystemVersion="$(SubsystemVersion)"
-              HighEntropyVA="$(HighEntropyVA)" -->
+              HighEntropyVA="$(HighEntropyVA)"
+              TargetProfile="$(TargetProfile)"
+              DotnetFscCompilerPath="$(DotnetFscCompilerPath)"
+              -->
 
         <ItemGroup>
             <_CoreCompileResourceInputs Remove="@(_CoreCompileResourceInputs)" />
