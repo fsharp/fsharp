@@ -21,9 +21,6 @@
     <TargetFrameworkVersion Condition="'$(TargetFramework)'=='net40'">v4.5</TargetFrameworkVersion>
     <BaseAddress>0x06800000</BaseAddress>
     <OtherFlags>$(OtherFlags) --warnon:1182</OtherFlags>
-    <OtherFlags>$(OtherFlags) --staticlink:System.Collections.Immutable</OtherFlags>
-    <OtherFlags>$(OtherFlags) --staticlink:Microsoft.DiaSymReader</OtherFlags>
-    <OtherFlags>$(OtherFlags) --staticlink:System.Reflection.Metadata</OtherFlags>
     <OtherFlags Condition=" '$(TargetFramework)'=='coreclr'">$(OtherFlags) --targetprofile:netcore</OtherFlags>
   </PropertyGroup>
   <!-- MonoDevelop likes these here to recognise the configurations -->
@@ -591,18 +588,22 @@
     <Reference Include="Microsoft.Build.Tasks.$(MSBuildVersionSuffix), Version=$(MSBuildVersionFull), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
 		<Private>True</Private>
 	</Reference>
-    <Reference Include="ISymWrapper, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+  <Reference Include="ISymWrapper, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
 	<Reference Include="Microsoft.DiaSymReader.PortablePdb">
 		<HintPath>..\..\..\packages\Microsoft.DiaSymReader.PortablePdb.1.1.0\lib\portable-net45+win8\Microsoft.DiaSymReader.PortablePdb.dll</HintPath>
+		<Private>True</Private>
 	</Reference>
 	<Reference Include="Microsoft.DiaSymReader">
 		<HintPath>..\..\..\packages\Microsoft.DiaSymReader.1.0.8\lib\portable-net45+win8\Microsoft.DiaSymReader.dll</HintPath>
+		<Private>True</Private>
 	</Reference>
 	<Reference Include="System.Reflection.Metadata">
 		<HintPath>..\..\..\packages\System.Reflection.Metadata.1.4.1-beta-24227-04\lib\portable-net45+win8\System.Reflection.Metadata.dll</HintPath>
+		<Private>True</Private>
 	</Reference>
 	<Reference Include="System.Collections.Immutable">
 		<HintPath>..\..\..\packages\System.Collections.Immutable.1.2.0\lib\portable-net45+win8+wp8+wpa81\System.Collections.Immutable.dll</HintPath>
+		<Private>True</Private>
 	</Reference>
   </ItemGroup>
   <ItemGroup>
@@ -615,15 +616,4 @@
   <Import Project="$(FSharpSourcesRoot)\FSharpSource.targets" />
   <Import Project="$(FsLexYaccpath)\FsLexYacc.targets" />
   
-  <Import Project="$(FSharpSourcesRoot)\..\lkg\FSharp-$(LkgVersion)\bin\FSharp.PowerPack.targets" />
-  <Target Name="GatherBinariesToBeSigned" AfterTargets="Localize">
-    <ItemGroup>
-      <BinariesToBeSigned Include="$(OutDir)$(AssemblyName).dll" />
-      <BinariesToBeSigned Include="$(OutDir)localize\**\$(AssemblyName).resources.dll" />
-      <FilesToSign Include="@(BinariesToBeSigned)">
-         <Authenticode>Microsoft</Authenticode>
-         <StrongName>StrongName</StrongName>
-      </FilesToSign>
-    </ItemGroup>
-  </Target>
 </Project>
