@@ -8,5 +8,5 @@ include @abs_top_builddir@/config.make
 
 include $(topdir)/src/fsharp/targets.make
 
-install: install-lib install-lib-net40
+install: install-sdk-lib 
 
