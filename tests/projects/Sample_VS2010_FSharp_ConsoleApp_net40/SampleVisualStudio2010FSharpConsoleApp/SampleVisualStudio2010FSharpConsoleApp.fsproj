@@ -48,8 +48,14 @@
   <ItemGroup>
     <Compile Include="Program.fs" />
   </ItemGroup>
+<!--
+These lines in VS2010 projects need to be adjusted to compile with F# 4.1 on Mono/Linux/Mac, because Microsoft.Build.Tasks.v4.0.dll is no longer in MSBuildBinPath (?)
+
   <Import Project="$(MSBuildExtensionsPath32)\FSharp\1.0\Microsoft.FSharp.Targets" Condition="!Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
   <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft F#\v4.0\Microsoft.FSharp.Targets" Condition=" Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
+-->
+  <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft F#\v4.0\Microsoft.FSharp.Targets" />
+
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
 	     Other similar extension points exist, see Microsoft.Common.targets.
 	<Target Name="BeforeBuild">

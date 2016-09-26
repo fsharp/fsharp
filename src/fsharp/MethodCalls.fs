@@ -145,7 +145,7 @@ let AdjustCalledArgType (infoReader:InfoReader) isConstraint (calledArg: CalledA
         let calledArgTy = 
             let adjustDelegateTy calledTy =
                 let (SigOfFunctionForDelegate(_,delArgTys,_,fty)) = GetSigOfFunctionForDelegate infoReader calledTy m  AccessibleFromSomeFSharpCode
-                let delArgTys = (if isNil delArgTys then [g.unit_ty] else delArgTys)
+                let delArgTys = if List.isEmpty delArgTys then [g.unit_ty] else delArgTys
                 if (fst (stripFunTy g callerArgTy)).Length = delArgTys.Length
                 then fty 
                 else calledArgTy 
@@ -388,11 +388,11 @@ type CalledMeth<'T>
 
     member x.NumArgSets             = x.ArgSets.Length
 
-    member x.HasOptArgs             = nonNil x.UnnamedCalledOptArgs
-    member x.HasOutArgs             = nonNil x.UnnamedCalledOutArgs
+    member x.HasOptArgs             = not (List.isEmpty x.UnnamedCalledOptArgs)
+    member x.HasOutArgs             = not (List.isEmpty x.UnnamedCalledOutArgs)
     member x.UsesParamArrayConversion = x.ArgSets |> List.exists (fun argSet -> argSet.ParamArrayCalledArgOpt.IsSome)
     member x.ParamArrayCalledArgOpt = x.ArgSets |> List.tryPick (fun argSet -> argSet.ParamArrayCalledArgOpt)
-    member x.ParamArrayCallerArgs = x.ArgSets |> List.tryPick (fun argSet -> if isSome argSet.ParamArrayCalledArgOpt then Some argSet.ParamArrayCallerArgs else None )
+    member x.ParamArrayCallerArgs = x.ArgSets |> List.tryPick (fun argSet -> if Option.isSome argSet.ParamArrayCalledArgOpt then Some argSet.ParamArrayCallerArgs else None )
     member x.ParamArrayElementType = 
         assert (x.UsesParamArrayConversion)
         x.ParamArrayCalledArgOpt.Value.CalledArgumentType |> destArrayTy x.amap.g 
@@ -401,7 +401,7 @@ type CalledMeth<'T>
     member x.NumCalledTyArgs = x.CalledTyArgs.Length
     member x.NumCallerTyArgs = x.CallerTyArgs.Length 
 
-    member x.AssignsAllNamedArgs = isNil x.UnassignedNamedArgs
+    member x.AssignsAllNamedArgs = List.isEmpty x.UnassignedNamedArgs
 
     member x.HasCorrectArity =
       (x.NumCalledTyArgs = x.NumCallerTyArgs)  &&
@@ -533,11 +533,11 @@ let TakeObjAddrForMethodCall g amap (minfo:MethInfo) isMutable m objArgs f =
         match objArgs with
         | [objArgExpr] -> 
             let objArgTy = tyOfExpr g objArgExpr
-            let wrap,objArgExpr' = mkExprAddrOfExpr g mustTakeAddress (isSome ccallInfo) isMutable objArgExpr None m
+            let wrap,objArgExpr' = mkExprAddrOfExpr g mustTakeAddress (Option.isSome ccallInfo) isMutable objArgExpr None m
             
             // Extension members and calls to class constraints may need a coercion for their object argument
             let objArgExpr' = 
-              if isNone ccallInfo && // minfo.IsExtensionMember && minfo.IsStruct && 
+              if Option.isNone ccallInfo && // minfo.IsExtensionMember && minfo.IsStruct && 
                  not (TypeDefinitelySubsumesTypeNoCoercion 0 g amap m minfo.EnclosingType objArgTy) then 
                   mkCoerceExpr(objArgExpr',minfo.EnclosingType,m,objArgTy)
               else
@@ -605,7 +605,7 @@ let BuildFSharpMethodApp g m (vref: ValRef) vexp vexprty (args: Exprs) =
                 if args.Length < arity then error(InternalError("internal error in getting arguments, n = "+string arity+", #args = "+string args.Length,m));
                 let tupargs,argst = List.chop arity args
                 let tuptys = tupargs |> List.map (tyOfExpr g) 
-                (mkTupled g m tupargs tuptys),
+                (mkRefTupled g m tupargs tuptys),
                 (argst, rangeOfFunTy g fty) )
     if not leftover.IsEmpty then error(InternalError("Unexpected "+string(leftover.Length)+" remaining arguments in method application",m))
     mkApps g ((vexp,vexprty),[],args3,m), 
@@ -733,7 +733,7 @@ let BuildMethodCall tcVal g amap isMutable m isProp minfo valUseFlags minst objA
                 let ilMethRef = Import.ImportProvidedMethodBaseAsILMethodRef amap m providedMeth
                 let isNewObj = isCtor && (match valUseFlags with NormalValUse -> true | _ -> false)
                 let actualTypeInst = 
-                    if isTupleTy g enclTy then argsOfAppTy g (mkCompiledTupleTy g (destTupleTy g enclTy))  // provided expressions can include method calls that get properties of tuple types
+                    if isRefTupleTy g enclTy then argsOfAppTy g (mkCompiledTupleTy g false (destRefTupleTy g enclTy))  // provided expressions can include method calls that get properties of tuple types
                     elif isFunTy g enclTy then [ domainOfFunTy g enclTy; rangeOfFunTy g enclTy ]  // provided expressions can call Invoke
                     else minfo.DeclaringTypeInst
                 let actualMethInst = minst
@@ -770,15 +770,16 @@ let BuildMethodCall tcVal g amap isMutable m isProp minfo valUseFlags minst objA
 let BuildNewDelegateExpr (eventInfoOpt:EventInfo option, g, amap, delegateTy, invokeMethInfo:MethInfo, delArgTys, f, fty, m) =
     let slotsig = invokeMethInfo.GetSlotSig(amap, m)
     let delArgVals,expr = 
-        let topValInfo = ValReprInfo([],List.replicate (List.length delArgTys) ValReprInfo.unnamedTopArg, ValReprInfo.unnamedRetVal)
+        let topValInfo = ValReprInfo([],List.replicate (max 1 (List.length delArgTys)) ValReprInfo.unnamedTopArg, ValReprInfo.unnamedRetVal)
 
         // Try to pull apart an explicit lambda and use it directly 
         // Don't do this in the case where we're adjusting the arguments of a function used to build a .NET-compatible event handler 
         let lambdaContents = 
-            if isSome eventInfoOpt then 
+            if Option.isSome eventInfoOpt then 
                 None 
             else 
                 tryDestTopLambda g amap topValInfo (f, fty)        
+
         match lambdaContents with 
         | None -> 
         
@@ -793,17 +794,15 @@ let BuildNewDelegateExpr (eventInfoOpt:EventInfo option, g, amap, delegateTy, in
                         match delArgVals with 
                         | [] -> error(nonStandardEventError einfo.EventName m)
                         | h :: _ when not (isObjTy g h.Type) -> error(nonStandardEventError einfo.EventName m)
-                        | h :: t -> [exprForVal m h; mkTupledVars g m t] 
+                        | h :: t -> [exprForVal m h; mkRefTupledVars g m t] 
                     | None -> 
-                        if isNil delArgTys then [mkUnit g m] else List.map (exprForVal m) delArgVals
+                        if List.isEmpty delArgTys then [mkUnit g m] else List.map (exprForVal m) delArgVals
                 mkApps g ((f,fty),[],args,m)
             delArgVals,expr
             
         | Some _ -> 
-           if isNil delArgTys then [], mkApps g ((f,fty),[],[mkUnit g m],m) 
-           else
-               let _,_,_,vsl,body,_ = IteratedAdjustArityOfLambda g amap topValInfo f
-               List.concat vsl, body
+            let _,_,_,vsl,body,_ = IteratedAdjustArityOfLambda g amap topValInfo f
+            List.concat vsl, body
             
     let meth = TObjExprMethod(slotsig, [], [], [delArgVals], expr, m)
     mkObjExpr(delegateTy,None,BuildObjCtorCall g m,[meth],[],m)
@@ -964,7 +963,7 @@ module ProvidedMethodCalls =
             | Some info -> 
                 let elems = info.PApplyArray(id, "GetInvokerExpresson",m)
                 let elemsT = elems |> Array.map exprToExpr |> Array.toList
-                let exprT = mkTupledNoTypes g m elemsT
+                let exprT = mkRefTupledNoTypes g m elemsT
                 None, (exprT, tyOfExpr g exprT)
             | None -> 
             match ea.PApplyOption((function ProvidedNewArrayExpr x -> Some x | _ -> None), m) with
@@ -984,8 +983,8 @@ module ProvidedMethodCalls =
                 let typeOfExpr = 
                     let t = tyOfExpr g inpT
                     stripTyEqnsWrtErasure EraseMeasures g t
-                let tysT = tryDestTupleTy g typeOfExpr
-                let exprT = mkTupleFieldGet (inpT, tysT, n.PUntaint(id,m), m)
+                let tupInfo, tysT = tryDestAnyTupleTy g typeOfExpr
+                let exprT = mkTupleFieldGet g (tupInfo, inpT, tysT, n.PUntaint(id,m), m)
                 None, (exprT, tyOfExpr g exprT)
             | None -> 
             match ea.PApplyOption((function ProvidedLambdaExpr x -> Some x | _ -> None), m) with
