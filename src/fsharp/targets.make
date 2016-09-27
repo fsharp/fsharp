@@ -185,6 +185,7 @@ install-sdk-lib:
 	    $(INSTALL_LIB) $(outdir)$(ASSEMBLY) $(DESTDIR)$(gacdir)/fsharp; \
 	    $(INSTALL_LIB) $(outdir)$(NAME).xml $(DESTDIR)$(gacdir)/fsharp; \
 	else \
+	  if test x-$(TargetFramework) = x-net40; then \
 	    if test -e $(outdir)$(NAME).dll; then \
 			echo "Installing $(outdir)$(NAME).dll to $(DESTDIR)$(gacdir)/fsharp/"; \
 			mkdir -p $(DESTDIR)$(gacdir)/fsharp/; \
@@ -205,6 +206,7 @@ install-sdk-lib:
 			mkdir -p $(DESTDIR)$(gacdir)/fsharp/; \
 			$(INSTALL_LIB) $(outdir)$(NAME).optdata $(DESTDIR)$(gacdir)/fsharp/; \
 	    fi; \
+	  fi; \
 	fi
 
 # The binaries fsc.exe and fsi.exe only get installed for Mono 4.5 profile
