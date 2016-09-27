@@ -110,25 +110,6 @@ install-gac-lib:
 			ln -fs ../../../../../../gac/$(NAME)/$(VERSION)__$(TOKEN)/$(NAME).dll $(DESTDIR)$(gacdir)/Reference\ Assemblies/Microsoft/FSharp/3.0/Runtime/.NETPortable/$(NAME).dll; \
 	fi
 
-# Also place some .NET 4.5 libraries into .NET 4.0. 
-install-gac-lib-net40: 
-	@if test '$(TargetFramework)' = 'net40'; then \
-	  if test -e $(DESTDIR)$(gacdir)/4.0/; then \
-		ln -fs ../4.5/$(ASSEMBLY) $(DESTDIR)$(gacdir)/4.0/$(ASSEMBLY); \
-		if test -e $(DESTDIR)$(gacdir)/4.5/$(ASSEMBLY).config; then \
-		    ln -fs ../4.5/$(ASSEMBLY).config $(DESTDIR)$(gacdir)/4.0/$(ASSEMBLY).config; \
-		fi; \
-		if test -e $(DESTDIR)$(gacdir)/4.5/$(NAME).sigdata; then \
-		    ln -fs ../4.5/$(NAME).sigdata $(DESTDIR)$(gacdir)/4.0/$(NAME).sigdata; \
-		fi; \
-		if test -e $(DESTDIR)$(gacdir)/4.5/$(NAME).xml; then \
-		    ln -fs ../4.5/$(NAME).xml $(DESTDIR)$(gacdir)/4.0/$(NAME).xml; \
-		fi; \
-		if test -e $(DESTDIR)$(gacdir)/4.5/$(NAME).optdata; then \
-		    ln -fs ../4.5/$(NAME).optdata $(DESTDIR)$(gacdir)/4.0/$(NAME).optdata; \
-		fi; \
-	  fi \
-	fi
 
 install-sdk-lib:
 	@echo "Installing $(ASSEMBLY)"
@@ -205,14 +186,24 @@ install-sdk-lib:
 	    $(INSTALL_LIB) $(outdir)$(NAME).xml $(DESTDIR)$(gacdir)/fsharp; \
 	else \
 	    if test -e $(outdir)$(NAME).dll; then \
-				echo "Installing $(outdir)$(NAME).dll to $(DESTDIR)$(gacdir)/fsharp/"; \
-				mkdir -p $(DESTDIR)$(gacdir)/fsharp/; \
-				$(INSTALL_LIB) $(outdir)$(NAME).dll $(DESTDIR)$(gacdir)/fsharp/; \
+			echo "Installing $(outdir)$(NAME).dll to $(DESTDIR)$(gacdir)/fsharp/"; \
+			mkdir -p $(DESTDIR)$(gacdir)/fsharp/; \
+			$(INSTALL_LIB) $(outdir)$(NAME).dll $(DESTDIR)$(gacdir)/fsharp/; \
 		fi; \
 	    if test -e $(outdir)$(NAME).xml; then \
 			echo "Installing $(outdir)$(NAME).xml into $(DESTDIR)$(gacdir)/fsharp/"; \
 			mkdir -p $(DESTDIR)$(gacdir)/fsharp/; \
 			$(INSTALL_LIB) $(outdir)$(NAME).xml $(DESTDIR)$(gacdir)/fsharp/; \
+	    fi; \
+	    if test -e $(outdir)$(NAME).sigdata; then \
+			echo "Installing $(outdir)$(NAME).sigdata into $(DESTDIR)$(gacdir)/fsharp/"; \
+			mkdir -p $(DESTDIR)$(gacdir)/fsharp/; \
+			$(INSTALL_LIB) $(outdir)$(NAME).sigdata $(DESTDIR)$(gacdir)/fsharp/; \
+	    fi; \
+	    if test -e $(outdir)$(NAME).optdata; then \
+			echo "Installing $(outdir)$(NAME).optdata into $(DESTDIR)$(gacdir)/fsharp/"; \
+			mkdir -p $(DESTDIR)$(gacdir)/fsharp/; \
+			$(INSTALL_LIB) $(outdir)$(NAME).optdata $(DESTDIR)$(gacdir)/fsharp/; \
 	    fi; \
 	fi
 
