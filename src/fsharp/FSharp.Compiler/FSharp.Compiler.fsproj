@@ -494,6 +494,9 @@
     <Compile Include="..\fsc.fs">
       <Link>Driver\fsc.fs</Link>
     </Compile>
+    <Compile Include="..\MSBuildReferenceResolver.fs">
+      <Link>MSBuildReferenceResolver.fs</Link>
+    </Compile>
     <!--
     <Compile Include="..\vs\Reactor.fsi">
       <Link>Service\Reactor.fsi</Link>
@@ -551,9 +554,6 @@
     </Compile>
     <Compile Include="..\vs\IncrementalBuild.fs">
       <Link>Driver\IncrementalBuild.fs</Link>
-    <Compile Include="..\MSBuildReferenceResolver.fs">
-      <Link>MSBuildReferenceResolver.fs</Link>
-    </Compile>
 -->
 	<Compile Include="InternalsVisibleTo.fs" Condition="'$(TargetFramework)' != 'coreclr'">
       <Link>InternalsVisibleTo.fs</Link>
