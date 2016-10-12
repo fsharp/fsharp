@@ -247,6 +247,8 @@ module internal MSBuildReferenceResolver =
         // Filter for null and zero length
         let references = references |> Array.filter(fst >> String.IsNullOrEmpty >> not) 
 
+        let rawFileNamePath = if allowRawFileName then ["{RawFileName}"] else []
+
         let searchPaths = 
             match resolutionEnvironment with
             | DesignTimeLike
