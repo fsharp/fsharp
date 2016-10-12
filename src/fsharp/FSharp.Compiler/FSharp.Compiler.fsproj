@@ -164,11 +164,8 @@
     <Compile Include="..\ErrorResolutionHints.fs">
       <Link>ErrorLogging\ErrorResolutionHints.fs</Link>
     </Compile>
-    <Compile Include="..\ReferenceResolution.fsi">
-      <Link>ReferenceResolution\ReferenceResolution.fsi</Link>
-    </Compile>
-    <Compile Include="..\ReferenceResolution.fs">
-      <Link>ReferenceResolution\ReferenceResolution.fs</Link>
+    <Compile Include="..\ReferenceResolver.fs">
+      <Link>ReferenceResolution\ReferenceResolver.fs</Link>
     </Compile>
     <FsLex Include="..\..\absil\illex.fsl">
       <OtherFlags>--lexlib Internal.Utilities.Text.Lexing</OtherFlags>
@@ -497,6 +494,9 @@
     <Compile Include="..\fsc.fs">
       <Link>Driver\fsc.fs</Link>
     </Compile>
+    <Compile Include="..\MSBuildReferenceResolver.fs">
+      <Link>MSBuildReferenceResolver.fs</Link>
+    </Compile>
     <!--
     <Compile Include="..\vs\Reactor.fsi">
       <Link>Service\Reactor.fsi</Link>
@@ -554,7 +554,6 @@
     </Compile>
     <Compile Include="..\vs\IncrementalBuild.fs">
       <Link>Driver\IncrementalBuild.fs</Link>
-    </Compile>
 -->
 	<Compile Include="InternalsVisibleTo.fs" Condition="'$(TargetFramework)' != 'coreclr'">
       <Link>InternalsVisibleTo.fs</Link>

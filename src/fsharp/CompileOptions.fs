@@ -407,7 +407,6 @@ let SetOptimizeOff(tcConfigB : TcConfigBuilder) =
     tcConfigB.optSettings <- { tcConfigB.optSettings with localOptUser = Some false }
     tcConfigB.optSettings <- { tcConfigB.optSettings with crossModuleOptUser = Some false }
     tcConfigB.optSettings <- { tcConfigB.optSettings with lambdaInlineThreshold = 0 }
-    tcConfigB.ignoreSymbolStoreSequencePoints <- false;
     tcConfigB.doDetuple <- false; 
     tcConfigB.doTLR <- false;
     tcConfigB.doFinalSimplify <- false;
@@ -417,8 +416,6 @@ let SetOptimizeOn(tcConfigB : TcConfigBuilder) =
     tcConfigB.optSettings <- { tcConfigB.optSettings with localOptUser = Some true }
     tcConfigB.optSettings <- { tcConfigB.optSettings with crossModuleOptUser = Some true }
     tcConfigB.optSettings <- { tcConfigB.optSettings with lambdaInlineThreshold = 6 }
-
-    tcConfigB.ignoreSymbolStoreSequencePoints <- true;
     tcConfigB.doDetuple <- true;  
     tcConfigB.doTLR <- true;
     tcConfigB.doFinalSimplify <- true;
@@ -474,9 +471,9 @@ let SetDebugSwitch (tcConfigB : TcConfigBuilder) (dtype : string option) (s : Op
     match dtype with
     | Some(s) ->
        match s with 
-       | "portable" ->  tcConfigB.portablePDB <- true ; tcConfigB.embeddedPDB <- false; tcConfigB.jitTracking <- true
+       | "portable" ->  tcConfigB.portablePDB <- true ; tcConfigB.embeddedPDB <- false; tcConfigB.jitTracking <- true; tcConfigB.ignoreSymbolStoreSequencePoints <- true
        | "pdbonly" ->   tcConfigB.portablePDB <- false; tcConfigB.embeddedPDB <- false; tcConfigB.jitTracking <- false
-       | "embedded" ->  tcConfigB.portablePDB <- true;  tcConfigB.embeddedPDB <- true;  tcConfigB.jitTracking <- true
+       | "embedded" ->  tcConfigB.portablePDB <- true;  tcConfigB.embeddedPDB <- true;  tcConfigB.jitTracking <- true; tcConfigB.ignoreSymbolStoreSequencePoints <- true
        | "full" ->      tcConfigB.portablePDB <- false; tcConfigB.embeddedPDB <- false; tcConfigB.jitTracking <- true
        | _ -> error(Error(FSComp.SR.optsUnrecognizedDebugType(s), rangeCmdArgs))
     | None ->           tcConfigB.portablePDB <- false; tcConfigB.embeddedPDB <- false; tcConfigB.jitTracking <- s = OptionSwitch.On;
@@ -859,9 +856,9 @@ let internalFlags (tcConfigB:TcConfigBuilder) =
     CompilerOption("implicitresolution", tagNone, OptionUnit (fun _ -> tcConfigB.implicitlyResolveAssemblies <- true), Some(InternalCommandLineOption("--implicitresolution", rangeCmdArgs)), None)
 
     CompilerOption("resolutions", tagNone, OptionUnit (fun () -> tcConfigB.showReferenceResolutions <- true), Some(InternalCommandLineOption("", rangeCmdArgs)), None) // "Display assembly reference resolution information") 
-    CompilerOption("resolutionframeworkregistrybase", tagString, OptionString (fun s -> tcConfigB.resolutionFrameworkRegistryBase<-s), Some(InternalCommandLineOption("", rangeCmdArgs)), None) // "The base registry key to use for assembly resolution. This part in brackets here: HKEY_LOCAL_MACHINE\[SOFTWARE\Microsoft\.NETFramework]\v2.0.50727\AssemblyFoldersEx")
-    CompilerOption("resolutionassemblyfoldersuffix", tagString, OptionString (fun s -> tcConfigB.resolutionAssemblyFoldersSuffix<-s), Some(InternalCommandLineOption("resolutionassemblyfoldersuffix", rangeCmdArgs)), None) // "The base registry key to use for assembly resolution. This part in brackets here: HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\.NETFramework\v2.0.50727\[AssemblyFoldersEx]")
-    CompilerOption("resolutionassemblyfoldersconditions", tagString, OptionString (fun s -> tcConfigB.resolutionAssemblyFoldersConditions <- ","+s), Some(InternalCommandLineOption("resolutionassemblyfoldersconditions", rangeCmdArgs)), None) // "Additional reference resolution conditions. For example \"OSVersion=5.1.2600.0,PlatformID=id")
+    CompilerOption("resolutionframeworkregistrybase", tagString, OptionString (fun _ -> ()), Some(InternalCommandLineOption("", rangeCmdArgs)), None) // "The base registry key to use for assembly resolution. This part in brackets here: HKEY_LOCAL_MACHINE\[SOFTWARE\Microsoft\.NETFramework]\v2.0.50727\AssemblyFoldersEx")
+    CompilerOption("resolutionassemblyfoldersuffix", tagString, OptionString (fun _ -> ()), Some(InternalCommandLineOption("resolutionassemblyfoldersuffix", rangeCmdArgs)), None) // "The base registry key to use for assembly resolution. This part in brackets here: HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\.NETFramework\v2.0.50727\[AssemblyFoldersEx]")
+    CompilerOption("resolutionassemblyfoldersconditions", tagString, OptionString (fun _ -> ()), Some(InternalCommandLineOption("resolutionassemblyfoldersconditions", rangeCmdArgs)), None) // "Additional reference resolution conditions. For example \"OSVersion=5.1.2600.0,PlatformID=id")
     CompilerOption("msbuildresolution", tagNone, OptionUnit (fun () -> tcConfigB.useSimpleResolution<-false), Some(InternalCommandLineOption("msbuildresolution", rangeCmdArgs)), None) // "Resolve assembly references using MSBuild resolution rules rather than directory based (Default=true except when running fsc.exe under mono)")
     CompilerOption("alwayscallvirt",tagNone,OptionSwitch(callVirtSwitch tcConfigB),Some(InternalCommandLineOption("alwayscallvirt",rangeCmdArgs)), None)
     CompilerOption("nodebugdata",tagNone, OptionUnit (fun () -> tcConfigB.noDebugData<-true),Some(InternalCommandLineOption("--nodebugdata",rangeCmdArgs)), None)
