@@ -1,3 +1,9 @@
+4.0.1.15
+  * Fix null condition in Fsc task
+
+4.0.1.13
+  * Integrate visualfsharp master to 2002675/216a38b
+
 4.0.1.3
   * Integrate Microsoft\visualfsharp to 688c26bdbbfc766326fc45e4d918f87fcba1e7ba. F# 4.1 work
   * [Inlined function causes "FS0078: Unable to find the file"](https://github.com/fsharp/fsharp/issues/584)
