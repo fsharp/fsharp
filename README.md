@@ -136,7 +136,7 @@ This build the proto compiler, then the library, then the final compiler.
 You can also build these independently using:
 
     msbuild src\fsharp-proto-build.proj
-    ngen install ..\lib\proto\fsc-proto.exe
+    ngen install lib\proto\fsc-proto.exe
     msbuild src\fsharp-library-build.proj /p:Configuration=Release
     msbuild src\fsharp-compiler-build.proj /p:Configuration=Release
 
