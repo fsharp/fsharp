@@ -1,3 +1,6 @@
+4.0.1.16
+  * Fix FSharp.Compiler.Tools package dependencies
+
 4.0.1.15
   * Fix null condition in Fsc task
 
