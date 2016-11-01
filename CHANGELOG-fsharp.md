@@ -1,3 +1,6 @@
+4.0.1.19
+  * Fix FSharp.Compiler.Tools targets for .NET Core usage
+
 4.0.1.16
   * Fix FSharp.Compiler.Tools package dependencies
 
