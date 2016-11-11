@@ -409,10 +409,8 @@ let envUpdateCreatedTypeRef emEnv (tref:ILTypeRef) =
     let typT,typB,typeDef,_createdTypOpt = Zmap.force tref emEnv.emTypMap "envGetTypeDef: failed"
     if typB.IsCreated() then
         let typ = typB.CreateTypeAndLog()
-#if FSHARP_CORE_4_5
-#else
 #if ENABLE_MONO_SUPPORT
-        // Bug DevDev2 40395: Mono 2.6 and 2.8 has a bug where executing code that includes an array type
+        // Mono has a bug where executing code that includes an array type
         // match "match x with :? C[] -> ..." before the full loading of an object of type
         // causes a failure when C is later loaded. One workaround for this is to attempt to do a fake allocation
         // of objects. We use System.Runtime.Serialization.FormatterServices.GetUninitializedObject to do
@@ -422,7 +420,6 @@ let envUpdateCreatedTypeRef emEnv (tref:ILTypeRef) =
             try 
               System.Runtime.Serialization.FormatterServices.GetUninitializedObject(typ) |> ignore
             with e -> ()
-#endif
 #endif
         {emEnv with emTypMap = Zmap.add tref (typT,typB,typeDef,Some typ) emEnv.emTypMap}
     else
