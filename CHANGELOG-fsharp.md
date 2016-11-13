@@ -1,3 +1,6 @@
+4.0.1.20
+  * Fix #639 - Problems with F# scripts on Mono 
+
 4.0.1.19
   * Fix FSharp.Compiler.Tools targets for .NET Core usage
 
