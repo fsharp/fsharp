@@ -42,7 +42,7 @@ type Pattern =
   | TPat_query of (Expr * TType list * (ValRef * TypeInst) option * int * ActivePatternInfo) * Pattern * range
   | TPat_unioncase of UnionCaseRef * TypeInst * Pattern list * range
   | TPat_exnconstr of TyconRef * Pattern list * range
-  | TPat_tuple of  Pattern list * TType list * range
+  | TPat_tuple of  TupInfo * Pattern list * TType list * range
   | TPat_array of  Pattern list * TType * range
   | TPat_recd of TyconRef * TypeInst * Pattern list * range
   | TPat_range of char * char * range
@@ -58,7 +58,7 @@ type Pattern =
     |   TPat_query(_,_,m) -> m
     |   TPat_unioncase(_,_,_,m) -> m
     |   TPat_exnconstr(_,_,m) -> m
-    |   TPat_tuple(_,_,m) -> m
+    |   TPat_tuple(_,_,_,m) -> m
     |   TPat_array(_,_,m) -> m
     |   TPat_recd(_,_,_,m) -> m
     |   TPat_range(_,_,m) -> m
@@ -102,7 +102,7 @@ type SubExprOfInput =
 
 let BindSubExprOfInput g amap gtps (PBind(v,tyscheme)) m (SubExpr(accessf,(ve2,v2))) =
     let e' = 
-        if isNil gtps then 
+        if List.isEmpty gtps then 
             accessf [] ve2 
         else 
             let tyargs = 
@@ -126,7 +126,7 @@ let BindSubExprOfInput g amap gtps (PBind(v,tyscheme)) m (SubExpr(accessf,(ve2,v
     v,mkGenericBindRhs g m [] tyscheme e'
 
 let GetSubExprOfInput g (gtps,tyargs,tinst) (SubExpr(accessf,(ve2,v2))) =
-    if isNil gtps then accessf [] ve2 else
+    if List.isEmpty gtps then accessf [] ve2 else
     accessf tinst (mkApps g ((ve2,v2.Type),[tyargs],[],v2.Range))
 
 //---------------------------------------------------------------------------
@@ -181,7 +181,7 @@ let RefuteDiscrimSet g m path discrims =
         | PathConj (p,_j) -> 
              go p tm
         | PathTuple (p,tys,j) -> 
-             go p (fun _ -> mkTupled g m (mkOneKnown tm j tys) tys)
+             go p (fun _ -> mkRefTupled g m (mkOneKnown tm j tys) tys)
         | PathRecd (p,tcref,tinst,j) -> 
              let flds = tcref |> actualTysOfInstanceRecdFields (mkTyconRefInst tcref tinst) |> mkOneKnown tm j
              go p (fun _ -> Expr.Op(TOp.Recd(RecdExpr, tcref),tinst, flds,m))
@@ -505,7 +505,7 @@ let rec BuildSwitch inpExprOpt g expr edges dflt m =
     // 'isinst' tests where we have stored the result of the 'isinst' in a variable 
     // In this case the 'expr' already holds the result of the 'isinst' test. 
 
-    | (TCase(Test.IsInst _,success)):: edges, dflt  when isSome inpExprOpt -> 
+    | (TCase(Test.IsInst _,success)):: edges, dflt  when Option.isSome inpExprOpt -> 
         TDSwitch(expr,[TCase(Test.IsNull,BuildSwitch None g expr edges dflt m)],Some success,m)    
         
     // isnull and isinst tests
@@ -519,7 +519,7 @@ let rec BuildSwitch inpExprOpt g expr edges dflt m =
     | [TCase(ListEmptyDiscrim g tinst, emptyCase)], Some consCase 
     | [TCase(ListEmptyDiscrim g _, emptyCase); TCase(ListConsDiscrim g tinst, consCase)], None
     | [TCase(ListConsDiscrim g tinst, consCase); TCase(ListEmptyDiscrim g _, emptyCase)], None
-                     when isSome inpExprOpt -> 
+                     when Option.isSome inpExprOpt -> 
         TDSwitch(expr, [TCase(Test.IsNull, emptyCase)], Some consCase, m)    
 #endif
                 
@@ -605,7 +605,7 @@ let rec layoutPat pat =
     | TPat_query (_,pat,_) -> Layout.(--) (Layout.wordL "query") (layoutPat pat)
     | TPat_wild _ -> Layout.wordL "wild"
     | TPat_as _ -> Layout.wordL "var"
-    | TPat_tuple (pats, _, _) 
+    | TPat_tuple (_, pats, _, _) 
     | TPat_array (pats, _, _) -> Layout.bracketL (Layout.tupleL (List.map layoutPat pats))
     | _ -> Layout.wordL "?" 
   
@@ -631,7 +631,7 @@ let rec isPatternPartial p =
     | TPat_wild _ -> false
     | TPat_as (p,_,_) -> isPatternPartial p
     | TPat_disjs (ps,_) | TPat_conjs(ps,_) 
-    | TPat_tuple (ps,_,_) | TPat_exnconstr(_,ps,_) 
+    | TPat_tuple (_,ps,_,_) | TPat_exnconstr(_,ps,_) 
     | TPat_array (ps,_,_) | TPat_unioncase (_,_,ps,_)
     | TPat_recd (_,_,ps,_) -> List.exists isPatternPartial ps
     | TPat_range _ -> false
@@ -646,7 +646,7 @@ let rec erasePartialPatterns inpp =
     | TPat_as (p,x,m) -> TPat_as (erasePartialPatterns p,x,m)
     | TPat_disjs (ps,m) -> TPat_disjs(erasePartials ps, m)
     | TPat_conjs(ps,m) -> TPat_conjs(erasePartials ps, m)
-    | TPat_tuple (ps,x,m) -> TPat_tuple(erasePartials ps, x, m)
+    | TPat_tuple (tupInfo,ps,x,m) -> TPat_tuple(tupInfo,erasePartials ps, x, m)
     | TPat_exnconstr(x,ps,m) -> TPat_exnconstr(x,erasePartials ps,m) 
     | TPat_array (ps,x,m) -> TPat_array (erasePartials ps,x,m)
     | TPat_unioncase (x,y,ps,m) -> TPat_unioncase (x,y,erasePartials ps,m)
@@ -734,7 +734,7 @@ let CompilePatternBasic
                 // targets of filters since if the exception is filtered successfully then we 
                 // will run the handler and hit the sequence point there.
                 // That sequence point will have the pattern variables bound, which is exactly what we want.
-                let tg = TTarget(FlatList.empty,throwExpr,SuppressSequencePointAtTarget  )
+                let tg = TTarget(List.empty,throwExpr,SuppressSequencePointAtTarget  )
                 mbuilder.AddTarget tg |> ignore
                 let clause = TClause(TPat_wild matchm,None,tg,matchm)
                 incompleteMatchClauseOnce := Some(clause)
@@ -792,7 +792,7 @@ let CompilePatternBasic
                     // For each case, recursively compile the residue decision trees that result if that case successfully matches 
                     let simulSetOfCases, _ = CompileSimultaneousSet frontiers path refuted subexpr simulSetOfEdgeDiscrims inpExprOpt 
                           
-                    assert (nonNil(simulSetOfCases))
+                    assert (not (List.isEmpty simulSetOfCases))
 
                     // Work out what the default/fall-through tree looks like, is any 
                     // Check if match is complete, if so optimize the default case away. 
@@ -813,7 +813,7 @@ let CompilePatternBasic
 
         let vs2 = GetValsBoundByClause i refuted
         let es2 = 
-            vs2 |> FlatList.map (fun v -> 
+            vs2 |> List.map (fun v -> 
                 match valMap.TryFind v with 
                 | None -> error(Error(FSComp.SR.patcMissingVariable(v.DisplayName),v.Range)) 
                 | Some res -> res)
@@ -873,7 +873,7 @@ let CompilePatternBasic
           
          | EdgeDiscrim(_i',(Test.IsInst (_srcty,tgty)),m) :: _rest 
                     (* check we can use a simple 'isinst' instruction *)
-                    when canUseTypeTestFast g tgty && isNil topgtvs ->
+                    when canUseTypeTestFast g tgty && List.isEmpty topgtvs ->
 
              let v,vexp = mkCompGenLocal m "typeTestResult" tgty
              if topv.IsMemberOrModuleBinding then 
@@ -884,7 +884,7 @@ let CompilePatternBasic
 
           // Any match on a struct union must take the address of its input
          | EdgeDiscrim(_i',(Test.UnionCase (ucref, _)),_) :: _rest 
-                 when (isNil topgtvs && ucref.Tycon.IsStructRecordOrUnionTycon) ->
+                 when List.isEmpty topgtvs && ucref.Tycon.IsStructRecordOrUnionTycon ->
 
              let argexp = GetSubExprOfInput subexpr
              let vOpt,addrexp = mkExprAddrOfExprAux g true false NeverMutates argexp None matchm
@@ -903,7 +903,7 @@ let CompilePatternBasic
          | [EdgeDiscrim(_, ListConsDiscrim g tinst, m)]
          | [EdgeDiscrim(_, ListEmptyDiscrim g tinst, m)]
                     (* check we can use a simple 'isinst' instruction *)
-                    when isNil topgtvs ->
+                    when List.isEmpty topgtvs ->
 
              let ucaseTy = (mkProvenUnionCaseTy g.cons_ucref tinst)
              let v,vexp = mkCompGenLocal m "unionTestResult" ucaseTy
@@ -917,7 +917,7 @@ let CompilePatternBasic
          // Active pattern matches: create a variable to hold the results of executing the active pattern. 
          | (EdgeDiscrim(_,(Test.ActivePatternCase(pexp,resTys,_,_,apinfo)),m) :: _) ->
              
-             if nonNil topgtvs then error(InternalError("Unexpected generalized type variables when compiling an active pattern",m))
+             if not (List.isEmpty topgtvs) then error(InternalError("Unexpected generalized type variables when compiling an active pattern",m))
              let rty = apinfo.ResultType g m resTys
              let v,vexp = mkCompGenLocal m "activePatternResult" rty
              if topv.IsMemberOrModuleBinding then 
@@ -954,7 +954,7 @@ let CompilePatternBasic
 #if OPTIMIZE_LIST_MATCHING
                                                            isNone inpExprOpt &&
 #endif
-                                                          (isNil topgtvs && 
+                                                          (List.isEmpty topgtvs && 
                                                            not topv.IsMemberOrModuleBinding && 
                                                            not ucref.Tycon.IsStructRecordOrUnionTycon  &&
                                                            ucref.UnionCase.RecdFields.Length >= 1 && 
@@ -1173,8 +1173,8 @@ let CompilePatternBasic
         | TPat_as(p',pbind,m) -> 
             let (v,subExpr') =  BindSubExprOfInput g amap topgtvs pbind m subExpr
             BindProjectionPattern (Active(path,subExpr,p')) (accActive,accValMap.Add v subExpr' )
-        | TPat_tuple(ps,tyargs,_m) ->
-            let accessf' j tpinst exprIn = mkTupleFieldGet(accessf tpinst exprIn,instTypes tpinst tyargs,j,exprm)
+        | TPat_tuple(tupInfo,ps,tyargs,_m) ->
+            let accessf' j tpinst subExpr' = mkTupleFieldGet g (tupInfo,accessf tpinst subExpr',instTypes tpinst tyargs,j,exprm)
             let pathBuilder path j = PathTuple(path,tyargs,j)
             let newActives = List.mapi (mkSubActive pathBuilder accessf') ps
             BindProjectionPatterns newActives s 
@@ -1276,7 +1276,7 @@ let rec CompilePattern  g denv amap exprm matchm warnOnUnused actionOnFailure (t
                 else SequencePointAtTarget
 
             // Make the clause that represents the remaining cases of the pattern match
-            let clauseForRestOfMatch = TClause(TPat_wild matchm,None,TTarget(FlatList.empty,expr,spTarget),matchm)
+            let clauseForRestOfMatch = TClause(TPat_wild matchm,None,TTarget(List.empty,expr,spTarget),matchm)
             
             CompilePatternBasic 
                  g denv amap exprm matchm warnOnUnused warnOnIncomplete actionOnFailure (topv,topgtvs) 

@@ -42,16 +42,21 @@
     <file src="..\lib\release\fsiAnyCpu.xml" target="tools\fsiAnyCpu.xml" />
     <file src="..\lib\release\FSharp.Build.dll" target="tools\FSharp.Build.dll" />
     <file src="..\lib\release\FSharp.Build.xml" target="tools\FSharp.Build.xml" />
-	  
-	<!-- Microsoft.FSharp.Targets : Must be used un any distribution of F# for Mono+Linux or any case-sensitive file system using MSBuild --> 
+    <file src="..\lib\release\System.Collections.Immutable.dll" target="tools\System.Collections.Immutable.dll" />
+    <file src="..\lib\release\System.Reflection.Metadata.dll" target="tools\System.Reflection.Metadata.dll" />
+
+    <!-- Microsoft.FSharp.Targets : Must be used un any distribution of F# for Mono+Linux or any case-sensitive file system using MSBuild --> 
 	<!-- Microsoft.FSharp.Targets or Microsoft.FSharp.targets : Used in the Visual F# Tools distribution (on Windows it doesn't matter). -->
 	<!-- Microsoft.FSharp.targets : Used in the source tree as of 08/04/2016 (prior this was Microsoft.FSharp.Targets) -->
 
     <file src="..\lib\release\Microsoft.FSharp.Targets" target="tools\Microsoft.FSharp.Targets" />
+<!--
+   These are statically linked
     <file src="..\lib\release\Microsoft.DiaSymReader.dll" target="tools\Microsoft.DiaSymReader.dll" />
     <file src="..\lib\release\Microsoft.DiaSymReader.PortablePdb.dll" target="tools\Microsoft.DiaSymReader.PortablePdb.dll" />
     <file src="..\lib\release\System.Collections.Immutable.dll" target="tools\System.Collections.Immutable.dll" />
     <file src="..\lib\release\System.Reflection.Metadata.dll" target="tools\System.Reflection.Metadata.dll" />
+-->
     <file src="..\lib\release\Microsoft.Build.dll" target="tools\Microsoft.Build.dll" />
     <file src="..\lib\release\Microsoft.Build.Engine.dll" target="tools\Microsoft.Build.Engine.dll" />
     <file src="..\lib\release\Microsoft.Build.Framework.dll" target="tools\Microsoft.Build.Framework.dll" />

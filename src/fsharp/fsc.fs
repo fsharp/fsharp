@@ -24,6 +24,7 @@ open System.Threading
 
 open Internal.Utilities
 open Internal.Utilities.Collections
+open Internal.Utilities.Filename
 
 open Microsoft.FSharp.Compiler 
 open Microsoft.FSharp.Compiler.AbstractIL 
@@ -198,7 +199,7 @@ type DisposablesTracker() =
 /// Type checking a set of inputs
 let TypeCheck (tcConfig, tcImports, tcGlobals, errorLogger:ErrorLogger, assemblyName, niceNameGen, tcEnv0, inputs, exiter: Exiter) =
     try 
-        if isNil inputs then error(Error(FSComp.SR.fscNoImplementationFiles(),Range.rangeStartup))
+        if List.isEmpty inputs then error(Error(FSComp.SR.fscNoImplementationFiles(),Range.rangeStartup))
         let ccuName = assemblyName
         let tcInitialState = GetInitialTcState (rangeStartup,ccuName,tcConfig,tcGlobals,tcImports,niceNameGen,tcEnv0)
         TypeCheckClosedInputSet ((fun () -> errorLogger.ErrorCount > 0),tcConfig,tcImports,tcGlobals,None,tcInitialState,inputs)
@@ -267,9 +268,12 @@ let ProcessCommandLineFlags (tcConfigB: TcConfigBuilder,setProcessThreadLocals,a
         else
             inputFilesRef := name :: !inputFilesRef
     let abbrevArgs = GetAbbrevFlagSet tcConfigB true
-    
+
     // This is where flags are interpreted by the command line fsc.exe.
     ParseCompilerOptions (collect, GetCoreFscCompilerOptions tcConfigB, List.tail (PostProcessCompilerArgs abbrevArgs argv))
+    if (tcConfigB.embedAllSource || tcConfigB.embedSourceList |> List.length <> 0) && (not (tcConfigB.portablePDB || tcConfigB.embeddedPDB)) then
+        error(Error(FSComp.SR.optsEmbeddedSourceRequirePortablePDBs(),rangeCmdArgs))
+
     let inputFiles = List.rev !inputFilesRef
 
 #if FX_LCIDFROMCODEPAGE
@@ -282,14 +286,13 @@ let ProcessCommandLineFlags (tcConfigB: TcConfigBuilder,setProcessThreadLocals,a
     setProcessThreadLocals(tcConfigB)
 
     (* step - get dll references *)
-    let dllFiles,sourceFiles = List.partition Filename.isDll inputFiles
+    let dllFiles,sourceFiles = inputFiles |> List.map(fun p -> trimQuotes p) |> List.partition Filename.isDll
     match dllFiles with
     | [] -> ()
     | h::_ -> errorR (Error(FSComp.SR.fscReferenceOnCommandLine(h),rangeStartup))
 
     dllFiles |> List.iter (fun f->tcConfigB.AddReferencedAssemblyByPath(rangeStartup,f))
     sourceFiles
-          
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // This code has logic for a prefix of the compile that is also used by the project system to do the front-end
@@ -302,6 +305,7 @@ let ProcessCommandLineFlags (tcConfigB: TcConfigBuilder,setProcessThreadLocals,a
 // A great deal of the logic of this function is repeated in fsi.fs, so maybe should refactor fsi.fs to call into this as well.
 let GetTcImportsFromCommandLine
         (argv : string[], 
+         referenceResolver,
          defaultFSharpBinariesDir : string, 
          directoryBuildingFrom : string, 
 #if FX_LCIDFROMCODEPAGE
@@ -314,7 +318,7 @@ let GetTcImportsFromCommandLine
          errorLoggerProvider : ErrorLoggerProvider,
          disposables : DisposablesTracker) =
 
-    let tcConfigB = TcConfigBuilder.CreateNew(defaultFSharpBinariesDir, optimizeForMemory, directoryBuildingFrom, isInteractive=false, isInvalidationSupported=false)
+    let tcConfigB = TcConfigBuilder.CreateNew(referenceResolver, defaultFSharpBinariesDir, optimizeForMemory, directoryBuildingFrom, isInteractive=false, isInvalidationSupported=false)
     // Preset: --optimize+ -g --tailcalls+ (see 4505)
     SetOptimizeSwitch tcConfigB OptionSwitch.On
     SetDebugSwitch    tcConfigB None OptionSwitch.Off
@@ -334,12 +338,12 @@ let GetTcImportsFromCommandLine
         // Rather than start processing, just collect names, then process them. 
         try 
             let sourceFiles = 
-                let files = ProcessCommandLineFlags (tcConfigB, setProcessThreadLocals, 
+                let files = ProcessCommandLineFlags (tcConfigB, setProcessThreadLocals,
 #if FX_LCIDFROMCODEPAGE
                                                      lcidFromCodePage, 
 #endif
                                                      argv)
-                AdjustForScriptCompile(tcConfigB,files,lexResourceManager)                     
+                AdjustForScriptCompile(tcConfigB,files,lexResourceManager)
             sourceFiles
 
         with e -> 
@@ -1054,8 +1058,8 @@ module MainModuleBuilder =
                                   [tcGlobals.ilg.typ_Int32],[ILAttribElem.Int32( 8)], []) 
                    yield! iattrs
                    yield! codegenResults.ilAssemAttrs
-                   if Option.isSome pdbfile then 
-                       yield (tcGlobals.ilg.mkDebuggableAttributeV2 (tcConfig.ignoreSymbolStoreSequencePoints, disableJitOptimizations, false (* enableEnC *) )) 
+                   if Option.isSome pdbfile then
+                       yield (tcGlobals.ilg.mkDebuggableAttributeV2 (tcConfig.jitTracking, tcConfig.ignoreSymbolStoreSequencePoints, disableJitOptimizations, false (* enableEnC *) )) 
                    yield! reflectedDefinitionAttrs ]
 
         // Make the manifest of the assembly
@@ -1069,6 +1073,8 @@ module MainModuleBuilder =
              Some { man with Version= Some ver
                              CustomAttrs = manifestAttrs
                              DisableJitOptimizations=disableJitOptimizations
+                             JitTracking= tcConfig.jitTracking
+                             IgnoreSymbolStoreSequencePoints = tcConfig.ignoreSymbolStoreSequencePoints
                              SecurityDecls=secDecls } 
 
         let resources = 
@@ -1260,7 +1266,7 @@ module StaticLinker =
     let debugStaticLinking = condition "FSHARP_DEBUG_STATIC_LINKING"
 
     let StaticLinkILModules (tcConfig, ilGlobals, ilxMainModule, dependentILModules: (CcuThunk option * ILModuleDef) list) = 
-        if isNil dependentILModules then 
+        if List.isEmpty dependentILModules then 
             ilxMainModule,(fun x -> x) 
         else
 
@@ -1441,7 +1447,7 @@ module StaticLinker =
 
             begin 
                 let remaining = ref (computeILRefs ilxMainModule).AssemblyReferences
-                while nonNil !remaining do
+                while not (List.isEmpty !remaining) do
                     let ilAssemRef = List.head !remaining
                     remaining := List.tail !remaining
                     if assumedIndependentSet.Contains ilAssemRef.Name || (ilAssemRef.PublicKey = Some ecmaPublicKey) then 
@@ -1503,7 +1509,7 @@ module StaticLinker =
                 ]
                               
             let remaining = ref roots
-            [ while nonNil !remaining do
+            [ while not (List.isEmpty !remaining) do
                 let n = List.head !remaining
                 remaining := List.tail !remaining
                 if not n.visited then 
@@ -1614,7 +1620,7 @@ module StaticLinker =
                   // Build the ILTypeDefs for generated types, starting with the roots 
                   let generatedILTypeDefs = 
                       let rec buildRelocatedGeneratedType (ProviderGeneratedType(ilOrigTyRef, ilTgtTyRef, ch)) = 
-                          let isNested = ilTgtTyRef.Enclosing |> nonNil
+                          let isNested = not (List.isEmpty ilTgtTyRef.Enclosing)
                           if allTypeDefsInProviderGeneratedAssemblies.ContainsKey ilOrigTyRef then 
                               let ilOrigTypeDef = allTypeDefsInProviderGeneratedAssemblies.[ilOrigTyRef]
                               if debugStaticLinking then printfn "Relocating %s to %s " ilOrigTyRef.QualifiedName ilTgtTyRef.QualifiedName
@@ -1714,7 +1720,7 @@ type SigningInfo = SigningInfo of (* delaysign:*) bool * (* publicsign:*) bool *
 let GetSigner signingInfo = 
         let (SigningInfo(delaysign,publicsign,signer,container)) = signingInfo
         // REVIEW: favor the container over the key file - C# appears to do this
-        if isSome container then
+        if Option.isSome container then
           Some(ILBinaryWriter.ILStrongNameSigner.OpenKeyContainer container.Value)
         else
             match signer with 
@@ -1741,6 +1747,9 @@ module FileWriter =
                     emitTailcalls = tcConfig.emitTailcalls
                     showTimes = tcConfig.showTimes
                     portablePDB = tcConfig.portablePDB
+                    embeddedPDB = tcConfig.embeddedPDB
+                    embedAllSource = tcConfig.embedAllSource
+                    embedSourceList = tcConfig.embedSourceList
                     signer = GetSigner signingInfo
                     fixupOverlappingSequencePoints = false
                     dumpDebugInfo = tcConfig.dumpDebugInfo },
@@ -1810,23 +1819,25 @@ let copyFSharpCore(outFile: string, referencedDlls: AssemblyReference list) =
     let outDir = Path.GetDirectoryName(outFile)
     let fsharpCoreAssemblyName = GetFSharpCoreLibraryName() + ".dll"
     let fsharpCoreDestinationPath = Path.Combine(outDir, fsharpCoreAssemblyName)
+    let copyFileIfDifferent src dest =
+        if not (File.Exists(dest)) || (File.GetCreationTimeUtc(src) <> File.GetCreationTimeUtc(dest)) then
+            File.Copy(src, dest, true)
 
-    if not (File.Exists(fsharpCoreDestinationPath)) then
-        match referencedDlls |> Seq.tryFind (fun dll -> String.Equals(Path.GetFileName(dll.Text), fsharpCoreAssemblyName, StringComparison.CurrentCultureIgnoreCase)) with
-        | Some referencedFsharpCoreDll -> File.Copy(referencedFsharpCoreDll.Text, fsharpCoreDestinationPath)
-        | None ->
-            let executionLocation =
+    match referencedDlls |> Seq.tryFind (fun dll -> String.Equals(Path.GetFileName(dll.Text), fsharpCoreAssemblyName, StringComparison.CurrentCultureIgnoreCase)) with
+    | Some referencedFsharpCoreDll -> copyFileIfDifferent referencedFsharpCoreDll.Text fsharpCoreDestinationPath
+    | None ->
+        let executionLocation =
 #if FX_RESHAPED_REFLECTION
-                TypeInThisAssembly(null).GetType().GetTypeInfo().Assembly.Location
+            TypeInThisAssembly(null).GetType().GetTypeInfo().Assembly.Location
 #else
-                Assembly.GetExecutingAssembly().Location
+            Assembly.GetExecutingAssembly().Location
 #endif
-            let compilerLocation = Path.GetDirectoryName(executionLocation)
-            let compilerFsharpCoreDllPath = Path.Combine(compilerLocation, fsharpCoreAssemblyName)
-            if File.Exists(compilerFsharpCoreDllPath) then
-                File.Copy(compilerFsharpCoreDllPath, fsharpCoreDestinationPath)
-            else
-                errorR(Error(FSComp.SR.fsharpCoreNotFoundToBeCopied(), rangeCmdArgs))
+        let compilerLocation = Path.GetDirectoryName(executionLocation)
+        let compilerFsharpCoreDllPath = Path.Combine(compilerLocation, fsharpCoreAssemblyName)
+        if File.Exists(compilerFsharpCoreDllPath) then
+            copyFileIfDifferent compilerFsharpCoreDllPath fsharpCoreDestinationPath
+        else
+            errorR(Error(FSComp.SR.fsharpCoreNotFoundToBeCopied(), rangeCmdArgs))
 
 //----------------------------------------------------------------------------
 // main - split up to make sure that we can GC the
@@ -1837,7 +1848,7 @@ let copyFSharpCore(outFile: string, referencedDlls: AssemblyReference list) =
 [<NoEquality; NoComparison>]
 type Args<'T> = Args  of 'T
 
-let main0(argv,bannerAlreadyPrinted,exiter:Exiter, errorLoggerProvider : ErrorLoggerProvider, disposables : DisposablesTracker) = 
+let main0(argv,referenceResolver,bannerAlreadyPrinted,exiter:Exiter, errorLoggerProvider : ErrorLoggerProvider, disposables : DisposablesTracker) = 
 
 #if FX_LCIDFROMCODEPAGE
     // See Bug 735819 
@@ -1853,7 +1864,7 @@ let main0(argv,bannerAlreadyPrinted,exiter:Exiter, errorLoggerProvider : ErrorLo
 
     let tcGlobals,tcImports,frameworkTcImports,generatedCcu,typedImplFiles,topAttrs,tcConfig,outfile,pdbfile,assemblyName,errorLogger = 
         GetTcImportsFromCommandLine(
-            argv,defaultFSharpBinariesDir,Directory.GetCurrentDirectory(),
+            argv,referenceResolver,defaultFSharpBinariesDir,Directory.GetCurrentDirectory(),
 #if FX_LCIDFROMCODEPAGE
              lcidFromCodePage, 
 #endif
@@ -2040,33 +2051,35 @@ let main4 (Args (tcConfig, errorLogger: ErrorLogger, ilGlobals, ilxMainModule, o
 
     AbortOnError(errorLogger, tcConfig, exiter)
 
-    if tcConfig.copyFSharpCore then
+    // Don't copy referenced fharp.core.dll if we are building fsharp.core.dll
+    if tcConfig.copyFSharpCore && not tcConfig.compilingFslib && not tcConfig.standalone then
         copyFSharpCore(outfile, tcConfig.referencedDLLs)
 
     SqmLoggerWithConfig tcConfig errorLogger.ErrorNumbers errorLogger.WarningNumbers
 
     ReportTime tcConfig "Exiting"
 
-let typecheckAndCompile(argv,bannerAlreadyPrinted,exiter:Exiter, errorLoggerProvider) =
+let typecheckAndCompile(argv,referenceResolver,bannerAlreadyPrinted,exiter:Exiter, errorLoggerProvider) =
     use d = new DisposablesTracker()
     use e = new SaveAndRestoreConsoleEncoding()
 
-    main0(argv,bannerAlreadyPrinted,exiter, errorLoggerProvider, d)
+    main0(argv,referenceResolver,bannerAlreadyPrinted,exiter, errorLoggerProvider, d)
+
     |> main1
     |> main2
     |> main2b
     |> main3 
     |> main4
 
-let mainCompile (argv, bannerAlreadyPrinted, exiter:Exiter) = 
-    typecheckAndCompile(argv, bannerAlreadyPrinted, exiter, DefaultLoggerProvider())
+let mainCompile (argv, referenceResolver, bannerAlreadyPrinted, exiter:Exiter) = 
+    typecheckAndCompile(argv, referenceResolver, bannerAlreadyPrinted, exiter, DefaultLoggerProvider())
 
 [<RequireQualifiedAccess>]
 type CompilationOutput = 
     { Errors : ErrorOrWarning[]
       Warnings : ErrorOrWarning[]  }
 
-type InProcCompiler() = 
+type InProcCompiler(referenceResolver) = 
     member this.Compile(argv) = 
 
         let errors = ResizeArray()
@@ -2088,7 +2101,7 @@ type InProcCompiler() =
             { new Exiter with
                  member this.Exit n = exitCode := n; raise StopProcessing }
         try 
-            typecheckAndCompile(argv, false, exiter, loggerProvider)
+            typecheckAndCompile(argv, referenceResolver, false, exiter, loggerProvider)
         with 
             | StopProcessing -> ()
             | ReportedError _  | WrappedError(ReportedError _,_)  ->

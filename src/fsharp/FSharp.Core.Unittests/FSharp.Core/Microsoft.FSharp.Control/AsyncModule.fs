@@ -300,6 +300,28 @@ type AsyncModule() =
         for _i = 1 to 3 do test()
 
     [<Test>]
+    member this.``OnCancel.RaceBetweenCancellationAndDispose``() = 
+        let flag = ref 0
+        let cts = new System.Threading.CancellationTokenSource()
+        let go = async {
+            use disp =
+                cts.Cancel()
+                { new IDisposable with
+                    override __.Dispose() = incr flag }
+            while true do
+                do! Async.Sleep 50
+            }
+        try
+            Async.RunSynchronously (go, cancellationToken = cts.Token)
+        with
+#if FX_NO_OPERATION_CANCELLED
+            _ -> ()
+#else
+            :? System.OperationCanceledException -> ()
+#endif
+        Assert.AreEqual(1, !flag)
+
+    [<Test>]
     member this.``OnCancel.CancelThatWasSignalledBeforeRunningTheComputation``() = 
         let test() = 
             let cts = new System.Threading.CancellationTokenSource()
@@ -420,9 +442,10 @@ type AsyncModule() =
     member this.``RaceBetweenCancellationAndError.Sleep``() =
         testErrorAndCancelRace (Async.Sleep (-5))
 
-#if !(FSHARP_CORE_PORTABLE || FSHARP_CORE_NETCORE_PORTABLE)
+#if !(FSHARP_CORE_PORTABLE || FSHARP_CORE_NETCORE_PORTABLE || coreclr)
     [<Test; Category("Expensive")>] // takes 3 minutes!
     member this.``Async.Choice specification test``() =
+        ThreadPool.SetMinThreads(100,100) |> ignore
         Check.QuickThrowOnFailure (normalize >> runChoice)
 #endif
 

@@ -206,3 +206,7 @@ FSharp.Core.Nuget/*.nupkg
 project.lock.json
 Tools/
 Backup/
+tests/fsharp/core/array/dont.run.peverify
+tests/fsharp/core/innerpoly/dont.run.peverify
+tests/fsharp/typecheck/sigs/neg94-pre.dll
+times

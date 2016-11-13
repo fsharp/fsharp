@@ -21,13 +21,8 @@ let (>>>&) (x:int32) (n:int32) = int32 (uint32 x >>> n)
 
 let notlazy v = Lazy<_>.CreateFromValue v
 
-let isSome x = match x with None -> false | _ -> true
-let isNone x = match x with None -> true | _ -> false
-let isNil x = match x with [] -> true | _ -> false
-let nonNil x = match x with [] -> false | _ -> true
-let isNull (x : 'T) = match (x :> obj) with null -> true | _ -> false
-let isNonNull (x : 'T) = match (x :> obj) with null -> false | _ -> true
-let nonNull msg x = if isNonNull x then x else failwith ("null: " ^ msg) 
+let inline isNonNull x = not (isNull x)
+let inline nonNull msg x = if isNull x then failwith ("null: " ^ msg) else x
 let (===) x y = LanguagePrimitives.PhysicalEquality x y
 
 //---------------------------------------------------------------------
@@ -438,7 +433,7 @@ module String =
         else
             None
 
-    let hasPrefix s t = isSome (tryDropPrefix s t)
+    let hasPrefix s t = Option.isSome (tryDropPrefix s t)
     let dropPrefix s t = match (tryDropPrefix s t) with Some(res) -> res | None -> failwith "dropPrefix"
 
     let dropSuffix s t = match (tryDropSuffix s t) with Some(res) -> res | None -> failwith "dropSuffix"
@@ -487,64 +482,6 @@ module ResultOrException =
         match x with 
         | Result x -> success x
         | Exception _err -> f()
-
-
-//-------------------------------------------------------------------------
-// Library: extensions to flat list  (immutable arrays)
-//------------------------------------------------------------------------
-#if FLAT_LIST_AS_ARRAY_STRUCT
-//#else
-module FlatList =
-
-    let order (eltOrder: IComparer<_>) =
-        { new IComparer<FlatList<_>> with 
-            member __.Compare(xs,ys) =
-                  match xs.array,ys.array with 
-                  | null,null -> 0
-                  | _,null -> 1
-                  | null,_ -> -1
-                  | arr1,arr2 -> Array.order eltOrder arr1 arr2 }
-
-    let mapq f (x:FlatList<_>) = 
-        match x.array with 
-        | null -> x
-        | arr -> 
-            let arr' = Array.map f arr in 
-            let n = arr.Length in 
-            let rec check i = if i >= n then true else arr.[i] === arr'.[i] && check (i+1) 
-            if check 0 then x else FlatList(arr')
-
-    let mapFold f acc (x:FlatList<_>) = 
-        match x.array with
-        | null -> 
-            FlatList.Empty,acc
-        | arr -> 
-            let  arr,acc = Array.mapFold f acc x.array
-            FlatList(arr),acc
-
-#endif
-#if FLAT_LIST_AS_LIST
-
-#else
-
-module FlatList =
-    let toArray xs = List.toArray xs
-    let choose f xs = List.choose f xs
-    let order eltOrder = List.order eltOrder 
-    let mapq f (x:FlatList<_>) = List.mapq f x
-    let mapFold f acc (x:FlatList<_>) =  List.mapFold f acc x
-
-#endif
-
-#if FLAT_LIST_AS_ARRAY
-//#else
-module FlatList =
-    let order eltOrder = Array.order eltOrder 
-    let mapq f x = Array.mapq f x
-    let mapFold f acc x =  Array.mapFold f acc x
-#endif
-
-
 
 /// Computations that can cooperatively yield by returning a continuation
 ///
@@ -716,8 +653,8 @@ type LazyWithContext<'T,'ctxt> =
           funcOrException = box f;
           findOriginalException = findOriginalException }
     static member NotLazy(x:'T) : LazyWithContext<'T,'ctxt> = 
-        { value = x;
-          funcOrException = null;
+        { value = x
+          funcOrException = null
           findOriginalException = id }
     member x.IsDelayed = (match x.funcOrException with null -> false | :? LazyWithContextFailure -> false | _ -> true)
     member x.IsForced = (match x.funcOrException with null -> true | _ -> false)
@@ -785,7 +722,7 @@ module NameMap =
     let exists f m = Map.foldBack (fun x y sofar -> sofar || f x y) m false
     let ofKeyedList f l = List.foldBack (fun x acc -> Map.add (f x) x acc) l Map.empty
     let ofList l : NameMap<'T> = Map.ofList l
-    let ofFlatList (l:FlatList<_>) : NameMap<'T> = FlatList.toMap l
+    let ofSeq l : NameMap<'T> = Map.ofSeq l
     let toList (l: NameMap<'T>) = Map.toList l
     let layer (m1 : NameMap<'T>) m2 = Map.foldBack Map.add m1 m2
 

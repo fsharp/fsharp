@@ -25,7 +25,7 @@ open Microsoft.FSharp.Compiler.Ast
 open Microsoft.FSharp.Compiler.CompileOps
 open Microsoft.FSharp.Compiler.ErrorLogger
 open Microsoft.FSharp.Compiler.Lib
-open Microsoft.FSharp.Compiler.MSBuildResolver
+open Microsoft.FSharp.Compiler.ReferenceResolver
 open Microsoft.FSharp.Compiler.PrettyNaming
 open Microsoft.FSharp.Compiler.Parser
 open Microsoft.FSharp.Compiler.Range
@@ -225,7 +225,7 @@ module internal Params =
                 let _, tau = vref.TypeScheme
                 if isFunTy denv.g tau then 
                     let arg,rtau = destFunTy denv.g tau 
-                    let args = tryDestTupleTy denv.g arg 
+                    let args = tryDestRefTupleTy denv.g arg 
                     ParamsOfTypes g denv args rtau
                 else []
             match vref.ValReprInfo with
@@ -334,7 +334,7 @@ type FSharpMethodGroup( name: string, unsortedMethods: FSharpMethodGroupItem[] )
 
     static member Create(infoReader:InfoReader,m,denv,items:Item list) = 
         let g = infoReader.g
-        if isNil items then new FSharpMethodGroup("", [| |]) else
+        if List.isEmpty items then new FSharpMethodGroup("", [| |]) else
         let name = items.Head.DisplayName 
         let getOverloadsForItem item =
 #if FX_ATLEAST_40
@@ -357,7 +357,7 @@ type FSharpMethodGroup( name: string, unsortedMethods: FSharpMethodGroupItem[] )
                     | Item.UnionCase(ucr,_) -> 
                         if not ucr.UnionCase.IsNullary then [item] else []
                     | Item.ExnCase(ecr) -> 
-                        if recdFieldsOfExnDefRef ecr |> nonNil then [item] else []
+                        if List.isEmpty (recdFieldsOfExnDefRef ecr) then [] else [item]
                     | Item.Property(_,pinfos) -> 
                         let pinfo = List.head pinfos 
                         if pinfo.IsIndexer then [item] else []
@@ -568,7 +568,7 @@ type TypeCheckInfo
             |> RemoveExplicitlySuppressed g
             |> FilterItemsForCtors filterCtors
 
-        if nonNil items then
+        if not (List.isEmpty items) then
             if hasTextChangedSinceLastTypecheck(textSnapshotInfo, m) then
                 NameResResult.TypecheckStaleAndTextChanged // typecheck is stale, wait for second-chance IntelliSense to bring up right result
             else
@@ -821,9 +821,9 @@ type TypeCheckInfo
         let safeCheck item = try check item with _ -> false
                                                 
         // Are we looking for items with precisely the given name?
-        if nonNil items && exactMatchResidueOpt.IsSome then
+        if not (List.isEmpty items) && exactMatchResidueOpt.IsSome then
             let items = items |> FilterDeclItemsByResidue exactMatchResidueOpt.Value |> List.filter safeCheck 
-            if nonNil items then Some(items, denv, m) else None        
+            if not (List.isEmpty items) then Some(items, denv, m) else None        
         else 
             // When (items = []) we must returns Some([],..) and not None
             // because this value is used if we want to stop further processing (e.g. let x.$ = ...)
@@ -888,7 +888,7 @@ type TypeCheckInfo
                 | None, _ -> [], None
                 | Some(origLongIdent), Some _ -> origLongIdent, None
                 | Some(origLongIdent), None ->
-                    assert (nonNil origLongIdent)
+                    assert (not (List.isEmpty origLongIdent))
                     // note: as above, this happens when we are called for "precise" resolution - (F1 keyword, data tip etc..)
                     let plid, residue = List.frontAndBack origLongIdent
                     plid, Some residue
@@ -954,13 +954,13 @@ type TypeCheckInfo
                 match nameResItems, envItems, qualItems with            
             
                 // First, use unfiltered name resolution items, if they're not empty
-                | NameResResult.Members(items, denv, m), _, _ when nonNil items -> 
+                | NameResResult.Members(items, denv, m), _, _ when not (List.isEmpty items) -> 
                     // lookup based on name resolution results successful
                     Some(items, denv, m)                
             
                 // If we have nonempty items from environment that were resolved from a type, then use them... 
                 // (that's better than the next case - here we'd return 'int' as a type)
-                | _, FilterRelevantItems exactMatchResidueOpt (items, denv, m), _ when nonNil items ->
+                | _, FilterRelevantItems exactMatchResidueOpt (items, denv, m), _ when not (List.isEmpty items) ->
                     // lookup based on name and environment successful
                     Some(items, denv, m)
 
@@ -1171,9 +1171,6 @@ type TypeCheckInfo
     /// Get the "reference resolution" tooltip for at a location
     member scope.GetReferenceResolutionToolTipText(line,col) = 
         let pos = mkPos line col
-        let lineIfExists(append) =
-            if not(String.IsNullOrEmpty(append)) then append.Trim([|' '|])+"\n"
-            else ""     
         let isPosMatch(pos, ar:AssemblyReference) : bool = 
             let isRangeMatch = (Range.rangeContainsPos ar.Range pos) 
             let isNotSpecialRange = (ar.Range <> rangeStartup) && (ar.Range <> range0) && (ar.Range <> rangeCmdArgs)
@@ -1193,38 +1190,7 @@ type TypeCheckInfo
             match matches with 
             | resolved::_ // Take the first seen
             | [resolved] -> 
-                let originalReferenceName = resolved.originalReference.Text
-                let resolvedPath = // Don't show the resolved path if it is identical to what was referenced.
-                    if originalReferenceName = resolved.resolvedPath then String.Empty
-                    else resolved.resolvedPath
-                let tip =                 
-                    match resolved.resolvedFrom with 
-                    | AssemblyFolders ->
-                        lineIfExists(resolvedPath)
-                        + lineIfExists(resolved.fusionName)
-                        + (FSComp.SR.assemblyResolutionFoundByAssemblyFoldersKey())
-                    | AssemblyFoldersEx -> 
-                        lineIfExists(resolvedPath)
-                        + lineIfExists(resolved.fusionName)
-                        + (FSComp.SR.assemblyResolutionFoundByAssemblyFoldersExKey())
-                    | TargetFrameworkDirectory -> 
-                        lineIfExists(resolvedPath)
-                        + lineIfExists(resolved.fusionName)
-                        + (FSComp.SR.assemblyResolutionNetFramework())
-                    | Unknown ->
-                        // Unknown when resolved by plain directory search without help from MSBuild resolver.
-                        lineIfExists(resolvedPath)
-                        + lineIfExists(resolved.fusionName)
-                    | RawFileName -> 
-                        lineIfExists(resolved.fusionName)
-                    | GlobalAssemblyCache -> 
-                        lineIfExists(resolved.fusionName)
-                        + (FSComp.SR.assemblyResolutionGAC())+ "\n"
-                        + lineIfExists(resolved.redist)
-                    | Path _ ->
-                        lineIfExists(resolvedPath)
-                        + lineIfExists(resolved.fusionName)  
-                                                  
+                let tip = resolved.prepareToolTip ()
                 FSharpToolTipText [FSharpToolTipElement.Single(tip.TrimEnd([|'\n'|]) ,FSharpXmlDoc.None)]
 
             | [] -> FSharpToolTipText []
@@ -1315,7 +1281,7 @@ type TypeCheckInfo
                     | Item.RecdField(rfinfo) -> if isFunction g rfinfo.FieldType then [item] else []
                     | Item.Value v -> if isFunction g v.Type then [item] else []
                     | Item.UnionCase(ucr,_) -> if not ucr.UnionCase.IsNullary then [item] else []
-                    | Item.ExnCase(ecr) -> if recdFieldsOfExnDefRef ecr |> nonNil then [item] else []
+                    | Item.ExnCase(ecr) -> if List.isEmpty (recdFieldsOfExnDefRef ecr) then [] else [item]
                     | Item.Property(_,pinfos) -> 
                         let pinfo = List.head pinfos 
                         if pinfo.IsIndexer then [item] else []
@@ -1401,12 +1367,10 @@ type TypeCheckInfo
                // custom builders, custom operations get colored as keywords
                | CNR(_, (Item.CustomBuilder _ | Item.CustomOperation _), ItemOccurence.Use, _, _, _, m) -> 
                    yield (m, FSharpTokenColorKind.Keyword) 
-#if COLORIZE_TYPES
                // types get colored as types when they occur in syntactic types or custom attributes
                // typevariables get colored as types when they occur in syntactic types custom builders, custom operations get colored as keywords
                | CNR(_, (Item.TypeVar  _ | Item.Types _ | Item.UnqualifiedType _) , (ItemOccurence.UseInType | ItemOccurence.UseInAttribute), _, _, _, m) -> 
                    yield (m, FSharpTokenColorKind.TypeName) 
-#endif
                | _ -> () 
            |]
     member x.ScopeResolutions = sResolutions
@@ -1701,7 +1665,7 @@ module internal Parser =
                     let checkForErrors() = (parseResults.ParseHadErrors || errHandler.ErrorCount > 0)
                     // Typecheck is potentially a long running operation. We chop it up here with an Eventually continuation and, at each slice, give a chance
                     // for the client to claim the result as obsolete and have the typecheck abort.
-                    let computation = TypeCheckSingleInputAndFinishEventually(checkForErrors,tcConfig, tcImports, tcGlobals, None, TcResultsSink.WithSink sink, tcState, parsedMainInput)
+                    let computation = TypeCheckOneInputAndFinishEventually(checkForErrors,tcConfig, tcImports, tcGlobals, None, TcResultsSink.WithSink sink, tcState, parsedMainInput)
                     match computation |> Eventually.forceWhile (fun () -> not (isResultObsolete())) with
                     | Some((tcEnvAtEnd,_,typedImplFiles),tcState) -> Some (tcEnvAtEnd, typedImplFiles, tcState)
                     | None -> None // Means 'aborted'
@@ -2060,7 +2024,7 @@ module Helpers =
         && FSharpProjectOptions.AreSubsumable(o1,o2)
         
 // There is only one instance of this type, held in FSharpChecker
-type BackgroundCompiler(projectCacheSize, keepAssemblyContents, keepAllBackgroundResolutions) as self =
+type BackgroundCompiler(referenceResolver, projectCacheSize, keepAssemblyContents, keepAllBackgroundResolutions) as self =
     // STATIC ROOT: FSharpLanguageServiceTestable.FSharpChecker.backgroundCompiler.reactor: The one and only Reactor
     let reactor = Reactor.Singleton
     let beforeFileChecked = Event<string>()
@@ -2099,7 +2063,7 @@ type BackgroundCompiler(projectCacheSize, keepAssemblyContents, keepAllBackgroun
 
         let builderOpt, errorsAndWarnings = 
             IncrementalBuilder.TryCreateBackgroundBuilderForProjectOptions
-                  (frameworkTcImportsCache, scriptClosureCache.TryGet options, Array.toList options.ProjectFileNames, 
+                  (referenceResolver, frameworkTcImportsCache, scriptClosureCache.TryGet options, Array.toList options.ProjectFileNames, 
                    Array.toList options.OtherOptions, projectReferences, options.ProjectDirectory, 
                    options.UseScriptResolutionRules, options.IsIncompleteTypeCheckEnvironment, keepAssemblyContents, keepAllBackgroundResolutions)
 
@@ -2474,7 +2438,7 @@ type BackgroundCompiler(projectCacheSize, keepAssemblyContents, keepAllBackgroun
                 let collect _name = ()
                 let fsiCompilerOptions = CompileOptions.GetCoreFsiCompilerOptions tcConfigB 
                 CompileOptions.ParseCompilerOptions (collect, fsiCompilerOptions, Array.toList otherFlags)
-            let fas = LoadClosure.ComputeClosureOfSourceText(filename, source, CodeContext.Editing, useSimpleResolution, useFsiAuxLib, new Lexhelp.LexResourceManager(), applyCompilerOptions)
+            let fas = LoadClosure.ComputeClosureOfSourceText(referenceResolver,filename, source, CodeContext.Editing, useSimpleResolution, useFsiAuxLib, new Lexhelp.LexResourceManager(), applyCompilerOptions)
             let otherFlags = 
                 [| yield "--noframework"; yield "--warn:3"; 
                    yield! otherFlags 
@@ -2576,9 +2540,9 @@ type BackgroundCompiler(projectCacheSize, keepAssemblyContents, keepAllBackgroun
 [<Sealed>]
 [<AutoSerializable(false)>]
 // There is typically only one instance of this type in a Visual Studio process.
-type FSharpChecker(projectCacheSize, keepAssemblyContents, keepAllBackgroundResolutions) =
+type FSharpChecker(referenceResolver, projectCacheSize, keepAssemblyContents, keepAllBackgroundResolutions) =
 
-    let backgroundCompiler = BackgroundCompiler(projectCacheSize, keepAssemblyContents, keepAllBackgroundResolutions)
+    let backgroundCompiler = BackgroundCompiler(referenceResolver, projectCacheSize, keepAssemblyContents, keepAllBackgroundResolutions)
 
     static let globalInstance = FSharpChecker.Create()
         
@@ -2593,15 +2557,13 @@ type FSharpChecker(projectCacheSize, keepAssemblyContents, keepAllBackgroundReso
             areSame=AreSameForParsing3,
             areSameForSubsumption=AreSubsumable3) 
 
-    static member Create() = 
-        new FSharpChecker(projectCacheSizeDefault,false,true)
-
     /// Instantiate an interactive checker.    
     static member Create(?projectCacheSize, ?keepAssemblyContents, ?keepAllBackgroundResolutions) = 
+        let referenceResolver = MSBuildReferenceResolver.Resolver 
         let keepAssemblyContents = defaultArg keepAssemblyContents false
         let keepAllBackgroundResolutions = defaultArg keepAllBackgroundResolutions true
         let projectCacheSizeReal = defaultArg projectCacheSize projectCacheSizeDefault
-        new FSharpChecker(projectCacheSizeReal,keepAssemblyContents, keepAllBackgroundResolutions)
+        new FSharpChecker(referenceResolver, projectCacheSizeReal,keepAssemblyContents, keepAllBackgroundResolutions)
 
     member ic.MatchBracesAlternate(filename, source, options) =
         async { 

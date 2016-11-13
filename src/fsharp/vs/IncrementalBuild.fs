@@ -1081,7 +1081,7 @@ type TypeCheckAccumulator =
 
       
 /// Global service state
-type FrameworkImportsCacheKey = (*resolvedpath*)string list * string * (*ClrRoot*)string list* (*fsharpBinaries*)string
+type FrameworkImportsCacheKey = (*resolvedpath*)string list * string * (*TargetFrameworkDirectories*)string list* (*fsharpBinaries*)string
 
 type FrameworkImportsCache(keepStrongly) = 
     let frameworkTcImportsCache = AgedLookup<FrameworkImportsCacheKey,(TcGlobals * TcImports)>(keepStrongly, areSame=(fun (x,y) -> x = y)) 
@@ -1096,6 +1096,7 @@ type FrameworkImportsCache(keepStrongly) =
             frameworkDLLs 
             |> List.map (fun ar->ar.resolvedPath) // The cache key. Just the minimal data.
             |> List.sort  // Sort to promote cache hits.
+
         let tcGlobals,frameworkTcImports = 
             // Prepare the frameworkTcImportsCache
             //
@@ -1104,7 +1105,7 @@ type FrameworkImportsCache(keepStrongly) =
             // FSharp.Core.dll and mscorlib.dll) must be logically invariant of all the other compiler configuration parameters.
             let key = (frameworkDLLsKey,
                         tcConfig.primaryAssembly.Name, 
-                        tcConfig.ClrRoot,
+                        tcConfig.TargetFrameworkDirectories,
                         tcConfig.fsharpBinariesDir)
             match frameworkTcImportsCache.TryGet key with 
             | Some res -> res
@@ -1744,7 +1745,7 @@ type IncrementalBuilder(frameworkTcImportsCache: FrameworkImportsCache, tcConfig
 
     /// CreateIncrementalBuilder (for background type checking). Note that fsc.fs also
     /// creates an incremental builder used by the command line compiler.
-    static member TryCreateBackgroundBuilderForProjectOptions (frameworkTcImportsCache, scriptClosureOptions:LoadClosure option, sourceFiles:string list, commandLineArgs:string list, projectReferences, projectDirectory, useScriptResolutionRules, isIncompleteTypeCheckEnvironment, keepAssemblyContents, keepAllBackgroundResolutions) =
+    static member TryCreateBackgroundBuilderForProjectOptions (referenceResolver, frameworkTcImportsCache, scriptClosureOptions:LoadClosure option, sourceFiles:string list, commandLineArgs:string list, projectReferences, projectDirectory, useScriptResolutionRules, isIncompleteTypeCheckEnvironment, keepAssemblyContents, keepAllBackgroundResolutions) =
     
         // Trap and report warnings and errors from creation.
         use errorScope = new ErrorScope()
@@ -1761,15 +1762,15 @@ type IncrementalBuilder(frameworkTcImportsCache: FrameworkImportsCache, tcConfig
                     
                 // see also fsc.fs:runFromCommandLineToImportingAssemblies(), as there are many similarities to where the PS creates a tcConfigB
                 let tcConfigB = 
-                    TcConfigBuilder.CreateNew(defaultFSharpBinariesDir, implicitIncludeDir=projectDirectory, 
+                    TcConfigBuilder.CreateNew(referenceResolver, defaultFSharpBinariesDir, implicitIncludeDir=projectDirectory, 
                                                 optimizeForMemory=true, isInteractive=false, isInvalidationSupported=true) 
                 // The following uses more memory but means we don'T take read-exclusions on the DLLs we reference 
                 // Could detect well-known assemblies--ie System.dll--and open them with read-locks 
                 tcConfigB.openBinariesInMemory <- true
                 tcConfigB.resolutionEnvironment 
                     <- if useScriptResolutionRules 
-                        then MSBuildResolver.DesigntimeLike  
-                        else MSBuildResolver.CompileTimeLike
+                        then ReferenceResolver.DesignTimeLike  
+                        else ReferenceResolver.CompileTimeLike
                 
                 tcConfigB.conditionalCompilationDefines <- 
                     let define = if useScriptResolutionRules then "INTERACTIVE" else "COMPILED"

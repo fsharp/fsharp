@@ -2,10 +2,6 @@
 
 namespace Microsoft.FSharp.Core
 
-    open System.Diagnostics
-    open Microsoft.FSharp.Core
-    open Microsoft.FSharp.Core.LanguagePrimitives.IntrinsicOperators
-    open Microsoft.FSharp.Collections
     open Microsoft.FSharp.Core.Operators
 
     [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
@@ -15,13 +11,13 @@ namespace Microsoft.FSharp.Core
         let get option = match option with None -> invalidArg "option" (SR.GetString(SR.optionValueWasNone)) | Some x -> x
 
         [<CompiledName("IsSome")>]
-        let isSome option = match option with  None -> false | Some _ -> true
+        let inline isSome option = match option with None -> false | Some _ -> true
 
         [<CompiledName("IsNone")>]
-        let isNone option = match option with  None -> true | Some _ -> false
+        let inline isNone option = match option with None -> true | Some _ -> false
 
         [<CompiledName("Count")>]
-        let count option = match option with  None -> 0 | Some _ -> 1
+        let count option = match option with None -> 0 | Some _ -> 1
 
         [<CompiledName("Fold")>]
         let fold<'T,'State> f (s:'State) (inp: option<'T>) = match inp with None -> s | Some x -> f s x
@@ -57,7 +53,7 @@ namespace Microsoft.FSharp.Core
         let toNullable option = match option with None -> System.Nullable() | Some v -> System.Nullable(v)
 
         [<CompiledName("OfNullable")>]
-        let ofNullable (value:System.Nullable<'T>) =  if value.HasValue then Some value.Value else None
+        let ofNullable (value:System.Nullable<'T>) = if value.HasValue then Some value.Value else None
 
         [<CompiledName("OfObj")>]
         let ofObj value = match value with null -> None | _ -> Some value

@@ -18,7 +18,7 @@ open Microsoft.FSharp.Compiler.Tast
 open Microsoft.FSharp.Compiler.Tastops
 open Microsoft.FSharp.Compiler.Lib
 open Microsoft.FSharp.Compiler.Infos
-open Microsoft.FSharp.Compiler.MSBuildResolver
+open Microsoft.FSharp.Compiler.ReferenceResolver
 open Microsoft.FSharp.Compiler.TcGlobals
 open Microsoft.FSharp.Core.CompilerServices
 #if EXTENSIONTYPING
@@ -183,12 +183,8 @@ type AssemblyResolution =
        originalReference : AssemblyReference
        /// Path to the resolvedFile
        resolvedPath : string    
-       /// Search path used to find this spot.
-       resolvedFrom : ResolvedFrom
-       /// The qualified name of the assembly
-       fusionName : string
-       /// Name of the redist, if any, that the assembly was found in.
-       redist : string 
+       /// Create the tooltip texxt for the assembly reference
+       prepareToolTip : unit -> string
        /// Whether or not this is an installed system assembly (for example, System.dll)
        sysdir : bool
        // Lazily populated ilAssemblyRef for this reference. 
@@ -241,7 +237,7 @@ type TcConfigBuilder =
       mutable implicitOpens: string list
       mutable useFsiAuxLib: bool
       mutable framework: bool
-      mutable resolutionEnvironment : Microsoft.FSharp.Compiler.MSBuildResolver.ResolutionEnvironment
+      mutable resolutionEnvironment : ReferenceResolver.ResolutionEnvironment
       mutable implicitlyResolveAssemblies : bool
       mutable addVersionSpecificFrameworkReferences : bool
       /// Set if the user has explicitly turned indentation-aware syntax on/off
@@ -268,9 +264,6 @@ type TcConfigBuilder =
       mutable checkOverflow:bool
       mutable showReferenceResolutions:bool
       mutable outputFile : string option
-      mutable resolutionFrameworkRegistryBase : string
-      mutable resolutionAssemblyFoldersSuffix : string 
-      mutable resolutionAssemblyFoldersConditions : string          
       mutable platform : ILPlatform option
       mutable prefer32Bit : bool
       mutable useSimpleResolution : bool
@@ -304,7 +297,11 @@ type TcConfigBuilder =
       mutable onlyEssentialOptimizationData : bool
       mutable useOptimizationDataFile : bool
       mutable useSignatureDataFile : bool
+      mutable jitTracking : bool
       mutable portablePDB : bool
+      mutable embeddedPDB : bool
+      mutable embedAllSource : bool
+      mutable embedSourceList : string list
       mutable ignoreSymbolStoreSequencePoints : bool
       mutable internConstantStrings : bool
       mutable extraOptimizationIterations : int
@@ -312,6 +309,7 @@ type TcConfigBuilder =
       mutable win32manifest : string
       mutable includewin32manifest : bool
       mutable linkResources : string list
+      mutable referenceResolver: ReferenceResolver.Resolver 
       mutable showFullPaths : bool
       mutable errorStyle : ErrorStyle
       mutable utf8output : bool
@@ -363,6 +361,7 @@ type TcConfigBuilder =
     }
 
     static member CreateNew : 
+        referenceResolver: ReferenceResolver.Resolver *
         defaultFSharpBinariesDir: string * 
         optimizeForMemory: bool * 
         implicitIncludeDir: string * 
@@ -375,6 +374,7 @@ type TcConfigBuilder =
     member AddIncludePath : range * string * string -> unit
     member AddReferencedAssemblyByPath : range * string -> unit
     member RemoveReferencedAssemblyByPath : range * string -> unit
+    member AddEmbeddedSourceFile : string -> unit
     member AddEmbeddedResource : string -> unit
     
     static member SplitCommandLineResourceInfo : string -> string * string * ILResourceAccess
@@ -420,9 +420,6 @@ type TcConfig =
     member checkOverflow:bool
     member showReferenceResolutions:bool
     member outputFile : string option
-    member resolutionFrameworkRegistryBase : string
-    member resolutionAssemblyFoldersSuffix : string 
-    member resolutionAssemblyFoldersConditions : string          
     member platform : ILPlatform option
     member prefer32Bit : bool
     member useSimpleResolution : bool
@@ -456,7 +453,11 @@ type TcConfig =
     member onlyEssentialOptimizationData : bool
     member useOptimizationDataFile : bool
     member useSignatureDataFile : bool
+    member jitTracking : bool
     member portablePDB : bool
+    member embeddedPDB : bool
+    member embedAllSource : bool
+    member embedSourceList : string list
     member ignoreSymbolStoreSequencePoints : bool
     member internConstantStrings : bool
     member extraOptimizationIterations : int
@@ -506,7 +507,7 @@ type TcConfig =
 
 
     member ComputeLightSyntaxInitialStatus : string -> bool
-    member ClrRoot : string list
+    member TargetFrameworkDirectories : string list
     
     /// Get the loaded sources that exist and issue a warning for the ones that don't
     member GetAvailableLoadedSources : unit -> (range*string) list
@@ -586,7 +587,6 @@ type TcAssemblyResolutions =
 type TcImports =
     interface System.IDisposable
     //new : TcImports option -> TcImports
-    member SetBase : TcImports -> unit
     member DllTable : NameMap<ImportedBinary> with get
     member GetImportedAssemblies : unit -> ImportedAssembly list
     member GetCcusInDeclOrder : unit -> CcuThunk list
@@ -728,7 +728,7 @@ val TypeCheckClosedInputSetFinish : TypedImplFile list * TcState -> TcState * Ty
 val TypeCheckClosedInputSet :(unit -> bool) * TcConfig * TcImports * TcGlobals * Ast.LongIdent option * TcState * Ast.ParsedInput  list  -> TcState * TopAttribs * TypedImplFile list * TcEnv
 
 /// Check a single input and finish the checking
-val TypeCheckSingleInputAndFinishEventually :
+val TypeCheckOneInputAndFinishEventually :
     (unit -> bool) * TcConfig * TcImports * TcGlobals * Ast.LongIdent option * NameResolution.TcResultsSink * TcState * Ast.ParsedInput 
         -> Eventually<(TcEnv * TopAttribs * TypedImplFile list) * TcState>
 
@@ -772,7 +772,7 @@ type LoadClosure =
       RootWarnings : PhasedError list }
 
     // Used from service.fs, when editing a script file
-    static member ComputeClosureOfSourceText : filename: string * source: string * implicitDefines:CodeContext * useSimpleResolution: bool * useFsiAuxLib: bool * lexResourceManager: Lexhelp.LexResourceManager * applyCompilerOptions: (TcConfigBuilder -> unit) -> LoadClosure
+    static member ComputeClosureOfSourceText : referenceResolver: ReferenceResolver.Resolver * filename: string * source: string * implicitDefines:CodeContext * useSimpleResolution: bool * useFsiAuxLib: bool * lexResourceManager: Lexhelp.LexResourceManager * applyCompilerOptions: (TcConfigBuilder -> unit) -> LoadClosure
 
     /// Used from fsi.fs and fsc.fs, for #load and command line. The resulting references are then added to a TcConfig.
     static member ComputeClosureOfSourceFiles : tcConfig:TcConfig * (string * range) list * implicitDefines:CodeContext * useDefaultScriptingReferences : bool * lexResourceManager : Lexhelp.LexResourceManager -> LoadClosure

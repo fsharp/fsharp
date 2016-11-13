@@ -136,7 +136,7 @@ This build the proto compiler, then the library, then the final compiler.
 You can also build these independently using:
 
     msbuild src\fsharp-proto-build.proj
-    ngen install ..\lib\proto\fsc-proto.exe
+    ngen install lib\proto\fsc-proto.exe
     msbuild src\fsharp-library-build.proj /p:Configuration=Release
     msbuild src\fsharp-compiler-build.proj /p:Configuration=Release
 
@@ -154,7 +154,7 @@ You can also build FSharp.Core.dll for other profiles:
 Change to ``` /p:Configuration=Debug``` for debug binaries.
 
 Add ``` /p:FSharpCoreBackVersion=3.0``` to build a back version of FSharp.Core.dll with a
-version number suitable for use when building libaries that have usable with both F# 3.0 and F# 3.1 libraries.
+version number suitable for use when building libraries that have usable with both F# 3.0 and F# 3.1 libraries.
 
     msbuild src\fsharp-library-build.proj /p:TargetFramework=net20 /p:Configuration=Release /p:FSharpCoreBackVersion=3.0
     msbuild src\fsharp-library-build.proj /p:TargetFramework=net40 /p:Configuration=Release /p:FSharpCoreBackVersion=3.0
@@ -296,7 +296,7 @@ sudo make install
 Maintainers
 -----------
 
-Tha maintainers of this repository appointed by the F# Core Engineering Group are:
+The maintainers of this repository appointed by the F# Core Engineering Group are:
 
  - [Tomas Petricek](http://github.com/tpetricek), [Robin Neatherway](https://github.com/rneatherway)
  - with help and guidance from [Don Syme](http://github.com/dsyme), [Cameron Taggart](http://github.com/ctaggart), [Dave Thomas](http://github.com/7sharp9), [Jo Shields](http://github.com/directhex), [Lincoln Atkinson](http://github.com/latkin), [Kevin Ransom](http://github.com/KevinRansom) and [Henrik Feldt](http://github.com/haf)

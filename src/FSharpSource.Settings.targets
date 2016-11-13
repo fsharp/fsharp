@@ -14,7 +14,8 @@
   </PropertyGroup>
   <!-- Standard interpretations of Debug and Release configurations -->
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
-    <DebugType Condition=" '$(DebugType)' == '' ">full</DebugType>
+    <DebugType Condition=" '$(DebugType)' == '' and  '$(TargetFramework)' != 'coreclr' ">full</DebugType>
+    <DebugType Condition=" '$(DebugType)' == '' and  '$(TargetFramework)' == 'coreclr' ">embedded</DebugType>
     <Optimize Condition=" '$(Optimize)' == '' ">false</Optimize>
     <DefineConstants Condition=" '$(DefineConstants)' == '' ">DEBUG;TRACE</DefineConstants>
     <ErrorReport Condition=" '$(ErrorReport)' == '' ">prompt</ErrorReport>

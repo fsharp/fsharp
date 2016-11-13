@@ -85,7 +85,7 @@ let GetSuperTypeOfType g amap m typ =
             Some g.system_Array_typ
         elif isRefTy g typ && not (isObjTy g typ) then 
             Some g.obj_ty
-        elif isTupleStructTy g typ then 
+        elif isStructTupleTy g typ then 
             Some g.obj_ty
         elif isRecdTy g typ || isUnionTy g typ then
             Some g.obj_ty
@@ -134,7 +134,7 @@ let rec GetImmediateInterfacesOfType skipUnref g amap m typ =
                     // succeeded with more reported. There are pathological corner cases where this 
                     // doesn't apply: e.g. for mscorlib interfaces like IComparable, but we can always 
                     // assume those are present. 
-                    [ for ity in tdef.Implements |> ILList.toList  do
+                    [ for ity in tdef.Implements do
                          if skipUnref = SkipUnrefInterfaces.No || CanImportILType scoref amap m ity then 
                              yield ImportILType scoref amap m tinst ity ]
 
@@ -369,7 +369,7 @@ type ValRef with
     member vref.IsDefiniteFSharpOverrideMember = 
         let membInfo = vref.MemberInfo.Value   
         let flags = membInfo.MemberFlags
-        not flags.IsDispatchSlot && (flags.IsOverrideOrExplicitImpl || nonNil membInfo.ImplementedSlotSigs)
+        not flags.IsDispatchSlot && (flags.IsOverrideOrExplicitImpl || not (List.isEmpty membInfo.ImplementedSlotSigs))
 
     /// Check if an F#-declared member value is an  explicit interface member implementation
     member vref.IsFSharpExplicitInterfaceImplementation g = 
@@ -561,24 +561,26 @@ type ParamData =
 type ILFieldInit with 
     /// Compute the ILFieldInit for the given provided constant value for a provided enum type.
     static member FromProvidedObj m (v:obj) = 
-        if v = null then ILFieldInit.Null else
-        let objTy = v.GetType()
-        let v = if objTy.IsEnum then objTy.GetField("value__").GetValue(v) else v
-        match v with 
-        | :? single as i -> ILFieldInit.Single i
-        | :? double as i -> ILFieldInit.Double i
-        | :? bool as i -> ILFieldInit.Bool i
-        | :? char as i -> ILFieldInit.Char (uint16 i)
-        | :? string as i -> ILFieldInit.String i
-        | :? sbyte as i -> ILFieldInit.Int8 i
-        | :? byte as i -> ILFieldInit.UInt8 i
-        | :? int16 as i -> ILFieldInit.Int16 i
-        | :? uint16 as i -> ILFieldInit.UInt16 i
-        | :? int as i -> ILFieldInit.Int32 i
-        | :? uint32 as i -> ILFieldInit.UInt32 i
-        | :? int64 as i -> ILFieldInit.Int64 i
-        | :? uint64 as i -> ILFieldInit.UInt64 i
-        | _ -> error(Error(FSComp.SR.infosInvalidProvidedLiteralValue(try v.ToString() with _ -> "?"),m))
+        match v with
+        | null -> ILFieldInit.Null
+        | _ ->
+            let objTy = v.GetType()
+            let v = if objTy.IsEnum then objTy.GetField("value__").GetValue(v) else v
+            match v with 
+            | :? single as i -> ILFieldInit.Single i
+            | :? double as i -> ILFieldInit.Double i
+            | :? bool as i -> ILFieldInit.Bool i
+            | :? char as i -> ILFieldInit.Char (uint16 i)
+            | :? string as i -> ILFieldInit.String i
+            | :? sbyte as i -> ILFieldInit.Int8 i
+            | :? byte as i -> ILFieldInit.UInt8 i
+            | :? int16 as i -> ILFieldInit.Int16 i
+            | :? uint16 as i -> ILFieldInit.UInt16 i
+            | :? int as i -> ILFieldInit.Int32 i
+            | :? uint32 as i -> ILFieldInit.UInt32 i
+            | :? int64 as i -> ILFieldInit.Int64 i
+            | :? uint64 as i -> ILFieldInit.UInt64 i
+            | _ -> error(Error(FSComp.SR.infosInvalidProvidedLiteralValue(try v.ToString() with _ -> "?"),m))
 
 
 /// Compute the OptionalArgInfo for a provided parameter. 
@@ -715,7 +717,7 @@ type ILMethInfo =
     /// Get the Abstract IL metadata corresponding to the parameters of the method. 
     /// If this is an C#-style extension method then drop the object argument.
     member x.ParamMetadata = 
-        let ps = x.RawMetadata.Parameters |> ILList.toList
+        let ps = x.RawMetadata.Parameters
         if x.IsILExtensionMethod then List.tail ps else ps
 
     /// Get the number of parameters of the method
@@ -768,7 +770,7 @@ type ILMethInfo =
     /// Get all the argument types of the IL method. Include the object argument even if this is 
     /// an C#-style extension method.
     member x.GetRawArgTypes(amap,m,minst) = 
-        x.RawMetadata.Parameters |> ILList.toList |> List.map (fun p -> ImportILTypeFromMetadata amap m x.MetadataScope x.DeclaringTypeInst minst p.Type) 
+        x.RawMetadata.Parameters |> List.map (fun p -> ImportILTypeFromMetadata amap m x.MetadataScope x.DeclaringTypeInst minst p.Type) 
 
     /// Get info about the arguments of the IL method. If this is an C#-style extension method then 
     /// drop the object argument.
@@ -785,7 +787,7 @@ type ILMethInfo =
     member x.IsDllImport g = 
         match g.attrib_DllImportAttribute with
         | None -> false
-        | Some (AttribInfo(tref,_)) ->x.RawMetadata.CustomAttrs |> TryDecodeILAttribute g tref  |> isSome
+        | Some (AttribInfo(tref,_)) ->x.RawMetadata.CustomAttrs |> TryDecodeILAttribute g tref |> Option.isSome
 
     /// Get the (zero or one) 'self'/'this'/'object' arguments associated with an IL method. 
     /// An instance extension method returns one object argument.
@@ -1689,10 +1691,10 @@ type ILPropInfo =
         ILMethInfo(g,x.ILTypeInfo.ToType,None,mdef,[]) 
           
     /// Indicates if the IL property has a 'get' method
-    member x.HasGetter = isSome x.RawMetadata.GetMethod 
+    member x.HasGetter = Option.isSome x.RawMetadata.GetMethod 
 
     /// Indicates if the IL property has a 'set' method
-    member x.HasSetter = isSome x.RawMetadata.SetMethod 
+    member x.HasSetter = Option.isSome x.RawMetadata.SetMethod 
 
     /// Indicates if the IL property is static
     member x.IsStatic = (x.RawMetadata.CallingConv = ILThisConvention.Static) 
@@ -1710,12 +1712,12 @@ type ILPropInfo =
     /// Get the names and types of the indexer arguments associated with the IL property.
     member x.GetParamNamesAndTypes(amap,m) = 
         let (ILPropInfo (tinfo,pdef)) = x
-        pdef.Args |> ILList.toList |> List.map (fun ty -> ParamNameAndType(None, ImportILTypeFromMetadata amap m tinfo.ILScopeRef tinfo.TypeInst [] ty) )
+        pdef.Args |> List.map (fun ty -> ParamNameAndType(None, ImportILTypeFromMetadata amap m tinfo.ILScopeRef tinfo.TypeInst [] ty) )
 
     /// Get the types of the indexer arguments associated with the IL property.
     member x.GetParamTypes(amap,m) = 
         let (ILPropInfo (tinfo,pdef)) = x
-        pdef.Args |> ILList.toList |> List.map (fun ty -> ImportILTypeFromMetadata amap m tinfo.ILScopeRef tinfo.TypeInst [] ty) 
+        pdef.Args |> List.map (fun ty -> ImportILTypeFromMetadata amap m tinfo.ILScopeRef tinfo.TypeInst [] ty) 
 
     /// Get the return type of the IL property.
     member x.GetPropertyType (amap,m) = 
@@ -1771,7 +1773,7 @@ type PropInfo =
     member x.HasGetter = 
         match x with
         | ILProp(_,x) -> x.HasGetter
-        | FSProp(_,_,x,_) -> isSome x 
+        | FSProp(_,_,x,_) -> Option.isSome x 
 #if EXTENSIONTYPING
         | ProvidedProp(_,pi,m) -> pi.PUntaint((fun pi -> pi.CanRead),m)
 #endif
@@ -1780,7 +1782,7 @@ type PropInfo =
     member x.HasSetter = 
         match x with
         | ILProp(_,x) -> x.HasSetter
-        | FSProp(_,_,_,x) -> isSome x 
+        | FSProp(_,_,_,x) -> Option.isSome x 
 #if EXTENSIONTYPING
         | ProvidedProp(_,pi,m) -> pi.PUntaint((fun pi -> pi.CanWrite),m)
 #endif
@@ -2218,7 +2220,7 @@ type EventInfo =
         | ILEvent(_,ILEventInfo(tinfo,edef)) -> 
             // Get the delegate type associated with an IL event, taking into account the instantiation of the
             // declaring type.
-            if isNone edef.Type then error (nonStandardEventError x.EventName m)
+            if Option.isNone edef.Type then error (nonStandardEventError x.EventName m)
             ImportILTypeFromMetadata amap m tinfo.ILScopeRef tinfo.TypeInst [] edef.Type.Value
 
         | FSEvent(g,p,_,_) -> 

@@ -118,7 +118,7 @@ let BindSubstVal env v e =
 
 
 let BindVals env vs = List.fold BindVal env vs // fold left-to-right because indexes are left-to-right 
-let BindFlatVals env vs = FlatList.fold BindVal env vs // fold left-to-right because indexes are left-to-right 
+let BindFlatVals env vs = List.fold BindVal env vs // fold left-to-right because indexes are left-to-right 
 
 exception InvalidQuotedTerm of exn
 exception IgnoringPartOfQuotedTermWarning of string * Range.range
@@ -178,7 +178,7 @@ let rec EmitDebugInfoIfNecessary cenv env m astExpr : QP.ExprData =
     if cenv.emitDebugInfoInQuotations && not (QP.isAttributedExpression astExpr) then
         cenv.emitDebugInfoInQuotations <- false
         try
-            let mk_tuple g m es = mkTupled g m es (List.map (tyOfExpr g) es)
+            let mk_tuple g m es = mkRefTupled g m es (List.map (tyOfExpr g) es)
 
             let rangeExpr = 
                     mk_tuple cenv.g m 
@@ -264,7 +264,7 @@ and private ConvExprCore cenv (env : QuotationTranslationEnv) (expr: Expr) : QP.
         // If so, adjust and try again
         if curriedArgs.Length < curriedArgInfos.Length ||
            ((List.take curriedArgInfos.Length curriedArgs,curriedArgInfos) ||> List.exists2 (fun arg argInfo -> 
-                       (argInfo.Length > (tryDestTuple arg).Length))) then
+                       (argInfo.Length > (tryDestRefTupleExpr arg).Length))) then
 
             if verboseCReflect then 
                 dprintfn "vref.DisplayName = %A was under applied" vref.DisplayName 
@@ -292,7 +292,7 @@ and private ConvExprCore cenv (env : QuotationTranslationEnv) (expr: Expr) : QP.
                         let numUntupledArgs = curriedArgInfo.Length 
                         (if numUntupledArgs = 0 then [] 
                          elif numUntupledArgs = 1 then [arg] 
-                         else tryDestTuple arg))
+                         else tryDestRefTupleExpr arg))
 
                 if verboseCReflect then 
                     dprintfn "vref.DisplayName  = %A , after unit adjust, #untupledCurriedArgs = %A, #curriedArgInfos = %d" vref.DisplayName  (List.map List.length untupledCurriedArgs) curriedArgInfos.Length
@@ -345,7 +345,7 @@ and private ConvExprCore cenv (env : QuotationTranslationEnv) (expr: Expr) : QP.
 
     // Simple applications 
     | Expr.App(f,_fty,tyargs,args,m) -> 
-        if nonNil tyargs then wfail(Error(FSComp.SR.crefQuotationsCantContainGenericExprs(), m))
+        if not (List.isEmpty tyargs) then wfail(Error(FSComp.SR.crefQuotationsCantContainGenericExprs(), m))
         List.fold (fun fR arg -> QP.mkApp (fR,ConvExpr cenv env arg)) (ConvExpr cenv env f) args
     
     // REVIEW: what is the quotation view of literals accessing enumerations? Currently they show up as integers. 
@@ -365,14 +365,14 @@ and private ConvExprCore cenv (env : QuotationTranslationEnv) (expr: Expr) : QP.
         
     | Expr.LetRec(binds,body,_,_) -> 
          let vs = valsOfBinds binds
-         let vsR = vs |> FlatList.map (ConvVal cenv env) 
+         let vsR = vs |> List.map (ConvVal cenv env) 
          let env = BindFlatVals env vs
          let bodyR = ConvExpr cenv env body 
-         let bindsR = FlatList.zip vsR (binds |> FlatList.map (fun b -> b.Expr |> ConvExpr cenv env))
-         QP.mkLetRec(FlatList.toList bindsR,bodyR)
+         let bindsR = List.zip vsR (binds |> List.map (fun b -> b.Expr |> ConvExpr cenv env))
+         QP.mkLetRec(bindsR,bodyR)
 
     | Expr.Lambda(_,_,_,vs,b,_,_) -> 
-        let v,b = MultiLambdaToTupledLambda vs b 
+        let v,b = MultiLambdaToTupledLambda cenv.g vs b 
         let vR = ConvVal cenv env v 
         let bR  = ConvExpr cenv (BindVal env v) b 
         QP.mkLambda(vR, bR)
@@ -415,10 +415,10 @@ and private ConvExprCore cenv (env : QuotationTranslationEnv) (expr: Expr) : QP.
             let tyargsR = ConvTypes cenv env m tyargs
             let argsR = ConvExprs cenv env args
             QP.mkSum(mkR,tyargsR,argsR)
-        | TOp.Tuple,tyargs,_ -> 
-            let tyR = ConvType cenv env m (mkTupledTy cenv.g tyargs)
+        | TOp.Tuple tupInfo,tyargs,_ -> 
+            let tyR = ConvType cenv env m (mkAnyTupledTy cenv.g tupInfo tyargs)
             let argsR = ConvExprs cenv env args
-            QP.mkTuple(tyR,argsR)
+            QP.mkTuple(tyR,argsR) // TODO: propagate to quotations
         | TOp.Recd (_,tcref),_,_  -> 
             let rgtypR = ConvTyconRef cenv tcref m
             let tyargsR = ConvTypes cenv env m tyargs
@@ -442,8 +442,8 @@ and private ConvExprCore cenv (env : QuotationTranslationEnv) (expr: Expr) : QP.
         | TOp.ValFieldGet(rfref),tyargs,args ->
             ConvRFieldGet cenv env m rfref tyargs args            
 
-        | TOp.TupleFieldGet(n),tyargs,[e] -> 
-            let tyR = ConvType cenv env m (mkTupledTy cenv.g tyargs)
+        | TOp.TupleFieldGet(tupInfo,n),tyargs,[e] when not (evalTupInfoIsStruct tupInfo) -> 
+            let tyR = ConvType cenv env m (mkRefTupledTy cenv.g tyargs)
             QP.mkTupleGet(tyR, n, ConvExpr cenv env e)
 
         | TOp.ILAsm(([ I_ldfld(_,_,fspec) ] 
@@ -561,7 +561,7 @@ and private ConvExprCore cenv (env : QuotationTranslationEnv) (expr: Expr) : QP.
         | TOp.ILCall(_,_,_,isNewObj,valUseFlags,isProp,_,ilMethRef,enclTypeArgs,methTypeArgs,_tys),[],callArgs -> 
              let parentTyconR = ConvILTypeRefUnadjusted cenv m ilMethRef.EnclosingTypeRef
              let isNewObj = (isNewObj || (match valUseFlags with CtorValUsedAsSuperInit | CtorValUsedAsSelfInit -> true | _ -> false))
-             let methArgTypesR = List.map (ConvILType cenv env m) (ILList.toList ilMethRef.ArgTypes)
+             let methArgTypesR = List.map (ConvILType cenv env m) ilMethRef.ArgTypes
              let methRetTypeR = ConvILType cenv env m ilMethRef.ReturnType
              let methName = ilMethRef.Name
              let isPropGet = isProp && methName.StartsWith("get_",System.StringComparison.Ordinal)
@@ -729,7 +729,7 @@ and private ConvValRefCore holeOk cenv env m (vref:ValRef) tyargs =
         let e = env.substVals.[v]
         ConvExpr cenv env e
     elif env.vs.ContainsVal v then 
-        if nonNil tyargs then wfail(InternalError("ignoring generic application of local quoted variable",m))
+        if not (List.isEmpty tyargs) then wfail(InternalError("ignoring generic application of local quoted variable",m))
         QP.mkVar(env.vs.[v])
     elif v.BaseOrThisInfo = CtorThisVal && cenv.isReflectedDefinition = IsReflectedDefinition.Yes then 
         QP.mkThisVar(ConvType cenv env m v.Type)
@@ -795,7 +795,7 @@ and ConvType cenv env m typ =
         QP.mkILNamedTy(ConvTyconRef cenv tcref m, ConvTypes cenv env m tyargs)
 
     | TType_fun(a,b)          -> QP.mkFunTy(ConvType cenv env m a,ConvType cenv env m b)
-    | TType_tuple(l)          -> ConvType cenv env m (mkCompiledTupleTy cenv.g l)
+    | TType_tuple(tupInfo,l)  -> ConvType cenv env m (mkCompiledTupleTy cenv.g (evalTupInfoIsStruct tupInfo) l)
     | TType_var(tp)           -> QP.mkVarTy(ConvTyparRef cenv env m tp)
     | TType_forall(_spec,_ty)   -> wfail(Error(FSComp.SR.crefNoInnerGenericsInQuotations(),m))
     | _ -> wfail(Error (FSComp.SR.crefQuotationsCantContainThisType(),m))
@@ -883,8 +883,8 @@ and ConvDecisionTree cenv env tgs typR x =
           let (TTarget(vars,rhs,_)) = tgs.[n] 
           // TAST stores pattern bindings in reverse order for some reason
           // Reverse them here to give a good presentation to the user
-          let args = List.rev (FlatList.toList args)
-          let vars = List.rev (FlatList.toList vars)
+          let args = List.rev args
+          let vars = List.rev vars
           
           let varsR = vars |> List.map (ConvVal cenv env) 
           let targetR = ConvExpr cenv (BindVals env vars) rhs
@@ -945,7 +945,7 @@ and ConvVoidType cenv m = QP.mkILNamedTy(ConvTyconRef cenv cenv.g.system_Void_tc
 
 and ConvILType cenv env m ty = 
     match ty with 
-    | ILType.Boxed tspec | ILType.Value tspec -> QP.mkILNamedTy(ConvILTypeRefUnadjusted cenv m tspec.TypeRef, List.map (ConvILType cenv env m) (ILList.toList tspec.GenericArgs))
+    | ILType.Boxed tspec | ILType.Value tspec -> QP.mkILNamedTy(ConvILTypeRefUnadjusted cenv m tspec.TypeRef, List.map (ConvILType cenv env m) tspec.GenericArgs)
     | ILType.Array (shape,ty) -> QP.mkArrayTy(shape.Rank,ConvILType cenv env m ty)
     | ILType.TypeVar idx -> QP.mkVarTy(int idx)
     | ILType.Void -> ConvVoidType cenv m

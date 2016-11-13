@@ -22,6 +22,7 @@
     <OtherFlags Condition=" '$(TargetFramework)'=='net20' AND EXISTS('$(SystemRoot)\Microsoft.NET\Framework\v4.0.30319\mscorlib.dll')">$(OtherFlags) --compiling-fslib-20:"$(SystemRoot)\Microsoft.NET\Framework\v4.0.30319\mscorlib.dll" </OtherFlags>
     <OtherFlags Condition=" '$(TargetFramework)'=='net20' AND EXISTS('$(MonoLibDir40)/mscorlib.dll')">$(OtherFlags) --compiling-fslib-20:"$(MonoLibDir40)/mscorlib.dll" </OtherFlags>
     <OtherFlags Condition=" '$(TargetFramework)'=='net40'">$(OtherFlags) --compiling-fslib-40</OtherFlags>	
+    <OtherFlags>$(OtherFlags) --warnon:1182 --compiling-fslib --maxerrors:20 --extraoptimizationloops:1 </OtherFlags>
     <OtherFlags Condition=" '$(TargetFramework)'=='net20'">$(OtherFlags) --compiling-fslib-20:"$(SystemRoot)\Microsoft.NET\Framework\v4.0.30319\mscorlib.dll" </OtherFlags>
     <OtherFlags Condition=" '$(TargetFramework)'=='net40'">$(OtherFlags) --compiling-fslib-40</OtherFlags>
     <OtherFlags Condition=" '$(TargetFramework)'=='coreclr'">$(OtherFlags) --targetprofile:netcore</OtherFlags>
@@ -249,6 +250,7 @@
                                                 '$(TargetFramework)' == 'xamarinmacfull'" >
       <Private>false</Private>
     </Reference>
+    <Reference Include="System.Numerics" Condition="'$(TargetFramework)' == 'net40'" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'coreclr'">
     <None Include="project.json" />

@@ -296,45 +296,6 @@ namespace Microsoft.FSharp.Text.StructuredFormat
             (let cases = FSharpType.GetUnionCases typ 
              cases.Length > 0 && equivHeadTypes (typedefof<list<_>>) cases.[0].DeclaringType)
 
-        module Type =
-
-            let recdDescOfProps props = 
-               props |> Array.toList |> List.map (fun (p:PropertyInfo) -> p.Name, p.PropertyType) 
-
-            let getTypeInfoOfType (bindingFlags:BindingFlags) (typ:Type) = 
-#if FX_RESHAPED_REFLECTION
-                let showNonPublic = isNonPublicFlag bindingFlags
-#endif
-                if FSharpType.IsTuple(typ)  then TypeInfo.TupleType (FSharpType.GetTupleElements(typ) |> Array.toList)
-                elif FSharpType.IsFunction(typ) then let ty1,ty2 = FSharpType.GetFunctionElements typ in  TypeInfo.FunctionType( ty1,ty2)
-#if FX_RESHAPED_REFLECTION
-                elif FSharpType.IsUnion(typ, showNonPublic) then 
-                    let cases = FSharpType.GetUnionCases(typ, showNonPublic)
-#else
-                elif FSharpType.IsUnion(typ,bindingFlags) then 
-                    let cases = FSharpType.GetUnionCases(typ,bindingFlags) 
-#endif
-                    match cases with 
-                    | [| |] -> TypeInfo.ObjectType(typ) 
-                    | _ -> 
-                        TypeInfo.SumType(cases |> Array.toList |> List.map (fun case -> 
-                            let flds = case.GetFields()
-                            case.Name,recdDescOfProps(flds)))
-#if FX_RESHAPED_REFLECTION
-                elif FSharpType.IsRecord(typ, showNonPublic) then 
-                    let flds = FSharpType.GetRecordFields(typ, showNonPublic) 
-#else
-                elif FSharpType.IsRecord(typ,bindingFlags) then 
-                    let flds = FSharpType.GetRecordFields(typ,bindingFlags) 
-#endif
-                    TypeInfo.RecordType(recdDescOfProps(flds))
-                else
-                    TypeInfo.ObjectType(typ)
-
-            let IsOptionType (typ:Type) = isOptionTy typ
-            let IsListType (typ:Type) = isListType typ
-            let IsUnitType (typ:Type) = isUnitType typ
-
         [<NoEquality; NoComparison>]
         type ValueInfo =
           | TupleValue of obj list
@@ -748,11 +709,10 @@ namespace Microsoft.FSharp.Text.StructuredFormat
         // pprinter: anyL - support functions
         // -------------------------------------------------------------------- 
 
-        let getProperty (obj: obj) name =
-            let ty = obj.GetType()
+        let getProperty (ty: Type) (obj: obj) name =
 #if FX_ATLEAST_PORTABLE
             let prop = ty.GetProperty(name, (BindingFlags.Instance ||| BindingFlags.Public ||| BindingFlags.NonPublic))
-            if prop <> null then prop.GetValue(obj,[||])
+            if isNotNull prop then prop.GetValue(obj,[||])
 #if FX_NO_MISSINGMETHODEXCEPTION
             // Profile 7, 47, 78 and 259 raise MissingMemberException
             else 
@@ -771,6 +731,9 @@ namespace Microsoft.FSharp.Text.StructuredFormat
             ty.InvokeMember(name, (BindingFlags.GetProperty ||| BindingFlags.Instance ||| BindingFlags.Public ||| BindingFlags.NonPublic), null, obj, [| |],CultureInfo.InvariantCulture)
 #endif
 #endif
+        let getField obj (fieldInfo: FieldInfo) =
+            fieldInfo.GetValue(obj)
+
         let formatChar isChar c = 
             match c with 
             | '\'' when isChar -> "\\\'"
@@ -866,12 +829,12 @@ namespace Microsoft.FSharp.Text.StructuredFormat
                             Some (wordL (x.ToString()))
                           else
                             // Try the StructuredFormatDisplayAttribute extensibility attribute
-                            match x.GetType().GetCustomAttributes (typeof<StructuredFormatDisplayAttribute>, true) with
+                            match ty.GetCustomAttributes (typeof<StructuredFormatDisplayAttribute>, true) with
                             | null | [| |] -> None
                             | res -> 
                                let attr = (res.[0] :?> StructuredFormatDisplayAttribute) 
                                let txt = attr.Value
-                               if txt = null || txt.Length <= 1 then  
+                               if isNull txt || txt.Length <= 1 then  
                                    None
                                else
                                   let messageRegexPattern = @"^(?<pre>.*?)(?<!\\){(?<prop>.*?)(?<!\\)}(?<post>.*)$"
@@ -901,7 +864,7 @@ namespace Microsoft.FSharp.Text.StructuredFormat
                                         let postText = m.Groups.["post"].Value // Everything after the closing bracket
                                         let prop = replaceEscapedBrackets(m.Groups.["prop"].Value) // Unescape everything between the opening and closing brackets
 
-                                        match catchExn (fun () -> getProperty x prop) with
+                                        match catchExn (fun () -> getProperty ty x prop) with
                                           | Choice2Of2 e -> Some (wordL ("<StructuredFormatDisplay exception: " + e.Message + ">"))
                                           | Choice1Of2 alternativeObj ->
                                               try 
@@ -1006,7 +969,7 @@ namespace Microsoft.FSharp.Text.StructuredFormat
                     makeRecordL (List.map itemL items)
 
                 | ConstructorValue (constr,recd) when // x is List<T>. Note: "null" is never a valid list value. 
-                                                      x<>null && Type.IsListType (x.GetType()) ->
+                                                      x<>null && isListType (x.GetType()) ->
                     match constr with 
                     | "Cons" -> 
                         let (x,xs) = unpackCons recd
@@ -1058,7 +1021,7 @@ namespace Microsoft.FSharp.Text.StructuredFormat
 #else
                         wordL (formatString s)  
 #endif                        
-                    | :? System.Array as arr -> 
+                    | :? Array as arr -> 
                         match arr.Rank with
                         | 1 -> 
                              let n = arr.Length
@@ -1083,18 +1046,17 @@ namespace Microsoft.FSharp.Text.StructuredFormat
                         
                     // Format 'set' and 'map' nicely
                     | _ when  
-                          (let ty = obj.GetType()
-                           ty.IsGenericType && (ty.GetGenericTypeDefinition() = typedefof<Map<int,int>> 
+                          (ty.IsGenericType && (ty.GetGenericTypeDefinition() = typedefof<Map<int,int>> 
                                                 || ty.GetGenericTypeDefinition() = typedefof<Set<int>>) ) ->
-                         let ty = obj.GetType()
                          let word = if ty.GetGenericTypeDefinition() = typedefof<Map<int,int>> then "map" else "set"
                          let possibleKeyValueL v = 
+                             let tyv = v.GetType()
                              if word = "map" &&
                                 (match v with null -> false | _ -> true) && 
-                                v.GetType().IsGenericType && 
-                                v.GetType().GetGenericTypeDefinition() = typedefof<KeyValuePair<int,int>> then
-                                  objL depthLim Precedence.BracketIfTuple (v.GetType().GetProperty("Key").GetValue(v, [| |]), 
-                                                                           v.GetType().GetProperty("Value").GetValue(v, [| |]))
+                                tyv.IsGenericType && 
+                                tyv.GetGenericTypeDefinition() = typedefof<KeyValuePair<int,int>> then
+                                  objL depthLim Precedence.BracketIfTuple (tyv.GetProperty("Key").GetValue(v, [| |]), 
+                                                                           tyv.GetProperty("Value").GetValue(v, [| |]))
                              else
                                   objL depthLim Precedence.BracketIfTuple v
                          let it = (obj :?>  System.Collections.IEnumerable).GetEnumerator() 
@@ -1128,7 +1090,7 @@ namespace Microsoft.FSharp.Text.StructuredFormat
                            // Also, in the declared values case, if the sequence is actually a known non-lazy type (list, array etc etc) we could print it.  
                            wordL "<seq>" |> showModeFilter
                     | _ ->
-                         if showMode = ShowTopLevelBinding && typeUsesSystemObjectToString (obj.GetType()) then
+                         if showMode = ShowTopLevelBinding && typeUsesSystemObjectToString ty then
                            emptyL
                          else
                            countNodes 1
@@ -1141,8 +1103,11 @@ namespace Microsoft.FSharp.Text.StructuredFormat
 #else                           
                               let props = ty.GetProperties(BindingFlags.GetField ||| BindingFlags.Instance ||| BindingFlags.Public)
 #endif                              
-                              let props = 
-                                props |> Array.filter (fun pi ->
+                              let fields = ty.GetFields(BindingFlags.Instance ||| BindingFlags.Public) |> Array.map (fun i -> i :> MemberInfo)
+                              let propsAndFields = 
+                                props |> Array.map (fun i -> i :> MemberInfo)
+                                      |> Array.append fields
+                                      |> Array.filter (fun pi ->
                                     // check if property is annotated with System.Diagnostics.DebuggerBrowsable(Never). 
                                     // Its evaluation may have unexpected side effects and\or block printing.
                                     match Seq.toArray (pi.GetCustomAttributes(typeof<System.Diagnostics.DebuggerBrowsableAttribute>, false)) with
@@ -1153,17 +1118,21 @@ namespace Microsoft.FSharp.Text.StructuredFormat
                               // massively reign in deep printing of properties 
                               let nDepth = depthLim/10
 #if FX_ATLEAST_PORTABLE
-                              System.Array.Sort((props),{ new System.Collections.Generic.IComparer<PropertyInfo> with member this.Compare(p1,p2) = compare (p1.Name) (p2.Name) } );
+                              Array.Sort((propsAndFields),{ new IComparer<MemberInfo> with member this.Compare(p1,p2) = compare (p1.Name) (p2.Name) } );
 #else                              
-                              System.Array.Sort((props:>System.Array),{ new System.Collections.IComparer with member this.Compare(p1,p2) = compare ((p1 :?> PropertyInfo).Name) ((p2 :?> PropertyInfo).Name) } );
+                              Array.Sort((propsAndFields :> Array),{ new System.Collections.IComparer with member this.Compare(p1,p2) = compare ((p1 :?> MemberInfo).Name) ((p2 :?> MemberInfo).Name) } );
 #endif                        
 
-                              if props.Length = 0 || (nDepth <= 0) then basicL 
+                              if propsAndFields.Length = 0 || (nDepth <= 0) then basicL 
                               else basicL --- 
-                                     (props 
+                                     (propsAndFields 
+                                      |> Array.map 
+                                        (fun m -> 
+                                            (m.Name,
+                                                (try Some (objL nDepth Precedence.BracketIfTuple (getProperty ty obj m.Name)) 
+                                                 with _ -> try Some (objL nDepth Precedence.BracketIfTuple (getField obj (m :?> FieldInfo))) 
+                                                           with _ -> None)))
                                       |> Array.toList 
-                                      |> List.map (fun p -> (p.Name,(try Some (objL nDepth Precedence.BracketIfTuple (getProperty obj p.Name)) 
-                                                                     with _ -> None)))
                                       |> makePropertiesL)
                            | _ -> basicL 
                 | UnitValue -> countNodes 1; measureL
@@ -1208,8 +1177,11 @@ namespace Microsoft.FSharp.Text.StructuredFormat
             | :? unativeint  as d -> d.ToString() + "un"
             | :? bool   as b -> (if b then "true" else "false")
             | :? char   as c -> "\'" + formatChar true c + "\'"
-            | _ -> try  let text = obj.ToString()
-                        if text = null then "" else text
+            | _ -> try 
+                        let text = obj.ToString()
+                        match text with
+                        | null -> ""
+                        | _ -> text
                    with e ->
                      // If a .ToString() call throws an exception, catch it and use the message as the result.
                      // This may be informative, e.g. division by zero etc...
