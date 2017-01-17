@@ -51,6 +51,12 @@ REFASSEMPATH = .NETFramework/v2.0
 outsuffix = $(TargetFramework)
 endif
 
+ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-mono-net45-)
+VERSION = 4.3.1.0
+TARGET = 4.5
+outsuffix = .
+endif
+
 ifeq (x-$(TargetFramework)-$(FSharpCoreBackVersion),x-monodroid-)
 VERSION = 3.98.4.0
 TARGET = $(TargetFramework)
