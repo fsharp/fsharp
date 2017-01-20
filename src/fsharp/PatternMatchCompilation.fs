@@ -102,7 +102,7 @@ type SubExprOfInput =
 
 let BindSubExprOfInput g amap gtps (PBind(v,tyscheme)) m (SubExpr(accessf,(ve2,v2))) =
     let e' = 
-        if List.isEmpty gtps then 
+        if isNil gtps then 
             accessf [] ve2 
         else 
             let tyargs = 
@@ -126,7 +126,7 @@ let BindSubExprOfInput g amap gtps (PBind(v,tyscheme)) m (SubExpr(accessf,(ve2,v
     v,mkGenericBindRhs g m [] tyscheme e'
 
 let GetSubExprOfInput g (gtps,tyargs,tinst) (SubExpr(accessf,(ve2,v2))) =
-    if List.isEmpty gtps then accessf [] ve2 else
+    if isNil gtps then accessf [] ve2 else
     accessf tinst (mkApps g ((ve2,v2.Type),[tyargs],[],v2.Range))
 
 //---------------------------------------------------------------------------
@@ -360,7 +360,7 @@ let rec removeActive x l =
 //---------------------------------------------------------------------------
 
 // tpinst is required because the pattern is specified w.r.t. generalized type variables. 
-let getDiscrimOfPattern g tpinst t = 
+let getDiscrimOfPattern (g: TcGlobals) tpinst t = 
     match t with 
     | TPat_null _m -> 
         Some(Test.IsNull)
@@ -386,7 +386,7 @@ let constOfDiscrim discrim =
 let constOfCase (c: DecisionTreeCase) = constOfDiscrim c.Discriminator
 
 /// Compute pattern identity
-let discrimsEq g d1 d2 =
+let discrimsEq (g: TcGlobals) d1 d2 =
   match d1,d2 with 
   | Test.UnionCase (c1,_),    Test.UnionCase(c2,_) -> g.unionCaseRefEq c1 c2
   | Test.ArrayLength (n1,_),   Test.ArrayLength(n2,_) -> (n1=n2)
@@ -602,20 +602,20 @@ let rec BuildSwitch inpExprOpt g expr edges dflt m =
 #if DEBUG
 let rec layoutPat pat = 
     match pat with
-    | TPat_query (_,pat,_) -> Layout.(--) (Layout.wordL "query") (layoutPat pat)
-    | TPat_wild _ -> Layout.wordL "wild"
-    | TPat_as _ -> Layout.wordL "var"
+    | TPat_query (_,pat,_) -> Layout.(--) (Layout.wordL (Layout.TaggedTextOps.tagText "query")) (layoutPat pat)
+    | TPat_wild _ -> Layout.wordL (Layout.TaggedTextOps.tagText "wild")
+    | TPat_as _ -> Layout.wordL (Layout.TaggedTextOps.tagText "var")
     | TPat_tuple (_, pats, _, _) 
     | TPat_array (pats, _, _) -> Layout.bracketL (Layout.tupleL (List.map layoutPat pats))
-    | _ -> Layout.wordL "?" 
+    | _ -> Layout.wordL (Layout.TaggedTextOps.tagText "?")
   
-let layoutPath _p = Layout.wordL "<path>"
+let layoutPath _p = Layout.wordL (Layout.TaggedTextOps.tagText "<path>")
      
 let layoutActive (Active (path, _subexpr, pat)) =
-    Layout.(--) (Layout.wordL "Active") (Layout.tupleL [layoutPath path; layoutPat pat]) 
+    Layout.(--) (Layout.wordL (Layout.TaggedTextOps.tagText "Active")) (Layout.tupleL [layoutPath path; layoutPat pat]) 
      
 let layoutFrontier (Frontier (i,actives,_)) =
-    Layout.(--) (Layout.wordL "Frontier") (Layout.tupleL [intL i; Layout.listL layoutActive actives]) 
+    Layout.(--) (Layout.wordL (Layout.TaggedTextOps.tagText "Frontier ")) (Layout.tupleL [intL i; Layout.listL layoutActive actives]) 
 #endif
 
 let mkFrontiers investigations i = 
@@ -792,7 +792,7 @@ let CompilePatternBasic
                     // For each case, recursively compile the residue decision trees that result if that case successfully matches 
                     let simulSetOfCases, _ = CompileSimultaneousSet frontiers path refuted subexpr simulSetOfEdgeDiscrims inpExprOpt 
                           
-                    assert (not (List.isEmpty simulSetOfCases))
+                    assert (not (isNil simulSetOfCases))
 
                     // Work out what the default/fall-through tree looks like, is any 
                     // Check if match is complete, if so optimize the default case away. 
@@ -873,7 +873,7 @@ let CompilePatternBasic
           
          | EdgeDiscrim(_i',(Test.IsInst (_srcty,tgty)),m) :: _rest 
                     (* check we can use a simple 'isinst' instruction *)
-                    when canUseTypeTestFast g tgty && List.isEmpty topgtvs ->
+                    when canUseTypeTestFast g tgty && isNil topgtvs ->
 
              let v,vexp = mkCompGenLocal m "typeTestResult" tgty
              if topv.IsMemberOrModuleBinding then 
@@ -884,7 +884,7 @@ let CompilePatternBasic
 
           // Any match on a struct union must take the address of its input
          | EdgeDiscrim(_i',(Test.UnionCase (ucref, _)),_) :: _rest 
-                 when List.isEmpty topgtvs && ucref.Tycon.IsStructRecordOrUnionTycon ->
+                 when isNil topgtvs && ucref.Tycon.IsStructRecordOrUnionTycon ->
 
              let argexp = GetSubExprOfInput subexpr
              let vOpt,addrexp = mkExprAddrOfExprAux g true false NeverMutates argexp None matchm
@@ -903,7 +903,7 @@ let CompilePatternBasic
          | [EdgeDiscrim(_, ListConsDiscrim g tinst, m)]
          | [EdgeDiscrim(_, ListEmptyDiscrim g tinst, m)]
                     (* check we can use a simple 'isinst' instruction *)
-                    when List.isEmpty topgtvs ->
+                    when isNil topgtvs ->
 
              let ucaseTy = (mkProvenUnionCaseTy g.cons_ucref tinst)
              let v,vexp = mkCompGenLocal m "unionTestResult" ucaseTy
@@ -917,7 +917,7 @@ let CompilePatternBasic
          // Active pattern matches: create a variable to hold the results of executing the active pattern. 
          | (EdgeDiscrim(_,(Test.ActivePatternCase(pexp,resTys,_,_,apinfo)),m) :: _) ->
              
-             if not (List.isEmpty topgtvs) then error(InternalError("Unexpected generalized type variables when compiling an active pattern",m))
+             if not (isNil topgtvs) then error(InternalError("Unexpected generalized type variables when compiling an active pattern",m))
              let rty = apinfo.ResultType g m resTys
              let v,vexp = mkCompGenLocal m "activePatternResult" rty
              if topv.IsMemberOrModuleBinding then 
@@ -954,7 +954,7 @@ let CompilePatternBasic
 #if OPTIMIZE_LIST_MATCHING
                                                            isNone inpExprOpt &&
 #endif
-                                                          (List.isEmpty topgtvs && 
+                                                          (isNil topgtvs && 
                                                            not topv.IsMemberOrModuleBinding && 
                                                            not ucref.Tycon.IsStructRecordOrUnionTycon  &&
                                                            ucref.UnionCase.RecdFields.Length >= 1 && 

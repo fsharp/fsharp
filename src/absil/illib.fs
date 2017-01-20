@@ -7,6 +7,7 @@ module internal Microsoft.FSharp.Compiler.AbstractIL.Internal.Library
 open System
 open System.Collections
 open System.Collections.Generic
+open System.Reflection
 open Internal.Utilities
 open Internal.Utilities.Collections
 open Microsoft.FSharp.Compiler.AbstractIL.Diagnostics
@@ -21,6 +22,7 @@ let (>>>&) (x:int32) (n:int32) = int32 (uint32 x >>> n)
 
 let notlazy v = Lazy<_>.CreateFromValue v
 
+let inline isNil x = List.isEmpty x
 let inline isNonNull x = not (isNull x)
 let inline nonNull msg x = if isNull x then failwith ("null: " ^ msg) else x
 let (===) x y = LanguagePrimitives.PhysicalEquality x y
@@ -756,10 +758,6 @@ module NameMap =
 
     let iter f (l : NameMap<'T>) = Map.iter (fun _k v -> f v) l
 
-    let iteri f (l : NameMap<'T>) = Map.iter f l
-
-    let mapi f (l : NameMap<'T>) = Map.map f l
-
     let partition f (l : NameMap<'T>) = Map.filter (fun _ x-> f x) l, Map.filter (fun _ x -> not (f x)) l
 
     let mem v (m: NameMap<'T>) = Map.containsKey v m
@@ -864,12 +862,9 @@ module Shim =
     type DefaultFileSystem() =
         interface IFileSystem with
             member __.AssemblyLoadFrom(fileName:string) = 
-    #if FX_ATLEAST_40_COMPILER_LOCATION
-                System.Reflection.Assembly.UnsafeLoadFrom fileName
-    #else
-                System.Reflection.Assembly.LoadFrom fileName
-    #endif
-            member __.AssemblyLoad(assemblyName:System.Reflection.AssemblyName) = System.Reflection.Assembly.Load assemblyName
+                Assembly.LoadFrom fileName
+            member __.AssemblyLoad(assemblyName:System.Reflection.AssemblyName) = 
+                Assembly.Load assemblyName
 
             member __.ReadAllBytesShim (fileName:string) = File.ReadAllBytes fileName
             member __.FileStreamReadShim (fileName:string) = new FileStream(fileName,FileMode.Open,FileAccess.Read,FileShare.ReadWrite)  :> Stream

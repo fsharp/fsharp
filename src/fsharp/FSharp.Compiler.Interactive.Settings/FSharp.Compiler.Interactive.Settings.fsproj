@@ -14,11 +14,13 @@
     <DefineConstants>EXTENSIONTYPING;$(DefineConstants)</DefineConstants>
     <AssemblyName>FSharp.Compiler.Interactive.Settings</AssemblyName>
     <FileAlignment>512</FileAlignment>
-    <OtherFlags Condition=" '$(TargetFramework)'=='coreclr'">$(OtherFlags) --targetprofile:netcore</OtherFlags>
   </PropertyGroup>
   <!-- MonoDevelop likes these here to recognise the configurations -->
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' " />
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' " />
+  <ItemGroup>
+    <PackageNuspec Include="FSharp.Compiler.Interactive.Settings.netcore.nuspec" Condition="'$(TargetFramework)' == 'coreclr'" />
+  </ItemGroup>
   <ItemGroup>
     <FsSrGen Include="..\FSInteractiveSettings.txt">
       <Link>FSInteractiveSettings.txt</Link>
@@ -55,7 +57,7 @@
   </ItemGroup>
   <Import Project="$(FSharpSourcesRoot)\FSharpSource.targets" />
   
-  <Target Name="GatherBinariesToBeSigned" AfterTargets="Localize">
+  <Target Name="GatherBinariesToBeSigned" AfterTargets="Localize" Condition="'$(UseGatherBinaries)' == 'true'">
     <ItemGroup>
       <BinariesToBeSigned Include="$(OutDir)$(AssemblyName).dll" />
       <FilesToSign Include="@(BinariesToBeSigned)">

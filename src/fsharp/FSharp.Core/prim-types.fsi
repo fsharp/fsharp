@@ -1493,8 +1493,7 @@ namespace Microsoft.FSharp.Core
         /// <param name="func"></param>
         /// <returns>'U</returns>
         abstract member Invoke : func:'T -> 'U
-#if FX_NO_CONVERTER
-#else 
+#if !FX_NO_CONVERTER
         /// <summary>Convert an F# first class function value to a value of type <c>System.Converter</c></summary>
         /// <param name="func">The input function.</param>
         /// <returns>A System.Converter of the function type.</returns>
@@ -1561,8 +1560,7 @@ namespace Microsoft.FSharp.Core
         /// <param name="action">The input action.</param>
         /// <returns>The F# function.</returns>
         static member  ToFSharpFunc       : action:Action<'T>            -> ('T -> unit)
-#if FX_NO_CONVERTER
-#else        
+#if !FX_NO_CONVERTER
         /// <summary>Convert the given Converter delegate object to an F# function value</summary>
         /// <param name="converter">The input Converter.</param>
         /// <returns>The F# function.</returns>
@@ -1829,6 +1827,10 @@ namespace Microsoft.FSharp.Collections
         
         interface System.Collections.Generic.IEnumerable<'T>
         interface System.Collections.IEnumerable
+
+#if !FSCORE_PORTABLE_OLD
+        interface System.Collections.Generic.IReadOnlyCollection<'T>
+#endif
         
     /// <summary>An abbreviation for the type of immutable singly-linked lists. </summary>
     ///
@@ -2154,7 +2156,7 @@ namespace Microsoft.FSharp.Core
         /// <param name="value">The value to check.</param>
         /// <returns>True when value is not null, false otherwise.</returns>
         [<CompiledName("IsNotNull")>]
-        val inline isNotNull : value:'T -> bool when 'T : null
+        val inline internal isNotNull : value:'T -> bool when 'T : null
 
         /// <summary>Throw a <c>System.Exception</c> exception.</summary>
         /// <param name="message">The exception message.</param>
@@ -2233,8 +2235,7 @@ namespace Microsoft.FSharp.Core
         val seq : sequence:seq<'T> -> seq<'T>
 
 
-#if FX_NO_EXIT
-#else
+#if !FX_NO_EXIT
         /// <summary>Exit the current hardware isolated process, if security settings permit,
         /// otherwise raise an exception. Calls <c>System.Environment.Exit</c>.</summary>
         /// <param name="exitcode">The exit code to use.</param>
@@ -2258,8 +2259,7 @@ namespace Microsoft.FSharp.Core
         /// <summary>Equivalent to <c>System.Single.NaN</c></summary>
         [<CompiledName("NaNSingle")>]
         val nanf: float32
-#if FX_NO_SYSTEM_CONSOLE
-#else
+#if !FX_NO_SYSTEM_CONSOLE
         /// <summary>Reads the value of the property <c>System.Console.In</c>. </summary>
         [<CompiledName("ConsoleIn")>]
         val stdin<'T> : System.IO.TextReader      
@@ -2476,8 +2476,7 @@ namespace Microsoft.FSharp.Core
         [<CompiledName("Tanh")>]
         val inline tanh     : value:^T -> ^T       when ^T : (static member Tanh     : ^T -> ^T)      and default ^T : float
 
-#if FX_NO_TRUNCATE
-#else
+#if !FX_NO_TRUNCATE
         /// <summary>Overloaded truncate operator.</summary>
         /// <param name="value">The input value.</param>
         /// <returns>The truncated value.</returns>

@@ -1,5 +1,5 @@
 // #Conformance #Structs #Interop 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 module Core_csext
 #endif
 

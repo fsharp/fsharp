@@ -153,8 +153,7 @@ module ExtraTopLevelOperators =
     [<CompiledName("PrintFormatLineToTextWriter")>]
     let fprintfn (os:TextWriter) fp = Printf.fprintfn os fp 
     
-#if FX_NO_SYSTEM_CONSOLE
-#else    
+#if !FX_NO_SYSTEM_CONSOLE
     [<CompiledName("PrintFormat")>]
     let printf      fp = Printf.printf      fp 
 
@@ -209,29 +208,17 @@ module ExtraTopLevelOperators =
     [<assembly: AutoOpen("Microsoft.FSharp.Core")>]
     [<assembly: AutoOpen("Microsoft.FSharp.Collections")>]
     [<assembly: AutoOpen("Microsoft.FSharp.Control")>]
-#if QUERIES_IN_FSLIB
     [<assembly: AutoOpen("Microsoft.FSharp.Linq.QueryRunExtensions.LowPriority")>]
     [<assembly: AutoOpen("Microsoft.FSharp.Linq.QueryRunExtensions.HighPriority")>]
-#endif
     do()
 
     [<CompiledName("LazyPattern")>]
     let (|Lazy|) (x:Lazy<_>) = x.Force()
 
 
-#if QUERIES_IN_FSLIB
     let query = Microsoft.FSharp.Linq.QueryBuilder()
-#if EXTRA_DEBUG
-    let queryexpr = Microsoft.FSharp.Linq.QueryExprBuilder()
-    let queryexprpretrans = Microsoft.FSharp.Linq.QueryExprPreTransBuilder()
-    let queryexprpreelim = Microsoft.FSharp.Linq.QueryExprPreEliminateNestedBuilder()
-    let queryquote = Microsoft.FSharp.Linq.QueryQuoteBuilder()
-    let querylinqexpr = Microsoft.FSharp.Linq.QueryLinqExprBuilder()
-#endif
 
 
-#endif
-#if PUT_TYPE_PROVIDERS_IN_FSCORE
 namespace Microsoft.FSharp.Core.CompilerServices
 
     open System
@@ -304,22 +291,6 @@ namespace Microsoft.FSharp.Core.CompilerServices
         member this.SystemRuntimeAssemblyVersion  with get() = systemRuntimeAssemblyVersion and set v = systemRuntimeAssemblyVersion <- v
         member this.SystemRuntimeContainsType (typeName : string) = systemRuntimeContainsType typeName
 
-#if FX_NO_CUSTOMATTRIBUTEDATA
-    type IProvidedCustomAttributeTypedArgument =
-        abstract ArgumentType: System.Type
-        abstract Value: System.Object
-
-    type IProvidedCustomAttributeNamedArgument =
-        abstract ArgumentType: System.Type
-        abstract MemberInfo: System.Reflection.MemberInfo
-        abstract TypedValue: IProvidedCustomAttributeTypedArgument
-
-    type IProvidedCustomAttributeData =
-        abstract Constructor: System.Reflection.ConstructorInfo
-        abstract ConstructorArguments: System.Collections.Generic.IList<IProvidedCustomAttributeTypedArgument>
-        abstract NamedArguments: System.Collections.Generic.IList<IProvidedCustomAttributeNamedArgument>
-#endif
-
     type IProvidedNamespace =
         abstract NamespaceName : string
         abstract GetNestedNamespaces : unit -> IProvidedNamespace[] 
@@ -338,77 +309,7 @@ namespace Microsoft.FSharp.Core.CompilerServices
         abstract Invalidate : Microsoft.FSharp.Control.IEvent<System.EventHandler, System.EventArgs>
         abstract GetGeneratedAssemblyContents : assembly:System.Reflection.Assembly -> byte[]
 
-#if FX_NO_CUSTOMATTRIBUTEDATA
-        abstract GetMemberCustomAttributesData : assembly:System.Reflection.MemberInfo -> System.Collections.Generic.IList<IProvidedCustomAttributeData>
-        abstract GetParameterCustomAttributesData : assembly:System.Reflection.ParameterInfo -> System.Collections.Generic.IList<IProvidedCustomAttributeData>
-#endif
-
     type ITypeProvider2 =
         abstract GetStaticParametersForMethod : methodWithoutArguments:MethodBase -> ParameterInfo[] 
         abstract ApplyStaticArgumentsForMethod : methodWithoutArguments:MethodBase * methodNameWithArguments:string * staticArguments:obj[] -> MethodBase
 
-#endif
-
-#if EXTRAS_FOR_SILVERLIGHT_COMPILER
-namespace Microsoft.FSharp
-
-    open Microsoft.FSharp.Core
-    open Microsoft.FSharp.Core.Operators
-    open ExtraTopLevelOperators
-    open System
-    open System.Collections.Generic
-    open System.Threading
-
-    [<StructuralEquality; NoComparison>]
-    exception UserInterrupt
-
-    [<NoComparison>]
-    type Silverlight() =
-        static let threadsToKill = HashSet<int>()
-        static let mutable isNotEmpty = false
-        static let mutable emitChecks = false
-
-        static member EmitInterruptChecks with get() = emitChecks and set b = emitChecks <- b
-
-        static member InterruptThread(id) =
-            isNotEmpty <- true
-            threadsToKill.Add(id) |> ignore
-
-        static member ResumeThread(id) =
-            threadsToKill.Remove(id) |> ignore
-            isNotEmpty <- threadsToKill.Count > 0
-
-        static member CheckInterrupt() =
-            if isNotEmpty then
-                let id = Thread.CurrentThread.ManagedThreadId
-                if threadsToKill.Contains(id) then raise UserInterrupt
-
-        static member WriteLine() = printfn ""
-        static member WriteLine(value2: string) = printfn "%s" value2
-        static member WriteLine(value: obj) = printfn "%O" value
-        static member WriteLine(value3: int) = printfn "%d" value3
-        static member WriteLine(format: string, arg0: obj) =
-            printfn "%s" (String.Format(format, arg0))
-        static member WriteLine(format: string, arg0: obj, arg1:obj) =
-            printfn "%s" (String.Format(format, arg0, arg1))
-        static member WriteLine(format: string, arg0: obj, arg1:obj, arg2: obj) =
-            printfn "%s" (String.Format(format, arg0, arg1, arg2))
-        static member WriteLine(format: string, arg0: obj, arg1:obj, arg2: obj, arg3: obj) =
-            printfn "%s" (String.Format(format, arg0, arg1, arg2, arg3))
-        static member WriteLine(format: string, [<ParamArray>] arg: obj[]) =
-            printfn "%s" (String.Format(format, arg))
-
-        static member Write(value2: string) = printf "%s" value2
-        static member Write(value: obj) = printf "%O" value
-        static member Write(value3: int) = printf "%d" value3
-        static member Write(format: string, arg0: obj) =
-            printf "%s" (String.Format(format, arg0))
-        static member Write(format: string, arg0: obj, arg1:obj) =
-            printf "%s" (String.Format(format, arg0, arg1))
-        static member Write(format: string, arg0: obj, arg1:obj, arg2: obj) =
-            printf "%s" (String.Format(format, arg0, arg1, arg2))
-        static member Write(format: string, arg0: obj, arg1:obj, arg2: obj, arg3: obj) =
-            printf "%s" (String.Format(format, arg0, arg1, arg2, arg3))
-        static member Write(format: string, [<ParamArray>] arg: obj[]) =
-            printf "%s" (String.Format(format, arg))
-#endif

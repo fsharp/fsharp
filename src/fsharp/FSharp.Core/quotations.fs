@@ -18,6 +18,7 @@ open Microsoft.FSharp.Reflection
 open Microsoft.FSharp.Core.Printf
 open Microsoft.FSharp.Text.StructuredPrintfImpl
 open Microsoft.FSharp.Text.StructuredPrintfImpl.LayoutOps
+open Microsoft.FSharp.Text.StructuredPrintfImpl.TaggedTextOps
 
 #nowarn "52" //  The value has been copied to ensure the original is not mutated by this operation
 
@@ -134,8 +135,7 @@ type Var(name: string, typ:Type, ?isMutable: bool) =
                 if System.Object.ReferenceEquals(v,v2) then 0 else
                 let c = compare v.Name v2.Name 
                 if c <> 0 then c else 
-#if FX_NO_REFLECTION_METADATA_TOKENS // not available on Compact Framework
-#else
+#if !FX_NO_REFLECTION_METADATA_TOKENS // not available on Compact Framework
                 let c = compare v.Type.MetadataToken v2.Type.MetadataToken 
                 if c <> 0 then c else 
                 let c = compare v.Type.Module.MetadataToken v2.Type.Module.MetadataToken 
@@ -228,22 +228,23 @@ and [<CompiledName("FSharpExpr")>]
         let expr (e:Expr ) = e.GetLayout(long)
         let exprs (es:Expr list) = es |> List.map expr
         let parens ls = bracketL (commaListL ls)
-        let pairL l1 l2 = bracketL (l1 ^^ sepL "," ^^ l2)
+        let pairL l1 l2 = bracketL (l1 ^^ sepL Literals.comma ^^ l2)
         let listL ls = squareBracketL (commaListL ls)
-        let combL nm ls = wordL nm ^^ parens ls
-        let noneL = wordL "None"
-        let someL e = combL "Some" [expr e]
-        let typeL (o: Type)  = wordL (if long then o.FullName else o.Name)
-        let objL (o: 'T)  = wordL (sprintf "%A" o)
-        let varL (v:Var) = wordL v.Name
+        let combTaggedL nm ls = wordL nm ^^ parens ls
+        let combL nm ls = combTaggedL (tagKeyword nm) ls
+        let noneL = wordL (tagProperty "None")
+        let someL e = combTaggedL (tagMethod "Some") [expr e]
+        let typeL (o: Type)  = wordL (tagClass (if long then o.FullName else o.Name))
+        let objL (o: 'T)  = wordL (tagText (sprintf "%A" o))
+        let varL (v:Var) = wordL (tagLocal v.Name)
         let (|E|) (e: Expr) = e.Tree
         let (|Lambda|_|)        (E x) = match x with LambdaTerm(a,b)  -> Some (a,b) | _ -> None 
         let (|IteratedLambda|_|) (e: Expr) = qOneOrMoreRLinear (|Lambda|_|) e
-        let ucaseL (unionCase:UnionCaseInfo) = (if long then objL unionCase else wordL unionCase.Name) 
-        let minfoL (minfo: MethodInfo) = if long then objL minfo else wordL minfo.Name 
-        let cinfoL (cinfo: ConstructorInfo) = if long then objL cinfo else wordL cinfo.DeclaringType.Name
-        let pinfoL (pinfo: PropertyInfo) = if long then objL pinfo else wordL pinfo.Name
-        let finfoL (finfo: FieldInfo) = if long then objL finfo else wordL finfo.Name
+        let ucaseL (unionCase:UnionCaseInfo) = (if long then objL unionCase else wordL (tagUnionCase unionCase.Name)) 
+        let minfoL (minfo: MethodInfo) = if long then objL minfo else wordL (tagMethod minfo.Name) 
+        let cinfoL (cinfo: ConstructorInfo) = if long then objL cinfo else wordL (tagMethod cinfo.DeclaringType.Name)
+        let pinfoL (pinfo: PropertyInfo) = if long then objL pinfo else wordL (tagProperty pinfo.Name)
+        let finfoL (finfo: FieldInfo) = if long then objL finfo else wordL (tagField finfo.Name)
         let rec (|NLambdas|_|) n (e:Expr) = 
             match e with 
             | _ when n <= 0 -> Some([],e) 
@@ -260,7 +261,7 @@ and [<CompiledName("FSharpExpr")>]
         | CombTerm(UnionCaseTestOp(unionCase),args)   -> combL "UnionCaseTest" (exprs args@ [ucaseL unionCase])
         | CombTerm(NewTupleOp _,args)            -> combL "NewTuple" (exprs args)
         | CombTerm(TupleGetOp (_,i),[arg])         -> combL "TupleGet" ([expr arg] @ [objL i])
-        | CombTerm(ValueOp(v,_,Some nm),[])               -> combL "ValueWithName" [objL v; wordL nm]
+        | CombTerm(ValueOp(v,_,Some nm),[])               -> combL "ValueWithName" [objL v; wordL (tagLocal nm)]
         | CombTerm(ValueOp(v,_,None),[])               -> combL "Value" [objL v]
         | CombTerm(WithValueOp(v,_),[defn])               -> combL "WithValue" [objL v; expr defn]
         | CombTerm(InstanceMethodCallOp(minfo),obj::args) -> combL "Call"     [someL obj; minfoL minfo; listL (exprs args)]
@@ -292,9 +293,9 @@ and [<CompiledName("FSharpExpr")>]
             | NLambdas n (vs,e) -> combL "NewDelegate" ([typeL ty] @ (vs |> List.map varL) @ [expr e])
             | _ -> combL "NewDelegate" [typeL ty; expr e]
         //| CombTerm(_,args)   -> combL "??" (exprs args)
-        | VarTerm(v)   -> wordL v.Name
+        | VarTerm(v)   -> wordL (tagLocal v.Name)
         | LambdaTerm(v,b)   -> combL "Lambda" [varL v; expr b]
-        | HoleTerm _  -> wordL "_"
+        | HoleTerm _  -> wordL (tagLocal "_")
         | CombTerm(QuoteOp _,args) -> combL "Quote" (exprs args)
         | _ -> failwithf "Unexpected term in layout %A" x.Tree
 
@@ -940,7 +941,7 @@ module Patterns =
           let resT  = instFormal tyargTs rty 
           let methInfo = 
               try 
-#if FX_ATLEAST_PORTABLE
+#if FX_PORTABLE_OR_NETSTANDARD
                  match parentT.GetMethod(nm,argTs) with 
 #else              
                  match parentT.GetMethod(nm,staticOrInstanceBindingFlags,null,argTs,null) with 
@@ -972,7 +973,7 @@ module Patterns =
         let tyArgs = List.toArray tyArgs
         let methInfo = 
             try 
-#if FX_ATLEAST_PORTABLE
+#if FX_PORTABLE_OR_NETSTANDARD
                 match ty.GetMethod(nm, argTypes) with 
 #else             
                 match ty.GetMethod(nm,staticOrInstanceBindingFlags,null, argTypes,null) with 
@@ -1095,7 +1096,7 @@ module Patterns =
         let typ = mkNamedType(tc,tyargs)
         let argtyps : Type list = argTypes |> inst tyargs
         let retType : Type = retType |> inst tyargs |> removeVoid
-#if FX_ATLEAST_PORTABLE
+#if FX_PORTABLE_OR_NETSTANDARD
         try 
             typ.GetProperty(propName, staticOrInstanceBindingFlags) 
         with :? AmbiguousMatchException -> null // more than one property found with the specified name and matching binding constraints - return null to initiate manual search
@@ -1110,7 +1111,7 @@ module Patterns =
 
     let bindGenericCtor (tc:Type,argTypes:Instantiable<Type list>) =
         let argtyps =  instFormal (getGenericArguments tc) argTypes
-#if FX_ATLEAST_PORTABLE
+#if FX_PORTABLE_OR_NETSTANDARD
         let argTypes = Array.ofList argtyps
         tc.GetConstructor(argTypes) 
         |> bindCtorBySearchIfCandidateIsNull tc argTypes
@@ -1121,7 +1122,7 @@ module Patterns =
     let bindCtor (tc,argTypes:Instantiable<Type list>,tyargs) =
         let typ = mkNamedType(tc,tyargs)
         let argtyps = argTypes |> inst tyargs
-#if FX_ATLEAST_PORTABLE
+#if FX_PORTABLE_OR_NETSTANDARD
         let argTypes = Array.ofList argtyps
         typ.GetConstructor(argTypes) 
         |> bindCtorBySearchIfCandidateIsNull typ argTypes
@@ -1593,8 +1594,7 @@ module Patterns =
 
     let decodedTopResources = new Dictionary<Assembly * string, int>(10,HashIdentity.Structural)
 
-#if FX_NO_REFLECTION_METADATA_TOKENS
-#else
+#if !FX_NO_REFLECTION_METADATA_TOKENS
 #if FX_NO_REFLECTION_MODULE_HANDLES // not available on Silverlight
     [<StructuralEquality;StructuralComparison>]
     type ModuleHandle = ModuleHandle of string * string
@@ -1753,8 +1753,7 @@ module Patterns =
             let qdataResources = 
                 // dynamic assemblies don't support the GetManifestResourceNames 
                 match assem with 
-#if FX_NO_REFLECTION_EMIT
-#else
+#if !FX_NO_REFLECTION_EMIT
                 | a when a.FullName = "System.Reflection.Emit.AssemblyBuilder" -> []
 #endif
                 | null | _ -> 

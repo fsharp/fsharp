@@ -31,33 +31,27 @@
     </FsSrGen>
     <EmbeddedResource Include="..\FSStrings.resx" />
     <FsLex Include="..\pplex.fsl">
-      <OtherFlags>--lexlib Internal.Utilities.Text.Lexing</OtherFlags>
+      <OtherFlags>--unicode --lexlib Internal.Utilities.Text.Lexing</OtherFlags>
       <Link>pplex.fsl</Link>
     </FsLex>
     <FsYacc Include="..\pppars.fsy">
-      <Module>Microsoft.FSharp.Compiler.PPParser</Module>
-      <Open>Microsoft.FSharp.Compiler</Open>
-      <OtherFlags>--internal --lexlib Internal.Utilities.Text.Lexing --parslib Internal.Utilities.Text.Parsing</OtherFlags>
+      <OtherFlags>--module Microsoft.FSharp.Compiler.PPParser --open Microsoft.FSharp.Compiler --internal --lexlib Internal.Utilities.Text.Lexing --parslib Internal.Utilities.Text.Parsing</OtherFlags>
       <Link>pppars.fsy</Link>
     </FsYacc>
     <FsLex Include="..\lex.fsl">
-      <OtherFlags>--lexlib Internal.Utilities.Text.Lexing</OtherFlags>
+      <OtherFlags>--unicode --lexlib Internal.Utilities.Text.Lexing</OtherFlags>
       <Link>lex.fsl</Link>
     </FsLex>
     <FsLex Include="..\..\absil\illex.fsl">
-      <OtherFlags>--lexlib Internal.Utilities.Text.Lexing</OtherFlags>
+      <OtherFlags>--unicode --lexlib Internal.Utilities.Text.Lexing</OtherFlags>
       <Link>illex.fsl</Link>
     </FsLex>
     <FsYacc Include="..\pars.fsy">
-      <Module>Microsoft.FSharp.Compiler.Parser</Module>
-      <Open>Microsoft.FSharp.Compiler</Open>
-      <OtherFlags>--internal --lexlib Internal.Utilities.Text.Lexing --parslib Internal.Utilities.Text.Parsing</OtherFlags>
+      <OtherFlags>--module Microsoft.FSharp.Compiler.Parser --open Microsoft.FSharp.Compiler --internal --lexlib Internal.Utilities.Text.Lexing --parslib Internal.Utilities.Text.Parsing</OtherFlags>
       <Link>pars.fsy</Link>
     </FsYacc>
     <FsYacc Include="..\..\absil\ilpars.fsy">
-      <Module>Microsoft.FSharp.Compiler.AbstractIL.Internal.AsciiParser</Module>
-      <Open>Microsoft.FSharp.Compiler.AbstractIL</Open>
-      <OtherFlags>--internal --lexlib Internal.Utilities.Text.Lexing --parslib Internal.Utilities.Text.Parsing</OtherFlags>
+      <OtherFlags>--module Microsoft.FSharp.Compiler.AbstractIL.Internal.AsciiParser --open Microsoft.FSharp.Compiler.AbstractIL --internal --lexlib Internal.Utilities.Text.Lexing --parslib Internal.Utilities.Text.Parsing</OtherFlags>
       <Link>ilpars.fsy</Link>
     </FsYacc>
     <Compile Include="..\..\utils\reshapedreflection.fs">
@@ -95,6 +89,10 @@
     </Compile>
     <Compile Include="..\..\utils\ResizeArray.fs">
       <Link>Utilities\ResizeArray.fs</Link>
+      <Link>ResizeArray.fsi</Link>
+    </Compile>
+    <Compile Include="..\..\utils\ResizeArray.fs">
+      <Link>ResizeArray.fs</Link>
     </Compile>
     <Compile Include="..\..\utils\HashMultiMap.fsi">
       <Link>HashMultiMap.fsi</Link>
@@ -467,6 +465,7 @@
     <Reference Include="FSharp.Core">
       <HintPath>$(LkgPath)\FSharp.Core.dll</HintPath>
     </Reference>
+    <Reference Include="$(FSharpCoreLkgPath)\FSharp.Core.dll" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Numerics" />
@@ -507,4 +506,24 @@
   </ItemGroup>
   <Import Project="$(FSharpSourcesRoot)\FSharpSource.targets" />
   <Import Project="$(FsLexYaccpath)\FsLexYacc.targets" />
+    <Reference Include="Microsoft.Build.Framework, Version=$(VisualStudioVersion).0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+      <HintPath>$(FSharpSourcesRoot)\..\packages\Microsoft.VisualFSharp.Msbuild.15.0.1.0.1\lib\net45\Microsoft.Build.Framework.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Build, Version=$(VisualStudioVersion).0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+      <HintPath>$(FSharpSourcesRoot)\..\packages\Microsoft.VisualFSharp.Msbuild.15.0.1.0.1\lib\net45\Microsoft.Build.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Build.Utilities.Core, Version=$(VisualStudioVersion).0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+      <HintPath>$(FSharpSourcesRoot)\..\packages\Microsoft.VisualFSharp.Msbuild.15.0.1.0.1\lib\net45\Microsoft.Build.Utilities.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Build.Tasks.Core, Version=$(VisualStudioVersion).0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+      <HintPath>$(FSharpSourcesRoot)\..\packages\Microsoft.VisualFSharp.Msbuild.15.0.1.0.1\lib\net45\Microsoft.Build.Tasks.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.DiaSymReader.PortablePdb"><HintPath>..\..\..\packages\Microsoft.DiaSymReader.PortablePdb.1.1.0\lib\portable-net45+win8\Microsoft.DiaSymReader.PortablePdb.dll</HintPath></Reference>
+    <Reference Include="Microsoft.DiaSymReader"><HintPath>..\..\..\packages\Microsoft.DiaSymReader.1.0.8\lib\portable-net45+win8\Microsoft.DiaSymReader.dll</HintPath></Reference>
+    <Reference Include="System.Reflection.Metadata"><HintPath>..\..\..\packages\System.Reflection.Metadata.1.4.1-beta-24227-04\lib\portable-net45+win8\System.Reflection.Metadata.dll</HintPath></Reference>
+    <Reference Include="System.Collections.Immutable"><HintPath>..\..\..\packages\System.Collections.Immutable.1.2.0\lib\portable-net45+win8+wp8+wpa81\System.Collections.Immutable.dll</HintPath></Reference>
+    <Reference Include="System.ValueTuple"><HintPath>..\..\..\packages\System.ValueTuple.4.3.0\lib\netstandard1.0\System.ValueTuple.dll</HintPath></Reference>
+  </ItemGroup>
+  <Import Project="$(FSharpSourcesRoot)\FSharpSource.targets" />
+  <Import Project="$(FsLexToolPath)\FsLexYacc.targets" />
 </Project>

@@ -3,9 +3,10 @@
 namespace Microsoft.FSharp
 open System.Reflection
 [<assembly:AssemblyDescription("FSharp.Build.dll")>]
+[<assembly:AssemblyCompany("Microsoft Corporation")>]
 [<assembly:AssemblyTitle("FSharp.Build.dll")>]
-[<assembly:AssemblyCopyright("\169 Microsoft Corporation and other contributors.  Apache 2.0 License.")>]
-[<assembly:AssemblyProduct("F# (open source edition)")>]
+[<assembly:AssemblyCopyright("\169 Microsoft Corporation.  Apache 2.0 License.")>]
+[<assembly:AssemblyProduct("Microsoft\174 F#")>]
 do()
 
 #if NO_STRONG_NAMES

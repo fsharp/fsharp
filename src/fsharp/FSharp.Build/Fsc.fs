@@ -122,6 +122,8 @@ type [<Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:Iden
     let mutable defineConstants : ITaskItem[] = [||]
     let mutable disabledWarnings : string = null
     let mutable documentationFile : string = null
+    let mutable embedAllSources = false
+    let mutable embed : string = null
     let mutable generateInterfaceFile : string = null
     let mutable keyFile : string = null
     let mutable noFramework = false
@@ -136,11 +138,9 @@ type [<Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:Iden
     let mutable referencePath : string = null
     let mutable resources : ITaskItem[] = [||]
     let mutable sources : ITaskItem[] = [||]
+    let mutable sourceLink : string = null
     let mutable targetType : string = null 
-#if FX_ATLEAST_35   
-#else 
     let mutable toolExe : string = "fsc.exe"
-#endif    
     let mutable warningLevel : string = null
     let mutable treatWarningsAsErrors : bool = false
     let mutable warningsAsErrors : string = null
@@ -167,10 +167,9 @@ type [<Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:Iden
     let mutable capturedArguments : string list = []  // list of individual args, to pass to HostObject Compile()
     let mutable capturedFilenames : string list = []  // list of individual source filenames, to pass to HostObject Compile()
 
-#if CROSS_PLATFORM_COMPILER 
-    // The properties TargetedRuntimeVersion and CopyLocalDependenciesWhenParentReferenceInGac 
-    // are not available to the cross-platform compiler since they are Windows only (not defined in the Mono  
-    // 4.0 XBuild support). So we only set them if available (to avoid a compile-time dependency). 
+#if ENABLE_MONO_SUPPORT
+    // The property YieldDuringToolExecution is not available on Mono.
+    // So we only set it if available (to avoid a compile-time dependency). 
     let runningOnMono = try System.Type.GetType("Mono.Runtime") <> null with e-> false         
     do if not runningOnMono then  
         typeof<ToolTask>.InvokeMember("YieldDuringToolExecution",(BindingFlags.Instance ||| BindingFlags.SetProperty ||| BindingFlags.Public),null,this,[| box true |])  |> ignore 
@@ -197,6 +196,10 @@ type [<Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:Iden
                 | "EMBEDDED" -> "embedded"
                 | "FULL"     -> "full"
                 | _          -> null)
+        if embedAllSources then
+            builder.AppendSwitch("--embed+")
+        builder.AppendSwitchIfNotNull("--embed:", embed)
+        builder.AppendSwitchIfNotNull("--sourcelink:", sourceLink)
         // NoFramework
         if noFramework then 
             builder.AppendSwitch("--noframework") 
@@ -333,7 +336,7 @@ type [<Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:Iden
     member fsc.DebugSymbols
         with get() = debugSymbols
         and set(b) = debugSymbols <- b
-    // --debug <none/portable/pdbonly/full>: Emit debugging information
+    // --debug <none/portable/embedded/pdbonly/full>: Emit debugging information
     member fsc.DebugType
         with get() = debugType
         and set(s) = debugType <- s
@@ -349,6 +352,12 @@ type [<Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:Iden
     member fsc.DocumentationFile
         with get() = documentationFile
         and set(s) = documentationFile <- s
+    member fsc.EmbedAllSources
+        with get() = embedAllSources
+        and  set(s) = embedAllSources <- s
+    member fsc.Embed
+        with get() = embed
+        and set(e) = embed <- e
     // --generate-interface-file <string>: 
     //     Print the inferred interface of the
     //     assembly to a file.
@@ -415,6 +424,10 @@ type [<Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:Iden
     member fsc.Resources
         with get() = resources
         and set(a) = resources <- a
+    // SourceLink
+    member fsc.SourceLink  
+        with get() = sourceLink 
+        and set(s) = sourceLink <- s
     // source files 
     member fsc.Sources  
         with get() = sources 
@@ -432,14 +445,6 @@ type [<Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:Iden
     member fsc.VersionFile
         with get() = versionFile
         and set(s) = versionFile <- s
-
-#if FX_ATLEAST_35
-#else
-    // Allow overriding to the executable name "fsc.exe"
-    member fsc.ToolExe
-        with get() = toolExe
-        and set(s) = toolExe<- s
-#endif
 
     // For targeting other folders for "fsc.exe" (or ToolExe if different)
     member fsc.ToolPath

@@ -1063,24 +1063,24 @@ and
     SynBinding =
     | Binding of
         accessibility:SynAccess option *
-        SynBindingKind *
+        kind:SynBindingKind *
         mustInline:bool *
         isMutable:bool *
-        SynAttributes *
+        attrs:SynAttributes *
         xmlDoc:PreXmlDoc *
-        SynValData *
+        valData:SynValData *
         headPat:SynPat *
-        SynBindingReturnInfo option *
-        SynExpr  *
+        returnInfo:SynBindingReturnInfo option *
+        expr:SynExpr  *
         range:range *
-        SequencePointInfoForBinding
+        seqPoint:SequencePointInfoForBinding
     // no member just named "Range", as that would be confusing:
     //  - for everything else, the 'range' member that appears last/second-to-last is the 'full range' of the whole tree construct
     //  - but for Binding, the 'range' is only the range of the left-hand-side, the right-hand-side range is in the SynExpr
     //  - so we use explicit names to avoid confusion
-    member x.RangeOfBindingSansRhs = let (Binding(_,_,_,_,_,_,_,_,_,_,m,_)) = x in m
-    member x.RangeOfBindingAndRhs = let (Binding(_,_,_,_,_,_,_,_,_,e,m,_)) = x in unionRanges e.Range m
-    member x.RangeOfHeadPat = let (Binding(_,_,_,_,_,_,_,headPat,_,_,_,_)) = x in headPat.Range
+    member x.RangeOfBindingSansRhs = let (Binding(range=m)) = x in m
+    member x.RangeOfBindingAndRhs = let (Binding(expr=e; range=m)) = x in unionRanges e.Range m
+    member x.RangeOfHeadPat = let (Binding(headPat=headPat)) = x in headPat.Range
 
 and
     [<NoEquality; NoComparison>]
@@ -1181,7 +1181,7 @@ and
     [<NoEquality; NoComparison>]
     SynEnumCase =
     /// The untyped, unchecked syntax tree for one case in an enum definition.
-    | EnumCase of SynAttributes * ident:Ident * SynConst * PreXmlDoc * range:range
+    | EnumCase of attrs:SynAttributes * ident:Ident * SynConst * PreXmlDoc * range:range
     member this.Range =
         match this with
         | EnumCase (range=m) -> m
@@ -1237,7 +1237,7 @@ and
     [<NoEquality; NoComparison>]
     /// The untyped, unchecked syntax tree for a field declaration in a record or class
     SynField =
-    | Field of SynAttributes * isStatic:bool * Ident option * SynType * bool * xmlDoc:PreXmlDoc * accessibility:SynAccess option * range:range
+    | Field of attrs:SynAttributes * isStatic:bool * Ident option * SynType * bool * xmlDoc:PreXmlDoc * accessibility:SynAccess option * range:range
 
 
 and
@@ -1258,21 +1258,21 @@ and
     [<NoEquality; NoComparison>]
     SynValSig =
     | ValSpfn of
-        SynAttributes *
+        synAttributes:SynAttributes *
         ident:Ident *
         explicitValDecls:SynValTyparDecls *
-        SynType *
+        synType:SynType *
         arity:SynValInfo *
         isInline:bool *
         isMutable:bool *
         xmlDoc:PreXmlDoc *
         accessibility:SynAccess option *
-        SynExpr option *
+        synExpr:SynExpr option *
         range:range
 
-    member x.RangeOfId  = let (ValSpfn(_,id,_,_,_,_,_,_,_,_,_)) = x in id.idRange
-    member x.SynInfo = let (ValSpfn(_,_,_,_,v,_,_,_,_,_,_)) = x in v
-    member x.SynType = let (ValSpfn(_,_,_,ty,_,_,_,_,_,_,_)) = x in ty
+    member x.RangeOfId  = let (ValSpfn(ident=id)) = x in id.idRange
+    member x.SynInfo = let (ValSpfn(arity=v)) = x in v
+    member x.SynType = let (ValSpfn(synType=ty)) = x in ty
 
 /// The argument names and other metadata for a member or function
 and
@@ -1347,7 +1347,7 @@ and
     | Inherit of SynType  * Ident option * range:range
     | ValField of SynField  * range:range
     /// A feature that is not implemented
-    | NestedType of SynTypeDefn * accessibility:SynAccess option * range:range
+    | NestedType of typeDefn:SynTypeDefn * accessibility:SynAccess option * range:range
     /// SynMemberDefn.AutoProperty (attribs,isStatic,id,tyOpt,propKind,memberFlags,xmlDoc,access,synExpr,mGetSet,mWholeAutoProp).
     ///
     /// F# syntax: 'member val X = expr'
@@ -1478,7 +1478,6 @@ let textOfId (id:Ident) = id.idText
 let pathOfLid lid = List.map textOfId lid
 let arrPathOfLid lid = Array.ofList (pathOfLid lid)
 let textOfPath path = String.concat "." path
-let textOfArrPath path = String.concat "." (List.ofArray path)
 let textOfLid lid = textOfPath (pathOfLid lid)
 
 let rangeOfLid (lid: Ident list) =
@@ -1758,15 +1757,15 @@ let ParseAssemblyCodeInstructions s m =
 #if NO_INLINE_IL_PARSER
 let ParseAssemblyCodeType _s m =
     errorR(Error((193,"Inline IL not valid in a hosted environment"),m))
-    IL.EcmaILGlobals.typ_Object
+    IL.EcmaMscorlibILGlobals.typ_Object
 #else
 let ParseAssemblyCodeType s m =
     try Microsoft.FSharp.Compiler.AbstractIL.Internal.AsciiParser.ilType
            Microsoft.FSharp.Compiler.AbstractIL.Internal.AsciiLexer.token
            (UnicodeLexing.StringAsLexbuf s)
-    with RecoverableParseError -> 
-      errorR(Error(FSComp.SR.astParseEmbeddedILTypeError(),m)); 
-      IL.EcmaILGlobals.typ_Object
+    with RecoverableParseError ->
+      errorR(Error(FSComp.SR.astParseEmbeddedILTypeError(),m));
+      IL.EcmaMscorlibILGlobals.typ_Object
 #endif
 
 //------------------------------------------------------------------------
@@ -1913,7 +1912,7 @@ module SynInfo =
     let selfMetadata = unnamedTopArg
 
     /// Determine if a syntactic information represents a member without arguments (which is implicitly a property getter)
-    let HasNoArgs (SynValInfo(args,_)) = List.isEmpty args
+    let HasNoArgs (SynValInfo(args,_)) = isNil args
 
     /// Check if one particular argument is an optional argument. Used when adjusting the
     /// types of optional arguments for function and member signatures.

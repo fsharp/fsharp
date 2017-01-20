@@ -48,6 +48,22 @@
     <Reference Include="FSharp.Core">
       <HintPath>$(LkgPath)\FSharp.Core.dll</HintPath>
     </Reference>
+    <CopyAndSubstituteText Include="..\FSharp.Build\Microsoft.FSharp.targets">
+		<Link>Microsoft.FSharp-proto.targets</Link>
+		<TargetFilename>Microsoft.FSharp-proto.targets</TargetFilename>
+		<Pattern1>{BuildSuffix}</Pattern1>
+		<Replacement1>-proto</Replacement1>
+	</CopyAndSubstituteText>
+	<CopyAndSubstituteText Include="..\FSharp.Build\Microsoft.Portable.FSharp.targets">
+		<Link>Microsoft.Portable.FSharp-proto.targets</Link>
+		<TargetFilename>Microsoft.Portable.FSharp-proto.targets</TargetFilename>
+		<Pattern1>{BuildSuffix}</Pattern1>
+		<Replacement1>-proto</Replacement1>
+    </CopyAndSubstituteText>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="mscorlib" />
+    <Reference Include="$(FSharpCoreLkgPath)\FSharp.Core.dll" />
     <Reference Include="System" />
     <Reference Include="System.Numerics" />
     <Reference Include="Microsoft.Build.Framework, Version=$(MSBuildVersionFull), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">

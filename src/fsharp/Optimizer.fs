@@ -31,6 +31,7 @@ open Microsoft.FSharp.Compiler.Tastops.DebugPrint
 open Microsoft.FSharp.Compiler.TypeChecker
 open Microsoft.FSharp.Compiler.TcGlobals
 open Microsoft.FSharp.Compiler.Layout
+open Microsoft.FSharp.Compiler.Layout.TaggedTextOps
 open Microsoft.FSharp.Compiler.TypeRelations
 
 open System.Collections.Generic
@@ -148,29 +149,29 @@ type ImplFileOptimizationInfo = LazyModuleInfo
 type CcuOptimizationInfo = LazyModuleInfo
 
 #if DEBUG
-let braceL x = leftL "{" ^^ x ^^ rightL "}"  
+let braceL x = leftL (tagText "{") ^^ x ^^ rightL (tagText "}")
 let seqL xL xs = Seq.fold (fun z x -> z @@ xL x)  emptyL xs
 let namemapL xL xmap = NameMap.foldBack (fun nm x z -> xL nm x @@ z)  xmap emptyL
 
 let rec exprValueInfoL g = function
   | ConstValue (x,ty)         -> NicePrint.layoutConst g ty x
-  | UnknownValue             -> wordL "?"
+  | UnknownValue             -> wordL (tagText "?")
   | SizeValue (_,vinfo)      -> exprValueInfoL g vinfo
-  | ValValue (vr,vinfo)      -> bracketL ((valRefL vr ^^ wordL "alias") --- exprValueInfoL g vinfo)
+  | ValValue (vr,vinfo)      -> bracketL ((valRefL vr ^^ wordL (tagText "alias")) --- exprValueInfoL g vinfo)
   | TupleValue vinfos    -> bracketL (exprValueInfosL g vinfos)
   | RecdValue (_,vinfos)     -> braceL   (exprValueInfosL g vinfos)
   | UnionCaseValue (ucr,vinfos) -> unionCaseRefL ucr ^^ bracketL (exprValueInfosL g vinfos)
-  | CurriedLambdaValue(_lambdaId,_arities,_bsize,expr',_ety) -> wordL "lam" ++ exprL expr' (* (sprintf "lam(size=%d)" bsize) *)
+  | CurriedLambdaValue(_lambdaId,_arities,_bsize,expr',_ety) -> wordL (tagText "lam") ++ exprL expr' (* (sprintf "lam(size=%d)" bsize) *)
   | ConstExprValue (_size,x)  -> exprL x
 and exprValueInfosL g vinfos = commaListL (List.map (exprValueInfoL g) (Array.toList vinfos))
 and moduleInfoL g (x:LazyModuleInfo) = 
     let x = x.Force()
-    braceL ((wordL "Modules: " @@ (x.ModuleOrNamespaceInfos |> namemapL (fun nm x -> wordL nm ^^ moduleInfoL g x) ) )
-            @@ (wordL "Values:" @@ (x.ValInfos.Entries |> seqL (fun (vref,x) -> valRefL vref ^^ valInfoL g x) )))
+    braceL ((wordL (tagText "Modules: ") @@ (x.ModuleOrNamespaceInfos |> namemapL (fun nm x -> wordL (tagText nm) ^^ moduleInfoL g x) ) )
+            @@ (wordL (tagText "Values:") @@ (x.ValInfos.Entries |> seqL (fun (vref,x) -> valRefL vref ^^ valInfoL g x) )))
 
 and valInfoL g (x:ValInfo) = 
-    braceL ((wordL "ValExprInfo: " @@ exprValueInfoL g x.ValExprInfo) 
-            @@ (wordL "ValMakesNoCriticalTailcalls:" @@ wordL (if x.ValMakesNoCriticalTailcalls then "true" else "false")))
+    braceL ((wordL (tagText "ValExprInfo: ") @@ exprValueInfoL g x.ValExprInfo) 
+            @@ (wordL (tagText "ValMakesNoCriticalTailcalls:") @@ wordL (tagText (if x.ValMakesNoCriticalTailcalls then "true" else "false"))))
 #endif
 
 type Summary<'Info> =
@@ -304,9 +305,6 @@ type OptimizationSettings =
     member x.EliminateImmediatelyConsumedLocals() = x.localOpt () 
     /// expand "let x = (exp1,exp2,...)" bind fields as prior tmps 
     member x.ExpandStructrualValues() = x.localOpt () 
-
-#if NO_COMPILER_BACKEND
-#else
 
 type cenv =
     { g: TcGlobals
@@ -487,7 +485,7 @@ let inline BindInternalValsToUnknown cenv vs env =
 let BindTypeVar tyv typeinfo env = { env with typarInfos= (tyv,typeinfo)::env.typarInfos } 
 
 let BindTypeVarsToUnknown (tps:Typar list) env = 
-    if List.isEmpty tps then env else
+    if isNil tps then env else
     // The optimizer doesn't use the type values it could track. 
     // However here we mutate to provide better names for generalized type parameters 
     // The names chosen are 'a', 'b' etc. These are also the compiled names in the IL code
@@ -612,15 +610,15 @@ let (|StripUnionCaseValue|_|) ev =
   | UnionCaseValue (c,info) -> Some (c,info)
   | _ -> None
 
-let mkBoolVal g n = ConstValue(Const.Bool n, g.bool_ty)
-let mkInt8Val g n = ConstValue(Const.SByte n, g.sbyte_ty)
-let mkInt16Val g n = ConstValue(Const.Int16 n, g.int16_ty)
-let mkInt32Val g n = ConstValue(Const.Int32 n, g.int32_ty)
-let mkInt64Val g n = ConstValue(Const.Int64 n, g.int64_ty)
-let mkUInt8Val g n = ConstValue(Const.Byte n, g.byte_ty)
-let mkUInt16Val g n = ConstValue(Const.UInt16 n, g.uint16_ty)
-let mkUInt32Val g n = ConstValue(Const.UInt32 n, g.uint32_ty)
-let mkUInt64Val g n = ConstValue(Const.UInt64 n, g.uint64_ty)
+let mkBoolVal (g: TcGlobals) n = ConstValue(Const.Bool n, g.bool_ty)
+let mkInt8Val (g: TcGlobals) n = ConstValue(Const.SByte n, g.sbyte_ty)
+let mkInt16Val (g: TcGlobals) n = ConstValue(Const.Int16 n, g.int16_ty)
+let mkInt32Val (g: TcGlobals) n = ConstValue(Const.Int32 n, g.int32_ty)
+let mkInt64Val (g: TcGlobals) n = ConstValue(Const.Int64 n, g.int64_ty)
+let mkUInt8Val (g: TcGlobals) n = ConstValue(Const.Byte n, g.byte_ty)
+let mkUInt16Val (g: TcGlobals) n = ConstValue(Const.UInt16 n, g.uint16_ty)
+let mkUInt32Val (g: TcGlobals) n = ConstValue(Const.UInt32 n, g.uint32_ty)
+let mkUInt64Val (g: TcGlobals) n = ConstValue(Const.UInt64 n, g.uint64_ty)
 
 let (|StripInt32Value|_|) = function StripConstValue(Const.Int32 n) -> Some n | _ -> None
       
@@ -1082,8 +1080,8 @@ let AbstractExprInfoByVars (boundVars:Val list,boundTyVars) ivalue =
           match ivalue with 
           // Check for escaping value. Revert to old info if possible  
           | ValValue (VRefLocal v2,detail) when  
-            (not (List.isEmpty boundVars) && List.exists (valEq v2) boundVars) || 
-            (not (List.isEmpty boundTyVars) &&
+            (not (isNil boundVars) && List.exists (valEq v2) boundVars) || 
+            (not (isNil boundTyVars) &&
              let ftyvs = freeInVal CollectTypars v2
              List.exists (Zset.memberOf ftyvs.FreeTypars) boundTyVars) -> 
 
@@ -1096,9 +1094,9 @@ let AbstractExprInfoByVars (boundVars:Val list,boundTyVars) ivalue =
         
           // Check for escape in lambda 
           | CurriedLambdaValue (_,_,_,expr,_) | ConstExprValue(_,expr)  when 
-            (let fvs = freeInExpr (if List.isEmpty boundTyVars then CollectLocals else CollectTyparsAndLocals) expr
-             (not (List.isEmpty boundVars) && List.exists (Zset.memberOf fvs.FreeLocals) boundVars) ||
-             (not (List.isEmpty boundTyVars) && List.exists (Zset.memberOf fvs.FreeTyvars.FreeTypars) boundTyVars) ||
+            (let fvs = freeInExpr (if isNil boundTyVars then CollectLocals else CollectTyparsAndLocals) expr
+             (not (isNil boundVars) && List.exists (Zset.memberOf fvs.FreeLocals) boundVars) ||
+             (not (isNil boundTyVars) && List.exists (Zset.memberOf fvs.FreeTyvars.FreeTypars) boundTyVars) ||
              (fvs.UsesMethodLocalConstructs )) ->
               
               // Trimming lambda
@@ -1106,7 +1104,7 @@ let AbstractExprInfoByVars (boundVars:Val list,boundTyVars) ivalue =
 
           // Check for escape in generic constant
           | ConstValue(_,ty) when 
-            (not (List.isEmpty boundTyVars) && 
+            (not (isNil boundTyVars) && 
              (let ftyvs = freeInType CollectTypars ty
               List.exists (Zset.memberOf ftyvs.FreeTypars) boundTyVars)) ->
               UnknownValue
@@ -1205,7 +1203,7 @@ let IsTyFuncValRefExpr = function
 let rec IsSmallConstExpr x =
     match x with
     | Expr.Val (v,_,_m) -> not v.IsMutable
-    | Expr.App(fe,_,_tyargs,args,_) -> List.isEmpty args && not (IsTyFuncValRefExpr fe) && IsSmallConstExpr fe
+    | Expr.App(fe,_,_tyargs,args,_) -> isNil args && not (IsTyFuncValRefExpr fe) && IsSmallConstExpr fe
     | _ -> false
 
 let ValueOfExpr expr = 
@@ -1533,7 +1531,7 @@ let (|AnyQueryBuilderOpTrans|_|) g = function
          Some (src,(fun newSource -> Expr.App(v,vty,tyargs,[builder; replaceArgs(newSource::rest)],m)))
     | _ ->  None
 
-let mkUnitDelayLambda g m e =
+let mkUnitDelayLambda (g: TcGlobals) m e =
     let uv,_ = mkCompGenLocal m "unitVar" g.unit_ty
     mkLambda m uv (e,tyOfExpr g e) 
 
@@ -1831,8 +1829,8 @@ and OptimizeExprOp cenv env (op,tyargs,args,m) =
   
     | TOp.ILCall (_,_,_,_,_,_,_,mref,_enclTypeArgs,_methTypeArgs,_tys),_,[arg]
         when (mref.EnclosingTypeRef.Scope.IsAssemblyRef &&
-              mref.EnclosingTypeRef.Scope.AssemblyRef.Name = cenv.g.sysCcu.AssemblyName &&
-              mref.EnclosingTypeRef.Name = "System.Array" &&
+              mref.EnclosingTypeRef.Scope.AssemblyRef.Name = cenv.g.ilg.typ_Array.TypeRef.Scope.AssemblyRef.Name &&
+              mref.EnclosingTypeRef.Name = cenv.g.ilg.typ_Array.TypeRef.Name &&
               mref.Name = "get_Length" &&
               isArray1DTy cenv.g (tyOfExpr cenv.g arg)) -> 
          OptimizeExpr cenv env (Expr.Op(TOp.ILAsm(i_ldlen,[cenv.g.int_ty]),[],[arg],m))
@@ -1957,12 +1955,15 @@ and OptimizeConst cenv env expr (c,m,ty) =
 // Optimize/analyze a record lookup. 
 //------------------------------------------------------------------------- 
 
-and TryOptimizeRecordFieldGet cenv _env (e1info,r:RecdFieldRef,_tinst,m) =
+and TryOptimizeRecordFieldGet cenv _env (e1info, (RFRef (rtcref,_) as r),_tinst,m) =
     match destRecdValue e1info.Info with
     | Some finfos when cenv.settings.EliminateRecdFieldGet() && not e1info.HasEffect ->
-        let n = r.Index
-        if n >= finfos.Length then errorR(InternalError( "TryOptimizeRecordFieldGet: term argument out of range",m))
-        Some finfos.[n]   (* Uses INVARIANT on record ValInfos that exprs are in defn order *)
+        match TryFindFSharpAttribute cenv.g cenv.g.attrib_CLIMutableAttribute rtcref.Attribs with
+        | Some _ -> None
+        | None ->
+            let n = r.Index
+            if n >= finfos.Length then errorR(InternalError( "TryOptimizeRecordFieldGet: term argument out of range",m))
+            Some finfos.[n]   (* Uses INVARIANT on record ValInfos that exprs are in defn order *)
     | _ -> None
   
 and TryOptimizeTupleFieldGet cenv _env (_tupInfo,e1info,tys,n,m) =
@@ -2280,7 +2281,7 @@ and CanDevirtualizeApplication cenv v vref ty args  =
      && not (IsUnionTypeWithNullAsTrueValue cenv.g (fst(StripToNominalTyconRef cenv ty)).Deref)  
      // If we de-virtualize an operation on structs then we have to take the address of the object argument
      // Hence we have to actually have the object argument available to us,
-     && (not (isStructTy cenv.g ty) || not (List.isEmpty args)) 
+     && (not (isStructTy cenv.g ty) || not (isNil args)) 
 
 and TakeAddressOfStructArgumentIfNeeded cenv (vref:ValRef) ty args m =
     if vref.IsInstanceMember && isStructTy cenv.g ty then 
@@ -2300,7 +2301,7 @@ and TakeAddressOfStructArgumentIfNeeded cenv (vref:ValRef) ty args m =
 
 and DevirtualizeApplication cenv env (vref:ValRef) ty tyargs args m =
     let wrap,args = TakeAddressOfStructArgumentIfNeeded cenv vref ty args m
-    let transformedExpr = wrap (MakeApplicationAndBetaReduce cenv.g (exprForValRef m vref,vref.Type,(if List.isEmpty tyargs then [] else [tyargs]),args,m))
+    let transformedExpr = wrap (MakeApplicationAndBetaReduce cenv.g (exprForValRef m vref,vref.Type,(if isNil tyargs then [] else [tyargs]),args,m))
     OptimizeExpr cenv env transformedExpr
 
     
@@ -2493,7 +2494,7 @@ and TryDevirtualizeApplication cenv env (f,tyargs,args,m) =
         
     // Don't fiddle with 'methodhandleof' calls - just remake the application
     | Expr.Val(vref,_,_),_,_ when valRefEq cenv.g vref cenv.g.methodhandleof_vref ->
-        Some( MakeApplicationAndBetaReduce cenv.g (exprForValRef m vref,vref.Type,(if List.isEmpty tyargs then [] else [tyargs]),args,m),
+        Some( MakeApplicationAndBetaReduce cenv.g (exprForValRef m vref,vref.Type,(if isNil tyargs then [] else [tyargs]),args,m),
               { TotalSize=1
                 FunctionSize=1
                 HasEffect=false
@@ -2503,7 +2504,7 @@ and TryDevirtualizeApplication cenv env (f,tyargs,args,m) =
     | _ -> None
 
 /// Attempt to inline an application of a known value at callsites
-and TryInlineApplication cenv env (_f0',finfo) (tyargs: TType list,args: Expr list,m) =
+and TryInlineApplication cenv env finfo (tyargs: TType list,args: Expr list,m) =
     // Considering inlining app 
     match finfo.Info with 
     | StripLambdaValue (lambdaId,arities,size,f2,f2ty) when
@@ -2525,6 +2526,8 @@ and TryInlineApplication cenv env (_f0',finfo) (tyargs: TType list,args: Expr li
                               match args.[0] with
                               | Expr.Val(vref,_,_) when vref.BaseOrThisInfo = BaseVal -> true
                               | _ -> false
+        
+        if isBaseCall then None else
 
         // Since Lazy`1 moved from FSharp.Core to mscorlib on .NET 4.0, inlining Lazy values from 2.0 will
         // confuse the optimizer if the assembly is referenced on 4.0, since there will be no value to tie back
@@ -2542,15 +2545,23 @@ and TryInlineApplication cenv env (_f0',finfo) (tyargs: TType list,args: Expr li
                             | _ -> false
                     | _ -> false
                 | _ -> false                                          
-                              
+        
+        if isValFromLazyExtensions then None else
+
         let isSecureMethod =
           match finfo.Info with
           |  ValValue(vref,_) ->
                 vref.Attribs |> List.exists (fun a -> (IsSecurityAttribute cenv.g cenv.amap cenv.casApplied a m) || (IsSecurityCriticalAttribute cenv.g a))
           | _ -> false                              
 
-        if isBaseCall || isSecureMethod || isValFromLazyExtensions then None
-        else
+        if isSecureMethod then None else
+
+        let isGetHashCode =
+            match finfo.Info with
+            | ValValue(vref,_) -> vref.DisplayName = "GetHashCode" && vref.IsCompilerGenerated
+            | _ -> false
+
+        if isGetHashCode then None else
 
         // Inlining lambda 
   (* ----------       printf "Inlining lambda near %a = %s\n"  outputRange m (showL (exprL f2))  (* JAMES: *) ----------*)
@@ -2580,7 +2591,7 @@ and OptimizeApplication cenv env (f0,f0ty,tyargs,args,m) =
         res
     | None -> 
     let newf0,finfo = OptimizeExpr cenv env f0
-    match TryInlineApplication cenv env (newf0,finfo) (tyargs,args,m) with 
+    match TryInlineApplication cenv env finfo (tyargs,args,m) with 
     | Some res -> 
         // inlined
         res
@@ -2666,7 +2677,7 @@ and OptimizeLambdas (vspec: Val option) cenv env topValInfo e ety =
         let body',bodyinfo = OptimizeExpr cenv env body
         let expr' = mkMemberLambdas m tps ctorThisValOpt baseValOpt vsl (body',bodyty)
         let arities = vsl.Length
-        let arities = if List.isEmpty tps then arities else 1+arities
+        let arities = if isNil tps then arities else 1+arities
         let bsize = bodyinfo.TotalSize
         
         /// Set the flag on the value indicating that direct calls can avoid a tailcall (which are expensive on .NET x86)
@@ -3231,8 +3242,6 @@ and p_ModuleInfo x st =
 and p_LazyModuleInfo x st = 
     p_lazy p_ModuleInfo x st
 let p_CcuOptimizationInfo x st = p_LazyModuleInfo x st
-
-#endif // !NO_COMPILER_BACKEND
 
 let rec u_ExprInfo st =
     let rec loop st =

@@ -22,6 +22,7 @@ type options =
    embeddedPDB: bool
    embedAllSource: bool
    embedSourceList: string list
+   sourceLink: string
    signer : ILStrongNameSigner option
    fixupOverlappingSequencePoints : bool
    emitTailcalls: bool
@@ -29,4 +30,4 @@ type options =
    dumpDebugInfo : bool }
 
 /// Write a binary to the file system. Extra configuration parameters can also be specified. 
-val WriteILBinary: filename: string * options:  options * input: ILModuleDef * noDebugData: bool -> unit
+val WriteILBinary: filename: string * options:  options * input: ILModuleDef -> unit

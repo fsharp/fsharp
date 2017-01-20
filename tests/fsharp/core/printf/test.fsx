@@ -1,6 +1,6 @@
 // #Conformance #Printing 
 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 module Core_printf
 #endif
 
@@ -14,20 +14,6 @@ let report_failure (s : string) =
     stderr.Write" NO: "
     stderr.WriteLine s
     failures := !failures @ [s]
-
-#if NetCore
-#else
-let argv = System.Environment.GetCommandLineArgs() 
-let SetCulture() = 
-  if argv.Length > 2 && argv.[1] = "--culture" then  begin
-    let cultureString = argv.[2] in 
-    let culture = new System.Globalization.CultureInfo(cultureString) in 
-    stdout.WriteLine ("Running under culture "+culture.ToString()+"...");
-    System.Threading.Thread.CurrentThread.CurrentCulture <-  culture
-  end 
-  
-do SetCulture()    
-#endif
 
 // change this to true to run every test case
 // leave as false to randomly execute a subset of cases (this is a very expensive test area)
@@ -9308,7 +9294,7 @@ func7000()
 func8000()
 
 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 let RUN() = !failures
 #else
 let aa =

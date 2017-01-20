@@ -20,15 +20,13 @@ open System.IO
 open System.Text
 open System.Reflection
 
-#if FX_NO_SYMBOLSTORE
-#else
+#if !FX_NO_SYMBOLSTORE
 open System.Diagnostics.SymbolStore
 #endif
 open System.Runtime.InteropServices
 open System.Runtime.CompilerServices
 
-#if FX_NO_LINKEDRESOURCES
-#else
+#if !FX_NO_LINKEDRESOURCES
 // Force inline, so GetLastWin32Error calls are immediately after interop calls as seen by FxCop under Debug build.
 let inline ignore _x = ()
 
@@ -57,8 +55,7 @@ let bytesToQWord ((b0 : byte) , (b1 : byte) , (b2 : byte) , (b3 : byte) , (b4 : 
 let dwToBytes n = [| (byte)(n &&& 0xff) ; (byte)((n >>> 8) &&& 0xff) ; (byte)((n >>> 16) &&& 0xff) ; (byte)((n >>> 24) &&& 0xff) |], 4
 let wToBytes (n : int16) = [| (byte)(n &&& 0xffs) ; (byte)((n >>> 8) &&& 0xffs) |], 2
 
-#if FX_NO_LINKEDRESOURCES
-#else
+#if !FX_NO_LINKEDRESOURCES
 // REVIEW: factor these classes under one hierarchy, use reflection for creation from buffer and toBytes()
 // Though, everything I'd like to unify is static - metaclasses?
 type IMAGE_FILE_HEADER (m:int16, secs:int16, tds:int32, ptst:int32, nos:int32, soh:int16, c:int16) =
@@ -854,8 +851,7 @@ let unlinkResource (ulLinkedResourceBaseRVA:int32) (pbLinkedResource:byte[]) =
     pResBuffer
 #endif
 
-#if FX_NO_PDB_WRITER
-#else
+#if !FX_NO_PDB_WRITER
 // PDB Writing
 
 [<ComImport; Interface>]
@@ -1016,8 +1012,7 @@ type idd =
       iddData: byte[];}
 #endif
 
-#if FX_NO_PDB_WRITER
-#else
+#if !FX_NO_PDB_WRITER
 let pdbInitialize (binaryName:string) (pdbName:string) =
     // collect necessary COM types
     let CorMetaDataDispenser = System.Type.GetTypeFromProgID("CLRMetaData.CorMetaDataDispenser")
@@ -1152,8 +1147,7 @@ let pdbWriteDebugInfo (writer: PdbWriter) =
 #endif
 
 
-#if FX_NO_PDB_WRITER
-#else
+#if !FX_NO_PDB_WRITER
 // PDB reading
 type PdbReader  = { symReader: ISymbolReader }
 type PdbDocument  = { symDocument: ISymbolDocument }
@@ -1170,9 +1164,6 @@ type PdbSequencePoint =
       pdbSeqPointEndColumn: int; }
 
 let pdbReadOpen (moduleName:string) (path:string) :  PdbReader = 
-  if IL.runningOnMono then 
-    { symReader = null }
-  else
     let CorMetaDataDispenser = System.Type.GetTypeFromProgID("CLRMetaData.CorMetaDataDispenser")
     let mutable IID_IMetaDataImport = new Guid("7DAC8207-D3AE-4c75-9B67-92801A497D44");
     let mdd = System.Activator.CreateInstance(CorMetaDataDispenser) :?> IMetaDataDispenser
@@ -1180,7 +1171,7 @@ let pdbReadOpen (moduleName:string) (path:string) :  PdbReader =
     mdd.OpenScope(moduleName, 0, &IID_IMetaDataImport, &o) ;
     let importerPtr = Marshal.GetComInterfaceForObject(o, typeof<IMetadataImport>)
     try 
-#if CROSS_PLATFORM_COMPILER 
+#if ENABLE_MONO_SUPPORT
         // ISymWrapper.dll is not available as a compile-time dependency for the cross-platform compiler, since it is Windows-only 
         // Access it via reflection instead.System.Diagnostics.SymbolStore.SymBinder 
         try  
@@ -1450,12 +1441,11 @@ let getICLRStrongName () =
         sn
     | Some(sn) -> sn
 
-let signerGetPublicKeyForKeyPair (kp:byte[])  =
+let signerGetPublicKeyForKeyPair kp =
  if IL.runningOnMono then 
     let snt = System.Type.GetType("Mono.Security.StrongName") 
     let sn = System.Activator.CreateInstance(snt, [| box kp |])
     snt.InvokeMember("PublicKey", (BindingFlags.GetProperty ||| BindingFlags.Instance ||| BindingFlags.Public), null, sn, [| |], Globalization.CultureInfo.InvariantCulture) :?> byte[] 
-
  else
     let mutable pSize = 0u
     let mutable pBuffer : nativeint = (nativeint)0
@@ -1469,9 +1459,6 @@ let signerGetPublicKeyForKeyPair (kp:byte[])  =
     keybuffer
 
 let signerGetPublicKeyForKeyContainer kc =
- if IL.runningOnMono then 
-    failwith "the use of key containers for strong name signing is not yet supported when running on Mono"
- else
     let mutable pSize = 0u
     let mutable pBuffer : nativeint = (nativeint)0
     let iclrSN = getICLRStrongName()
@@ -1483,9 +1470,6 @@ let signerGetPublicKeyForKeyContainer kc =
     keybuffer
  
 let signerCloseKeyContainer kc = 
- if IL.runningOnMono then 
-    failwith "the use of key containers for strong name signing is not yet supported when running on Mono"
- else
     let iclrSN = getICLRStrongName()
     iclrSN.StrongNameKeyDelete(kc) |> ignore
 
@@ -1498,7 +1482,7 @@ let signerSignatureSize (pk:byte[]) =
     iclrSN.StrongNameSignatureSize(pk, uint32 pk.Length, &pSize) |> ignore
     int pSize
 
-let signerSignFileWithKeyPair fileName (kp:byte[]) = 
+let signerSignFileWithKeyPair fileName kp = 
  if IL.runningOnMono then 
     let snt = System.Type.GetType("Mono.Security.StrongName") 
     let sn = System.Activator.CreateInstance(snt, [| box kp |])
@@ -1514,9 +1498,6 @@ let signerSignFileWithKeyPair fileName (kp:byte[]) =
     iclrSN.StrongNameSignatureVerificationEx(fileName, true, &ok) |> ignore
 
 let signerSignFileWithKeyContainer fileName kcName =
- if IL.runningOnMono then 
-    failwith "the use of key containers for strong name signing is not yet supported when running on Mono"
- else
     let mutable pcb = 0u
     let mutable ppb = (nativeint)0
     let mutable ok = false

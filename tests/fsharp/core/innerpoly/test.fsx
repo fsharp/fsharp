@@ -1,5 +1,5 @@
 // #Conformance #Regression #LetBindings #TypeInference 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 module Core_innerpoly
 #endif
 
@@ -389,7 +389,7 @@ module InnerGenericBindingsInComputationExpressions = begin
     f()
 end
 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 let RUN() = !failures
 #else
 let aa =
