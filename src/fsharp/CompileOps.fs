@@ -2807,12 +2807,12 @@ type TcConfig private (data : TcConfigBuilder,validate:bool) =
                 [ let runtimeRoot = System.Runtime.InteropServices.RuntimeEnvironment.GetRuntimeDirectory()
                   let runtimeRootWithoutSlash = runtimeRoot.TrimEnd('/', '\\')
                   let api = runtimeRootWithoutSlash + "-api"
+                  yield runtimeRoot // The defaut FSharp.Core is found in lib/mono/4.5
                   if Directory.Exists(api) then
                      yield api
                      let facades = Path.Combine(api, "Facades")
                      if Directory.Exists(facades) then
                         yield facades
-                  yield runtimeRoot // The defaut FSharp.Core is found in lib/mono/4.5
                   let facades = Path.Combine(runtimeRoot, "Facades")
                   if Directory.Exists(facades) then
                      yield facades

@@ -111,6 +111,7 @@ module internal Microsoft.FSharp.Compiler.MSBuildReferenceResolver
 
     /// Use MSBuild to determine the version of the highest installed framework.
     let HighestInstalledNetFrameworkVersion() =
+      try
 #if MSBUILD_AT_LEAST_14
         if box (ToolLocationHelper.GetPathToDotNetFramework(TargetDotNetFrameworkVersion.Version461)) <> null then Net461
         elif box (ToolLocationHelper.GetPathToDotNetFramework(TargetDotNetFrameworkVersion.Version46)) <> null then Net46
@@ -121,7 +122,8 @@ module internal Microsoft.FSharp.Compiler.MSBuildReferenceResolver
         if box (ToolLocationHelper.GetPathToDotNetFramework(TargetDotNetFrameworkVersion.Version451)) <> null then Net451 
 #endif
         elif box (ToolLocationHelper.GetPathToDotNetFramework(TargetDotNetFrameworkVersion.Version45)) <> null then Net45 
-        else Net40 // version is 4.0 assumed since this code is running. 
+        else Net45 // version is 4.0 assumed since this code is running. 
+      with _ -> Net45
 
     /// Derive the target framework directories.        
     let DeriveTargetFrameworkDirectories (targetFrameworkVersion:string, logMessage) =
