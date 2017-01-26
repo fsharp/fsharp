@@ -452,7 +452,7 @@ module ProbabilityWorkflow =
        // Every sample should be identical on left and right because of the condition
        check "cwnew0" v1 v2
        
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 let RUN() = !failures
 #else
 let aa =

@@ -3,6 +3,7 @@
 module Core_unicode
 #endif
 
+open System.IO
 let failures = ref []
 
 let reportFailure (s : string) = 
@@ -18,7 +19,7 @@ let test (s : string) b =
 (* TEST SUITE FOR UNICODE CHARS *)
 
 
-#if !FX_PORTABLE_OR_NETSTANDARD
+#if !TESTS_AS_APP && !FX_PORTABLE_OR_NETSTANDARD
 let input_byte (x : System.IO.FileStream) = 
     let b = x.ReadByte() 
     if b = -1 then raise (System.IO.EndOfStreamException()) else b
@@ -129,7 +130,7 @@ let αβΛΘΩΨΧΣδζȚŶǺ = 22/7
 
 let π = 3.1415
 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 let RUN() = !failures
 #else
 let aa =

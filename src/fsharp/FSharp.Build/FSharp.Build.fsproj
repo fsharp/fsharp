@@ -14,9 +14,6 @@
     <ProjectGuid>{702A7979-BCF9-4C41-853E-3ADFC9897890}</ProjectGuid>
     <FX_NOLOADER>true</FX_NOLOADER>
   </PropertyGroup>
-  <!-- MonoDevelop likes these here to recognise the configurations -->
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' " />
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' " />
   <ItemGroup>
     <FilesToLocalize Include="$(OutDir)$(AssemblyName).dll">
       <TranslationFile>$(FSharpSourcesRoot)\..\loc\lcl\{Lang}\$(AssemblyName).dll.lcl</TranslationFile>
@@ -37,36 +34,18 @@
     <Compile Include="..\..\utils\CompilerLocationUtils.fs">
       <Link>Utilities/CompilerLocationUtils.fs</Link>
     </Compile>
-    <Compile Include="Fsc.fsi" >
-      <Link>BuildTasks/Fsc.fsi</Link>
-    </Compile>
-    <Compile Include="Fsc.fs" >
-      <Link>BuildTasks/Fsc.fs</Link>
-    </Compile>
-    <Compile Include="CreateFSharpManifestResourceName.fsi" >
-      <Link>BuildTasks/CreateFSharpManifestResourceName.fsi</Link>
-    </Compile>
-    <Compile Include="CreateFSharpManifestResourceName.fs" >
-      <Link>BuildTasks/CreateFSharpManifestResourceName.fs</Link>
-    </Compile>
-    <None Include="Microsoft.FSharp.targets">
-      <Link>Microsoft.FSharp.targets</Link>
-    </None>
-    <None Include="Microsoft.Portable.FSharp.targets">
-      <Link>Microsoft.Portable.FSharp.targets</Link>
-    </None>
     <Compile Include="..\..\utils\reshapedreflection.fs" />
     <Compile Include="Fsc.fsi" />
     <Compile Include="Fsc.fs" />
     <Compile Include="CreateFSharpManifestResourceName.fsi" />
     <Compile Include="CreateFSharpManifestResourceName.fs" />
     <CopyAndSubstituteText Include="Microsoft.FSharp.targets">
-		<TargetFilename>Microsoft.FSharp.targets</TargetFilename>
+		<TargetFilename>Microsoft.FSharp.Targets</TargetFilename>
 		<Pattern1>{BuildSuffix}</Pattern1>
 		<Replacement1></Replacement1>
 	</CopyAndSubstituteText>
 	<CopyAndSubstituteText Include="Microsoft.Portable.FSharp.targets">
-		<TargetFilename>Microsoft.Portable.FSharp.targets</TargetFilename>
+		<TargetFilename>Microsoft.Portable.FSharp.Targets</TargetFilename>
 		<Pattern1>{BuildSuffix}</Pattern1>
 		<Replacement1></Replacement1>
     </CopyAndSubstituteText>
@@ -74,19 +53,19 @@
   <ItemGroup Condition=" '$(TargetFramework)' != 'coreclr' ">
     <Reference Include="mscorlib" />
     <Reference Include="System" />
-    <Reference Include="Microsoft.Build.Framework, Version=$(MSBuildVersionFull), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+	<Reference Include="Microsoft.Build.Framework, Version=$(MSBuildVersionFull), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
 		<Private>True</Private>
 	</Reference>
-    <Reference Include="Microsoft.Build.Engine, Version=$(MSBuildVersionFull), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+	<Reference Include="Microsoft.Build.Engine, Version=$(MSBuildVersionFull), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
 		<Private>True</Private>
 	</Reference>
-    <Reference Include="Microsoft.Build, Version=$(MSBuildVersionFull), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+	<Reference Include="Microsoft.Build, Version=$(MSBuildVersionFull), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
 		<Private>True</Private>
 	</Reference>
 	<Reference Include="Microsoft.Build.Utilities.$(MSBuildVersionSuffix), Version=$(MSBuildVersionFull), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
 		<Private>True</Private>
 	</Reference>
-    <Reference Include="Microsoft.Build.Tasks.$(MSBuildVersionSuffix), Version=$(MSBuildVersionFull), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+	<Reference Include="Microsoft.Build.Tasks.$(MSBuildVersionSuffix), Version=$(MSBuildVersionFull), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
 		<Private>True</Private>
 	</Reference>
   </ItemGroup>
@@ -97,23 +76,6 @@
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(FSharpSourcesRoot)\FSharpSource.targets" />
-
-	  <!-- Hook compilation phase to do custom work -->
-  <PropertyGroup>
-    <PrepareForRunDependsOn>$(PrepareForRunDependsOn);CopyToBuiltBin</PrepareForRunDependsOn>
-  </PropertyGroup>
-
-	<!-- Microsoft.FSharp.Targets : Must be used un any distribution of F# for Mono+Linux or any case-sensitive file system using MSBuild --> 
-	<!-- Microsoft.FSharp.Targets or Microsoft.FSharp.targets : Used in the Visual F# Tools distribution (on Windows it doesn't matter). -->
-	<!-- Microsoft.FSharp.targets : Used in the source tree as of 08/04/2016 (prior this was Microsoft.FSharp.Targets) -->
-	
-  <Target Name="CopyToBuiltBin">
-    <Copy SourceFiles="Microsoft.FSharp.targets" DestinationFiles="$(OutputPath)/Microsoft.FSharp.Targets" SkipUnchangedFiles="true" >
-      <Output TaskParameter="DestinationFiles" ItemName="FileWrites" />
-    </Copy>
-	  <Copy SourceFiles="Microsoft.Portable.FSharp.targets" DestinationFiles="$(OutputPath)/Microsoft.Portable.FSharp.Targets" SkipUnchangedFiles="true" >
-		  <Output TaskParameter="DestinationFiles" ItemName="FileWrites" />
-	  </Copy>
   <Target Name="GatherBinariesToBeSigned" AfterTargets="Localize" Condition="'$(UseGatherBinaries)' == 'true'">
     <ItemGroup>
       <BinariesToBeSigned Include="$(OutDir)$(AssemblyName).dll" />
@@ -124,5 +86,4 @@
       </FilesToSign>
     </ItemGroup>
   </Target>
-
 </Project>

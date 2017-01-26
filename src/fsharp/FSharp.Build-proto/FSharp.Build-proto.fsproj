@@ -14,11 +14,7 @@
     <DefineConstants>BUILDING_WITH_LKG;$(DefineConstants)</DefineConstants>
     <BuildWith>LKG</BuildWith>
     <ProjectGuid>{D8BC791F-C1A9-49DC-9432-0F3090537555}</ProjectGuid>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
   </PropertyGroup>
-  <!-- MonoDevelop likes these here to recognise the configurations -->
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' " />
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' " />
   <ItemGroup>
       <FsSrGen Include="..\FSharp.Build\FSBuild.txt">
           <Link>FSBuild.txt</Link>
@@ -39,15 +35,6 @@
     <Compile Include="..\FSharp.Build\Fsc.fs">
       <Link>Fsc.fs</Link>
     </Compile>
-    <Content Include="Microsoft.FSharp-proto.targets">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-  <ItemGroup>
-    <Reference Include="mscorlib" />
-    <Reference Include="FSharp.Core">
-      <HintPath>$(LkgPath)\FSharp.Core.dll</HintPath>
-    </Reference>
     <CopyAndSubstituteText Include="..\FSharp.Build\Microsoft.FSharp.targets">
 		<Link>Microsoft.FSharp-proto.targets</Link>
 		<TargetFilename>Microsoft.FSharp-proto.targets</TargetFilename>
@@ -66,19 +53,19 @@
     <Reference Include="$(FSharpCoreLkgPath)\FSharp.Core.dll" />
     <Reference Include="System" />
     <Reference Include="System.Numerics" />
-    <Reference Include="Microsoft.Build.Framework, Version=$(MSBuildVersionFull), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+	<Reference Include="Microsoft.Build.Framework, Version=$(MSBuildVersionFull), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
 		<Private>True</Private>
 	</Reference>
-    <Reference Include="Microsoft.Build.Engine, Version=$(MSBuildVersionFull), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+	<Reference Include="Microsoft.Build.Engine, Version=$(MSBuildVersionFull), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
 		<Private>True</Private>
 	</Reference>
-    <Reference Include="Microsoft.Build, Version=$(MSBuildVersionFull), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+	<Reference Include="Microsoft.Build, Version=$(MSBuildVersionFull), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
 		<Private>True</Private>
 	</Reference>
 	<Reference Include="Microsoft.Build.Utilities.$(MSBuildVersionSuffix), Version=$(MSBuildVersionFull), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
 		<Private>True</Private>
 	</Reference>
-    <Reference Include="Microsoft.Build.Tasks.$(MSBuildVersionSuffix), Version=$(MSBuildVersionFull), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+	<Reference Include="Microsoft.Build.Tasks.$(MSBuildVersionSuffix), Version=$(MSBuildVersionFull), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
 		<Private>True</Private>
 	</Reference>
   </ItemGroup>

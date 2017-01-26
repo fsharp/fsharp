@@ -850,7 +850,7 @@ module MoreSequenceSyntaxTests =
                             return 2 }  
         let x0m = async { printfn "hello" }
 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 #else
         let f103 () = 
             async { do! Async.SwitchToNewThread()
@@ -950,7 +950,7 @@ module SyncMonad =
            sync { printfn "hello" }
 
 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 #else
     type ThreadBuilder () = 
         inherit SyncBuilder()
@@ -1485,7 +1485,7 @@ module SideEffectListMonad =
         test "x0b" (x0b = ([1], 1))
 
 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 let RUN() = !failures
 #else
 let aa =

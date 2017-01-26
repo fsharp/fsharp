@@ -1,5 +1,5 @@
 // #Conformance #MemberDefinitions #Overloading #ComputationExpressions 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 module Core_members_ops
 #endif
 
@@ -409,7 +409,7 @@ module CodeGenTraitCallWitnessesNotBeingInlined =
 
 
 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 let RUN() = !failures
 #else
 let aa =

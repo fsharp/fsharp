@@ -449,14 +449,10 @@ namespace Microsoft.FSharp.Core
 #if FX_NO_BIGINT
                        BigInteger.Parse s
 #else
-#if FX_NO_BIGINT_CULTURE_PARSE
-                       BigInteger.Parse s
-#else
                        if  isOX s then 
                           BigInteger.Parse (s.[2..],NumberStyles.AllowHexSpecifier,CultureInfo.InvariantCulture)
                        else
                           BigInteger.Parse (s,NumberStyles.AllowLeadingSign,CultureInfo.InvariantCulture)
-#endif
 #endif
 #endif
                     res <-  v

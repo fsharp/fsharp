@@ -615,7 +615,7 @@ module rec Ok15 =
 
     test "lkneecec09iew15" (not (typeof<A.Dummy>.FullName.Contains("AModule") )) 
 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 let RUN() = !failures
 #else
 let aa =

@@ -179,7 +179,7 @@ namespace rec global
       do Hello.Goodbye.Utils.test "test292jwf" (N.x.V = 4)
 
 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
     let RUN() = !failures
 #else
     let aa =

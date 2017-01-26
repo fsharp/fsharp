@@ -2,7 +2,7 @@
 
 #light
 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 module Core_members_basics
 #else
 module Tests
@@ -58,8 +58,7 @@ test "fweoew093" ((f(1)).b = 2)
 
 open System
 open System.Collections
-#if Portable
-#else
+#if !FX_PORTABLE_OR_NETSTANDARD
 open System.Windows.Forms
 #endif
 
@@ -67,8 +66,7 @@ open System.Windows.Forms
 // Some simple object-expression tests
 
 let x0 = { new System.Object() with member __.GetHashCode() = 3 }
-#if Portable
-#else
+#if !FX_PORTABLE_OR_NETSTANDARD
 let x1 = { new System.Windows.Forms.Form() with member __.GetHashCode() = 3 }
 #endif
 
@@ -983,8 +981,7 @@ let [<DontPressThisButton("Please don't press this again")>] button () = 1
 // Test we can use base calls
 
 
-#if Portable
-#else
+#if !FX_PORTABLE_OR_NETSTANDARD
 open System.Windows.Forms
 
 type MyCanvas2 = 
@@ -1784,16 +1781,14 @@ module DefaultConstructorConstraints = begin
   let x1 = (f1() : obj)
   let x2 = (f1() : int)
   let x3 = (f1() : DateTime)
-#if Portable
-#else
+#if !FX_PORTABLE_OR_NETSTANDARD
   let x4 = (f1() : System.Windows.Forms.Form)
 #endif
   let f2 () = f1()
   let y1 = (f2() : obj)
   let y2 = (f2() : int)
   let y3 = (f2() : DateTime)
-#if Portable
-#else
+#if !FX_PORTABLE_OR_NETSTANDARD
   let y4 = (f2() : System.Windows.Forms.Form)
 #endif
   
@@ -2036,8 +2031,7 @@ module T1 =
 
     Vector2D(1.0,1.0) = Vector2D(1.0,1.0)
 
-#if Portable
-#else
+#if !FX_PORTABLE_OR_NETSTANDARD
 module Ex5 = 
     open System.Drawing
     type Label(?text,?font) =
@@ -5614,7 +5608,7 @@ module Devdiv2_5385_repro2 =
 
 
 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 let RUN() = !failures
 #else
 let aa =

@@ -376,7 +376,7 @@ module CheckGenericParameterAttibutesAndNames =
     if typeof<Cases>.GetMethod("M2").GetGenericArguments().[1].Name <> "V" then report_failure "wrong name on generic parameter (C)" 
     if typeof<Cases>.GetMethod("M3").GetGenericArguments().[0].Name <> "a" then report_failure "unexpected inferred name on generic parameter (D)" 
 
-#if !FX_PORTABLE_OR_NETSTANDARD
+#if !TESTS_AS_APP && !FX_PORTABLE_OR_NETSTANDARD
 module CheckAttributesOnElementsWithSignatures = 
 
     let checkOneAttribute msg (cas: _ []) = 
@@ -1333,7 +1333,7 @@ module TestFsiLoadOfNonExistentAssembly =
  *------------------------------------------------------------------------- *)
 
 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 let RUN() = !failures
 #else
 let aa =

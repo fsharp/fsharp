@@ -225,8 +225,7 @@ end
 
 //! Area variations
   
-#if Portable
-#else
+#if !MONO && !FX_PORTABLE_OR_NETSTANDARD
 module AreaVariations = begin
     (* Accepted *)
     open System.Drawing
@@ -403,8 +402,7 @@ end
 
 //! Forms
   
-#if Portable
-#else
+#if !MONO && !FX_PORTABLE_OR_NETSTANDARD
 module Forms1 = begin
     open System.Drawing
     open System.Windows.Forms
@@ -712,7 +710,7 @@ end
 //! Finish
 
 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 let RUN() = !failures
 #else
 let aa =

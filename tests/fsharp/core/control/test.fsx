@@ -452,7 +452,7 @@ module Bug6078 =
         let throwingAsync = async { raise <| new InvalidOperationException("foo") }
         
         for i in 1..100 do
-            check "5678w6r78w" 
+            check ("5678w6r78w"+string i) 
                 begin
                     try
                         [   for j in 1..i do yield sleepingAsync; 
@@ -465,7 +465,7 @@ module Bug6078 =
                 "foo"
     Test()
 
-#if !FX_PORTABLE_OR_NETSTANDARD
+#if !MONO && !FX_PORTABLE_OR_NETSTANDARD
 module AwaitEventTests = 
     let AwaitEventTest() = 
         // AwaitEvent
@@ -782,7 +782,7 @@ module OnCancelTests =
          res) 0
 
 
-#if !FX_PORTABLE_OR_NETSTANDARD
+#if !TESTS_AS_APP && !FX_PORTABLE_OR_NETSTANDARD
 module SyncContextReturnTests = 
 
     let p() = printfn "running on %A" System.Threading.SynchronizationContext.Current
@@ -1780,7 +1780,7 @@ module ParallelTest =
     Test()    
 
 
-#if !FX_PORTABLE_OR_NETSTANDARD
+#if !TESTS_AS_APP && !FX_PORTABLE_OR_NETSTANDARD
 // See bug 5570, check we do not switch threads
 module CheckNoPumpingOrThreadSwitchingBecauseWeTrampolineSynchronousCode =
     let checkOnThread  msg expectedThreadId = 
@@ -2083,7 +2083,9 @@ let RunAll() =
     StartChildOutsideOfAsync.Run()
     SpawnTests.Run()
     AsBeginEndTests.AsBeginEndTest()
+#if !MONO && !FX_PORTABLE_OR_NETSTANDARD
     AwaitEventTests.AwaitEventTest()
+#endif
     OnCancelTests.Run()
     GenerateTests.Run()
     ParallelTests.Run()
@@ -2092,7 +2094,7 @@ let RunAll() =
     AsyncGenerateTests.Run()
 #endif
 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 let RUN() = RunAll(); failures
 #else
 RunAll()

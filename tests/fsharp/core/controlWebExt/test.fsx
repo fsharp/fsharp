@@ -1,5 +1,5 @@
 // #Conformance #ComputationExpressions #Async 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 module Core_controlWebExt
 #endif
 #light
@@ -224,7 +224,7 @@ let RunAll() =
     WebClientTests.repeatedFetchAndCancelTest()
     WebResponseTests.repeatedFetchAndCancelTest()
 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 let RUN() = RunAll(); failures
 #else
 RunAll()

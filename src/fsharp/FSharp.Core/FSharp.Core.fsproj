@@ -3,7 +3,6 @@
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <FSharpSourcesRoot>$(MSBuildProjectDirectory)\..\..</FSharpSourcesRoot>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
   </PropertyGroup>
   <Import Project="$(FSharpSourcesRoot)\FSharpSource.Settings.targets" />
   <PropertyGroup>
@@ -16,30 +15,20 @@
     <BaseAddress>0x05000000</BaseAddress>
     <CompilingFsLib>true</CompilingFsLib>
     <AllowCrossTargeting>true</AllowCrossTargeting>
-    <TargetFrameworkVersion Condition=" '$(TargetFramework)'=='net20'">v2.0</TargetFrameworkVersion>
     <FX_NO_LOADER>true</FX_NO_LOADER>
-    <OtherFlags>$(OtherFlags) --warnon:1182 --compiling-fslib --optimize --maxerrors:20 --extraoptimizationloops:1 </OtherFlags>
+    <OtherFlags>$(OtherFlags) --warnon:1182 --compiling-fslib --maxerrors:20   --extraoptimizationloops:1 </OtherFlags>
     <OtherFlags Condition=" '$(TargetFramework)'=='net20' AND EXISTS('$(SystemRoot)\Microsoft.NET\Framework\v4.0.30319\mscorlib.dll')">$(OtherFlags) --compiling-fslib-20:"$(SystemRoot)\Microsoft.NET\Framework\v4.0.30319\mscorlib.dll" </OtherFlags>
     <OtherFlags Condition=" '$(TargetFramework)'=='net20' AND EXISTS('$(MonoLibDir40)/mscorlib.dll')">$(OtherFlags) --compiling-fslib-20:"$(MonoLibDir40)/mscorlib.dll" </OtherFlags>
-    <OtherFlags Condition=" '$(TargetFramework)'=='net40'">$(OtherFlags) --compiling-fslib-40</OtherFlags>	
-    <OtherFlags>$(OtherFlags) --warnon:1182 --compiling-fslib --maxerrors:20 --extraoptimizationloops:1 </OtherFlags>
-    <OtherFlags Condition=" '$(TargetFramework)'=='net20'">$(OtherFlags) --compiling-fslib-20:"$(SystemRoot)\Microsoft.NET\Framework\v4.0.30319\mscorlib.dll" </OtherFlags>
-    <OtherFlags Condition=" '$(TargetFramework)'=='net40'">$(OtherFlags) --compiling-fslib-40</OtherFlags>
+    <OtherFlags Condition=" '$(TargetFramework)'=='net40'">$(OtherFlags)       --compiling-fslib-40</OtherFlags>
     <OtherFlags Condition=" '$(TargetFramework)'=='coreclr'">$(OtherFlags) --targetprofile:netcore</OtherFlags>
     <OtherFlags Condition=" '$(TargetFramework)'=='portable7'">$(OtherFlags) --targetprofile:netcore</OtherFlags>
     <OtherFlags Condition=" '$(TargetFramework)'=='portable78'">$(OtherFlags) --targetprofile:netcore</OtherFlags>
     <OtherFlags Condition=" '$(TargetFramework)'=='portable259'">$(OtherFlags) --targetprofile:netcore</OtherFlags>
-    <OtherFlags>$(OtherFlags) --warnon:1182 --compiling-fslib --maxerrors:20   --extraoptimizationloops:1 </OtherFlags>
-    <OtherFlags Condition=" '$(TargetFramework)'=='net40'">$(OtherFlags)       --compiling-fslib-40</OtherFlags>
     <OtherFlags Condition=" '$(TargetFramework)'=='coreclr'">$(OtherFlags)     --compiling-fslib-40</OtherFlags>
     <OtherFlags Condition=" '$(TargetFramework)'=='portable7'">$(OtherFlags)   --compiling-fslib-40</OtherFlags>
     <OtherFlags Condition=" '$(TargetFramework)'=='portable78'">$(OtherFlags)  --compiling-fslib-40 --compiling-fslib-nobigint</OtherFlags>
     <OtherFlags Condition=" '$(TargetFramework)'=='portable259'">$(OtherFlags) --compiling-fslib-40 --compiling-fslib-nobigint</OtherFlags>
   </PropertyGroup>
-  <!-- MonoDevelop likes these here to recognise the configurations -->
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' " />
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' " />
-
   <ItemGroup>
     <PackageNuspec Include="FSharp.Core.netcore.nuspec" Condition="'$(TargetFramework)' == 'coreclr'" />
     <None Include="FSharp.Core.runtimeconfig.json"      Condition="'$(TargetFramework)' == 'coreclr'" ><CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory></None>
@@ -233,9 +222,6 @@
     <Compile Include="..\..\assemblyinfo\assemblyinfo.FSharp.Core.dll.fs">
       <Link>assemblyinfo.FSharp.Core.dll.fs</Link>
     </Compile>
-    <CustomAdditionalCompileInputs Include="$(FscToolPath)\$(FscToolExe)">
-      <Visible>False</Visible>
-    </CustomAdditionalCompileInputs>
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' != 'portable7' and '$(TargetFramework)' != 'coreclr'">
     <Reference Include="mscorlib" />
@@ -274,18 +260,6 @@
   <Import Project="$(FSharpSourcesRoot)\FSharpSource.targets" />
 
   <!-- Hook compilation phase to do custom work -->
-  <PropertyGroup>
-    <PrepareForRunDependsOn>$(PrepareForRunDependsOn);CopyToBuiltBin</PrepareForRunDependsOn>
-  </PropertyGroup>
-  <Target Name="CopyToBuiltBin">
-    <Copy SourceFiles="$(IntermediateOutputPath)\FSharp.Core.sigdata" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true">
-      <Output TaskParameter="DestinationFiles" ItemName="FileWrites" />
-    </Copy>
-    <Copy SourceFiles="$(IntermediateOutputPath)\FSharp.Core.optdata" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true">
-      <Output TaskParameter="DestinationFiles" ItemName="FileWrites" />
-    </Copy>
-  </Target>
-  
 
   <Target Name="CopyToBuiltBin" BeforeTargets="AfterCompile" AfterTargets="CoreCompile" >
     <ItemGroup>

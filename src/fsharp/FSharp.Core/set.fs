@@ -248,7 +248,7 @@ namespace Microsoft.FSharp.Collections
         let rec foldOpt (f:OptimizedClosures.FSharpFunc<_,_,_>) x m = 
             match m with 
             | SetNode(k,l,r,_) -> 
-                let x = foldOpt f x l
+                let x = foldOpt f x l in 
                 let x = f.Invoke(x, k)
                 foldOpt f x r
             | SetOne(k) -> f.Invoke(x, k)

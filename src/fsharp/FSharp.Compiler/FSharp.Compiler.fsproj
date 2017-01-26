@@ -17,18 +17,8 @@
     <NoWarn>$(NoWarn);62;9</NoWarn>
     <ProjectGuid>{2E4D67B4-522D-4CF7-97E4-BA940F0B18F3}</ProjectGuid>
     <AllowCrossTargeting>true</AllowCrossTargeting>
-    <TargetFrameworkVersion Condition="'$(TargetFramework)'=='net40'">v4.5</TargetFrameworkVersion>
     <BaseAddress>0x06800000</BaseAddress>
-    <OtherFlags>$(OtherFlags) --warnon:1182</OtherFlags>
-    <OtherFlags Condition=" '$(TargetFramework)'=='coreclr'">$(OtherFlags) --targetprofile:netcore</OtherFlags>
     <OtherFlags>$(OtherFlags) /warnon:1182</OtherFlags>
-  </PropertyGroup>
-  <!-- MonoDevelop likes these here to recognise the configurations -->
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <OutputPath>bin\Debug</OutputPath>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <OutputPath>bin\Release</OutputPath>
   </PropertyGroup>
   <!-- References -->
   <Import Project="$(FSharpSourcesRoot)\.nuget\NuGet.targets" Condition="Exists('$(FSharpSourcesRoot)\.nuget\NuGet.targets')" />
@@ -492,65 +482,7 @@
     <Compile Include="..\MSBuildReferenceResolver.fs">
       <Link>MSBuildReferenceResolver.fs</Link>
     </Compile>
-    <!--
-    <Compile Include="..\vs\Reactor.fsi">
-      <Link>Service\Reactor.fsi</Link>
-    </Compile>
-    <Compile Include="..\vs\Reactor.fs">
-      <Link>Service\Reactor.fs</Link>
-    </Compile>
-    <Compile Include="..\vs\ServiceLexing.fsi">
-      <Link>Service\ServiceLexing.fsi</Link>
-    </Compile>
-    <Compile Include="..\vs\ServiceLexing.fs">
-      <Link>Service\ServiceLexing.fs</Link>
-    </Compile>
-    <Compile Include="..\vs\ServiceConstants.fs">
-      <Link>Service\ServiceConstants.fs</Link>
-    </Compile>
-    <Compile Include="..\vs\ServiceParseTreeWalk.fs">
-      <Link>Service\ServiceParseTreeWalk.fs</Link>
-    </Compile>
-    <Compile Include="..\vs\ServiceNavigation.fsi">
-      <Link>Service\ServiceNavigation.fsi</Link>
-    </Compile>
-    <Compile Include="..\vs\ServiceNavigation.fs">
-      <Link>Service\ServiceNavigation.fs</Link>
-    </Compile>
-    <Compile Include="..\vs\ServiceParamInfoLocations.fsi">
-      <Link>Service\ServiceParamInfoLocations.fsi</Link>
-    </Compile>
-    <Compile Include="..\vs\ServiceParamInfoLocations.fs">
-      <Link>Service\ServiceParamInfoLocations.fs</Link>
-    </Compile>
-    <Compile Include="..\vs\ServiceUntypedParse.fsi">
-      <Link>Service\ServiceUntypedParse.fsi</Link>
-    </Compile>
-    <Compile Include="..\vs\ServiceUntypedParse.fs">
-      <Link>Service\ServiceUntypedParse.fs</Link>
-    </Compile>
-    <Compile Include="..\vs\ServiceDeclarations.fsi">
-      <Link>Service\ServiceDeclarations.fsi</Link>
-    </Compile>
-    <Compile Include="..\vs\ServiceDeclarations.fs">
-      <Link>Service\ServiceDeclarations.fs</Link>
-    </Compile>
-    <Compile Include="..\vs\service.fsi">
-      <Link>Service\service.fsi</Link>
-    </Compile>
-    <Compile Include="..\vs\service.fs">
-      <Link>Service\service.fs</Link>
-    </Compile>
-    <Compile Include="..\vs\SimpleServices.fs">
-      <Link>SimpleServices.fs</Link>
-    </Compile>
-    <Compile Include="..\vs\IncrementalBuild.fsi">
-      <Link>Driver\IncrementalBuild.fsi</Link>
-    </Compile>
-    <Compile Include="..\vs\IncrementalBuild.fs">
-      <Link>Driver\IncrementalBuild.fs</Link>
--->
-	<Compile Include="InternalsVisibleTo.fs" Condition="'$(TargetFramework)' != 'coreclr'">
+    <Compile Include="InternalsVisibleTo.fs" Condition="'$(TargetFramework)' != 'coreclr'">
       <Link>InternalsVisibleTo.fs</Link>
     </Compile>
     <Compile Include="..\LegacyHostedCompilerForTesting.fs">
@@ -566,8 +498,7 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Numerics" />
-    <Reference Include="System.Windows.Forms" />
-    <Reference Include="System.Runtime.Remoting" />
+    <Reference Include="ISymWrapper, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
     <Reference Include="Microsoft.Build.Framework, Version=$(MSBuildVersionFull), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
 		<Private>True</Private>
 	</Reference>
@@ -580,39 +511,9 @@
 	<Reference Include="Microsoft.Build.Utilities.$(MSBuildVersionSuffix), Version=$(MSBuildVersionFull), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
 		<Private>True</Private>
 	</Reference>
-    <Reference Include="Microsoft.Build.Tasks.$(MSBuildVersionSuffix), Version=$(MSBuildVersionFull), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+	<Reference Include="Microsoft.Build.Tasks.$(MSBuildVersionSuffix), Version=$(MSBuildVersionFull), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
 		<Private>True</Private>
 	</Reference>
-  <Reference Include="ISymWrapper, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
-	<Reference Include="Microsoft.DiaSymReader.PortablePdb">
-		<HintPath>..\..\..\packages\Microsoft.DiaSymReader.PortablePdb.1.1.0\lib\portable-net45+win8\Microsoft.DiaSymReader.PortablePdb.dll</HintPath>
-		<Private>True</Private>
-	</Reference>
-	<Reference Include="Microsoft.DiaSymReader">
-		<HintPath>..\..\..\packages\Microsoft.DiaSymReader.1.0.8\lib\portable-net45+win8\Microsoft.DiaSymReader.dll</HintPath>
-		<Private>True</Private>
-	</Reference>
-	<Reference Include="System.Reflection.Metadata">
-		<HintPath>..\..\..\packages\System.Reflection.Metadata.1.4.1-beta-24227-04\lib\portable-net45+win8\System.Reflection.Metadata.dll</HintPath>
-		<Private>True</Private>
-	</Reference>
-	<Reference Include="System.Collections.Immutable">
-		<HintPath>..\..\..\packages\System.Collections.Immutable.1.2.0\lib\portable-net45+win8+wp8+wpa81\System.Collections.Immutable.dll</HintPath>
-		<Private>True</Private>
-	</Reference>
-    <Reference Include="ISymWrapper, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
-    <Reference Include="Microsoft.Build.Framework, Version=$(VisualStudioVersion).0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-      <HintPath>$(FSharpSourcesRoot)\..\packages\Microsoft.VisualFSharp.Msbuild.15.0.1.0.1\lib\net45\Microsoft.Build.Framework.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.Build, Version=$(VisualStudioVersion).0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-      <HintPath>$(FSharpSourcesRoot)\..\packages\Microsoft.VisualFSharp.Msbuild.15.0.1.0.1\lib\net45\Microsoft.Build.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.Build.Utilities.Core, Version=$(VisualStudioVersion).0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-      <HintPath>$(FSharpSourcesRoot)\..\packages\Microsoft.VisualFSharp.Msbuild.15.0.1.0.1\lib\net45\Microsoft.Build.Utilities.Core.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.Build.Tasks.Core, Version=$(VisualStudioVersion).0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-      <HintPath>$(FSharpSourcesRoot)\..\packages\Microsoft.VisualFSharp.Msbuild.15.0.1.0.1\lib\net45\Microsoft.Build.Tasks.Core.dll</HintPath>
-    </Reference>
     <Reference Include="Microsoft.DiaSymReader.PortablePdb"><HintPath>..\..\..\packages\Microsoft.DiaSymReader.PortablePdb.1.1.0\lib\portable-net45+win8\Microsoft.DiaSymReader.PortablePdb.dll</HintPath></Reference>
     <Reference Include="Microsoft.DiaSymReader"><HintPath>..\..\..\packages\Microsoft.DiaSymReader.1.0.8\lib\portable-net45+win8\Microsoft.DiaSymReader.dll</HintPath></Reference>
     <Reference Include="System.Reflection.Metadata"><HintPath>..\..\..\packages\System.Reflection.Metadata.1.4.1-beta-24227-04\lib\portable-net45+win8\System.Reflection.Metadata.dll</HintPath></Reference>
@@ -642,8 +543,6 @@
   </ItemGroup>
   <Import Project="$(FSharpSourcesRoot)\.nuget\NuGet.targets" Condition="Exists('$(FSharpSourcesRoot)\.nuget\NuGet.targets')" />
   <Import Project="$(FSharpSourcesRoot)\FSharpSource.targets" />
-  <Import Project="$(FsLexYaccpath)\FsLexYacc.targets" />
-  
   <Import Project="$(FsLexToolPath)\FsLexYacc.targets" />
   <Target Name="GatherBinariesToBeSigned" AfterTargets="Localize" Condition="'$(UseGatherBinaries)' == 'true'">
     <ItemGroup>

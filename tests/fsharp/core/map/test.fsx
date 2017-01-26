@@ -160,7 +160,7 @@ module Bug_FSharp_1_0_6307 =
     let t = typeof<global.System.Int32>
 
 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 let RUN() = !failures
 #else
 let aa =

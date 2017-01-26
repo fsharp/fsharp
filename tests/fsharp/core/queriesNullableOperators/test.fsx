@@ -304,7 +304,7 @@ module NullableConversions =
     check "opp2oin209v304i" (Nullable.single (Nullable 2<kg>)) (Nullable 2.0f)
 
 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 let RUN() = !failures
 #else
 let aa =

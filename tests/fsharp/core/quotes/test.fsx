@@ -1672,10 +1672,9 @@ module QuotationConstructionTests =
     check "vcknwwe066" (try let _ = Expr.PropertyGet(getof <@@ System.DateTime.Now @@>,[ <@@ 1 @@> ]) in false with :? ArgumentException -> true) true
     check "vcknwwe077" (Expr.PropertyGet(<@@ "3" @@>, getof <@@ "1".Length @@>)) <@@ "3".Length @@>
     check "vcknwwe088" (Expr.PropertyGet(<@@ "3" @@>, getof <@@ "1".Length @@>,[  ])) <@@ "3".Length @@>
-    #if Portable
-    #else
+#if !TESTS_AS_APP && !FX_PORTABLE_OR_NETSTANDARD
     check "vcknwwe099" (Expr.PropertySet(<@@ (new System.Windows.Forms.Form()) @@>, setof <@@ (new System.Windows.Forms.Form()).Text <- "2" @@>, <@@ "3" @@> )) <@@ (new System.Windows.Forms.Form()).Text <- "3" @@>
-    #endif
+#endif
     // Disabled, see https://github.com/fsharp/fsharp/issues/517
     // check "vcknwwe099" (Expr.PropertySet(<@@ (new Foo()) @@>, setof <@@ (new Foo()).[3] <- 1 @@>, <@@ 2 @@> , [ <@@ 3 @@> ] )) <@@ (new Foo()).[3] <- 2 @@>
 #if FSHARP_CORE_31
@@ -3081,7 +3080,7 @@ module TestAssemblyAttributes =
     let attributes = System.Reflection.Assembly.GetExecutingAssembly().GetCustomAttributes(false)
 #endif
 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 let RUN() = !failures
 #else
 let aa =

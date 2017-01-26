@@ -1697,21 +1697,11 @@ namespace Microsoft.FSharp.Control
                             Async.Start (async { do (ccont e |> unfake) })
 
                     // register cancellation handler
-                    let registration = aux.token.Register((fun _ -> cancel (OperationCanceledException())), null)
+                    let registration = aux.token.Register(fun () -> cancel (OperationCanceledException()))
 
                     // run actual await routine
                     // callback will be executed on the thread pool so we need to use TrampolineHolder.Protect to install trampoline
                     try
-#if FX_NO_TASK
-                        ThreadPool.QueueUserworkItem((fun _ ->
-                            let asyncResult = WaitHandleIAsyncResult(waitHandle) :> System.IAsyncResult
-                            if asyncResult.IsCompleted then
-                                if latch.Enter() then
-                                    registration.Dispose()
-                                    aux.trampolineHolder.Protect(fun () -> scont true) 
-                                    |> unfake
-                        ), null) |> ignore
-#else
                         Task.Factory.FromAsync
                             (
                                 WaitHandleIAsyncResult(waitHandle),
@@ -1722,7 +1712,6 @@ namespace Microsoft.FSharp.Control
                                         |> unfake
                             )
                             |> ignore
-#endif
                         // if user has specified timeout different from Timeout.Infinite 
                         // then start another async to track timeout expiration
                         if millisecondsTimeout <> Timeout.Infinite then 
@@ -2247,8 +2236,6 @@ namespace Microsoft.FSharp.Control
                     result  = (fun args      -> args.Result)
                 )
 
-#if FX_NO_WEBCLIENT_DOWNLOADDATACOMPLETED
-#else
             [<CompiledName("AsyncDownloadData")>] // give the extension member a 'nice', unmangled compiled name, unique within this module
             member this.AsyncDownloadData (address:Uri) : Async<byte[]> =
                 this.Download(
@@ -2266,7 +2253,6 @@ namespace Microsoft.FSharp.Control
                     start   = (fun userToken -> this.DownloadFileAsync(address, fileName, userToken)),
                     result  = (fun _         -> ())
                 )
-#endif
 #endif
 
 

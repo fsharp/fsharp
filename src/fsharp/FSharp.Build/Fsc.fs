@@ -145,8 +145,6 @@ type [<Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:Iden
     let mutable treatWarningsAsErrors : bool = false
     let mutable warningsAsErrors : string = null
     let mutable toolPath : string = 
-        // We expect to find an fsc.exe next to FSharp.Build.dll. Note FSharp.Build.dll
-        // is not in the GAC, at least on Windows.
         let locationOfThisDll = 
             try Some(System.IO.Path.GetDirectoryName(typeof<FscCommandLineBuilder>.Assembly.Location))
             with _ -> None
@@ -535,15 +533,7 @@ type [<Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:Iden
                                                 System.Globalization.CultureInfo.InvariantCulture)
                 unbox ret
             with 
-            
-#if CROSS_PLATFORM_COMPILER 
-            // The type "Microsoft.Build.Exceptions.BuildAbortedException is not available to   
-            // the cross-platform compiler since it is Windows only (not defined in the Mono  
-            // 4.0 XBuild support). So we test for the type using a string comparison. 
-            | :? System.Reflection.TargetInvocationException as tie when (match tie.InnerException with | null -> false | x when x.GetType().Name = "Microsoft.Build.Exceptions.BuildAbortedException" -> true | _ -> false) -> 
-#else
             | :? System.Reflection.TargetInvocationException as tie when (match tie.InnerException with | :? Microsoft.Build.Exceptions.BuildAbortedException -> true | _ -> false) ->
-#endif
                 fsc.Log.LogError(tie.InnerException.Message, [| |])
                 -1  // ok, this is what happens when VS IDE cancels the build, no need to assert, just log the build-canceled error and return -1 to denote task failed
             | e ->

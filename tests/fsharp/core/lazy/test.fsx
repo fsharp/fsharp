@@ -71,7 +71,7 @@ let x1 : System.IObservable<int> = null
 let x2 : System.IObserver<int> = null
 let x3 : System.Lazy<int> = null
 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 let RUN() = !failures
 #else
 let aa =

@@ -607,15 +607,14 @@ module WrappedFloatTypeTest =
     let c32 =  C<kg>.Mul (C<kg>(0.5<kg>),C<kg>(2.0<kg>))
 
 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 let RUN() = !failures
 #else
 let aa =
   match !failures with 
   | [] -> 
       stdout.WriteLine "Test Passed"
-#if Portable
-#else
+#if !FX_PORTABLE_OR_NETSTANDARD
       System.IO.File.WriteAllText("test.ok","ok")
 #endif
       exit 0

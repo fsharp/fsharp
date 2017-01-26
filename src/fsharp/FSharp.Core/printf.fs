@@ -131,7 +131,7 @@ module internal PrintfImpl =
         
         let parseTypeChar (s : string) i : char * int = 
             s.[i], (i + 1)
-
+    
         let findNextFormatSpecifier (s : string) i = 
             let rec go i (buf : Text.StringBuilder) =
                 if i >= s.Length then 
@@ -400,8 +400,8 @@ module internal PrintfImpl =
                     env.Write s2
                     env.Finalize()
                 )
-            )
-        
+            )   
+       
         static member PercentStarFinal1(s1 : string, s2 : string) = 
             (fun (env : unit -> PrintfEnv<'State, 'Residue, 'Result>) ->
                 (fun (_star1 : int) -> 
@@ -1380,12 +1380,6 @@ module Printf =
 
 #if !FX_NO_SYSTEM_CONSOLE
 #if EXTRAS_FOR_SILVERLIGHT_COMPILER
-    let outWriter = ref System.Console.Out
-    let errorWriter = ref System.Console.Error
-
-    let setWriter (out : System.IO.TextWriter) = outWriter := out
-    let setError  (error : System.IO.TextWriter) = errorWriter := error
-    
     [<CompiledName("PrintFormat")>]
     let printf fmt = fprintf (!outWriter) fmt
 

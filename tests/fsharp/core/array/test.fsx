@@ -6,7 +6,7 @@ module Core_array
 let mutable failures = []
 let report_failure (s) = 
   stderr.WriteLine " NO"; failures <- s :: failures
-let test s b = if not b then (stderr.Write(s:string);   report_failure() )
+let test s b = if not b then (stderr.Write(s:string);   report_failure(s) )
 let check s b1 b2 = test s (b1 = b2)
 
 
@@ -1499,11 +1499,11 @@ module bug6447 =
     do check "bug6447_hash_a2" (hash a2) 10727    
 #endif    
     
-#if ALL_IN_ONE
-let RUN() = !failures
+#if TESTS_AS_APP
+let RUN() = failures
 #else
 let aa =
-  match !failures with 
+  match failures with 
   | [] -> 
       stdout.WriteLine "Test Passed"
       System.IO.File.WriteAllText("test.ok","ok")

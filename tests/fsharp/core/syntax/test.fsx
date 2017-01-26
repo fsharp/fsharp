@@ -786,7 +786,7 @@ let testTryFinallySyntaxOnOneLine () =
     try () finally ()
 
 
-#if !FX_PORTABLE_OR_NETSTANDARD
+#if !TESTS_AS_APP && !FX_PORTABLE_OR_NETSTANDARD
 type SampleForm = 
   class
     inherit System.Windows.Forms.Form
@@ -984,8 +984,7 @@ do test "vliwe94"   (f -2L = - 2L)
 do test "vliwe95"   (f -2n = - 2n)
 do test "vliwe96"   (f -2.0 = - 2.0)
 do test "vliwe97"   (f -2.0f = - 2.0f)
-#if Portable
-#else
+#if !FX_PORTABLE_OR_NETSTANDARD
 do test "vliwe99"   (f -2I = - 2I)
 #endif
 
@@ -1784,7 +1783,7 @@ module AdHocTests =
               let (b, _, _) = (1,2,3)
               [b]      
     
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 let RUN() = !failures
 #else
 let aa =

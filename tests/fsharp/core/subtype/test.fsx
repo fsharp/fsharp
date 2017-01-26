@@ -106,7 +106,7 @@ let testUpcastToEnum1 (x: System.AttributeTargets) = (x :> System.Enum)
 let testUpcastToEnum6 (x: System.Enum) = (x :> System.Enum) 
 
 // these delegates don't exist in portable
-#if !FX_PORTABLE_OR_NETSTANDARD
+#if !UNIX && !FX_PORTABLE_OR_NETSTANDARD
 let testUpcastToDelegate1 (x: System.Threading.ThreadStart) = (x :> System.Delegate) 
 
 let testUpcastToMulticastDelegate1 (x: System.Threading.ThreadStart) = (x :> System.MulticastDelegate) 
@@ -244,8 +244,7 @@ module SomeRandomOperatorConstraints = begin
 
     let sum64 seq : int64 = Seq.reduce (+) seq
     let sum32 seq : int64 = Seq.reduce (+) seq
-#if Portable
-#else
+#if !FX_PORTABLE_OR_NETSTANDARD
     let sumBigInt seq : BigInteger = Seq.reduce (+) seq
 #endif
     let sumDateTime (dt : DateTime) (seq : #seq<TimeSpan>) : DateTime = Seq.fold (+) dt seq
@@ -1763,7 +1762,7 @@ module SRTPFix =
       printfn "%A" <| replace 'q' (test("HI"))
      *)
 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 let RUN() = !failures
 #else
 let aa =

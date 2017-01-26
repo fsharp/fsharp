@@ -1,5 +1,5 @@
 // #Conformance #Regression 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 module Core_math_lalgebra
 #endif
 
@@ -306,7 +306,7 @@ RegressionTest "Netlib" maxDimension
 //--------  
 
 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 let RUN() = !failures
 #else
 let aa =

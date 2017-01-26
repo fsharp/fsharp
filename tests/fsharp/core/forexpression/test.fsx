@@ -134,7 +134,7 @@ do test "ilistSum"          (expectedArraySum   = ilistSum      )
 do test "rangeSum"          (expectedRangeSum   = rangeSum      )
 do test "stringSum"         (expectedStringSum  = stringSum     )
 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 let RUN() = !failures
 #else
 let aa =

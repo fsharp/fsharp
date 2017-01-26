@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env sh
 
 # OS detection
 
@@ -28,11 +28,11 @@ fi
 
 # Check if SSL certificates have been imported into Mono's certificate store.
 # If certs haven't been installed, some/all of the Nuget packages will fail to restore.
-if [ $('certmgr -list -c Trust | grep -c -F "X.509"') -le 1 ]; then
-  echo "No SSL certificates installed so unable to restore NuGet packages." >&2;
-  echo "Run 'mozroots --sync --import' to install certificates to Mono's certificate store." >&2;
-  exit 1
-fi
+#if [ $('certmgr -list -c Trust | grep -c -F "X.509"') -le 1 ]; then
+#  echo "No SSL certificates installed so unable to restore NuGet packages." >&2;
+#  echo "Run 'mozroots --sync --import' to install certificates to Mono's certificate store." >&2;
+#  exit 1
+#fi
 
 # Restore NuGet packages (needed for compiler bootstrap and tests).
 mono .nuget/NuGet.exe restore packages.config -PackagesDirectory packages -ConfigFile .nuget/NuGet.Config
@@ -54,9 +54,12 @@ fi)
 fi)
 
 #TODO: work out how to avoid the need for this
-chmod u+x packages/FSharp.Compiler.Tools.4.0.1.19/tools/fsi.exe 
-chmod u+x packages/FsLexYacc.7.0.3/build/fslex.exe
-chmod u+x packages/FsLexYacc.7.0.3/build/fsyacc.exe
+echo "chmod u+x packages/FSharp.Compiler.Tools.4.0.1.21/tools/fsi.exe"
+echo "chmod u+x packages/FsLexYacc.7.0.4/build/fslex.exe"
+echo "chmod u+x packages/FsLexYacc.7.0.4/build/fsyacc.exe"
+chmod u+x packages/FSharp.Compiler.Tools.4.0.1.21/tools/fsi.exe 
+chmod u+x packages/FsLexYacc.7.0.4/build/fslex.exe
+chmod u+x packages/FsLexYacc.7.0.4/build/fsyacc.exe
 
 # The FSharp.Compiler.Tools package doesn't work correctly unless a proper install of F# has been done on the machine.
 # OSX can skip this because the OSX Mono installer includes F#.

@@ -17,30 +17,17 @@
     <OutputType>Library</OutputType>
     <UnitTestAssembly>true</UnitTestAssembly>
     <AssemblyName>FSharp.Core.Unittests</AssemblyName>
-    <Name>SystematicUnitTests</Name>
-    <TargetFrameworkVersion Condition=" '$(TargetFramework)' == 'net20' ">v3.5</TargetFrameworkVersion>
     <!-- Prevent compiler from inlining calls to FSharp.Core to improve code coverage accuracy -->
     <Optimize>false</Optimize>
     <Tailcalls>false</Tailcalls>
-    <TargetProfile Condition=" '$(TargetFramework)' == 'portable7' or '$(TargetFramework)' == 'portable78' or '$(TargetFramework)' == 'portable259' ">netcore</TargetProfile>
-    <!-- workaround for msbuild narrowing the assembly search paths when building portable libs -->
-    <AssemblySearchPaths Condition=" '$(TargetFramework)' == 'portable47' or '$(TargetFramework)' == 'portable7' or '$(TargetFramework)' == 'portable78' or '$(TargetFramework)' == 'portable259' ">
-      {CandidateAssemblyFiles};
-      {TargetFrameworkDirectory};
-      {Registry:Software\Microsoft\.NETFramework,v4.5,AssemblyFoldersEx};
-    </AssemblySearchPaths>
     <TargetProfile Condition=" '$(TargetFramework)' == 'portable7' or '$(TargetFramework)' == 'portable78' or '$(TargetFramework)' == 'portable259' or '$(TargetFramework)' == 'coreclr' ">netcore</TargetProfile>
     <NoWarn>$(NoWarn);217</NoWarn>
   </PropertyGroup>
   <PropertyGroup>
-    <DefineConstants Condition=" '$(TargetFramework)' == 'sl5' OR '$(TargetFramework)' == 'sl5-compiler' ">$(DefineConstants);SILVERLIGHT</DefineConstants>
-    <DefineConstants Condition=" '$(TargetFramework)' == 'sl5' ">$(DefineConstants);SILVERLIGHT</DefineConstants>
     <DefineConstants>$(DefineConstants);EXTENSIONTYPING;$(TargetFramework.ToLower())</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <OutputPath>bin\Debug\</OutputPath>
     <Optimize>false</Optimize>
     <DefineConstants>$(DefineConstants);DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
@@ -51,7 +38,6 @@
     <DefineConstants>$(DefineConstants);TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>3</WarningLevel>
-    <DebugSymbols>False</DebugSymbols>
   </PropertyGroup>
   <ItemGroup  Condition=" '$(TargetFramework)' != 'coreclr' ">
     <!-- need full name and SpecificVersion = true in order to convince msbuild to allow this reference when targeting portable47 -->
@@ -72,29 +58,9 @@
       <Project>{DED3BBD7-53F4-428A-8C9F-27968E768605}</Project>
       <Name>FSharp.Core</Name>
     </ProjectReference>
-    <Reference Include="nunit.framework"/>
-    <Reference Include="System.ValueTuple" Condition="'$(TargetFramework)' != 'portable47'">
-        <HintPath>..\..\..\packages\System.ValueTuple.4.0.0-rc3-24212-01\lib\netstandard1.1\System.ValueTuple.dll</HintPath>
-    </Reference>
-    <Reference Include="TupleSample" Condition="'$(TargetFramework)' != 'portable47'">
-        <Private>True</Private>
-        <HintPath>..\..\..\src\fsharp\FSharp.Core.Unittests\FSharp.Core\SampleTuples\TupleSample.dll</HintPath>
-    </Reference>
-  </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)' == 'coreclr'">
-    <Reference Include="nunit.framework, Version=3.0.5797.27550, Culture=neutral, PublicKeyToken=2638cd05610744eb">
-        <SpecificVersion>true</SpecificVersion>
     <Reference Include="System.ValueTuple">
         <HintPath Condition=" '$(TargetFramework)' == 'profile47' ">..\..\..\packages\System.ValueTuple.4.3.0\lib\netstandard1.0\System.ValueTuple.dll</HintPath>
         <HintPath Condition="'$(TargetFramework)' != 'profile47' ">..\..\..\packages\System.ValueTuple.4.3.0\lib\portable-net40+sl4+win8+wp8\System.ValueTuple.dll</HintPath>
-        <Private>True</Private>
-    </Reference>
-  </ItemGroup>
-  <ItemGroup Condition="!('$(TargetFramework)' == 'portable47' or '$(TargetFramework)' == 'portable7' or '$(TargetFramework)' == 'portable78' or '$(TargetFramework)' == 'portable259' )">
-    <Reference Include="nunitlite, Version=3.0.5797.27550, Culture=neutral, PublicKeyToken=2638cd05610744eb">
-        <SpecificVersion>true</SpecificVersion>
-    <Reference Include="TupleSample">
-        <HintPath>..\..\..\packages\Microsoft.FSharp.TupleSample.1.0.0-alpha-161121/lib/portable-net40+sl4+win8+wp8/TupleSample.dll</HintPath>
         <Private>True</Private>
     </Reference>
   </ItemGroup>
@@ -103,10 +69,6 @@
     <Reference Include="System" />
     <Reference Include="System.Numerics" Condition="'$(TargetFramework)' == 'net40'" />
     <Reference Include="System.Core" />
-    <ProjectReference Include="..\FSharp.Core\FSharp.Core.fsproj">
-      <Project>{DED3BBD7-53F4-428A-8C9F-27968E768605}</Project>
-      <Name>FSharp.Core</Name>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="LibraryTestFx.fs" />
@@ -148,13 +110,13 @@
     <Compile Include="FSharp.Core\Microsoft.FSharp.Control\Cancellation.fs" />
     <Compile Include="FSharp.Core\Microsoft.FSharp.Control\AsyncType.fs" />
     <Compile Include="FSharp.Core\Microsoft.FSharp.Control\LazyType.fs" />
+    <Compile Include="FSharp.Core\Microsoft.FSharp.Control\MailboxProcessorType.fs" />
+    <Compile Include="FSharp.Core\Microsoft.FSharp.Control\AsyncModule.fs" />
     <Compile Include="FSharp.Core\Microsoft.FSharp.Control\ObservableModule.fs" />
+    <Compile Include="FSharp.Core\Microsoft.FSharp.Control\EventModule.fs" />
     <Compile Include="FSharp.Core\Microsoft.FSharp.Reflection\FSharpReflection.fs" />
     <Compile Include="FSharp.Core\Microsoft.FSharp.Quotations\FSharpQuotations.fs" />
-    <Compile Include="FSharp.Core\PrimTypes.fs" />
     <Compile Include="TypeForwarding.fs" />
-    <!-- <Compile Include="SurfaceArea.4.0.fs" Condition="'$(TargetFramework)' == 'net40'"/> -->
-    <Compile Include="StructTuples.fs" Condition="'$(TargetFramework)' != 'portable47'" />
     <Compile Include="StructTuples.fs" />
     <Compile Include="SurfaceArea.$(TargetFramework).fs" />
     <Compile Include="Program.fs" Condition="'$(TargetFramework)' == 'coreclr'" />

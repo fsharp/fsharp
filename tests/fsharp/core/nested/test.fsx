@@ -57,7 +57,7 @@ do test "uyf78" (!wher = [ "Initialized before X1 OK";
                            "Initialized after X3 OK" ])
 
 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 let RUN() = !failures
 #else
 let aa =

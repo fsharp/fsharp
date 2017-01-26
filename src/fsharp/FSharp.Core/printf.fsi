@@ -250,7 +250,3 @@ module Printf =
     /// <returns>The arguments of the formatter.</returns>
     [<CompiledName("PrintFormatToStringThenFail")>]
     val failwithf: format:StringFormat<'T,'Result> -> 'T
-#if EXTRAS_FOR_SILVERLIGHT_COMPILER
-    val setWriter: System.IO.TextWriter -> unit
-    val setError:  System.IO.TextWriter -> unit
-#endif

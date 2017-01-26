@@ -9,7 +9,6 @@ open System.Runtime.CompilerServices
 
 open Microsoft.FSharp.Compiler
 open Microsoft.FSharp.Compiler.AbstractIL.IL // runningOnMono 
-open Microsoft.FSharp.Compiler.AbstractIL.Internal.Library
 open Microsoft.FSharp.Compiler.ErrorLogger
 open Microsoft.FSharp.Compiler.Driver
 open Microsoft.FSharp.Compiler.Lib
@@ -29,16 +28,11 @@ do ()
 
 module Driver = 
     let main argv = 
-        let inline hasArgument name args = 
-            args |> Array.exists (fun x -> x = ("--" + name) || x = ("/" + name))
-        let inline stripArgument name args = 
-            args |> Array.filter (fun x -> x <> ("--" + name) && x <> ("/" + name))
-
         // Check for --pause as the very first step so that a compiler can be attached here.
-        if hasArgument "pause" argv then 
-            System.Console.WriteLine("Press any key to continue...")
-            System.Console.ReadKey() |> ignore
-      
+        if argv |> Array.exists  (fun x -> x = "/pause" || x = "--pause") then 
+            System.Console.WriteLine("Press return to continue...")
+            System.Console.ReadLine() |> ignore
+
         let quitProcessExiter = 
             { new Exiter with 
                 member x.Exit(n) =                    

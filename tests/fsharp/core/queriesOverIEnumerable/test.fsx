@@ -995,7 +995,7 @@ module MiscTestsForImplicitExpressionConversion =
                        Queryable.AsQueryable [ for i in 0 .. 100 -> Rank(source = i, value = i+100) ])
 
 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 let RUN() = !failures
 #else
 let aa =

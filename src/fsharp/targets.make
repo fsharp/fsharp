@@ -3,7 +3,7 @@ SOURCES := $(patsubst $(srcdir)$(tmpdir)%,$(tmpdir)%,$(patsubst %,$(srcdir)%,$(s
 .PHONY: install-gac-lib install-sdk-lib install-gac-lib-net40
 
 build:
-	MONO_ENV_OPTIONS=$(monoopts) $(XBUILD) /p:Configuration=$(Configuration) /p:TargetFramework=$(TargetFramework) /p:MonoLibDir40=$(monogacdir40) /p:FSharpCoreBackVersion=$(FSharpCoreBackVersion)
+	MONO_ENV_OPTIONS=$(monoopts) $(XBUILD) /p:Configuration=$(Configuration) /p:TargetFramework=$(TargetFramework) /p:MonoLibDir40=$(monogacdir40)
 
 clean:
 	$(XBUILD) /p:Configuration=$(Configuration) /p:TargetFramework=$(TargetFramework) /t:Clean
@@ -30,14 +30,6 @@ clean:
 #     .../lib/mono/xbuild/Microsoft/VisualStudio/v/FSharp/Microsoft.FSharp.Targets
 # since this is the location if 'xbuild' fails to set VisualStudioVersion.
 #
-# Add appropriate softlinks under 
-#     ...Reference Assemblies/Microsoft/FSharp/.NETCore/...
-#     ...Reference Assemblies/Microsoft/FSharp/.NETFramework/...
-#     ...Reference Assemblies/Microsoft/FSharp/.NETPortable/...
-# And for VS2012 Profile47 compat under
-#     ...Reference Assemblies/Microsoft/FSharp/3.0/Runtime/.NETPortable
-#
-# 
 install-gac-lib:
 	@echo "Installing $(ASSEMBLY)"
 	@mkdir -p $(DESTDIR)$(gacdir)/$(TARGET)
@@ -99,15 +91,6 @@ install-gac-lib:
 			ln -fs ../../../../../gac/$(NAME)/$(VERSION)__$(TOKEN)/$(NAME).sigdata $(DESTDIR)$(gacdir)/Reference\ Assemblies/Microsoft/FSharp/$(PCLPATH)/$(VERSION)/$(NAME).sigdata; \
 			ln -fs ../../../../../gac/$(NAME)/$(VERSION)__$(TOKEN)/$(NAME).optdata $(DESTDIR)$(gacdir)/Reference\ Assemblies/Microsoft/FSharp/$(PCLPATH)/$(VERSION)/$(NAME).optdata; \
 			ln -fs ../../../../../gac/$(NAME)/$(VERSION)__$(TOKEN)/$(NAME).dll $(DESTDIR)$(gacdir)/Reference\ Assemblies/Microsoft/FSharp/$(PCLPATH)/$(VERSION)/$(NAME).dll; \
-	fi
-	@if test x-$(NAME)-$(TargetFramework)-$(VERSION) = x-FSharp.Core-portable47-2.3.5.0; then \
-			echo "Installing FSharp.Core $(VERSION) reference assembly into install location matching Visual Studio"; \
-			echo "   ../gac/$(NAME)/$(VERSION)__$(TOKEN)/$(NAME).dll --> $(DESTDIR)$(gacdir)/Reference Assemblies/Microsoft/FSharp/3.0/Runtime/.NETPortable"; \
-			mkdir -p $(DESTDIR)$(gacdir)/Reference\ Assemblies/Microsoft/FSharp/3.0/Runtime/.NETPortable; \
-			ln -fs ../../../../../../gac/$(NAME)/$(VERSION)__$(TOKEN)/$(NAME).xml $(DESTDIR)$(gacdir)/Reference\ Assemblies/Microsoft/FSharp/3.0/Runtime/.NETPortable/$(NAME).xml; \
-			ln -fs ../../../../../../gac/$(NAME)/$(VERSION)__$(TOKEN)/$(NAME).sigdata $(DESTDIR)$(gacdir)/Reference\ Assemblies/Microsoft/FSharp/3.0/Runtime/.NETPortable/$(NAME).sigdata; \
-			ln -fs ../../../../../../gac/$(NAME)/$(VERSION)__$(TOKEN)/$(NAME).optdata $(DESTDIR)$(gacdir)/Reference\ Assemblies/Microsoft/FSharp/3.0/Runtime/.NETPortable/$(NAME).optdata; \
-			ln -fs ../../../../../../gac/$(NAME)/$(VERSION)__$(TOKEN)/$(NAME).dll $(DESTDIR)$(gacdir)/Reference\ Assemblies/Microsoft/FSharp/3.0/Runtime/.NETPortable/$(NAME).dll; \
 	fi
 
 

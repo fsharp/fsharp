@@ -158,7 +158,7 @@ this file.
     </ItemGroup>
 
     <PropertyGroup>
-        <CoreCompileDependsOn>_ComputeNonExistentFileProperty</CoreCompileDependsOn>
+        <CoreCompileDependsOn></CoreCompileDependsOn>
     </PropertyGroup>
 
     <Target
@@ -221,7 +221,7 @@ this file.
               Prefer32Bit="$(Actual32Bit)"
               References="@(ReferencePath)"
               ReferencePath="$(ReferencePath)"
-              Resources="@(_CoreCompileResourceInputs);@(CompiledLicenseFile);@(AdditionalEmbeddedResource)"
+              Resources="@(_CoreCompileResourceInputs);@(ManifestResourceWithNoCulture);@(ManifestNonResxWithNoCultureOnDisk);@(CompiledLicenseFile);@(AdditionalEmbeddedResource)"
               SourceLink="$(SourceLink)"
               Sources="@(CompileBefore);@(Compile);@(CompileAfter)"
               Tailcalls="$(Tailcalls)"
