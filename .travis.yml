@@ -6,7 +6,7 @@ os:
 
 mono:
   - latest
-  - 4.2.2
+  - 4.4.2
   - 4.0.5
 
 install:
@@ -16,7 +16,7 @@ before_script:
 
 script: ./travis-autogen.sh && make && sudo make install && xbuild ./src/fsharp-library-unittests-build.proj /p:TargetFramework=net40 /p:Configuration=Release && (cd tests/projects; ./build.sh) && (cd tests/fsharp/core; ./run-opt.sh)
 
-matrix:
-  allow_failures:
-    - mono: 4.2.2
+#matrix:
+#  allow_failures:
+#    - mono: 4.2.2
 
