@@ -1,3 +1,6 @@
+4.0.1.21
+  * Fix [#656](https://github.com/fsharp/fsharp/issues/656)  - error FS0193: internal error: No access to the given key
+
 4.0.1.20
   * Fix #639 - Problems with F# scripts on Mono 
 
