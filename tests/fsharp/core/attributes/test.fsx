@@ -511,7 +511,7 @@ module ThreadStaticTest = begin
         static val mutable private results : int list
         static member Results with get() = C.results and set v = C.results <- v
 
-#if !FX_PORTABLE_OR_NETSTANDARD
+#if !MONO && !FX_PORTABLE_OR_NETSTANDARD
     let N = 1000
     let main() = 
         let t1 = 
@@ -1002,8 +1002,7 @@ module TestTypeInstantiationsInAttributes =
     let attrs2 = typeof<C2>.GetCustomAttributes(typeof<System.Diagnostics.DebuggerTypeProxyAttribute>,false) ;
     match attrs2 with 
       | [| (:? System.Diagnostics.DebuggerTypeProxyAttribute as ca)  |]  -> 
-#if MONO
-#else
+#if !MONO
           check "test423cwo3nq01b" ca.ProxyTypeName (typeof<ListProxy<int>>).AssemblyQualifiedName
 #endif
           check "test423cwo3nq02b" ca.Target typeof<List<C1>>
@@ -1012,8 +1011,7 @@ module TestTypeInstantiationsInAttributes =
     let attrs3 = typeof<C3>.GetCustomAttributes(typeof<System.Diagnostics.DebuggerTypeProxyAttribute>,false) ;
     match attrs3 with 
       | [| (:? System.Diagnostics.DebuggerTypeProxyAttribute as ca)  |]  -> 
-#if MONO
-#else
+#if !MONO
           check "test423cwo3nw01c" ca.ProxyTypeName (typeof<ListProxy<int>>).AssemblyQualifiedName
 #endif
           check "test423cwo3nw02c" ca.Target typeof<List<C1[]>>
@@ -1022,8 +1020,7 @@ module TestTypeInstantiationsInAttributes =
     let attrs4 = typeof<C4>.GetCustomAttributes(typeof<System.Diagnostics.DebuggerTypeProxyAttribute>,false) ;
     match attrs4 with 
       | [| (:? System.Diagnostics.DebuggerTypeProxyAttribute as ca)  |]  -> 
-#if MONO
-#else
+#if !MONO
           check "test423cwo3nd01d" ca.ProxyTypeName (typeof<ListProxy<int>>).AssemblyQualifiedName
 #endif
           check "test423cwo3nd02d" ca.Target typeof<List<C1>[,]>
@@ -1032,8 +1029,7 @@ module TestTypeInstantiationsInAttributes =
     let attrs5 = typeof<C5>.GetCustomAttributes(typeof<System.Diagnostics.DebuggerTypeProxyAttribute>,false) ;
     match attrs5 with 
       | [| (:? System.Diagnostics.DebuggerTypeProxyAttribute as ca)  |]  -> 
-#if MONO
-#else
+#if !MONO
           check "test423cwo3ng01e" ca.ProxyTypeName (typedefof<ListProxy<_>>).AssemblyQualifiedName
 #endif
           check "test423cwo3ng02e" ca.Target typedefof<List<_>>

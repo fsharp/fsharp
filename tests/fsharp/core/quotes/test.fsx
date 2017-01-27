@@ -3059,12 +3059,14 @@ module ReflectionOverTypeInstantiations =
         check (nm + "-falihksec4 - expect IsValueType to give accurate results on typical F# type provider implementation of TypeBuilderInstantiation") (try ty.IsValueType |> Some with e -> None) (Some false)
         check (nm + "-falihksec5 - expect IsTuple to give accurate results on typical F# type provider implementation of TypeBuilderInstantiation") (try Reflection.FSharpType.IsTuple(ty) |> Some with _ -> None) (Some isTup)
 
+#if !MONO
         check (nm + "-falihksec3a - currently expect IsEnum to throw on typical F# type provider implementation of TypeBuilderInstantiation") (try ty.IsEnum |> ignore; 100 with e -> 200) 200
         check (nm + "-falihksec4a - currently expect FullName to throw on typical F# type provider implementation of TypeBuilderInstantiation") (try ty.FullName |> ignore; 100 with e -> 200) 200
         check (nm + "-falihksec5a - currently expect IsFunction to throw on typical F# type provider implementation of TypeBuilderInstantiation") (try Reflection.FSharpType.IsFunction(ty) |> ignore; 100 with _ -> 200) 200
         check (nm + "-falihksec6a - currently expect IsUnion to throw on typical F# type provider implementation of TypeBuilderInstantiation") (try Reflection.FSharpType.IsUnion(ty) |> ignore; 100 with :? System.NotSupportedException -> 200) 200
         check (nm + "-falihksec7a - currently expect IsRecord to throw on typical F# type provider implementation of TypeBuilderInstantiation") (try Reflection.FSharpType.IsRecord (ty) |> ignore; 100 with :? System.NotSupportedException -> 200) 200
         check (nm + "-falihksec8a - currently expect IsModule to throw on typical F# type provider implementation of TypeBuilderInstantiation") (try Reflection.FSharpType.IsModule (ty) |> ignore; 100 with :? System.NotSupportedException -> 200) 200
+#endif
 
     // This makes a TypeBuilderInstantiation type, because a real type has been instantiated with a non-real type
     let t0 = ProvidedTypeBuilder.MakeGenericType(typedefof<list<_>>, [ typeof<int> ])

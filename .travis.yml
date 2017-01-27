@@ -7,11 +7,10 @@ os:
 mono:
   - latest
   - 4.4.2
-  - 4.0.5
 
 install:
 
-script: ./build.sh
+script: ./build-mono.sh && ./test-mono.sh
 
 #matrix:
 #  allow_failures:
