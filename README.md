@@ -13,8 +13,7 @@ ensures that the versions do not diverge.
 
 ### Contributing on Windows
 
-If you are using Windows, you should fork the https://github.com/Microsoft/visualfsharp repo and contribute directly there. Your contributions will
-then be merged into this repo.
+If you are using Windows, you should fork the https://github.com/Microsoft/visualfsharp repo and contribute directly there. Your contributions will then be merged into this repo.
 
 ### Contributing on Linux/OSX when using Mono
 
@@ -28,9 +27,7 @@ available from this repo. At the moment the process is:
 4. Cherry-pick your changes into a pull request for https://github.com/Microsoft/visualfsharp and submit for final testing and clearance.
 5. The change will then be merged into this repo at a later point.
 
-If you don't have access to Windows in order to run final tests at step 4. If you need help, email fsharp-opensource@googlegroups.com and ask to make a final test run on Windows.
-
-Contributions specifically related to the packaging of the Open Edition should be made here.
+Contributions specifically related to cross-platform packaging should be made here.
 
 
 ## Status
@@ -89,7 +86,7 @@ If using NuGet Package Manager, add the source to the list of available package 
 ## Build Requirements
 
 Building F# on Unix-type platforms requires
-[Mono](http://www.mono-project.com/download/) 3.0 or higher. If you
+[Mono](http://www.mono-project.com/download/) 4.4 or higher. If you
 get a complaint in subsequent steps about `xbuild` being missing, it means
 you don't have Mono installed.
 
@@ -231,10 +228,6 @@ A continuous integration build is set up with Travis. See above.
 
 ### Editing the Compiler with Visual Studio, Xamarin Studio or MonoDevelop
 
-Open `all-vs2013.sln`, and edit in modes Debug or Release. The compiler takes a good while to compile and that
-can be a bit invasive to the work flow, so it's normally better to do the actual compilation from
-the command line, see above.
-
 Historically it is difficult to edit the compiler with Xamarin Studio or MonoDevelop because of bugs in loading the hand-edited project files and targets used in the F# compiler build. These are generally in the process of being fixed, your mileage will vary.
 
 ## How to Test and Validate
@@ -259,7 +252,9 @@ to develop and test on Windows.
 F# compiler sources as initially dropped are available from [fsharppowerpack.codeplex.com](http://fsharppowerpack.codeplex.com).
 
 On 4 April 2014, Microsoft Open Tech published the F# compiler sources  at http://visualfsharp.codeplex.com and began
-accepting contributions to the F# compiler/library and tools.  This repository is a modified version of that.
+accepting contributions to the F# compiler/library and tools.  
+
+In 2016 the Microsoft http://visualfsharp.codeplex.com repo moved to GitHub at http://github.com/Microsoft/visualfsharp.
 
 This repository uses bootstrapping libraries, tools and F# compiler. The `lib/bootstrap/X.0` directories contain mono-built libraries, compiler and tools that can be used to bootstrap a build. You can also supply your own via the `--with-bootstrap` option.
 
