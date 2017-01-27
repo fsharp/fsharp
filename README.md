@@ -1,4 +1,4 @@
-## The Open Edition of the F# Compiler, Core Library & Tools
+## The Cross-Platform Packaging of the F# Compiler, Core Library & Tools
 
 The main purpose of this repository is to package the open editions of the F# compiler, core library
 and core tools for use across multiple platforms.  
