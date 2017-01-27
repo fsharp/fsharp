@@ -22,18 +22,6 @@ let test (s : string) b =
 let check s b1 b2 = test s (b1 = b2)
 
 
-let argv = System.Environment.GetCommandLineArgs() 
-let SetCulture() = 
-  if argv.Length > 2 && argv.[1] = "--culture" then  begin
-    let cultureString = argv.[2] in 
-    let culture = new System.Globalization.CultureInfo(cultureString) in 
-    stdout.WriteLine ("Running under culture "+culture.ToString()+"...");
-    System.Threading.Thread.CurrentThread.CurrentCulture <-  culture
-  end 
-  
-do SetCulture()    
-  
-
 test "coic23a" (Seq.toList { 'a' .. 'c' } = ['a';'b';'c'])
 
 test "coic23q" (Seq.toList {1 .. 0} = [])
@@ -459,6 +447,7 @@ test "coic23"
 
 
 
+#if !FX_PORTABLE_OR_NETSTANDARD
 let pickering() = 
     let files = Directory.GetFiles(@"C:\Program Files\Microsoft Enterprise Library January 2006\", "*.csproj", SearchOption.AllDirectories)
     for file in files do
@@ -475,7 +464,7 @@ let pickering() =
         doc.Save(file)
     stdin.ReadLine()
  
-
+#endif
 for i,j in [(1,1);(2,1);(3,2)] do
    printf "i = %d,j = %d\n" i j
 
@@ -568,6 +557,7 @@ module RandomSmallIfThenElseTest =
             do ()
         return a }
 
+#if !FX_PORTABLE_OR_NETSTANDARD
 module MoreExtensions =
 
     open Microsoft.FSharp.Control
@@ -736,7 +726,7 @@ module SimpleAsyncWebCrawl =
         collector.Start()
         collector <-- "http://news.google.com"
         Async.CancelDefaultToken()
-
+#endif
 
 module TryFinallySequenceExpressionTests = 
 
@@ -1051,7 +1041,7 @@ module TryFinallySequenceExpressionTests =
 
     testve937() 
 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 let RUN() = !failures
 #else
 let aa =

@@ -1,5 +1,5 @@
 ﻿// #Quotations #Query
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 module Core_queriesOverIQueryable
 #endif
 
@@ -18,19 +18,6 @@ module Infrastructure =
         stderr.Write" NO: "
         stderr.WriteLine s
         failures := !failures @ [s]
-
-#if NetCore
-#else
-    let argv = System.Environment.GetCommandLineArgs() 
-    let SetCulture() = 
-        if argv.Length > 2 && argv.[1] = "--culture" then  
-            let cultureString = argv.[2] 
-            let culture = new System.Globalization.CultureInfo(cultureString) 
-            stdout.WriteLine ("Running under culture "+culture.ToString()+"...");
-            System.Threading.Thread.CurrentThread.CurrentCulture <-  culture
-  
-    do SetCulture()    
-#endif
 
     let check  s v1 v2 = 
        if v1 = v2 then 
@@ -2473,7 +2460,7 @@ module Problem2 =
        [item]
 
 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 let RUN() = !failures
 #else
 let aa =

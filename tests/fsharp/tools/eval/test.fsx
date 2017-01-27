@@ -7,8 +7,10 @@
 
 #light
 
+#if !FX_PORTABLE_OR_NETSTANDARD
 #r @"System.Core.dll"
 #r @"System.Data.Linq.dll"
+#endif
 
 #nowarn "57"
 

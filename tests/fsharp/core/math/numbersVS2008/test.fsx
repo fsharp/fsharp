@@ -1,5 +1,5 @@
 // #Regression #Conformance #Regression 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 module Core_math_numbersVS2008
 #endif
 
@@ -246,14 +246,9 @@ let negative64s =
          (-1152921504606846977L , -1152921504606846976L , -1152921504606846975L);
          (-2305843009213693953L , -2305843009213693952L , -2305843009213693951L);
          (-4611686018427387905L , -4611686018427387904L , -4611686018427387903L);
-#if MONO // https://github.com/fsharp/fsharp/issues/190
-         (9223372036854775807L  , -9223372036854775808L , -9223372036854775807L); (* MinValue is -2^63 *)
-#else
          (999L                  , -9223372036854775808L , -9223372036854775807L); (* MinValue is -2^63 *)
-#endif
          (999L                  , 999L                  , 999L)]
-#if Portable
-#else
+#if !FX_PORTABLE_OR_NETSTANDARD
 // Regression 3481: ToInt32
 let triple k n project =
   let x = k * BigInteger.Pow(2I,n) in project (x - 1I),project x,project (x + 1I)
@@ -274,7 +269,7 @@ for (a,b) in List.zip negative64s (List.map (triple64 -1I) [0 .. 64]) do
 (* END *)  
 #endif
 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 let RUN() = !failures
 #else
 let aa =

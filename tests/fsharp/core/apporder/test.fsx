@@ -1,5 +1,5 @@
 // #Conformance #Constants #Recursion #LetBindings #MemberDefinitions #Mutable 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 module Core_apporder
 #endif
 
@@ -1123,7 +1123,7 @@ module RecordInitialisationWithDifferentTxpes =
         check "cewekcjnwe21" expected actual
         check "cewekcjnwe22" "1234567" !order
 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 let RUN() = !failures
 #else
 let aa =

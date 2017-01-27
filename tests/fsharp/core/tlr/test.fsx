@@ -1,20 +1,5 @@
 // #Conformance #Regression #Recursion #LetBindings 
-(*----------------------------------------------------------------------------
-CONTENTS-START-LINE: HERE=1 SEP=2
- 23.    tlr constants
- 58.    tlr lambdas
- 97.    tlr polymorphic constants?
- 111.   env tests
- 138.   mixed recursion (inner recursing with outer)
- 188.   arity 0 tests
- 211.   value recursion
- 252.   inner constant
- 264.   lifting tests
- 335.   lifting
- 348.   wrap up
-CONTENTS-END-LINE:
-----------------------------------------------------------------------------*)
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 module Core_tlr
 #endif
 
@@ -31,20 +16,6 @@ let test (s : string) b =
     else report_failure (s)
 
 
-
-#if NetCore
-#else
-let argv = System.Environment.GetCommandLineArgs() 
-let SetCulture() = 
-  if argv.Length > 2 && argv.[1] = "--culture" then  begin
-    let cultureString = argv.[2] in 
-    let culture = new System.Globalization.CultureInfo(cultureString) in 
-    stdout.WriteLine ("Running under culture "+culture.ToString()+"...");
-    System.Threading.Thread.CurrentThread.CurrentCulture <-  culture
-  end 
-  
-do SetCulture()    
-#endif
 
 (*-------------------------------------------------------------------------
  *INDEX: tlr constants
@@ -402,7 +373,7 @@ end
  *INDEX: wrap up
  *-------------------------------------------------------------------------*)    
 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 let RUN() = !failures
 #else
 let aa =

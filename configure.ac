@@ -46,7 +46,7 @@ fi
 
 AC_ARG_WITH([bootstrap], 
         [  --with-bootstrap=<path>], 
-        [], [with_bootstrap=packages/FSharp.Compiler.Tools.4.0.1.3/tools])
+        [], [with_bootstrap=packages/FSharp.Compiler.Tools.4.0.1.21/tools])
 with_bootstrap=$(mkdir -p "$with_bootstrap" && cd "$with_bootstrap" && pwd)
 AC_MSG_NOTICE(Using bootstrap : $with_bootstrap)
 AC_SUBST(with_bootstrap)
@@ -176,6 +176,7 @@ src/fsharp/policy.3.78.FSharp.Core/Makefile
 src/fsharp/policy.3.259.FSharp.Core/Makefile
 src/fsharp/policy.4.0.FSharp.Core/Makefile
 src/fsharp/policy.4.3.FSharp.Core/Makefile
+src/fsharp/policy.4.4.FSharp.Core/Makefile
 ])
 AC_OUTPUT
 

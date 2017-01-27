@@ -5,10 +5,11 @@ open System.Reflection
 open System.Runtime.InteropServices
 
 [<assembly:AssemblyDescription("FSharp.Core.dll")>]
+[<assembly:AssemblyCompany("Microsoft Corporation")>]
 [<assembly:AssemblyTitle("FSharp.Core.dll")>]
-[<assembly:AssemblyCopyright("\169 Microsoft Corporation and other contributors.  Apache 2.0 License.")>]
-[<assembly:AssemblyProduct("F# (open edition)")>]
-#if !FSHARP_CORE_PORTABLE
+[<assembly:AssemblyCopyright("\169 Microsoft Corporation.  Apache 2.0 License.")>]
+[<assembly:AssemblyProduct("Microsoft\174 F#")>]
+#if !FSCORE_PORTABLE_OLD
 [<assembly:ComVisible(false)>]
 #endif
 

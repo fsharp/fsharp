@@ -3366,7 +3366,7 @@ module AutoProps_2 = begin
 end
 
 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 let RUN() = !failures
 #else
 let aa =

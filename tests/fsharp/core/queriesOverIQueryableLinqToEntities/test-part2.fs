@@ -557,7 +557,7 @@ FROM [dbo].[Customers] AS [t0]"""
 
 
 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 let RUN() = !failures
 #else
 let aa =

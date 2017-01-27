@@ -18,39 +18,20 @@ if not exist %_ngenexe% echo Note: Could not find ngen.exe.
 .\.nuget\NuGet.exe restore packages.config -PackagesDirectory packages -ConfigFile .nuget\nuget.config
 @if ERRORLEVEL 1 echo Error: Nuget restore failed  && goto :failure
 
-%_ngenexe% install packages\FSharp.Compiler.Tools.4.0.1.3\tools\fsc.exe
+%_ngenexe% install packages\FSharp.Compiler.Tools.4.0.1.21\tools\fsc.exe
+
+set BUILD_NET40=1
+set BUILD_PORTABLE=1
+set TEST_NET40_COREUNIT_SUITE=1
+set TEST_PORTABLE_COREUNIT_SUITE=1
 
 %_msbuildexe% src\fsharp-proto-build.proj
 @if ERRORLEVEL 1 echo Error: "%_msbuildexe% src\fsharp-proto-build.proj" failed  && goto :failure
 
-%_ngenexe% install lib\proto\fsc-proto.exe
+%_ngenexe% install Proto\net440\bin\fsc-proto.exe
 
-%_msbuildexe% %msbuildflags% src\fsharp-library-build.proj /p:TargetFramework=net40 /p:Configuration=Release
+%_msbuildexe% %msbuildflags% build-everything.proj /p:TargetFramework=net40 /p:Configuration=Release
 @if ERRORLEVEL 1 echo Error: "%_msbuildexe% %msbuildflags% src\fsharp-library-build.proj /p:TargetFramework=net40 /p:Configuration=Release" failed  && goto :failure
-
-%_msbuildexe% %msbuildflags% src\fsharp-library-unittests-build.proj /p:TargetFramework=net40 /p:Configuration=Release
-@if ERRORLEVEL 1 echo Error: "%_msbuildexe% %msbuildflags% src\fsharp-library-unittests-build.proj /p:TargetFramework=net40 /p:Configuration=Release" failed  && goto :failure
-
-%_msbuildexe% %msbuildflags% src\fsharp-compiler-build.proj /p:TargetFramework=net40 /p:Configuration=Release
-@if ERRORLEVEL 1 echo Error: "%_msbuildexe% %msbuildflags% src\fsharp-compiler-build.proj /p:TargetFramework=net40 /p:Configuration=Release" failed  && goto :failure
-
-%_msbuildexe% %msbuildflags% src\fsharp-compiler-unittests-build.proj /p:TargetFramework=net40 /p:Configuration=Release
-@if ERRORLEVEL 1 echo Error: "%_msbuildexe% %msbuildflags% src\fsharp-compiler-unittests-build.proj /p:TargetFramework=net40 /p:Configuration=Release" failed  && goto :failure
-
-%_msbuildexe% %msbuildflags% src\fsharp-library-build.proj /p:TargetFramework=portable47 /p:Configuration=Release
-@if ERRORLEVEL 1 echo Error: "%_msbuildexe% %msbuildflags% src\fsharp-library-build.proj /p:TargetFramework=portable47 /p:Configuration=Release" failed  && goto :failure
-
-%_msbuildexe% %msbuildflags% src\fsharp-library-build.proj /p:TargetFramework=portable7 /p:Configuration=Release
-@if ERRORLEVEL 1 echo Error: "%_msbuildexe% %msbuildflags% src\fsharp-library-build.proj /p:TargetFramework=portable7 /p:Configuration=Release" failed  && goto :failure
-
-%_msbuildexe% %msbuildflags% src\fsharp-library-build.proj /p:TargetFramework=portable78 /p:Configuration=Release
-@if ERRORLEVEL 1 echo Error: "%_msbuildexe% %msbuildflags% src\fsharp-library-build.proj /p:TargetFramework=portable78 /p:Configuration=Release" failed  && goto :failure
-
-%_msbuildexe% %msbuildflags% src\fsharp-library-build.proj /p:TargetFramework=portable259 /p:Configuration=Release
-@if ERRORLEVEL 1 echo Error: "%_msbuildexe% %msbuildflags% src\fsharp-library-build.proj /p:TargetFramework=portable259 /p:Configuration=Release" failed  && goto :failure
-
-%_msbuildexe% %msbuildflags% src\fsharp-library-build.proj /p:TargetFramework=monotouch /p:Configuration=Release /p:KeyFile=..\..\..\mono.snk
-@if ERRORLEVEL 1 echo Error: "%_msbuildexe% %msbuildflags% src\fsharp-library-build.proj /p:TargetFramework=monotouch /p:Configuration=Release /p:KeyFile=..\..\..\mono.snk" failed  && goto :failure
 
 
 @echo "Finished"

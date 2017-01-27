@@ -58,7 +58,7 @@ module Core_genericMeasures =
         T.Baz()
     
 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
     let RUN() = RunAll(); []
 #else
     RunAll();

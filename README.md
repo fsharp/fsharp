@@ -153,19 +153,6 @@ You can also build FSharp.Core.dll for other profiles:
 
 Change to ``` /p:Configuration=Debug``` for debug binaries.
 
-Add ``` /p:FSharpCoreBackVersion=3.0``` to build a back version of FSharp.Core.dll with a
-version number suitable for use when building libraries that have usable with both F# 3.0 and F# 3.1 libraries.
-
-    msbuild src\fsharp-library-build.proj /p:TargetFramework=net20 /p:Configuration=Release /p:FSharpCoreBackVersion=3.0
-    msbuild src\fsharp-library-build.proj /p:TargetFramework=net40 /p:Configuration=Release /p:FSharpCoreBackVersion=3.0
-    msbuild src\fsharp-library-build.proj /p:TargetFramework=portable47 /p:Configuration=Release /p:FSharpCoreBackVersion=3.0
-	msbuild src\fsharp-library-build.proj /p:TargetFramework=net40 /p:Configuration=Release /p:FSharpCoreBackVersion=3.0
-	msbuild src\fsharp-library-build.proj /p:TargetFramework=portable47 /p:Configuration=Release /p:FSharpCoreBackVersion=3.0
-	msbuild src\fsharp-library-build.proj /p:TargetFramework=net40 /p:Configuration=Release /p:FSharpCoreBackVersion=3.1
-	msbuild src\fsharp-library-build.proj /p:TargetFramework=portable7 /p:Configuration=Release /p:FSharpCoreBackVersion=3.1
-	msbuild src\fsharp-library-build.proj /p:TargetFramework=portable47 /p:Configuration=Release /p:FSharpCoreBackVersion=3.1
-	msbuild src\fsharp-library-build.proj /p:TargetFramework=portable78 /p:Configuration=Release /p:FSharpCoreBackVersion=3.1
-	msbuild src\fsharp-library-build.proj /p:TargetFramework=portable259 /p:Configuration=Release /p:FSharpCoreBackVersion=3.1
 
 ### Windows, using xbuild (e.g. if only Mono is installed):
 
@@ -187,12 +174,8 @@ If a strong-name signed FSharp.Core.dll is needed then use the one in
 ## How to Install
 
 Built main compiler binaries go to
-    lib/release/4.0
+    Release/net40/bin
 
-Additionally, versions of FSharp.Core for .NET 2.0, MonoAndroid, MonoTouch (Mono profile 2.1) go to
-     lib/release/2.0
-     lib/release/2.1
-     lib/release/2.1monotouch
 
 `make install` sends the binaries to the `prefix` location, e.g.
 

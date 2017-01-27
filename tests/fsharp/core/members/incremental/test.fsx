@@ -1,33 +1,5 @@
 // #Conformance #MemberDefinitions #Mutable #ObjectOrientedTypes #Classes #InterfacesAndImplementations #Recursion 
-(* (c) Microsoft Corporation. All rights reserved *)
-// CONTENTS-INDEX-REGEXP = FROM>^//! +<TO
-//----------------------------------------------------------------------------
-//CONTENTS-START-LINE: HERE=3 SEP=2
-// 30.    Setup
-// 38.    Address of incremental class local mutable
-// 49.    Address of mutable record field (related to above)
-// 59.    Minor test
-// 72.    Misc
-// 90.    Wire prevously
-// 114.   Wire variations
-// 224.   Area variations
-// 335.   Person
-// 393.   Forms
-// 456.   typar scoping
-// 475.   local let rec test
-// 506.   local let rec test
-// 532.   override test
-// 549.   abstract test
-// 568.   CC tests
-// 583.   interface
-// 591.   static expr test
-// 599.   ctor args stored in fields
-// 605.   Test cases:
-// 621.   Finish
-//CONTENTS-END-LINE:
-//--------------------------------------------------------------------------
-
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 module Core_members_incremental
 #endif
 
@@ -253,8 +225,7 @@ end
 
 //! Area variations
   
-#if Portable
-#else
+#if !MONO && !FX_PORTABLE_OR_NETSTANDARD
 module AreaVariations = begin
     (* Accepted *)
     open System.Drawing
@@ -431,8 +402,7 @@ end
 
 //! Forms
   
-#if Portable
-#else
+#if !MONO && !FX_PORTABLE_OR_NETSTANDARD
 module Forms1 = begin
     open System.Drawing
     open System.Windows.Forms
@@ -740,7 +710,7 @@ end
 //! Finish
 
 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 let RUN() = !failures
 #else
 let aa =

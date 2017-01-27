@@ -1,5 +1,5 @@
 // #Conformance 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 module Core_nested
 #endif
 let failures = ref []
@@ -15,20 +15,6 @@ let test (s : string) b =
     else report_failure (s)
 
 let check s b1 b2 = test s (b1 = b2)
-
-#if NetCore
-#else
-let argv = System.Environment.GetCommandLineArgs() 
-let SetCulture() = 
-  if argv.Length > 2 && argv.[1] = "--culture" then  begin
-    let cultureString = argv.[2] in 
-    let culture = new System.Globalization.CultureInfo(cultureString) in 
-    stdout.WriteLine ("Running under culture "+culture.ToString()+"...");
-    System.Threading.Thread.CurrentThread.CurrentCulture <-  culture
-  end 
-  
-do SetCulture()    
-#endif
 
 let f () = 3
 
@@ -71,7 +57,7 @@ do test "uyf78" (!wher = [ "Initialized before X1 OK";
                            "Initialized after X3 OK" ])
 
 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 let RUN() = !failures
 #else
 let aa =

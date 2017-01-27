@@ -2,7 +2,7 @@
 
 #light
 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 module Core_members_incremental_testhw
 #endif
 
@@ -227,8 +227,7 @@ module WireVariations =
 
 //! Area variations
   
-#if Portable
-#else
+#if !FX_PORTABLE_OR_NETSTANDARD
 module AreaVariations = 
     (* Accepted *)
     open System.Drawing
@@ -405,8 +404,7 @@ module ScalaPersonExample =
 
 //! Forms
   
-#if Portable
-#else
+#if !FX_PORTABLE_OR_NETSTANDARD
 module Forms1 = 
     open System.Drawing
     open System.Windows.Forms
@@ -735,7 +733,7 @@ module ExceptionsWithAugmentations =
 //! Finish
 
 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 let RUN() = !failures
 #else
 let aa =

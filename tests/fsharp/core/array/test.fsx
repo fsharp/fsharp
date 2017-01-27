@@ -1,38 +1,15 @@
 // #Conformance #Arrays #Stress #Structs #Mutable #ControlFlow #LetBindings 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 module Core_array
 #endif
 
-#light
-let failures = ref []
-
-let report_failure (s : string) = 
-    stderr.Write" NO: "
-    stderr.WriteLine s
-    failures := !failures @ [s]
-
-let test (s : string) b = 
-    stderr.Write(s)
-    if b then stderr.WriteLine " OK"
-    else report_failure (s)
-
+let mutable failures = []
+let report_failure (s) = 
+  stderr.WriteLine " NO"; failures <- s :: failures
+let test s b = if not b then (stderr.Write(s:string);   report_failure(s) )
 let check s b1 b2 = test s (b1 = b2)
 
 
-#if NetCore
-#else
-let argv = System.Environment.GetCommandLineArgs() 
-let SetCulture() = 
-  if argv.Length > 2 && argv.[1] = "--culture" then  begin
-    let cultureString = argv.[2] in 
-    let culture = new System.Globalization.CultureInfo(cultureString) in 
-    stdout.WriteLine ("Running under culture "+culture.ToString()+"...");
-    System.Threading.Thread.CurrentThread.CurrentCulture <-  culture
-  end 
-  
-do SetCulture()    
-#endif
-  
 (* TEST SUITE FOR Array *)
 
 let test_make_get_set_length () = 
@@ -612,7 +589,7 @@ module Array2Tests = begin
 
 end
 
-#if !Portable
+#if !FSCORE_PORTABLE_OLD && !FSCORE_PORTABLE_NEW
 module ArrayNonZeroBasedTestsSlice = 
   let runTest () = 
     let arr = (Array2D.initBased 5 4 3 2 (fun i j -> (i,j)))
@@ -1432,7 +1409,7 @@ module bug872632 =
 
 module CheckUnionTypesAreSealed =
     open System
-#if NetCore
+#if FX_PORTABLE_OR_NETSTANDARD
     open System.Reflection
     type System.Type with
         member this.IsSealed
@@ -1494,8 +1471,7 @@ module manyIndexes =
         0
 
 
-#if Portable
-#else    // this overload of CreateInstance doesn't exist in portable
+#if !FX_PORTABLE_OR_NETSTANDARD
 module bug6447 =
     let a = System.Array.CreateInstance(typeof<int>, [|1|], [|1|])
     let a1 = System.Array.CreateInstance(typeof<int>, [|1|], [|3|])
@@ -1523,11 +1499,11 @@ module bug6447 =
     do check "bug6447_hash_a2" (hash a2) 10727    
 #endif    
     
-#if ALL_IN_ONE
-let RUN() = !failures
+#if TESTS_AS_APP
+let RUN() = failures
 #else
 let aa =
-  match !failures with 
+  match failures with 
   | [] -> 
       stdout.WriteLine "Test Passed"
       System.IO.File.WriteAllText("test.ok","ok")

@@ -1,17 +1,10 @@
 // #Conformance #Regression 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 module Core_math_lalgebra
 #endif
 
 #light
 
-// CONTENTS-INDEX-REGEXP = FROM>^\//! <TO 
-//----------------------------------------------------------------------------
-//CONTENTS-START-LINE: HERE=2 SEP=2
-// 22.    TESTS HERE......
-// 26.    Finish
-//CONTENTS-END-LINE:
-//----------------------------------------------------------------------------
 
 let failures = ref []
 
@@ -313,7 +306,7 @@ RegressionTest "Netlib" maxDimension
 //--------  
 
 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 let RUN() = !failures
 #else
 let aa =

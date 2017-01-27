@@ -6,7 +6,7 @@
 // Microsoft Research Ltd.
 //---------------------------------------------------------------
 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 module Core_members_factors
 #endif
 
@@ -269,7 +269,7 @@ let Gaussian1DPriorFactorNode((var: VariableNode<Gaussian1D>), mean, variance) =
 
 
 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 let RUN() = !failures
 #else
 let aa =

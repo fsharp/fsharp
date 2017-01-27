@@ -1,5 +1,5 @@
 // #Conformance #ObjectConstructors 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 module Core_longnames
 #endif
 let failures = ref []
@@ -15,20 +15,6 @@ let test (s : string) b =
     else report_failure (s)
 
 let check s b1 b2 = test s (b1 = b2)
-
-#if NetCore
-#else
-let argv = System.Environment.GetCommandLineArgs() 
-let SetCulture() = 
-  if argv.Length > 2 && argv.[1] = "--culture" then  begin
-    let cultureString = argv.[2] in 
-    let culture = new System.Globalization.CultureInfo(cultureString) in 
-    stdout.WriteLine ("Running under culture "+culture.ToString()+"...");
-    System.Threading.Thread.CurrentThread.CurrentCulture <-  culture
-  end 
-  
-do SetCulture()    
-#endif
 
 (* Some test expressions *)
 
@@ -126,8 +112,7 @@ let v12 =
 
 let v13 = Microsoft.FSharp.Core.Some(1)
 
-#if Portable
-#else
+#if !FX_PORTABLE_OR_NETSTANDARD
 (* check lid setting bug *)
 
 open System.Diagnostics
@@ -552,8 +537,8 @@ module Ok9b =
         let create() = 1
         type Dummy = A | B
 
-
-    test "lkneecec09iew9" (typeof<A.Dummy>.FullName.Contains("AModule") )
+    //A<'T> has a type parameter, so appending Module is not necessary.
+    test "lkneecec09iew9" (not (typeof<A.Dummy>.FullName.Contains("AModule") ) )
 
 module rec Ok10 = 
 
@@ -630,7 +615,7 @@ module rec Ok15 =
 
     test "lkneecec09iew15" (not (typeof<A.Dummy>.FullName.Contains("AModule") )) 
 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 let RUN() = !failures
 #else
 let aa =

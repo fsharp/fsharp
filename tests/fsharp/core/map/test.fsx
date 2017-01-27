@@ -1,5 +1,5 @@
 // #Conformance #Regression #Collections 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 module Core_map
 #endif
 
@@ -15,20 +15,6 @@ let test (s : string) b =
     stderr.Write(s)
     if b then stderr.WriteLine " OK"
     else report_failure (s)
-
-#if NetCore
-#else
-let argv = System.Environment.GetCommandLineArgs() 
-let SetCulture() = 
-  if argv.Length > 2 && argv.[1] = "--culture" then  begin
-    let cultureString = argv.[2] in 
-    let culture = new System.Globalization.CultureInfo(cultureString) in 
-    stdout.WriteLine ("Running under culture "+culture.ToString()+"...");
-    System.Threading.Thread.CurrentThread.CurrentCulture <-  culture
-  end 
-  
-do SetCulture()    
-#endif
 
 (* TEST SUITE FOR STANDARD LIBRARY *)
   
@@ -174,7 +160,7 @@ module Bug_FSharp_1_0_6307 =
     let t = typeof<global.System.Int32>
 
 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 let RUN() = !failures
 #else
 let aa =

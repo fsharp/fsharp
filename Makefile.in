@@ -3,6 +3,7 @@ include $(topsrcdir)config.make
 all clean install build build-proto all-monotouch-monodroid-xamarinmac all-monotouch-monodroid all-monotouch all-monodroid all-xamarinmac all-monotouch-xamarinmac:
 	MONO_ENV_OPTIONS=$(monoopts) mono .nuget/NuGet.exe restore packages.config -PackagesDirectory packages -ConfigFile .nuget/NuGet.Config
 	$(MAKE) -C src/fsharp $@
+	BUILD_NET40=1 TEST_NET40_COREUNIT_SUITE=1 MONO_ENV_OPTIONS=$(monoopts) $(XBUILD) /p:Configuration=$(Configuration) /p:TargetFramework=$(TargetFramework) build-everything.proj
 
 dist:
 	-rm -r fsharp-$(DISTVERSION) fsharp-$(DISTVERSION).tar.bz2

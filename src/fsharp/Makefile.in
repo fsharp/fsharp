@@ -16,9 +16,9 @@ build-proto: $(bootstrap)/FSharp.Core.dll $(bootstrap)/FSharp.Core.sigdata $(boo
 	cp -p $(bootstrap)/FSharp.Core.dll $(protodir)FSharp.Core.dll
 	cp -p $(bootstrap)/FSharp.Core.sigdata $(protodir)FSharp.Core.sigdata
 	cp -p $(bootstrap)/FSharp.Core.optdata $(protodir)FSharp.Core.optdata
-	$(MAKE) -C FSharp.Build-proto Configuration=proto $@
-	$(MAKE) -C FSharp.Compiler-proto Configuration=proto $@
-	$(MAKE) -C Fsc-proto Configuration=proto $@
+	$(MAKE) -C FSharp.Build-proto Configuration=Proto $@
+	$(MAKE) -C FSharp.Compiler-proto Configuration=Proto $@
+	$(MAKE) -C Fsc-proto Configuration=Proto $@
 
 # The main targets
 #
@@ -43,27 +43,21 @@ build clean install:
 	$(MAKE) -C policy.3.259.FSharp.Core $@
 	$(MAKE) -C policy.4.0.FSharp.Core $@
 	$(MAKE) -C policy.4.3.FSharp.Core $@
-	if test -e $MONOGACDIR20/mscorlib.dll; then $(MAKE) -C FSharp.Core TargetFramework=net20 $@;fi
+	$(MAKE) -C policy.4.4.FSharp.Core $@
 	$(MAKE) only-monotouch only-monodroid only-xamarinmac
-	$(MAKE) -C FSharp.Core FSharpCoreBackVersion=3.0 TargetFramework=net40 $@
-	$(MAKE) -C FSharp.Core FSharpCoreBackVersion=3.1 TargetFramework=net40 $@
-	if test -e $MONOGACDIR20/mscorlib.dll; then $(MAKE) -C FSharp.Core FSharpCoreBackVersion=3.0 TargetFramework=net20 $@;fi
+
+build-pcl-fsharp-core clean-pcl-fsharp-core install-pcl-fsharp-core:
 ifeq ("$(pclenabled47)", "yes")
 	$(MAKE) -C FSharp.Core TargetFramework=portable47 $@
-	$(MAKE) -C FSharp.Core FSharpCoreBackVersion=3.0 TargetFramework=portable47 $@
-	$(MAKE) -C FSharp.Core FSharpCoreBackVersion=3.1 TargetFramework=portable47 $@
 endif
 ifeq ("$(pclenabled7)", "yes")
 	$(MAKE) -C FSharp.Core TargetFramework=portable7 $@
-	$(MAKE) -C FSharp.Core FSharpCoreBackVersion=3.1 TargetFramework=portable7 $@
 endif
 ifeq ("$(pclenabled78)", "yes")
 	$(MAKE) -C FSharp.Core TargetFramework=portable78 $@
-	$(MAKE) -C FSharp.Core FSharpCoreBackVersion=3.1 TargetFramework=portable78 $@
 endif
 ifeq ("$(pclenabled259)", "yes")
 	$(MAKE) -C FSharp.Core TargetFramework=portable259 $@
-	$(MAKE) -C FSharp.Core FSharpCoreBackVersion=3.1 TargetFramework=portable259 $@
 endif
 
 all-monotouch-monodroid-xamarinmac:

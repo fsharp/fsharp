@@ -1,8 +1,8 @@
-<!-- Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information. -->
+<!-- Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information. -->
 
 <!--
 ***********************************************************************************************
-Microsoft.FSharp.Targets
+Microsoft.FSharp.targets
 
 WARNING:  DO NOT MODIFY this file unless you are knowledgeable about MSBuild and have
           created a backup copy.  Incorrect changes to this file will make it
@@ -12,17 +12,16 @@ This file defines the steps in the standard build process specific for F# .NET p
 For example, it contains the step that actually calls the F# compiler.  The remainder
 of the build process is defined in Microsoft.Common.targets, which is imported by 
 this file.
-
-Copyright (C) Microsoft Corporation. Apache 2.0 License.
 ***********************************************************************************************
 -->
 
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
-    <UsingTask TaskName="Fsc" AssemblyFile="FSharp.Build.dll"/>
-    <UsingTask TaskName="CreateFSharpManifestResourceName" AssemblyFile="FSharp.Build.dll"/>
+    <UsingTask TaskName="Fsc" AssemblyFile="FSharp.Build{BuildSuffix}.dll"/>
+    <UsingTask TaskName="CreateFSharpManifestResourceName" AssemblyFile="FSharp.Build{BuildSuffix}.dll"/>
+    <UsingTask TaskName="SetEnv" AssemblyFile="FSharp.Build{BuildSuffix}.dll"/>
 
-    <PropertyGroup>
+  <PropertyGroup>
         <ImportByWildcardBeforeMicrosoftFSharpTargets Condition="'$(ImportByWildcardBeforeMicrosoftFSharpTargets)' == ''">true</ImportByWildcardBeforeMicrosoftFSharpTargets>
         <ImportByWildcardAfterMicrosoftFSharpTargets Condition="'$(ImportByWildcardAfterMicrosoftFSharpTargets)' == ''">true</ImportByWildcardAfterMicrosoftFSharpTargets>
     </PropertyGroup>
@@ -39,7 +38,7 @@ Copyright (C) Microsoft Corporation. Apache 2.0 License.
         <!-- Visual studio requires a non-empty RootNamespace value for "Add New Item" to work. -->
         <RootNamespace Condition="'$(RootNamespace)'==''">RootNamespace</RootNamespace>
         <Actual32Bit Condition="'$(TargetFrameworkVersion)'=='v2.0' or '$(TargetFrameworkVersion)'=='v3.0' or '$(TargetFrameworkVersion)'=='v3.5' or '$(TargetFrameworkVersion)'=='v4.0'">false</Actual32Bit>
-        <Actual32Bit Condition="!('$(TargetFrameworkVersion)'=='v2.0' or '$(TargetFrameworkVersion)'=='v3.0' or '$(TargetFrameworkVersion)'=='v3.5' or '$(TargetFrameworkVersion)'=='v4.0')">$(Prefer32Bit)</Actual32Bit>    
+        <Actual32Bit Condition="!('$(TargetFrameworkVersion)'=='v2.0' or '$(TargetFrameworkVersion)'=='v3.0' or '$(TargetFrameworkVersion)'=='v3.5' or '$(TargetFrameworkVersion)'=='v4.0')">$(Prefer32Bit)</Actual32Bit>
     </PropertyGroup>
 
     <!--
@@ -66,10 +65,10 @@ Copyright (C) Microsoft Corporation. Apache 2.0 License.
         <CreateManifestResourceNamesDependsOn></CreateManifestResourceNamesDependsOn>
     </PropertyGroup>
 
-  <PropertyGroup>
-    <UsingXBuild>false</UsingXBuild>
-    <UsingXBuild Condition="$(MSBuildExtensionsPath32.Contains('xbuild'))">true</UsingXBuild>
-  </PropertyGroup>
+    <PropertyGroup>
+        <UsingXBuild>false</UsingXBuild>
+        <UsingXBuild Condition="$(MSBuildExtensionsPath32.Contains('xbuild'))">true</UsingXBuild>
+    </PropertyGroup>
 
     <Target
         Name="CreateManifestResourceNames"
@@ -81,43 +80,44 @@ Copyright (C) Microsoft Corporation. Apache 2.0 License.
             <_Temporary Remove="@(_Temporary)" />
         </ItemGroup>
 
-  <!-- START XBUILD -->
+        <!-- START XBUILD -->
 
-  <!-- This is the implementation of CreateManifestResourceNames which is compatible with the way -->
-  <!-- xbuild processes resource names -->
+        <!-- This is the implementation of CreateManifestResourceNames which is compatible with the way -->
+        <!-- xbuild processes resource names -->
 
-    <CreateFSharpManifestResourceName 
-         Condition="'@(ResxWithNoCulture)' != '' AND '$(UsingXBuild)' == 'true'"
-	 ResourceFiles="@(ResxWithNoCulture)" RootNamespace="$(RootNamespace)">
-      <Output TaskParameter = "ManifestResourceNames" ItemName = "ManifestResourceWithNoCultureName" />
-    </CreateFSharpManifestResourceName>
+        <CreateFSharpManifestResourceName
+             Condition="'@(ResxWithNoCulture)' != '' AND '$(UsingXBuild)' == 'true'"
+         ResourceFiles="@(ResxWithNoCulture)" RootNamespace="$(RootNamespace)">
+            <Output TaskParameter = "ManifestResourceNames" ItemName = "ManifestResourceWithNoCultureName" />
+        </CreateFSharpManifestResourceName>
 
-    <CreateFSharpManifestResourceName 
-         Condition="'@(NonResxWithNoCulture)' != '' AND '$(UsingXBuild)' == 'true'"
-	 ResourceFiles="@(NonResxWithNoCulture)" RootNamespace="$(RootNamespace)">
-      <Output TaskParameter = "ManifestResourceNames" ItemName = "ManifestNonResxWithNoCulture" />
-    </CreateFSharpManifestResourceName>
+        <CreateFSharpManifestResourceName
+             Condition="'@(NonResxWithNoCulture)' != '' AND '$(UsingXBuild)' == 'true'"
+         ResourceFiles="@(NonResxWithNoCulture)" RootNamespace="$(RootNamespace)">
+            <Output TaskParameter = "ManifestResourceNames" ItemName = "ManifestNonResxWithNoCulture" />
+        </CreateFSharpManifestResourceName>
 
-    <CreateFSharpManifestResourceName 
-         Condition="'@(ResxWithCulture)' != '' AND '$(UsingXBuild)' == 'true'"
-         ResourceFiles="@(ResxWithCulture)" RootNamespace="$(RootNamespace)">
-      <Output TaskParameter = "ManifestResourceNames" ItemName = "ManifestResourceWithCultureName" />
-    </CreateFSharpManifestResourceName>
+        <CreateFSharpManifestResourceName
+             Condition="'@(ResxWithCulture)' != '' AND '$(UsingXBuild)' == 'true'"
+             ResourceFiles="@(ResxWithCulture)" RootNamespace="$(RootNamespace)">
+            <Output TaskParameter = "ManifestResourceNames" ItemName = "ManifestResourceWithCultureName" />
+        </CreateFSharpManifestResourceName>
 
-    <CreateFSharpManifestResourceName 
-         Condition="'@(NonResxWithCulture)' != '' AND '$(UsingXBuild)' == 'true'"
-         ResourceFiles="@(NonResxWithCulture)" RootNamespace="$(RootNamespace)">
-      <Output TaskParameter = "ManifestResourceNames" ItemName = "ManifestNonResxWithCulture" />
-    </CreateFSharpManifestResourceName>
+        <CreateFSharpManifestResourceName
+             Condition="'@(NonResxWithCulture)' != '' AND '$(UsingXBuild)' == 'true'"
+             ResourceFiles="@(NonResxWithCulture)" RootNamespace="$(RootNamespace)">
+            <Output TaskParameter = "ManifestResourceNames" ItemName = "ManifestNonResxWithCulture" />
+        </CreateFSharpManifestResourceName>
 
-  <!-- END XBUILD -->
+        <!-- END XBUILD -->
 
 
-  <!-- START MSBUILD -->
+        <!-- START MSBUILD -->
 
-  <!-- This is the implementation of CreateManifestResourceNames which is compatible with the way -->
-  <!-- msbuild processes resource names -->
+        <!-- This is the implementation of CreateManifestResourceNames which is compatible with the way -->
+        <!-- msbuild processes resource names -->
 
+        <!-- Create manifest names for culture and non-culture Resx files, and for non-culture Non-Resx resources -->
         <CreateFSharpManifestResourceName
               ResourceFiles="@(EmbeddedResource)"
               RootNamespace="$(RootNamespace)"
@@ -137,8 +137,7 @@ Copyright (C) Microsoft Corporation. Apache 2.0 License.
             <Output TaskParameter="ResourceFilesWithManifestResourceNames" ItemName="_Temporary" />
 
         </CreateFSharpManifestResourceName>
-
-  <!-- END MSBUILD -->
+        <!-- END MSBUILD -->
 
 
         <ItemGroup>
@@ -185,15 +184,14 @@ Copyright (C) Microsoft Corporation. Apache 2.0 License.
                  @(_DebugSymbolsIntermediatePath);                 
                  $(NonExistentFile);
                  @(CustomAdditionalCompileOutputs)"
+        Returns=""
         DependsOnTargets="$(CoreCompileDependsOn)"
     >
 
-    <!-- See bug 6053
         <Error
-            Condition="'$(SilverlightVersion)' != '' and !(Exists('$(ProgramFiles)\Microsoft F#\Silverlight\Libraries\Client\$(SilverlightVersion)\FSharp.Core.dll'))"
-            Text="F# runtime for Silverlight version $(SilverlightVersion) is not installed. Please go to http://go.microsoft.com/fwlink/?LinkId=177463 to download and install matching F# runtime"
+            Condition="'$(SilverlightVersion)' != '' and '$(SilverlightVersion)' != 'v5.0'"
+            Text="In this version of Visual Studio, F# for Silverlight can only target Silverlight v5.0. Use a prior version of Visual Studio to target previous versions of Silverlight with F#."
         />
-          -->
 
         <Warning
             Condition="'$(Win32ResourceFile)' != '' "
@@ -209,6 +207,8 @@ Copyright (C) Microsoft Corporation. Apache 2.0 License.
               DefineConstants="$(DefineConstants)"
               DisabledWarnings="$(NoWarn)"
               DocumentationFile="$(DocumentationFile)"
+              EmbedAllSources="$(EmbedAllSources)"
+              Embed="$(Embed)"
               GenerateInterfaceFile="$(GenerateInterfaceFile)"
               KeyFile="$(KeyOriginatorFile)"
               LCID="$(LCID)"
@@ -218,9 +218,11 @@ Copyright (C) Microsoft Corporation. Apache 2.0 License.
               OutputAssembly="@(IntermediateAssembly)"
               PdbFile="$(PdbFile)"
               Platform="$(PlatformTarget)"
+              Prefer32Bit="$(Actual32Bit)"
               References="@(ReferencePath)"
               ReferencePath="$(ReferencePath)"
-              Resources="@(ManifestResourceWithNoCulture);@(ManifestNonResxWithNoCultureOnDisk);@(CompiledLicenseFile);@(AdditionalEmbeddedResource)"
+              Resources="@(_CoreCompileResourceInputs);@(ManifestResourceWithNoCulture);@(ManifestNonResxWithNoCultureOnDisk);@(CompiledLicenseFile);@(AdditionalEmbeddedResource)"
+              SourceLink="$(SourceLink)"
               Sources="@(CompileBefore);@(Compile);@(CompileAfter)"
               Tailcalls="$(Tailcalls)"
               TargetType="$(OutputType)"
@@ -234,11 +236,10 @@ Copyright (C) Microsoft Corporation. Apache 2.0 License.
               WarningsAsErrors="$(WarningsAsErrors)"
               Win32ManifestFile="$(Win32Manifest)"
               Win32ResourceFile="$(Win32Resource)"
-              DotnetFscCompilerPath="$(DotnetFscCompilerPath)"
-              Prefer32Bit="$(Actual32Bit)" 
               SubsystemVersion="$(SubsystemVersion)"
               HighEntropyVA="$(HighEntropyVA)"
               TargetProfile="$(TargetProfile)"
+              DotnetFscCompilerPath="$(DotnetFscCompilerPath)"
         />
 
         <ItemGroup>
@@ -249,6 +250,43 @@ Copyright (C) Microsoft Corporation. Apache 2.0 License.
 
 
     <Import Project="$(MSBuildBinPath)\Microsoft.Common.targets"/>
+
+    <!--
+            ============================================================
+            GenerateTargetFrameworkMonikerAttribute
+
+            Emit the target framework moniker attribute as  a code 
+            fragment into a temporary source file for the compiler.
+
+            ============================================================
+        -->
+
+    <Target Name="GenerateTargetFrameworkMonikerAttribute" BeforeTargets="BeforeCompile" DependsOnTargets="PrepareForBuild;GetReferenceAssemblyPaths" Inputs="$(MSBuildThisFileFullPath)" Outputs="$(TargetFrameworkMonikerAssemblyAttributesPath)" Condition="'$(GenerateTargetFrameworkAttribute)' == 'true'">
+
+        <PropertyGroup>
+            <!-- This attribute is only available in mscorlib v4 and later -->
+            <AdditionalSourcesText Condition="'$(TargetFrameworkMoniker)' != '' and '$(TargetingClr2Framework)' != 'true'">
+                $(AdditionalSourcesText)
+                namespace Microsoft.BuildSettings
+                [&lt;System.Runtime.Versioning.TargetFrameworkAttribute(&quot;$(TargetFrameworkMoniker)&quot;, FrameworkDisplayName=&quot;$(TargetFrameworkMonikerDisplayName)&quot;)&gt;]
+                do ()
+            </AdditionalSourcesText>
+        </PropertyGroup>
+
+        <!-- This is a file shared between projects so we have to take care to handle simultaneous writes (by ContinueOnError)
+             and a race between clean from one project and build from another (by not adding to FilesWritten so it doesn't clean) -->
+        <WriteLinesToFile
+            File="$(TargetFrameworkMonikerAssemblyAttributesPath)"
+            Lines="$(AdditionalSourcesText)"
+            Condition="'$(AdditionalSourcesText)' != ''"
+            ContinueOnError="true"
+            Overwrite="true"/>
+
+        <ItemGroup>
+            <CompileBefore Include="$(TargetFrameworkMonikerAssemblyAttributesPath)" Condition="'$(AdditionalSourcesText)' != ''"/>
+        </ItemGroup>
+
+    </Target>
 
     <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\$(MSBuildThisFile)\ImportAfter\*" Condition="'$(ImportByWildcardAfterMicrosoftFSharpTargets)' == 'true' and exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\$(MSBuildThisFile)\ImportAfter')"/>
 

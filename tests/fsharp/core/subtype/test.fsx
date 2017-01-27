@@ -1,5 +1,5 @@
 // #Conformance #TypeInference #TypeConstraints #UnitsOfMeasure #Regression #Operators #Mutable 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 module Core_subtype
 #endif
 
@@ -22,20 +22,6 @@ let check s v1 v2 = test s (v1 = v2)
 (* TEST SUITE FOR SUBTYPE CONSTRAINTS *)
 
 
-#if NetCore
-#else
-let argv = System.Environment.GetCommandLineArgs() 
-let SetCulture() = 
-  if argv.Length > 2 && argv.[1] = "--culture" then  begin
-    let cultureString = argv.[2] in 
-    let culture = new System.Globalization.CultureInfo(cultureString) in 
-    stdout.WriteLine ("Running under culture "+culture.ToString()+"...");
-    System.Threading.Thread.CurrentThread.CurrentCulture <-  culture
-  end 
-
-do SetCulture()    
-#endif
-
 open System
 open System.IO
 
@@ -45,8 +31,7 @@ open System.Collections.Generic
 let f1 (x: 'a[]) = (x :> ICollection<'a>) 
 do let x = f1 [| 3;4; |] in test "test239809" (x.Contains(3))
 
-#if Portable
-#else
+#if !FX_PORTABLE_OR_NETSTANDARD
 (* 'a[] :> IReadOnlyCollection<'a> *)
 let f1ReadOnly (x: 'a[]) = (x :> IReadOnlyCollection<'a>) 
 do let x = f1ReadOnly [| 3;4; |] in test "test239809ReadOnly" (x.Count = 2)
@@ -56,8 +41,7 @@ do let x = f1ReadOnly [| 3;4; |] in test "test239809ReadOnly" (x.Count = 2)
 let f2 (x: 'a[]) = (x :> IList<'a>) 
 do let x = f2 [| 3;4; |] in test "test239810" (x.Item(1) = 4)
 
-#if Portable
-#else
+#if !FX_PORTABLE_OR_NETSTANDARD
 (* 'a[] :> IReadOnlyList<'a> *)
 let f2ReadOnly (x: 'a[]) = (x :> IReadOnlyList<'a>) 
 do let x = f2ReadOnly [| 3;4; |] in test "test239810ReadOnly" (x.Item(1) = 4)
@@ -71,8 +55,7 @@ do let x = f3 [| 3;4; |] in for x in x do (Printf.printf "val %d\n" x) done
 let f4 (x: 'a[]) = (x :> IList<'a>) 
 do let x = f4 [| 31;42; |] in for x in x do (Printf.printf "val %d\n" x) done
 
-#if Portable
-#else
+#if !FX_PORTABLE_OR_NETSTANDARD
 (* Call 'foreachG' using an IReadOnlyList<int> (solved to IEnumerable<int>) *)
 let f4ReadOnly (x: 'a[]) = (x :> IReadOnlyList<'a>) 
 do let x = f4ReadOnly [| 31;42; |] in for x in x do (Printf.printf "val %d\n" x) done
@@ -82,8 +65,7 @@ do let x = f4ReadOnly [| 31;42; |] in for x in x do (Printf.printf "val %d\n" x)
 let f5 (x: 'a[]) = (x :> ICollection<'a>) 
 do let x = f5 [| 31;42; |] in for x in x do (Printf.printf "val %d\n" x) done
 
-#if Portable
-#else
+#if !FX_PORTABLE_OR_NETSTANDARD
 (* Call 'foreachG' using an IReadOnlyCollection<int> (solved to IEnumerable<int>) *)
 let f5ReadOnly (x: 'a[]) = (x :> IReadOnlyCollection<'a>) 
 do let x = f5ReadOnly [| 31;42; |] in for x in x do (Printf.printf "val %d\n" x) done
@@ -124,8 +106,7 @@ let testUpcastToEnum1 (x: System.AttributeTargets) = (x :> System.Enum)
 let testUpcastToEnum6 (x: System.Enum) = (x :> System.Enum) 
 
 // these delegates don't exist in portable
-#if Portable
-#else
+#if !UNIX && !FX_PORTABLE_OR_NETSTANDARD
 let testUpcastToDelegate1 (x: System.Threading.ThreadStart) = (x :> System.Delegate) 
 
 let testUpcastToMulticastDelegate1 (x: System.Threading.ThreadStart) = (x :> System.MulticastDelegate) 
@@ -263,8 +244,7 @@ module SomeRandomOperatorConstraints = begin
 
     let sum64 seq : int64 = Seq.reduce (+) seq
     let sum32 seq : int64 = Seq.reduce (+) seq
-#if Portable
-#else
+#if !FX_PORTABLE_OR_NETSTANDARD
     let sumBigInt seq : BigInteger = Seq.reduce (+) seq
 #endif
     let sumDateTime (dt : DateTime) (seq : #seq<TimeSpan>) : DateTime = Seq.fold (+) dt seq
@@ -1383,8 +1363,7 @@ module CoercivePipingTest =
     check "clwcweki" (f8 3) (box 3)
     check "clwcweki" (f9 3) (box 3)
 
-#if NetCore
-#else
+#if !FX_RESHAPED_REFLECTION
     // this was the actual repro
     let f (info: System.Reflection.MethodInfo) = 
       System.Attribute.GetCustomAttribute(info, typeof<ReflectedDefinitionAttribute>)
@@ -1783,7 +1762,7 @@ module SRTPFix =
       printfn "%A" <| replace 'q' (test("HI"))
      *)
 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 let RUN() = !failures
 #else
 let aa =

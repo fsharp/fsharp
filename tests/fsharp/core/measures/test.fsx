@@ -1,5 +1,5 @@
 // #Conformance #UnitsOfMeasure #Constants 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 module Core_measures
 #endif
 #light
@@ -17,21 +17,6 @@ let test (s : string) b =
     else report_failure (s)
 
 (* TEST SUITE FOR Operators on units-of-measure *)
-
-#if NetCore
-#else
-let argv = System.Environment.GetCommandLineArgs() 
-let SetCulture() = 
-  if argv.Length > 2 && argv.[1] = "--culture" then
-    let cultureString = argv.[2]
-    let culture = new System.Globalization.CultureInfo(cultureString)
-    stdout.WriteLine ("Running under culture "+culture.ToString()+"...");
-    System.Threading.Thread.CurrentThread.CurrentCulture <-  culture
-  else
-    System.Threading.Thread.CurrentThread.CurrentCulture <-  System.Globalization.CultureInfo.InvariantCulture
-
-do SetCulture()    
-#endif
 
 [<Measure>] type kg
 [<Measure>] type s
@@ -138,8 +123,7 @@ module FLOAT =
  let x23p = sinh (4.4<_>)
  let x23r = tan (4.4<_>)
  let x23s = tanh (4.4<_>)
-#if Portable
-#else
+#if !FX_PORTABLE_OR_NETSTANDARD
  let x23t = truncate (4.5<_>)
 #endif
  // check the types and values!
@@ -329,8 +313,7 @@ module DECIMAL =
  let x1d : decimal = ceil 4.4M 
  let x1h : decimal = floor 4.4M 
  let x1l : decimal = pown 4.4M 3
-#if Portable
-#else
+#if !FX_PORTABLE_OR_NETSTANDARD
  let x1m : decimal = round 4.4M 
 #endif
  let x1n : int = sign 4.4M 
@@ -516,8 +499,7 @@ module MembersTest =
     let s = 2.0f<kg>
     let d = 2.0M<kg>
 
-#if NetCore
-#else
+#if !FSCORE_PORTABLE_OLD && !FSCORE_PORTABLE_NEW
     let tmpCulture = System.Threading.Thread.CurrentThread.CurrentCulture
     System.Threading.Thread.CurrentThread.CurrentCulture <- System.Globalization.CultureInfo("en-US")
     test "f" (f.ToString().Equals("2"))
@@ -536,8 +518,7 @@ module MembersTest =
     let f1 = (f :> System.IFormattable)
     let f2 = (f :> System.IComparable)
     let f3 = (f :> System.IEquatable<float<kg>>)
-#if Portable
-#else // double does not implement IConvertible on portable
+#if !FX_PORTABLE_OR_NETSTANDARD
     let f4 = (f :> System.IConvertible)
 #endif
   
@@ -570,8 +551,7 @@ module WrappedFloatTypeTest =
         static member Sin (c1:C<1>) = C<1>(sin c1.V)
         static member Sinh (c1:C<1>) = C<1>(sinh c1.V)
         static member Tanh (c1:C<1>) = C<1>(tan c1.V)
-#if Portable
-#else
+#if !FX_PORTABLE_OR_NETSTANDARD
         static member Truncate (c1:C<1>) = C<1>(truncate c1.V)
 #endif
         static member Pow (c1:C<1>,c2:C<1>) = C<1>( c1.V ** c2.V)
@@ -619,8 +599,7 @@ module WrappedFloatTypeTest =
     let c26 = sin (C<1>(0.5))
     let c27 = sinh (C<1>(0.5))
     let c28 = tanh (C<1>(0.5))
-#if Portable
-#else
+#if !FX_PORTABLE_OR_NETSTANDARD
     let c29 = truncate (C<1>(0.5))
 #endif
     let c30 =  C<1>(0.5) ** C<1>(2.0)
@@ -628,15 +607,14 @@ module WrappedFloatTypeTest =
     let c32 =  C<kg>.Mul (C<kg>(0.5<kg>),C<kg>(2.0<kg>))
 
 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 let RUN() = !failures
 #else
 let aa =
   match !failures with 
   | [] -> 
       stdout.WriteLine "Test Passed"
-#if Portable
-#else
+#if !FX_PORTABLE_OR_NETSTANDARD
       System.IO.File.WriteAllText("test.ok","ok")
 #endif
       exit 0

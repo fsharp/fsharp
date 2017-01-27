@@ -73,57 +73,54 @@ val ParseInput : (UnicodeLexing.Lexbuf -> Parser.token) * ErrorLogger * UnicodeL
 // Error and warnings
 //--------------------------------------------------------------------------
 
-/// Represents the style being used to format errros
-type ErrorStyle = 
-    | DefaultErrors 
-    | EmacsErrors 
-    | TestErrors 
-    | VSErrors
-    | GccErrors
-
 /// Get the location associated with an error
-val GetRangeOfError : PhasedError -> range option
+val GetRangeOfDiagnostic : PhasedDiagnostic -> range option
 
 /// Get the number associated with an error
-val GetErrorNumber : PhasedError -> int
+val GetDiagnosticNumber : PhasedDiagnostic -> int
 
 /// Split errors into a "main" error and a set of associated errors
-val SplitRelatedErrors : PhasedError -> PhasedError * PhasedError list
+val SplitRelatedDiagnostics : PhasedDiagnostic -> PhasedDiagnostic * PhasedDiagnostic list
 
 /// Output an error to a buffer
-val OutputPhasedError : StringBuilder -> PhasedError -> bool -> unit
+val OutputPhasedDiagnostic : ErrorStyle -> StringBuilder -> PhasedDiagnostic -> isError: bool -> unit
 
 /// Output an error or warning to a buffer
-val OutputErrorOrWarning : implicitIncludeDir:string * showFullPaths: bool * flattenErrors: bool * errorStyle: ErrorStyle *  warning:bool -> StringBuilder -> PhasedError -> unit
+val OutputDiagnostic : implicitIncludeDir:string * showFullPaths: bool * flattenErrors: bool * errorStyle: ErrorStyle *  isError:bool -> StringBuilder -> PhasedDiagnostic -> unit
 
 /// Output extra context information for an error or warning to a buffer
-val OutputErrorOrWarningContext : prefix:string -> fileLineFunction:(string -> int -> string) -> StringBuilder -> PhasedError -> unit
+val OutputDiagnosticContext : prefix:string -> fileLineFunction:(string -> int -> string) -> StringBuilder -> PhasedDiagnostic -> unit
 
+/// Part of LegacyHostedCompilerForTesting
 [<RequireQualifiedAccess>]
-type ErrorLocation =
+type DiagnosticLocation =
     { Range : range
       File : string
       TextRepresentation : string
       IsEmpty : bool }
 
+/// Part of LegacyHostedCompilerForTesting
 [<RequireQualifiedAccess>]
-type CanonicalInformation = 
+type DiagnosticCanonicalInformation = 
     { ErrorNumber : int
       Subcategory : string
       TextRepresentation : string }
 
+/// Part of LegacyHostedCompilerForTesting
 [<RequireQualifiedAccess>]
-type DetailedIssueInfo = 
-    { Location : ErrorLocation option
-      Canonical : CanonicalInformation
+type DiagnosticDetailedInfo = 
+    { Location : DiagnosticLocation option
+      Canonical : DiagnosticCanonicalInformation
       Message : string }
 
+/// Part of LegacyHostedCompilerForTesting
 [<RequireQualifiedAccess>]
-type ErrorOrWarning = 
+type Diagnostic = 
     | Short of bool * string
-    | Long of bool * DetailedIssueInfo
+    | Long of bool * DiagnosticDetailedInfo
 
-val CollectErrorOrWarning : implicitIncludeDir:string * showFullPaths: bool * flattenErrors: bool * errorStyle: ErrorStyle *  warning:bool * PhasedError -> seq<ErrorOrWarning>
+/// Part of LegacyHostedCompilerForTesting
+val CollectDiagnostic : implicitIncludeDir:string * showFullPaths: bool * flattenErrors: bool * errorStyle: ErrorStyle *  warning:bool * PhasedDiagnostic -> seq<Diagnostic>
 
 //----------------------------------------------------------------------------
 // Resolve assembly references 
@@ -219,7 +216,6 @@ type VersionFlag =
     member GetVersionInfo : implicitIncludeDir:string -> ILVersionInfo
     member GetVersionString : implicitIncludeDir:string -> string
 
-     
 type TcConfigBuilder =
     { mutable primaryAssembly : PrimaryAssembly
       mutable autoResolveOpenDirectivesToDlls: bool
@@ -232,6 +228,7 @@ type TcConfigBuilder =
       mutable compilingFslib: bool
       mutable compilingFslib20: string option
       mutable compilingFslib40: bool
+      mutable compilingFslibNoBigInt: bool
       mutable useIncrementalBuilder: bool
       mutable includes: string list
       mutable implicitOpens: string list
@@ -239,7 +236,6 @@ type TcConfigBuilder =
       mutable framework: bool
       mutable resolutionEnvironment : ReferenceResolver.ResolutionEnvironment
       mutable implicitlyResolveAssemblies : bool
-      mutable addVersionSpecificFrameworkReferences : bool
       /// Set if the user has explicitly turned indentation-aware syntax on/off
       mutable light: bool option
       mutable conditionalCompilationDefines: string list
@@ -296,12 +292,12 @@ type TcConfigBuilder =
       mutable noSignatureData : bool
       mutable onlyEssentialOptimizationData : bool
       mutable useOptimizationDataFile : bool
-      mutable useSignatureDataFile : bool
       mutable jitTracking : bool
       mutable portablePDB : bool
       mutable embeddedPDB : bool
       mutable embedAllSource : bool
       mutable embedSourceList : string list
+      mutable sourceLink : string
       mutable ignoreSymbolStoreSequencePoints : bool
       mutable internConstantStrings : bool
       mutable extraOptimizationIterations : int
@@ -318,7 +314,6 @@ type TcConfigBuilder =
       mutable abortOnError : bool
       mutable baseAddress : int32 option
  #if DEBUG
-      mutable writeGeneratedILFiles : bool (* write il files? *)  
       mutable showOptimizationData : bool
 #endif
       mutable showTerms     : bool 
@@ -331,9 +326,8 @@ type TcConfigBuilder =
       mutable emitTailcalls : bool
 #if PREFERRED_UI_LANG
       mutable preferredUiLang: string option
-#else
-      mutable lcid         : int option
 #endif
+      mutable lcid         : int option
       mutable productNameForBannerText : string
       mutable showBanner  : bool
       mutable showTimes : bool
@@ -355,9 +349,7 @@ type TcConfigBuilder =
       mutable emitDebugInfoInQuotations : bool
       mutable exename : string option 
       mutable copyFSharpCore : bool
-#if SHADOW_COPY_REFERENCES
       mutable shadowCopyReferences : bool
-#endif
     }
 
     static member CreateNew : 
@@ -395,6 +387,7 @@ type TcConfig =
     member compilingFslib: bool
     member compilingFslib20: string option
     member compilingFslib40: bool
+    member compilingFslibNoBigInt: bool
     member useIncrementalBuilder: bool
     member includes: string list
     member implicitOpens: string list
@@ -452,12 +445,12 @@ type TcConfig =
     member noSignatureData : bool
     member onlyEssentialOptimizationData : bool
     member useOptimizationDataFile : bool
-    member useSignatureDataFile : bool
     member jitTracking : bool
     member portablePDB : bool
     member embeddedPDB : bool
     member embedAllSource : bool
     member embedSourceList : string list
+    member sourceLink : string
     member ignoreSymbolStoreSequencePoints : bool
     member internConstantStrings : bool
     member extraOptimizationIterations : int
@@ -473,7 +466,6 @@ type TcConfig =
     member maxErrors : int
     member baseAddress : int32 option
 #if DEBUG
-    member writeGeneratedILFiles : bool (* write il files? *)  
     member showOptimizationData : bool
 #endif
     member showTerms     : bool 
@@ -523,7 +515,7 @@ type TcConfig =
     member sqmNumOfSourceFiles : int
     member sqmSessionStartedTime : int64
     member copyFSharpCore : bool
-#if SHADOW_COPY_REFERENCES
+#if FSI_SHADOW_COPY_REFERENCES
     member shadowCopyReferences : bool
 #endif
     static member Create : TcConfigBuilder * validate: bool -> TcConfig
@@ -633,14 +625,11 @@ val IsOptimizationDataResource : ILResource -> bool
 val IsReflectedDefinitionsResource : ILResource -> bool
 val GetSignatureDataResourceName : ILResource -> string
 
-#if NO_COMPILER_BACKEND
-#else
 /// Write F# signature data as an IL resource
 val WriteSignatureData : TcConfig * TcGlobals * Tastops.Remap * CcuThunk * string -> ILResource
 
 /// Write F# optimization data as an IL resource
 val WriteOptimizationData :  TcGlobals * string * CcuThunk * Optimizer.LazyModuleInfo -> ILResource
-#endif
 
 
 //----------------------------------------------------------------------------
@@ -674,7 +663,7 @@ val GetScopedPragmasForInput : Ast.ParsedInput -> ScopedPragma list
 val GetErrorLoggerFilteringByScopedPragmas : checkFile:bool * ScopedPragma list * ErrorLogger  -> ErrorLogger
 
 /// This list is the default set of references for "non-project" files. 
-val DefaultBasicReferencesForOutOfProjectSources : string list
+val DefaultReferencesForScriptsAndOutOfProjectSources : bool -> string list
 
 //----------------------------------------------------------------------------
 // Parsing
@@ -733,10 +722,10 @@ val TypeCheckOneInputAndFinishEventually :
         -> Eventually<(TcEnv * TopAttribs * TypedImplFile list) * TcState>
 
 /// Indicates if we should report a warning
-val ReportWarning : globalWarnLevel: int * specificWarnOff: int list * specificWarnOn: int list -> PhasedError -> bool
+val ReportWarning : globalWarnLevel: int * specificWarnOff: int list * specificWarnOn: int list -> PhasedDiagnostic -> bool
 
 /// Indicates if we should report a warning as an error
-val ReportWarningAsError : globalWarnLevel: int * specificWarnOff: int list * specificWarnOn: int list * specificWarnAsError: int list * specificWarnAsWarn: int list * globalWarnAsError: bool -> PhasedError -> bool
+val ReportWarningAsError : globalWarnLevel: int * specificWarnOff: int list * specificWarnOn: int list * specificWarnAsError: int list * specificWarnAsWarn: int list * globalWarnAsError: bool -> PhasedDiagnostic -> bool
 
 //----------------------------------------------------------------------------
 // #load closure
@@ -749,6 +738,14 @@ type CodeContext =
     | Editing
 
 [<RequireQualifiedAccess>]
+type LoadClosureInput = 
+    { FileName: string
+      SyntaxTree: ParsedInput option
+      ParseDiagnostics: (PhasedDiagnostic * bool) list 
+      MetaCommandDiagnostics: (PhasedDiagnostic * bool) list  }
+
+
+[<RequireQualifiedAccess>]
 type LoadClosure = 
     { /// The source files along with the ranges of the #load positions in each file.
       SourceFiles: (string * range list) list
@@ -756,23 +753,29 @@ type LoadClosure =
       /// The resolved references along with the ranges of the #r positions in each file.
       References: (string * AssemblyResolution list) list
 
-      /// The list of references that were not resolved during load closure. These may still be extension references.
+      /// The list of references that were not resolved during load closure.
       UnresolvedReferences : UnresolvedAssemblyReference list
 
-      /// The list of all sources in the closure with inputs when available
-      Inputs: (string * ParsedInput option) list
+      /// The list of all sources in the closure with inputs when available, with associated parse errors and warnings
+      Inputs: LoadClosureInput list
+
+      /// The original #load references, including those that didn't resolve
+      OriginalLoadReferences: (range * string) list
 
       /// The #nowarns
       NoWarns: (string * range list) list
 
-      /// *Parse* errors seen while parsing root of closure
-      RootErrors : PhasedError list
+      /// Diagnostics seen while processing resolutions
+      ResolutionDiagnostics : (PhasedDiagnostic * bool)  list
 
-      /// *Parse* warnings seen while parsing root of closure
-      RootWarnings : PhasedError list }
+      /// Diagnostics to show for root of closure (used by fsc.fs)
+      AllRootFileDiagnostics : (PhasedDiagnostic * bool) list
+
+      /// Diagnostics seen while processing the compiler options implied root of closure
+      LoadClosureRootFileDiagnostics : (PhasedDiagnostic * bool) list }   
 
     // Used from service.fs, when editing a script file
-    static member ComputeClosureOfSourceText : referenceResolver: ReferenceResolver.Resolver * filename: string * source: string * implicitDefines:CodeContext * useSimpleResolution: bool * useFsiAuxLib: bool * lexResourceManager: Lexhelp.LexResourceManager * applyCompilerOptions: (TcConfigBuilder -> unit) -> LoadClosure
+    static member ComputeClosureOfSourceText : referenceResolver: ReferenceResolver.Resolver * filename: string * source: string * implicitDefines:CodeContext * useSimpleResolution: bool * useFsiAuxLib: bool * lexResourceManager: Lexhelp.LexResourceManager * applyCompilerOptions: (TcConfigBuilder -> unit) * assumeDotNetFramework : bool -> LoadClosure
 
     /// Used from fsi.fs and fsc.fs, for #load and command line. The resulting references are then added to a TcConfig.
-    static member ComputeClosureOfSourceFiles : tcConfig:TcConfig * (string * range) list * implicitDefines:CodeContext * useDefaultScriptingReferences : bool * lexResourceManager : Lexhelp.LexResourceManager -> LoadClosure
+    static member ComputeClosureOfSourceFiles : tcConfig:TcConfig * (string * range) list * implicitDefines:CodeContext * lexResourceManager : Lexhelp.LexResourceManager -> LoadClosure

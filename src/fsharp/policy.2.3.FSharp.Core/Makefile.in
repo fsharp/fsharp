@@ -11,16 +11,16 @@ include $(topdir)/src/fsharp/targets.make
 
 # override the targets to build the assembly
 
-$(outdir)/$(NAME).dll: $(NAME).dll.config 
+$(outdir)$(NAME).dll: $(NAME).dll.config 
 	@mkdir -p $(@D)
 	cp $(NAME).dll.config $(@D)
 	$(monobindir)/al /link:$(NAME).dll.config /out:$@ /delaysign /keyfile:$(topdir)msfinal.pub
 
 build: 
-	$(MAKE) $(outdir)/$(NAME).dll
+	$(MAKE) $(outdir)$(NAME).dll
 
 clean: 
-	-rm -f $(outdir)/$(NAME).dll 
+	-rm -f $(outdir)$(NAME).dll 
 
 install: install-gac-lib
 

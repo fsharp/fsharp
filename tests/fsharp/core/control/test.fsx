@@ -1,10 +1,10 @@
 // #Regression #Conformance #ComputationExpressions #Async #Regression #Events #Stress
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 module Core_control
 #endif
 #light
 
-#if NetCore
+#if FX_PORTABLE_OR_NETSTANDARD
 open System.Threading.Tasks
 #endif
 
@@ -32,8 +32,7 @@ let report_failure s =
      log (sprintf "FAILURE: %s failed" s)
   )
 
-#if Portable
-#else
+#if !FX_PORTABLE_OR_NETSTANDARD
 System.AppDomain.CurrentDomain.UnhandledException.AddHandler(
        fun _ (args:System.UnhandledExceptionEventArgs) ->
           lock syncObj (fun () ->
@@ -54,20 +53,6 @@ let checkQuiet s x1 x2 =
 let check s x1 x2 = 
     if x1 = x2 then test s true
     else (test s false; log (sprintf "expected: %A, got %A" x2 x1))
-
-#if NetCore
-#else
-let argv = System.Environment.GetCommandLineArgs() 
-let SetCulture() = 
-  if argv.Length > 2 && argv.[1] = "--culture" then  begin
-    let cultureString = argv.[2] in 
-    let culture = new System.Globalization.CultureInfo(cultureString) in 
-    stdout.WriteLine ("Running under culture "+culture.ToString()+"...");
-    System.Threading.Thread.CurrentThread.CurrentCulture <-  culture
-  end 
-  
-do SetCulture()    
-#endif
 
 open Microsoft.FSharp.Control
 open Microsoft.FSharp.Control.WebExtensions
@@ -370,7 +355,7 @@ module SpawnTests =
                              do result <- 1 });
          while result = 0 do 
              printf "."
-#if NetCore
+#if FX_PORTABLE_OR_NETSTANDARD
              Task.Delay(10).Wait()
 #else
              System.Threading.Thread.Sleep(10)
@@ -378,6 +363,7 @@ module SpawnTests =
          result) 1
 
 
+#if !FX_PORTABLE_OR_NETSTANDARD
 module FromBeginEndTests = 
     // FromBeginEnd 
     let FromBeginEndTest() = 
@@ -409,7 +395,7 @@ module FromBeginEndTests =
                                               if (!savedCallback).IsNone then failwith "expected a callback (loc cwowen903)"
                                               (!savedCallback).Value.Invoke iar
                                           else 
-#if NetCore
+#if FX_PORTABLE_OR_NETSTANDARD
                                               Task.Run(fun _ -> 
                                                    Task.Delay(sleep).Wait()
 #else
@@ -456,7 +442,7 @@ module FromBeginEndTests =
                      expectedResult
 
     FromBeginEndTest()
-
+#endif
 module Bug6078 =
     open System
     
@@ -466,7 +452,7 @@ module Bug6078 =
         let throwingAsync = async { raise <| new InvalidOperationException("foo") }
         
         for i in 1..100 do
-            check "5678w6r78w" 
+            check ("5678w6r78w"+string i) 
                 begin
                     try
                         [   for j in 1..i do yield sleepingAsync; 
@@ -479,6 +465,7 @@ module Bug6078 =
                 "foo"
     Test()
 
+#if !MONO && !FX_PORTABLE_OR_NETSTANDARD
 module AwaitEventTests = 
     let AwaitEventTest() = 
         // AwaitEvent
@@ -499,7 +486,7 @@ module AwaitEventTests =
                                           if completeSynchronously then 
                                               ev.Trigger(r)
                                           else 
-#if NetCore
+#if FX_PORTABLE_OR_NETSTANDARD
                                               Task.Run(fun _ -> 
                                                    Task.Delay(sleep).Wait()
 #else
@@ -530,6 +517,7 @@ module AwaitEventTests =
 
     //AwaitEventTest()
 
+#endif
 
 module AsBeginEndTests = 
 
@@ -683,7 +671,7 @@ module AsBeginEndTests =
            (sprintf "cvew0-9rn7")
            (let req = AsyncRequest( async { return 2087 } ) 
             let iar = req.BeginAsync(null,null)
-            iar.AsyncWaitHandle.WaitOne(100,true) |> ignore
+            iar.AsyncWaitHandle.WaitOne(100) |> ignore
             req.EndAsync(iar))
            2087
 
@@ -692,7 +680,7 @@ module AsBeginEndTests =
            (let req = AsyncRequest( async { return 2087 } ) 
             let mutable called = 0
             let iar = req.BeginAsync(System.AsyncCallback(fun _ -> called <- 10),null)
-            iar.AsyncWaitHandle.WaitOne(100,true) |> ignore
+            iar.AsyncWaitHandle.WaitOne(100) |> ignore
             let v = req.EndAsync(iar)
             v + called)
            2097
@@ -703,7 +691,7 @@ module AsBeginEndTests =
             let mutable called = 0
             let iar = req.BeginAsync(System.AsyncCallback(fun iar -> called <- req.EndAsync(iar)),null)
             while not iar.IsCompleted do
-                 iar.AsyncWaitHandle.WaitOne(100,true) |> ignore
+                 iar.AsyncWaitHandle.WaitOne(100) |> ignore
             
             called)
            2087
@@ -718,7 +706,7 @@ module AsBeginEndTests =
                                             return 10 } ) 
             let iar = req.BeginAsync(null,null)
             printfn "waiting"
-            iar.AsyncWaitHandle.WaitOne(100,true) |> ignore
+            iar.AsyncWaitHandle.WaitOne(100) |> ignore
             printfn "cancelling"
             req.CancelAsync(iar)
             (try req.EndAsync(iar) with :? System.OperationCanceledException as e -> 100 ))
@@ -785,7 +773,7 @@ module OnCancelTests =
                              return () }, asyncGroup.Token);
          while count = 0 do 
              do printfn "waiting to enter cancellation section"
-#if NetCore
+#if FX_PORTABLE_OR_NETSTANDARD
              Task.Delay(10).Wait()
 #else
              System.Threading.Thread.Sleep(10)
@@ -794,8 +782,7 @@ module OnCancelTests =
          res) 0
 
 
-#if Portable
-#else
+#if !TESTS_AS_APP && !FX_PORTABLE_OR_NETSTANDARD
 module SyncContextReturnTests = 
 
     let p() = printfn "running on %A" System.Threading.SynchronizationContext.Current
@@ -1095,7 +1082,7 @@ module ParallelTests =
                                                     member x.Dispose() = 
                                                        // This gets run when the cancel happens
                                                        // Sleep a bit to check we wait for the sleep after the cancel
-#if NetCore
+#if FX_PORTABLE_OR_NETSTANDARD
                                                        Task.Delay(10).Wait()
 #else
                                                        System.Threading.Thread.Sleep(10)
@@ -1147,8 +1134,7 @@ module ParallelTests =
             [| 0..n-1 |]
 
 
-#if NetCore
-#else
+#if !FX_PORTABLE_OR_NETSTANDARD
 module AsyncWaitOneTest1 = 
   let Run() = 
         
@@ -1273,8 +1259,7 @@ Async.RunSynchronously (async { let! n = s.AsyncRead(buffer,0,9) in return n }) 
 *)
 #endif
 
-#if NetCore
-#else
+#if !FX_PORTABLE_OR_NETSTANDARD
 module AsyncGenerateTests = 
   let Run() = 
     for length in 1 .. 10 do
@@ -1330,8 +1315,7 @@ module AsyncGenerateTests =
                 [| 0 .. length-1|];;
 #endif
 
-#if NetCore
-#else
+#if !FX_PORTABLE_OR_NETSTANDARD
 (*
 #This part of control suite disabled under bug#1809
 module ThreadAbortTests = 
@@ -1417,7 +1401,7 @@ let catch a =
 
 let to_be_cancelled n flag1 flag2 =
   async { use! holder = Async.OnCancel(fun _ -> incr flag1)
-#if NetCore
+#if FX_PORTABLE_OR_NETSTANDARD
           do Task.Delay(n/8).Wait()
 #else
           do System.Threading.Thread.Sleep (n / 8)
@@ -1438,8 +1422,7 @@ let test2 () =
     test "test2 - OnCancel" (!flag1 >= 0 && !flag1 < n && !flag2 >= 0 && !flag2 < n)
 
 
-#if NetCore
-#else
+#if !FX_PORTABLE_OR_NETSTANDARD
 // SwitchToNewThread
 let test3 () =
     let ids = ref []
@@ -1501,7 +1484,7 @@ let test8() =
     let syncRoot = System.Object()
     let k = ref 0
     let comp _ = async { return lock syncRoot (fun () -> incr k
-#if NetCore
+#if FX_PORTABLE_OR_NETSTANDARD
                                                          Task.Delay(1).Wait()
 #else
                                                          System.Threading.Thread.Sleep(1)
@@ -1645,7 +1628,7 @@ let test15() =
         Async.Parallel2(a, cancel)
         |> Async.RunSynchronously |> ignore
     with _ -> ()
-#if NetCore
+#if FX_PORTABLE_OR_NETSTANDARD
     Task.Delay(300).Wait()
 #else
     System.Threading.Thread.Sleep(300)
@@ -1668,7 +1651,7 @@ let test15b() =
         let a = Async.TryCancelled(a, (fun _ -> p.Check -1))
         a |> Async.RunSynchronously |> ignore
     with _ -> ()
-#if NetCore
+#if FX_PORTABLE_OR_NETSTANDARD
     Task.Delay(100).Wait()
 #else
     System.Threading.Thread.Sleep(100)
@@ -1676,8 +1659,7 @@ let test15b() =
 
 test1()
 test2()
-#if NetCore
-#else
+#if !FX_PORTABLE_OR_NETSTANDARD
 test3()
 #endif
 test8()
@@ -1703,7 +1685,7 @@ let test22() =
     let p = Path "test22"
     let a = async {
         do p.Check 1
-#if NetCore
+#if FX_PORTABLE_OR_NETSTANDARD
         do Task.Delay(200).Wait()
 #else
         do System.Threading.Thread.Sleep(200)
@@ -1721,14 +1703,14 @@ let test22() =
     let run = Async.TryCancelled(run, fun _ -> p.Check 4)
     let group = new System.Threading.CancellationTokenSource()
     Async.Start(run,group.Token)
-#if NetCore
+#if FX_PORTABLE_OR_NETSTANDARD
     Task.Delay(100).Wait()
 #else
     System.Threading.Thread.Sleep(100)
 #endif
     p.Check 2
     group.Cancel()
-#if NetCore
+#if FX_PORTABLE_OR_NETSTANDARD
     Task.Delay(200).Wait()
 #else
     System.Threading.Thread.Sleep(200)
@@ -1766,7 +1748,7 @@ module ParallelTest =
                                                   member x.Dispose() = // This gets run when the cancel happens
                                                       if i=n-1 then
                                                           // last guy waits a long time to ensure client is blocked
-#if NetCore
+#if FX_PORTABLE_OR_NETSTANDARD
                                                           Task.Delay(200).Wait()
 #else
                                                           System.Threading.Thread.Sleep(2000)
@@ -1798,8 +1780,7 @@ module ParallelTest =
     Test()    
 
 
-#if NetCore
-#else
+#if !TESTS_AS_APP && !FX_PORTABLE_OR_NETSTANDARD
 // See bug 5570, check we do not switch threads
 module CheckNoPumpingOrThreadSwitchingBecauseWeTrampolineSynchronousCode =
     let checkOnThread  msg expectedThreadId = 
@@ -1822,8 +1803,6 @@ module CheckNoPumpingOrThreadSwitchingBecauseWeTrampolineSynchronousCode =
                 checkOnThread "clkneoiwen thread check" tid 
                 checkQuiet "cwnewe9wecokm" !state 1 } |> Async.StartImmediate
 
-#if Portable
-#else
 open System.Windows.Forms
 
 #if COMPILED
@@ -1863,7 +1842,6 @@ module CheckNoPumpingBecauseWeTrampolineSynchronousCode =
 
 #endif
 
-#endif //NetCore
 
 module CheckContinuationsMayNotBeCalledMoreThanOnce = 
 
@@ -2014,8 +1992,7 @@ module ExceptionInAsyncParallelOrHowToInvokeContinuationTwice =
 
     check "ExceptionInAsyncParallelOrHowToInvokeContinuationTwice" (Seq.init 30 (ignore >> test) |> Seq.forall id) true
     
-#if FX_NO_EXCEPTIONDISPATCHINFO
-#else
+#if !FX_NO_EXCEPTIONDISPATCHINFO
 
 // [Asyncs] Better stack traces for Async
 module BetterStacksTest1 = 
@@ -2080,7 +2057,7 @@ module Bug391710 =
 
         Async.Start(a1, cancellationToken = cts.Token)
         Async.Start(a2)
-#if NetCore
+#if FX_PORTABLE_OR_NETSTANDARD
         Task.Delay(500).Wait();
 #else
         System.Threading.Thread.Sleep(500)
@@ -2089,7 +2066,7 @@ module Bug391710 =
 
     try
         Bug391710()
-#if NetCore
+#if FX_PORTABLE_OR_NETSTANDARD
         Task.Delay(500).Wait();
 #else
         System.Threading.Thread.Sleep(2000)
@@ -2106,17 +2083,18 @@ let RunAll() =
     StartChildOutsideOfAsync.Run()
     SpawnTests.Run()
     AsBeginEndTests.AsBeginEndTest()
+#if !MONO && !FX_PORTABLE_OR_NETSTANDARD
     AwaitEventTests.AwaitEventTest()
+#endif
     OnCancelTests.Run()
     GenerateTests.Run()
     ParallelTests.Run()
-#if Portable
-#else
+#if !FX_PORTABLE_OR_NETSTANDARD
     AsyncWaitOneTest1.Run()
     AsyncGenerateTests.Run()
 #endif
 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 let RUN() = RunAll(); failures
 #else
 RunAll()

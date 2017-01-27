@@ -1,5 +1,5 @@
 // #Conformance #Interop #Events #MemberDefinitions 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 module Core_members_console
 #endif
 

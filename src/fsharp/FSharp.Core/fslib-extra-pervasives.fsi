@@ -13,8 +13,7 @@ module ExtraTopLevelOperators =
     open Microsoft.FSharp.Text
     open Microsoft.FSharp.Math
 
-#if FX_NO_SYSTEM_CONSOLE
-#else    
+#if !FX_NO_SYSTEM_CONSOLE
     /// <summary>Print to <c>stdout</c> using the given format.</summary>
     /// <param name="format">The formatter.</param>
     /// <returns>The formatted result.</returns>
@@ -144,20 +143,9 @@ module ExtraTopLevelOperators =
     val (|Lazy|) : input:Lazy<'T> -> 'T
 
         
-#if QUERIES_IN_FSLIB
     /// <summary>Builds a query using query syntax and operators.</summary>
     val query : Microsoft.FSharp.Linq.QueryBuilder
-#if EXTRA_DEBUG
-    val queryexprpretrans : Microsoft.FSharp.Linq.QueryExprPreTransBuilder
-    val queryexprpreelim : Microsoft.FSharp.Linq.QueryExprPreEliminateNestedBuilder
-    val queryexpr : Microsoft.FSharp.Linq.QueryExprBuilder
-    val queryquote : Microsoft.FSharp.Linq.QueryQuoteBuilder
-    val querylinqexpr : Microsoft.FSharp.Linq.QueryLinqExprBuilder
-#endif
 
-#endif
-
-#if PUT_TYPE_PROVIDERS_IN_FSCORE
 
 namespace Microsoft.FSharp.Core.CompilerServices
 
@@ -166,6 +154,8 @@ namespace Microsoft.FSharp.Core.CompilerServices
     open System.Linq.Expressions
     open System.Collections.Generic
     open Microsoft.FSharp.Core
+    open Microsoft.FSharp.Control
+    open Microsoft.FSharp.Quotations
 
 
     /// <summary>Represents the product of two measure expressions when returned as a generic argument of a provided type.</summary>
@@ -260,22 +250,6 @@ namespace Microsoft.FSharp.Core.CompilerServices
         /// Checks if given type exists in target system runtime library
         member SystemRuntimeContainsType : string -> bool
 
-#if FX_NO_CUSTOMATTRIBUTEDATA
-    type IProvidedCustomAttributeTypedArgument =
-        abstract ArgumentType: System.Type
-        abstract Value: System.Object
-
-    type IProvidedCustomAttributeNamedArgument =
-        abstract ArgumentType: System.Type
-        abstract MemberInfo: System.Reflection.MemberInfo
-        abstract TypedValue: IProvidedCustomAttributeTypedArgument
-
-    type IProvidedCustomAttributeData =
-        abstract Constructor: System.Reflection.ConstructorInfo
-        abstract ConstructorArguments: System.Collections.Generic.IList<IProvidedCustomAttributeTypedArgument>
-        abstract NamedArguments: System.Collections.Generic.IList<IProvidedCustomAttributeNamedArgument>
-#endif
-
 
     /// <summary>
     /// Represents a namespace provided by a type provider component.
@@ -335,29 +309,18 @@ namespace Microsoft.FSharp.Core.CompilerServices
         /// <param name="syntheticMethodBase">MethodBase that was given to the compiler by a type returned by a GetType(s) call.</param>
         /// <param name="parameters">Expressions that represent the parameters to this call.</param>
         /// <returns>An expression that the compiler will use in place of the given method base.</returns>
-        abstract GetInvokerExpression : syntheticMethodBase:MethodBase * parameters:Microsoft.FSharp.Quotations.Expr[] -> Microsoft.FSharp.Quotations.Expr
+        abstract GetInvokerExpression : syntheticMethodBase:MethodBase * parameters:Expr[] -> Expr
 
         /// <summary>
         /// Triggered when an assumption changes that invalidates the resolutions so far reported by the provider
         /// </summary>
         [<CLIEvent>]
-        abstract Invalidate : Microsoft.FSharp.Control.IEvent<System.EventHandler, System.EventArgs>
+        abstract Invalidate : IEvent<System.EventHandler, System.EventArgs>
 
         /// <summary>
         /// Get the physical contents of the given logical provided assembly.
         /// </summary>
-        abstract GetGeneratedAssemblyContents : assembly:System.Reflection.Assembly -> byte[]
-
-#if FX_NO_CUSTOMATTRIBUTEDATA
-        /// <summary>
-        /// Get the custom attribute data for a provided member or type.
-        /// </summary>
-        abstract GetMemberCustomAttributesData : assembly:System.Reflection.MemberInfo -> System.Collections.Generic.IList<IProvidedCustomAttributeData>
-        /// <summary>
-        /// Get the custom attribute data for a provided parameter.
-        /// </summary>
-        abstract GetParameterCustomAttributesData : assembly:System.Reflection.ParameterInfo -> System.Collections.Generic.IList<IProvidedCustomAttributeData>
-#endif
+        abstract GetGeneratedAssemblyContents : assembly:Assembly -> byte[]
 
     /// Represents additional, optional information for a type provider component
     type ITypeProvider2 =
@@ -380,39 +343,3 @@ namespace Microsoft.FSharp.Core.CompilerServices
         /// <returns>The provided method definition corresponding to the given static parameter values</returns>
         abstract ApplyStaticArgumentsForMethod : methodWithoutArguments:MethodBase * methodNameWithArguments:string * staticArguments:obj[] -> MethodBase
 
-#endif
-#if EXTRAS_FOR_SILVERLIGHT_COMPILER
-namespace Microsoft.FSharp
-
-    open Microsoft.FSharp.Core
-
-
-    [<StructuralEquality; NoComparison>]
-    exception UserInterrupt
-
-    [<Class; NoComparison>]
-    type Silverlight =
-        static member EmitInterruptChecks : bool with get, set
-        static member InterruptThread: id: int -> unit
-        static member ResumeThread: id: int -> unit
-        static member CheckInterrupt: unit -> unit
-
-        static member WriteLine : unit -> unit
-        static member WriteLine : value2:string -> unit
-        static member WriteLine : value:obj -> unit
-        static member WriteLine : value:int -> unit
-        static member WriteLine : format:string * arg0:obj -> unit
-        static member WriteLine : format:string * arg:obj [] -> unit
-        static member WriteLine : format:string * arg0:obj * arg1:obj -> unit
-        static member WriteLine : format:string * arg0:obj * arg1:obj * arg2:obj -> unit
-        static member WriteLine : format:string * arg0:obj * arg1:obj * arg2:obj * arg3:obj -> unit
-
-        static member Write : value2:string -> unit
-        static member Write : value:obj -> unit
-        static member Write : value:int -> unit
-        static member Write : format:string * arg0:obj -> unit
-        static member Write : format:string * arg:obj [] -> unit
-        static member Write : format:string * arg0:obj * arg1:obj -> unit
-        static member Write : format:string * arg0:obj * arg1:obj * arg2:obj -> unit
-        static member Write : format:string * arg0:obj * arg1:obj * arg2:obj * arg3:obj -> unit
-#endif

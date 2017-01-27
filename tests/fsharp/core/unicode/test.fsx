@@ -1,8 +1,9 @@
 // #Conformance #Globalization 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 module Core_unicode
 #endif
 
+open System.IO
 let failures = ref []
 
 let reportFailure (s : string) = 
@@ -18,22 +19,7 @@ let test (s : string) b =
 (* TEST SUITE FOR UNICODE CHARS *)
 
 
-#if NetCore
-#else
-let argv = System.Environment.GetCommandLineArgs() 
-let SetCulture() = 
-  if argv.Length > 2 && argv.[1] = "--culture" then  begin
-    let cultureString = argv.[2] in 
-    let culture = new System.Globalization.CultureInfo(cultureString) in 
-    stdout.WriteLine ("Running under culture "+culture.ToString()+"...");
-    System.Threading.Thread.CurrentThread.CurrentCulture <-  culture
-  end 
-  
-do SetCulture()    
-#endif
-
-#if Portable
-#else
+#if !TESTS_AS_APP && !FX_PORTABLE_OR_NETSTANDARD
 let input_byte (x : System.IO.FileStream) = 
     let b = x.ReadByte() 
     if b = -1 then raise (System.IO.EndOfStreamException()) else b
@@ -144,7 +130,7 @@ let αβΛΘΩΨΧΣδζȚŶǺ = 22/7
 
 let π = 3.1415
 
-#if ALL_IN_ONE
+#if TESTS_AS_APP
 let RUN() = !failures
 #else
 let aa =
