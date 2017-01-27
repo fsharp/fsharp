@@ -7,7 +7,7 @@ See [contributing guide][fsharp-contributing-guide] for more info
 The https://github.com/fsharp/fsharp repository is for cross platform packaging only.
 The development of the compiler and core library is at [Microsoft/visualfsharp][Microsoft/visualfsharp].
 
-* **Is this a language suggestion?** Use the [F# Language User Voice](http://fslang.uservoice.com)
+* **Is this a language suggestion?** Use the [F# Language Suggestions](http://github.com/fsharp/fslang-suggestions)
 
 * **Is the issue specific to F# on Mono/OSX/Linux?** This might be the right repository.
 
@@ -33,12 +33,8 @@ The development of the compiler and core library is at [Microsoft/visualfsharp][
 
 #### **Do you intend to add a new feature or change an existing one?**
 
-* Is the issue about the future evolution of the F# Language or Core Library? Suggest your change in the [F# Language Design User Voice site](https://fslang.uservoice.com/forums/245727-f-language).
-  After a feature/change is "approved-in-principle", it's discussed in the [F# language design repository](https://github.com/fsharp/FSharpLangDesign/issues)
-  and implemented as Github pull request in the [Microsoft/visualfsharp][Microsoft/visualfsharp] repository
+* See the [F# Language Suggestions](http://github.com/fsharp/fslang-suggestions).
   
-* Otherwise, open a Github pull request
-
 #### **Do you have questions about the source code?**
 
 * Ask any question about how to use F# in the [F# mailing list](https://groups.google.com/forum/m/#!forum/fsharp-opensource) or on stackoverflow.
