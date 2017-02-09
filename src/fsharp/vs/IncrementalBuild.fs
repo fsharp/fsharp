@@ -1161,9 +1161,9 @@ type internal CompilationErrorLogger (debugName:string, tcConfig:TcConfig) =
         [ for (e,isError) in diagnostics -> e, (if isError then FSharpErrorSeverity.Error else FSharpErrorSeverity.Warning) ]
 
 
-/// This represents the global state established as each task function runs as part of the build
+/// This represents the global state established as each task function runs as part of the build.
 ///
-/// Use to reset error and warning handlers            
+/// Use to reset error and warning handlers.
 type CompilationGlobalsScope(errorLogger:ErrorLogger,phase,projectDirectory) = 
     do ignore projectDirectory
     let unwindEL = PushErrorLoggerPhaseUntilUnwind(fun _ -> errorLogger)
@@ -1427,8 +1427,8 @@ type IncrementalBuilder(frameworkTcImportsCache: FrameworkImportsCache, tcConfig
                 errorLogger.Warning(e)
                 frameworkTcImports           
 
-        let tcEnvAtEndOfFile = GetInitialTcEnv (assemblyName, rangeStartup, tcConfig, tcImports, tcGlobals)
-        let tcState = GetInitialTcState (rangeStartup, assemblyName, tcConfig, tcGlobals, tcImports, niceNameGen, tcEnvAtEndOfFile)
+        let tcInitial = GetInitialTcEnv (assemblyName, rangeStartup, tcConfig, tcImports, tcGlobals)
+        let tcState = GetInitialTcState (rangeStartup, assemblyName, tcConfig, tcGlobals, tcImports, niceNameGen, tcInitial)
         let loadClosureErrors = 
            [ match loadClosureOpt with 
              | None -> ()
@@ -1442,7 +1442,7 @@ type IncrementalBuilder(frameworkTcImportsCache: FrameworkImportsCache, tcConfig
               tcImports=tcImports
               tcState=tcState
               tcConfig=tcConfig
-              tcEnvAtEndOfFile=tcEnvAtEndOfFile
+              tcEnvAtEndOfFile=tcInitial
               tcResolutions=[]
               tcSymbolUses=[]
               topAttribs=None
@@ -1479,6 +1479,7 @@ type IncrementalBuilder(frameworkTcImportsCache: FrameworkImportsCache, tcConfig
                     /// Only keep the typed interface files when doing a "full" build for fsc.exe, otherwise just throw them away
                     let typedImplFiles = if keepAssemblyContents then typedImplFiles else []
                     let tcResolutions = if keepAllBackgroundResolutions then sink.GetResolutions() else TcResolutions.Empty
+                    let tcEnvAtEndOfFile = (if keepAllBackgroundResolutions then tcEnvAtEndOfFile else tcState.TcEnvFromImpls)
                     let tcSymbolUses = sink.GetSymbolUses()  
                     fileChecked.Trigger (filename)
                     return {tcAcc with tcState=tcState 
@@ -1497,8 +1498,9 @@ type IncrementalBuilder(frameworkTcImportsCache: FrameworkImportsCache, tcConfig
             if ensureReactive then 
                 let timeSlicedComputation = 
                     fullComputation |> 
-                        Eventually.repeatedlyProgressUntilDoneOrTimeShareOver 
+                        Eventually.repeatedlyProgressUntilDoneOrTimeShareOverOrCanceled
                             maxTimeShareMilliseconds
+                            CancellationToken.None
                             (fun f -> 
                                 // Reinstall the compilation globals each time we start or restart
                                 use unwind = new CompilationGlobalsScope (errorLogger, BuildPhase.TypeCheck, projectDirectory) 
@@ -1599,10 +1601,14 @@ type IncrementalBuilder(frameworkTcImportsCache: FrameworkImportsCache, tcConfig
         
     // Build
     let stampedFileNamesNode        = Vector.Stamp "SourceFileTimeStamps" StampFileNameTask fileNamesNode
-    let parseTreesNode              = Vector.Map "ParseTrees" ParseTask stampedFileNamesNode
     let stampedReferencedAssembliesNode = Vector.Stamp "TimestampReferencedAssembly" TimestampReferencedAssemblyTask referencedAssembliesNode
     let initialTcAccNode            = Vector.Demultiplex "CombineImportedAssemblies" CombineImportedAssembliesTask stampedReferencedAssembliesNode
-    let tcStatesNode                = Vector.ScanLeft "TypeCheckingStates" TypeCheckTask initialTcAccNode parseTreesNode
+#if FCS_RETAIN_BACKGROUND_PARSE_RESULTS
+    let parseTreesNode              = Vector.Map "ParseTrees" ParseTask stampedFileNamesNode
+    let tcStatesNode                = Vector.ScanLeft "TypeCheckingStates" TypeCheckTask initialTcAccNode stampedFileNamesNode
+#else
+    let tcStatesNode                = Vector.ScanLeft "TypeCheckingStates" (fun tcAcc n -> TypeCheckTask tcAcc (ParseTask n)) initialTcAccNode stampedFileNamesNode
+#endif
     let finalizedTypeCheckNode      = Vector.Demultiplex "FinalizeTypeCheck" FinalizeTypeCheckTask tcStatesNode
 
     // Outputs
@@ -1610,7 +1616,9 @@ type IncrementalBuilder(frameworkTcImportsCache: FrameworkImportsCache, tcConfig
 
     do buildDescription.DeclareVectorOutput stampedFileNamesNode
     do buildDescription.DeclareVectorOutput stampedReferencedAssembliesNode
+#if FCS_RETAIN_BACKGROUND_PARSE_RESULTS
     do buildDescription.DeclareVectorOutput parseTreesNode
+#endif
     do buildDescription.DeclareVectorOutput tcStatesNode
     do buildDescription.DeclareScalarOutput initialTcAccNode
     do buildDescription.DeclareScalarOutput finalizedTypeCheckNode
@@ -1759,6 +1767,7 @@ type IncrementalBuilder(frameworkTcImportsCache: FrameworkImportsCache, tcConfig
       
     member ib.GetParseResultsForFile (filename, ct) =
         let slotOfFile = ib.GetSlotOfFileName filename
+#if FCS_RETAIN_BACKGROUND_PARSE_RESULTS
         match GetVectorResultBySlot(parseTreesNode,slotOfFile,partialBuild) with
         | Some (results, _) -> results
         | None -> 
@@ -1766,6 +1775,18 @@ type IncrementalBuilder(frameworkTcImportsCache: FrameworkImportsCache, tcConfig
             match GetVectorResultBySlot(parseTreesNode,slotOfFile,build) with
             | Some (results, _) -> results
             | None -> failwith "Build was not evaluated, expcted the results to be ready after 'Eval'."
+#else
+        let results = 
+            match GetVectorResultBySlot(stampedFileNamesNode,slotOfFile,partialBuild) with
+            | Some (results, _) ->  results
+            | None -> 
+                let build = IncrementalBuild.EvalUpTo SavePartialBuild ct (stampedFileNamesNode, slotOfFile) partialBuild  
+                match GetVectorResultBySlot(stampedFileNamesNode,slotOfFile,build) with
+                | Some (results, _) -> results
+                | None -> failwith "Build was not evaluated, expcted the results to be ready after 'Eval'."
+        // re-parse on demand instead of retaining
+        ParseTask results
+#endif
 
     member __.ProjectFileNames  = sourceFiles  |> List.map (fun (_,f,_) -> f)
 
