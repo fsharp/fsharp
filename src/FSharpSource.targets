@@ -559,12 +559,12 @@
 
   <Target Name="dotnetrestore" BeforeTargets="Build" Condition=" '$(DOTNET_PUBLISH)' == 'true' ">
     <SetEnvVar Name="NUGET_PACKAGES" Value="$(NUGET_PACKAGES)" />
-    <Exec Command="$(MSBuildThisFileDirectory)..\Tools\dotnetcli\dotnet.exe restore --configfile $(MSBuildThisFileDirectory)..\.nuget\NuGet.Config project.json"/>
+    <Exec Command="$(MSBuildThisFileDirectory)..\Tools\dotnetcli\dotnet.exe restore &#45;&#45;configfile $(MSBuildThisFileDirectory)..\.nuget\NuGet.Config project.json"/>
   </Target>
 
   <Target Name="dotnetpublish" AfterTargets="Build" Condition=" '$(DOTNET_PUBLISH)' == 'true' ">
     <SetEnvVar Name="NUGET_PACKAGES" Value="$(NUGET_PACKAGES)" />
-    <Exec Command="$(MSBuildThisFileDirectory)..\Tools\dotnetcli\dotnet.exe --verbose publish --no-build project.json -r $(DOTNET_PUBLISH_PLATFORM) -c $(Configuration) -o $(DOTNET_PUBLISH_PATH)"/>
+    <Exec Command="$(MSBuildThisFileDirectory)..\Tools\dotnetcli\dotnet.exe &#45;&#45;verbose publish &#45;&#45;no-build project.json -r $(DOTNET_PUBLISH_PLATFORM) -c $(Configuration) -o $(DOTNET_PUBLISH_PATH)"/>
   </Target>
 
   <Target Name="dotnetpublishfsccompiler" AfterTargets="CopyFilesToOutputDirectory" Condition=" '$(DOTNET_PUBLISH_FSC)' == 'true' ">
@@ -638,6 +638,7 @@
     <Delete Files="@(OldBuildVersionFiles)" TreatErrorsAsWarnings="true"/>
   </Target>
 
+<!--
   <Target Name="nugetpack"
           DependsOnTargets="CreateOrUpdateBuildVersionFile"
           AfterTargets="Build"
