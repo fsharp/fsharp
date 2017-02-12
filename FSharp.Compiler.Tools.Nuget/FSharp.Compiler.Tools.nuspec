@@ -3,7 +3,7 @@
   <metadata>
     <id>FSharp.Compiler.Tools</id>
     <version>0.0.0</version>
-    <title>FSharp.Compiler.Tools for F# 4.0</title>
+    <title>FSharp.Compiler.Tools for F# 4.1</title>
     <authors>F# Software Foundation</authors>
     <owners>F# Software Foundation</owners>
     <licenseUrl>https://github.com/fsharp/fsharp/blob/master/LICENSE</licenseUrl>
@@ -11,12 +11,12 @@
     <iconUrl>http://fsharp.org/img/logo.png</iconUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>
-      FSharp.Compiler.Tools for F# 4.0
+      FSharp.Compiler.Tools for F# 4.1
 
       FSharp.Compiler.Tools built by F# Software Foundation
       This package includes the F# compiler and the F# Interactive.
     </description>
-    <summary>FSharp.Compiler.Tools for F# 4.0 - This package includes the F# compiler and the F# Interactive.</summary>
+    <summary>FSharp.Compiler.Tools for F# 4.1 - This package includes the F# compiler and the F# Interactive.</summary>
     <tags>F#, FSharp, FSharp.Core, fsi, fsc</tags>
   </metadata>
   <files>
@@ -62,5 +62,25 @@
     <file src="..\Release\net40\bin\Microsoft.Build.Framework.dll" target="tools\Microsoft.Build.Framework.dll" />
     <file src="..\Release\net40\bin\Microsoft.Build.Tasks.v12.0.dll" target="tools\Microsoft.Build.Tasks.v12.0.dll" />
     <file src="..\Release\net40\bin\Microsoft.Build.Utilities.v12.0.dll" target="tools\Microsoft.Build.Utilities.v12.0.dll" />
+
+    <!-- Add fsc published as framework dependent netcoreapp -->
+    <file src="..\packages\Microsoft.FSharp.Compiler.netcore.1.0.0-rc-170122\lib\netstandard1.6\fsc.exe" target="build\netcoreapp1.0\fsc.dll" />
+    <file src="..\packages\Microsoft.FSharp.Compiler.netcore.1.0.0-rc-170122\lib\netstandard1.6\FSharp.Build.dll" target="build\netcoreapp1.0\FSharp.Build.dll" />
+    <file src="..\packages\Microsoft.FSharp.Compiler.netcore.1.0.0-rc-170122\lib\netstandard1.6\FSharp.Compiler.dll" target="build\netcoreapp1.0\FSharp.Compiler.dll" />
+    <file src="..\packages\Microsoft.FSharp.Core.netcore.1.0.0-rc-170122\lib\netstandard1.6\FSharp.Core.dll" target="build\netcoreapp1.0\FSharp.Core.dll" />
+    <file src="..\packages\Microsoft.FSharp.Core.netcore.1.0.0-rc-170122\lib\netstandard1.6\FSharp.Core.xml" target="build\netcoreapp1.0\FSharp.Core.xml" />
+    <file src=".\build\netcoreapp1.0\default.win32manifest" target="build\netcoreapp1.0\default.win32manifest" />
+    <file src=".\build\netcoreapp1.0\fsc.deps.json" target="build\netcoreapp1.0\fsc.deps.json" />
+    <file src=".\build\netcoreapp1.0\fsc.runtimeconfig.json" target="build\netcoreapp1.0\fsc.runtimeconfig.json" />
+    <file src=".\build\netcoreapp1.0\Microsoft.DiaSymReader.dll" target="build\netcoreapp1.0\Microsoft.DiaSymReader.dll" />
+    <file src=".\build\netcoreapp1.0\Microsoft.DiaSymReader.PortablePdb.dll" target="build\netcoreapp1.0\Microsoft.DiaSymReader.PortablePdb.dll" />
+    <file src=".\build\netcoreapp1.0\System.Reflection.Metadata.dll" target="build\netcoreapp1.0\System.Reflection.Metadata.dll" />
+    <file src=".\build\netcoreapp1.0\System.Runtime.Loader.dll" target="build\netcoreapp1.0\System.Runtime.Loader.dll" />
+    <file src=".\build\netcoreapp1.0\System.ValueTuple.dll" target="build\netcoreapp1.0\System.ValueTuple.dll" />
+    <file src=".\build\netcoreapp1.0\runtimes\unix\lib\netstandard1.3\System.Diagnostics.TraceSource.dll" target="build\netcoreapp1.0\runtimes\unix\lib\netstandard1.3\System.Diagnostics.TraceSource.dll" />
+    <file src=".\build\netcoreapp1.0\runtimes\win\lib\netstandard1.3\System.Diagnostics.TraceSource.dll\System.Diagnostics.TraceSource.dll" target="build\netcoreapp1.0\runtimes\win\lib\netstandard1.3\System.Diagnostics.TraceSource.dll\System.Diagnostics.TraceSource.dll" />
+    <!-- Add auto-imported props to locate fsc and FSharp.Build -->
+    <file src=".\build\FSharp.Compiler.Tools.props" target="build\FSharp.Compiler.Tools.props" />
+    <file src=".\buildCrossTargeting\FSharp.Compiler.Tools.props" target="buildCrossTargeting\FSharp.Compiler.Tools.props" />
   </files>
 </package>

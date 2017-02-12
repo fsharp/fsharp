@@ -31,11 +31,6 @@ function pack($nuspec){
 pack(gi .\FSharp.Core.Nuget\FSharp.Core.nuspec)
 pack(gi .\FSharp.Compiler.Tools.Nuget\FSharp.Compiler.Tools.nuspec)
 
-# Merge the latest known .NET Core FSharp.Core nuget package with the one we build here
-pushd dotnet-tools
-& dotnet restore
-& dotnet mergenupkg --source ..\FSharp.Core.Nuget\FSharp.Core.$version.nupkg --other ..\packages\Microsoft.FSharp.Core.netcore.1.0.0-alpha-160831\Microsoft.FSharp.Core.netcore.1.0.0-alpha-160831.nupkg --framework netstandard1.6
-popd
-& copy FSharp.Core.Nuget\*.nupkg lib\release
-& copy FSharp.Compiler.Tools.Nuget\*.nupkg lib\release
+copy FSharp.Core.Nuget\*.nupkg lib\release
+copy FSharp.Compiler.Tools.Nuget\*.nupkg lib\release
 
