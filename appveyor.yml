@@ -3,6 +3,7 @@ init:
   - git config --global core.autocrlf input
 
 build_script: 
+  - cmd: dotnet --version
   - cmd: build.bat
   - ps: .\appveyor.ps1
 
