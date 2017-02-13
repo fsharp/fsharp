@@ -20,17 +20,12 @@ if ($env:appveyor){
 
 $nuget = (gi .\.nuget\NuGet.exe).FullName
 
+$packagesOutDir = Join-Path $PSScriptRoot "lib\release\"
+
 function pack($nuspec){
     $dir = [IO.Path]::GetDirectoryName($nuspec)
-    & $nuget pack $nuspec -BasePath "$dir" -Version $version -NoDefaultExcludes -Verbosity d
+    & $nuget pack $nuspec -BasePath "$dir" -Version $version -OutputDirectory "$packagesOutDir" -NoDefaultExcludes -Verbosity d
 }
 
 pack(gi .\FSharp.Core.Nuget\FSharp.Core.nuspec)
 pack(gi .\FSharp.Compiler.Tools.Nuget\FSharp.Compiler.Tools.nuspec)
-
-if(!(Test-Path -Path "lib\release\" )) {
-    mkdir lib\release\
-}
-copy FSharp.Core.Nuget\*.nupkg lib\release
-copy FSharp.Compiler.Tools.Nuget\*.nupkg lib\release
-
