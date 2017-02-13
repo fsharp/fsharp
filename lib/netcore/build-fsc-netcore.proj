@@ -6,14 +6,6 @@
     <FscOutDir>$(RepoRoot)/Release/netcoreapp1.0/bin</FscOutDir>
   </PropertyGroup>
 
-  <Target Name="RestoreFscNetcore"
-    Inputs="$(FscProjectDir)/project.json"
-    Outputs="$(FscProjectDir)/project.lock.json">
-    <!-- Restore once -->
-
-    <Exec Command="dotnet restore" WorkingDirectory="$(FscProjectDir)" />
-  </Target>
-
   <Target Name="Build"
           DependsOnTargets="RestoreFscNetcore">
 
@@ -65,6 +57,14 @@
       SkipUnchangedFiles="true"
       />
 
+  </Target>
+
+  <Target Name="RestoreFscNetcore"
+    Inputs="$(FscProjectDir)/project.json"
+    Outputs="$(FscProjectDir)/project.lock.json">
+    <!-- Restore once -->
+
+    <Exec Command="dotnet restore" WorkingDirectory="$(FscProjectDir)" />
   </Target>
 
   <Target Name="Clean">
