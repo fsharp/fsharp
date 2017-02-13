@@ -22,14 +22,7 @@ $nuget = (gi .\.nuget\NuGet.exe).FullName
 
 function pack($nuspec){
     $dir = [IO.Path]::GetDirectoryName($nuspec)
-    rm "$dir\*.nupkg"
-    try {
-        pushd $dir
-        & $nuget pack $nuspec -Version $version -NoDefaultExcludes -Verbosity d
-        if (-not ($?)) { exit 1; }
-    } finally {
-        popd
-    }    
+    & $nuget pack $nuspec -BasePath "$dir" -Version $version -NoDefaultExcludes -Verbosity d
 }
 
 pack(gi .\FSharp.Core.Nuget\FSharp.Core.nuspec)
