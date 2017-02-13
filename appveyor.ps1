@@ -24,7 +24,7 @@ function pack($nuspec){
     $dir = [IO.Path]::GetDirectoryName($nuspec)
     rm "$dir\*.nupkg"
     pushd $dir
-    & $nuget pack $nuspec -Version $version -NoDefaultExcludes
+    & $nuget pack $nuspec -Version $version -NoDefaultExcludes -Verbosity d
     if (-not ($?)) {
       popd
       exit 1;
