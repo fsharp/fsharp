@@ -30,7 +30,7 @@
     <summary>FSharp.Core for F# 4.1</summary>
     <tags>F#, FSharp, FSharp.Core</tags>
     <dependencies>
-      <group targetFramework=".NETFramework4.5.2">
+      <group>
         <dependency id="System.ValueTuple" version="4.3.0" />
       </group>
       <group targetFramework=".NETStandard1.6">
