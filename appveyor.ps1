@@ -35,6 +35,7 @@ function pack($nuspec){
 pack(gi .\FSharp.Core.Nuget\FSharp.Core.nuspec)
 pack(gi .\FSharp.Compiler.Tools.Nuget\FSharp.Compiler.Tools.nuspec)
 
+mkdir lib\release\
 copy FSharp.Core.Nuget\*.nupkg lib\release
 copy FSharp.Compiler.Tools.Nuget\*.nupkg lib\release
 
