@@ -21,10 +21,10 @@
   </metadata>
   <files>
     <!-- use signed FSharp.Core in package -->
-    <file src="..\lib\bootstrap\signed\.NETFramework\v4.0\4.4.0.0\FSharp.Core.dll" target="tools\FSharp.Core.dll" />
-    <file src="..\lib\bootstrap\signed\.NETFramework\v4.0\4.4.0.0\FSharp.Core.optdata" target="tools\FSharp.Core.optdata" />
-    <file src="..\lib\bootstrap\signed\.NETFramework\v4.0\4.4.0.0\FSharp.Core.sigdata" target="tools\FSharp.Core.sigdata" />
-    <file src="..\lib\bootstrap\signed\.NETFramework\v4.0\4.4.0.0\FSharp.Core.xml" target="tools\FSharp.Core.xml" />
+    <file src="..\lib\bootstrap\signed\.NETFramework\v4.0\4.4.1.0\FSharp.Core.dll" target="tools\FSharp.Core.dll" />
+    <file src="..\lib\bootstrap\signed\.NETFramework\v4.0\4.4.1.0\FSharp.Core.optdata" target="tools\FSharp.Core.optdata" />
+    <file src="..\lib\bootstrap\signed\.NETFramework\v4.0\4.4.1.0\FSharp.Core.sigdata" target="tools\FSharp.Core.sigdata" />
+    <file src="..\lib\bootstrap\signed\.NETFramework\v4.0\4.4.1.0\FSharp.Core.xml" target="tools\FSharp.Core.xml" />
     <file src="..\Release\net40\bin\fsc.exe" target="tools\fsc.exe" />
     <file src="..\Release\net40\bin\fsc.exe.config" target="tools\fsc.exe.config" />
     <file src="..\Release\net40\bin\fsc.xml" target="tools\fsc.xml" />
@@ -64,7 +64,7 @@
     <file src="..\Release\net40\bin\Microsoft.Build.Utilities.v12.0.dll" target="tools\Microsoft.Build.Utilities.v12.0.dll" />
 
     <!-- Add fsc published as framework dependent netcoreapp -->
-    <file src="..\Release\netcoreapp1.0\**" target="build\netcoreapp1.0" />
+    <file src="..\Release\netcoreapp1.0\bin\**" target="build\netcoreapp1.0" />
     <!-- Add auto-imported props to locate fsc and FSharp.Build -->
     <file src=".\build\FSharp.Compiler.Tools.props" target="build\FSharp.Compiler.Tools.props" />
     <file src=".\buildCrossTargeting\FSharp.Compiler.Tools.props" target="buildCrossTargeting\FSharp.Compiler.Tools.props" />
