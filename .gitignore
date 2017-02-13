@@ -215,3 +215,4 @@ times
 source_link.json
 .vs/
 /VSRelease/net40/bin
+lib/netcore/fsc/bin/
