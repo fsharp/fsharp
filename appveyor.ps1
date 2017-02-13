@@ -25,6 +25,10 @@ function pack($nuspec){
     rm "$dir\*.nupkg"
     pushd $dir
     & $nuget pack $nuspec -Version $version -NoDefaultExcludes
+    if (-not ($?)) {
+      popd
+      exit 1;
+    }
     popd
 }
 
