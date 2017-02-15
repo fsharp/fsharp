@@ -72,7 +72,8 @@
  <returns>True if the map contains the given key.</returns>
 </member>
 <member name="M:Microsoft.FSharp.Collections.FSharpMap`2.Add(`0,`1)">
- <summary>Returns a new map with the binding added to the given map.</summary>
+ <summary>Returns a new map with the binding added to the given map.
+ If a binding with the given key already exists in the input map, the existing binding is replaced by the new binding in the result map.</summary>
  <param name="key">The input key.</param>
  <returns>The resulting map.</returns>
 </member>
@@ -227,7 +228,7 @@
  <summary>Builds a new array whose elements are the results of applying the given function
  to each of the elements of the array.</summary>
 
- <remarks>For non-zero-based arrays the basing on an input array will be propogated to the output
+ <remarks>For non-zero-based arrays the basing on an input array will be propagated to the output
  array.</remarks>
 
  <param name="mapping">A function that is applied to transform each item of the input array.</param>
@@ -343,7 +344,7 @@
 <member name="M:Microsoft.FSharp.Collections.Array2DModule.Copy``1(``0[0:,0:])">
  <summary>Builds a new array whose elements are the same as the input array.</summary>
 
- <remarks>For non-zero-based arrays the basing on an input array will be propogated to the output
+ <remarks>For non-zero-based arrays the basing on an input array will be propagated to the output
  array.</remarks>
 
  <param name="array">The input array.</param>
@@ -398,7 +399,7 @@
  to each of the elements of the array. The integer indices passed to the
  function indicates the element being transformed.</summary>
 
- <remarks>For non-zero-based arrays the basing on an input array will be propogated to the output
+ <remarks>For non-zero-based arrays the basing on an input array will be propagated to the output
  array.</remarks>
  <param name="mapping">The function to transform the elements at each index in the array.</param>
  <param name="array">The input array.</param>
@@ -408,7 +409,7 @@
  <summary>Builds a new array whose elements are the results of applying the given function
  to each of the elements of the array.</summary>
 
- <remarks>For non-zero-based arrays the basing on an input array will be propogated to the output
+ <remarks>For non-zero-based arrays the basing on an input array will be propagated to the output
  array.</remarks>
  <param name="mapping">The function to transform each element of the array.</param>
  <param name="array">The input array.</param>
@@ -430,7 +431,7 @@
  <returns>The length of the array in the first dimension.</returns>
 </member>
 <member name="M:Microsoft.FSharp.Collections.Array3DModule.IterateIndexed``1(Microsoft.FSharp.Core.FSharpFunc{System.Int32,Microsoft.FSharp.Core.FSharpFunc{System.Int32,Microsoft.FSharp.Core.FSharpFunc{System.Int32,Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Core.Unit}}}},``0[0:,0:,0:])">
- <summary>Applies the given function to each element of the array. The integer indicies passed to the
+ <summary>Applies the given function to each element of the array. The integer indices passed to the
  function indicates the index of element.</summary>
  <param name="action">The function to apply to each element of the array.</param>
  <param name="array">The input array.</param>
@@ -871,7 +872,7 @@
  <param name="array">The input array.</param>
  <exception cref="System.ArgumentNullException">Thrown when the input array is null.</exception>
  <exception cref="System.ArgumentException">Thrown when the input array is empty.</exception>
- <returns>The final result of the redcutions.</returns>
+ <returns>The final result of the reductions.</returns>
 </member>
 <member name="M:Microsoft.FSharp.Collections.ArrayModule.Permute``1(Microsoft.FSharp.Core.FSharpFunc{System.Int32,System.Int32},``0[])">
  <summary>Returns an array with all elements permuted according to the
@@ -1499,7 +1500,7 @@
  respectively </summary>
 
  <remarks>Performs the operation in parallel using System.Threading.Parallel.For.
- The order in which the given function is applied to indicies is not specified.</remarks>
+ The order in which the given function is applied to indices is not specified.</remarks>
  <param name="predicate">The function to test the input elements.</param>
  <param name="array">The input array.</param>
  <returns>'T[] * 'T[]</returns>
@@ -1509,7 +1510,7 @@
  <summary>Create an array given the dimension and a generator function to compute the elements.</summary>
 
  <remarks>Performs the operation in parallel using System.Threading.Parallel.For.
- The order in which the given function is applied to indicies is not specified.</remarks>
+ The order in which the given function is applied to indices is not specified.</remarks>
  <param name="count"></param>
  <param name="initializer"></param>
  <returns>'T[]</returns>
@@ -2542,7 +2543,8 @@
  <returns>The resulting map.</returns>
 </member>
 <member name="M:Microsoft.FSharp.Collections.MapModule.Add``2(``0,``1,Microsoft.FSharp.Collections.FSharpMap{``0,``1})">
- <summary>Returns a new map with the binding added to the given map.</summary>
+ <summary>Returns a new map with the binding added to the given map.
+ If a binding with the given key already exists in the input map, the existing binding is replaced by the new binding in the result map.</summary>
  <param name="key">The input key.</param>
  <param name="value">The input value.</param>
  <param name="table">The input map.</param>
@@ -3479,7 +3481,7 @@
  <exception cref="System.ArgumentNullException">Thrown when the input sequence is null.</exception>
 </member>
 <member name="M:Microsoft.FSharp.Collections.SeqModule.Except``1(System.Collections.Generic.IEnumerable{``0},System.Collections.Generic.IEnumerable{``0})">
- <summary>Returns a new sequence with the distinct elements of the second sequence which do not apear in the first sequence,
+ <summary>Returns a new sequence with the distinct elements of the second sequence which do not appear in the first sequence,
  using generic hash and equality comparisons to compare values.</summary>
 
  <remarks>Note that this function returns a sequence that digests the whole of the first input sequence as soon as
@@ -3797,7 +3799,7 @@
 </member>
 <member name="M:Microsoft.FSharp.Collections.SetModule.UnionMany``1(System.Collections.Generic.IEnumerable{Microsoft.FSharp.Collections.FSharpSet{``0}})">
  <summary>Computes the union of a sequence of sets.</summary>
- <param name="sets">The sequence of sets to untion.</param>
+ <param name="sets">The sequence of sets to union.</param>
  <returns>The union of the input sets.</returns>
 </member>
 <member name="M:Microsoft.FSharp.Collections.SetModule.Union``1(Microsoft.FSharp.Collections.FSharpSet{``0},Microsoft.FSharp.Collections.FSharpSet{``0})">
@@ -4088,7 +4090,7 @@
 </member>
 <member name="M:Microsoft.FSharp.Control.FSharpAsync.FromBeginEnd``4(``0,``1,``2,Microsoft.FSharp.Core.FSharpFunc{System.Tuple{``0,``1,``2,System.AsyncCallback,System.Object},System.IAsyncResult},Microsoft.FSharp.Core.FSharpFunc{System.IAsyncResult,``3},Microsoft.FSharp.Core.FSharpOption{Microsoft.FSharp.Core.FSharpFunc{Microsoft.FSharp.Core.Unit,Microsoft.FSharp.Core.Unit}})">
  <summary>Creates an asynchronous computation in terms of a Begin/End pair of actions in 
- the style used in CLI APIs. This overlaod should be used if the operation is 
+ the style used in CLI APIs. This overload should be used if the operation is 
  qualified by three arguments. For example, 
      <c>Async.FromBeginEnd(arg1,arg2,arg3,ws.BeginGetWeather,ws.EndGetWeather)</c>
  When the computation is run, <c>beginFunc</c> is executed, with
@@ -4111,7 +4113,7 @@
 </member>
 <member name="M:Microsoft.FSharp.Control.FSharpAsync.FromBeginEnd``3(``0,``1,Microsoft.FSharp.Core.FSharpFunc{System.Tuple{``0,``1,System.AsyncCallback,System.Object},System.IAsyncResult},Microsoft.FSharp.Core.FSharpFunc{System.IAsyncResult,``2},Microsoft.FSharp.Core.FSharpOption{Microsoft.FSharp.Core.FSharpFunc{Microsoft.FSharp.Core.Unit,Microsoft.FSharp.Core.Unit}})">
  <summary>Creates an asynchronous computation in terms of a Begin/End pair of actions in 
- the style used in CLI APIs. This overlaod should be used if the operation is 
+ the style used in CLI APIs. This overload should be used if the operation is 
  qualified by two arguments. For example, 
      <c>Async.FromBeginEnd(arg1,arg2,ws.BeginGetWeather,ws.EndGetWeather)</c>
  When the computation is run, <c>beginFunc</c> is executed, with
@@ -4133,7 +4135,7 @@
 </member>
 <member name="M:Microsoft.FSharp.Control.FSharpAsync.FromBeginEnd``2(``0,Microsoft.FSharp.Core.FSharpFunc{System.Tuple{``0,System.AsyncCallback,System.Object},System.IAsyncResult},Microsoft.FSharp.Core.FSharpFunc{System.IAsyncResult,``1},Microsoft.FSharp.Core.FSharpOption{Microsoft.FSharp.Core.FSharpFunc{Microsoft.FSharp.Core.Unit,Microsoft.FSharp.Core.Unit}})">
  <summary>Creates an asynchronous computation in terms of a Begin/End pair of actions in 
- the style used in CLI APIs. This overlaod should be used if the operation is 
+ the style used in CLI APIs. This overload should be used if the operation is 
  qualified by one argument. For example, 
      <c>Async.FromBeginEnd(place,ws.BeginGetWeather,ws.EndGetWeather)</c>
  When the computation is run, <c>beginFunc</c> is executed, with
@@ -4331,7 +4333,7 @@
  <param name="computation">The input computation.</param>
  <param name="compensation">The action to be run after <c>computation</c> completes or raises an
  exception (including cancellation).</param>
- <returns>An asynchronous computation that executes computation and compensation aftewards or
+ <returns>An asynchronous computation that executes computation and compensation afterwards or
  when an exception is raised.</returns>
 </member>
 <member name="M:Microsoft.FSharp.Control.FSharpAsyncBuilder.ReturnFrom``1(Microsoft.FSharp.Control.FSharpAsync{``0})">
@@ -4493,7 +4495,7 @@
  <summary>First class event values for arbitrary delegate types.</summary>
 
  <remarks>F# gives special status to member properties compatible with type IDelegateEvent and 
- tagged with the CLIEventAttribute. In this case the F# compiler generates approriate 
+ tagged with the CLIEventAttribute. In this case the F# compiler generates appropriate 
  CLI metadata to make the member appear to other CLI languages as a CLI event.</remarks>
 </member>
 <member name="T:Microsoft.FSharp.Control.IEvent`1">
@@ -4637,7 +4639,7 @@
  the message to be sent.</param>
  <param name="timeout">An optional timeout parameter (in milliseconds) to wait for a reply message.
  Defaults to -1 which corresponds to <c>System.Threading.Timeout.Infinite</c>.</param>
- <returns>An asychronous computation that will wait for the reply from the agent.</returns>
+ <returns>An asynchronous computation that will wait for the reply from the agent.</returns>
 </member>
 <member name="M:Microsoft.FSharp.Control.FSharpMailboxProcessor`1.Post(`0)">
  <summary>Posts a message to the message queue of the MailboxProcessor, asynchronously.</summary>
@@ -5547,7 +5549,7 @@
  <returns>The output curried function.</returns>
 </member>
 <member name="T:Microsoft.FSharp.Core.FuncConvert">
- <summary>Helper functions for converting F# first class function values to and from CLI representaions
+ <summary>Helper functions for converting F# first class function values to and from CLI representations
  of functions using delegates.</summary>
 </member>
 <member name="M:Microsoft.FSharp.Core.GeneralizableValueAttribute.#ctor">
@@ -6529,7 +6531,7 @@
  primitive numeric types. For strings, the input is converted using <c>Single.Parse()</c>  with InvariantCulture settings. Otherwise the operation requires and invokes a <c>ToSingle</c> method on the input type.</remarks>
 </member>
 <member name="P:Microsoft.FSharp.Core.ExtraTopLevelOperators.DefaultAsyncBuilder">
- <summary>Builds an aysnchronous workflow using computation expression syntax.</summary>
+ <summary>Builds an asynchronous workflow using computation expression syntax.</summary>
 </member>
 <member name="M:Microsoft.FSharp.Core.ExtraTopLevelOperators.CreateSet``1(System.Collections.Generic.IEnumerable{``0})">
  <summary>Builds a set from a sequence of objects. The objects are indexed using generic comparison.</summary>
@@ -6948,7 +6950,7 @@
 </member>
 <member name="M:Microsoft.FSharp.Core.LanguagePrimitives.IntrinsicFunctions.CreateInstance``1">
  <summary>This function implements calls to default constructors
- acccessed by 'new' constraints.</summary>
+ accessed by 'new' constraints.</summary>
 </member>
 <member name="M:Microsoft.FSharp.Core.LanguagePrimitives.IntrinsicFunctions.GetString(System.String,System.Int32)">
  <summary>Primitive used by pattern match compilation</summary>
@@ -7007,47 +7009,47 @@
 </member>
 <member name="M:Microsoft.FSharp.Core.NumericLiterals.NumericLiteralI.FromStringDynamic(System.String)">
 <summary>
- Provides a default implementations of F# numeric literal syntax  for literals fo the form &apos;dddI&apos; 
+ Provides a default implementations of F# numeric literal syntax  for literals of the form &apos;dddI&apos; 
 </summary>
 </member>
 <member name="M:Microsoft.FSharp.Core.NumericLiterals.NumericLiteralI.FromInt64Dynamic(System.Int64)">
 <summary>
- Provides a default implementations of F# numeric literal syntax  for literals fo the form &apos;dddI&apos; 
+ Provides a default implementations of F# numeric literal syntax  for literals of the form &apos;dddI&apos; 
 </summary>
 </member>
 <member name="M:Microsoft.FSharp.Core.NumericLiterals.NumericLiteralI.FromString``1(System.String)">
 <summary>
- Provides a default implementations of F# numeric literal syntax  for literals fo the form &apos;dddI&apos; 
+ Provides a default implementations of F# numeric literal syntax  for literals of the form &apos;dddI&apos; 
 </summary>
 </member>
 <member name="M:Microsoft.FSharp.Core.NumericLiterals.NumericLiteralI.FromInt64``1(System.Int64)">
 <summary>
- Provides a default implementations of F# numeric literal syntax  for literals fo the form &apos;dddI&apos; 
+ Provides a default implementations of F# numeric literal syntax  for literals of the form &apos;dddI&apos; 
 </summary>
 </member>
 <member name="M:Microsoft.FSharp.Core.NumericLiterals.NumericLiteralI.FromInt32``1(System.Int32)">
 <summary>
- Provides a default implementations of F# numeric literal syntax  for literals fo the form &apos;dddI&apos; 
+ Provides a default implementations of F# numeric literal syntax  for literals of the form &apos;dddI&apos; 
 </summary>
 </member>
 <member name="M:Microsoft.FSharp.Core.NumericLiterals.NumericLiteralI.FromOne``1">
 <summary>
- Provides a default implementations of F# numeric literal syntax  for literals fo the form &apos;dddI&apos; 
+ Provides a default implementations of F# numeric literal syntax  for literals of the form &apos;dddI&apos; 
 </summary>
 </member>
 <member name="M:Microsoft.FSharp.Core.NumericLiterals.NumericLiteralI.FromZero``1">
 <summary>
- Provides a default implementations of F# numeric literal syntax  for literals fo the form &apos;dddI&apos; 
+ Provides a default implementations of F# numeric literal syntax  for literals of the form &apos;dddI&apos; 
 </summary>
 </member>
 <member name="T:Microsoft.FSharp.Core.NumericLiterals.NumericLiteralI">
 <summary>
- Provides a default implementations of F# numeric literal syntax  for literals fo the form &apos;dddI&apos; 
+ Provides a default implementations of F# numeric literal syntax  for literals of the form &apos;dddI&apos; 
 </summary>
 </member>
 <member name="T:Microsoft.FSharp.Core.NumericLiterals">
 <summary>
- Provides a default implementations of F# numeric literal syntax  for literals fo the form &apos;dddI&apos; 
+ Provides a default implementations of F# numeric literal syntax  for literals of the form &apos;dddI&apos; 
 </summary>
 </member>
 <member name="M:Microsoft.FSharp.Core.Operators.KeyValuePattern``2(System.Collections.Generic.KeyValuePair{``0,``1})">
@@ -7468,7 +7470,7 @@
  <returns>The boxed object.</returns>
 </member>
 <member name="M:Microsoft.FSharp.Core.Operators.Unbox``1(System.Object)">
- <summary>Unboxes a strongly typed value.</summary>
+ <summary>Unbox a strongly typed value.</summary>
  <param name="value">The boxed value.</param>
  <returns>The unboxed result.</returns>
 </member>
@@ -9924,7 +9926,7 @@
  <returns>The resulting expression.</returns>
 </member>
 <member name="M:Microsoft.FSharp.Quotations.FSharpExpr.LetRecursive(Microsoft.FSharp.Collections.FSharpList{System.Tuple{Microsoft.FSharp.Quotations.FSharpVar,Microsoft.FSharp.Quotations.FSharpExpr}},Microsoft.FSharp.Quotations.FSharpExpr)">
- <summary>Builds recursives expressions associated with 'let rec' constructs</summary>
+ <summary>Builds recursive expressions associated with 'let rec' constructs</summary>
  <param name="bindings">The list of bindings for the let expression.</param>
  <param name="body">The sub-expression where the bindings are in scope.</param>
  <returns>The resulting expression.</returns>
@@ -9937,7 +9939,7 @@
  <returns>The resulting expression.</returns>
 </member>
 <member name="M:Microsoft.FSharp.Quotations.FSharpExpr.Lambda(Microsoft.FSharp.Quotations.FSharpVar,Microsoft.FSharp.Quotations.FSharpExpr)">
- <summary>Builds an expression that represents the constrution of an F# function value</summary>
+ <summary>Builds an expression that represents the construction of an F# function value</summary>
  <param name="parameter">The parameter to the function.</param>
  <param name="body">The body of the function.</param>
  <returns>The resulting expression.</returns>
@@ -9951,7 +9953,7 @@
 </member>
 <member name="M:Microsoft.FSharp.Quotations.FSharpExpr.GlobalVar``1(System.String)">
  <summary>Fetches or creates a new variable with the given name and type from a global pool of shared variables
- indexed by name and type. The type is given by the expicit or inferred type parameter</summary>
+ indexed by name and type. The type is given by the explicit or inferred type parameter</summary>
  <param name="name">The variable name.</param>
  <returns>The created of fetched typed global variable.</returns>
 </member>
@@ -10106,7 +10108,7 @@
  <returns>The decomposed Var, Lambda, or ConstApp.</returns>
 </member>
 <member name="T:Microsoft.FSharp.Quotations.ExprShapeModule">
- <summary>Active patterns for traversing, visiting, rebuilding and tranforming expressions in a generic way</summary>
+ <summary>Active patterns for traversing, visiting, rebuilding and transforming expressions in a generic way</summary>
 </member>
 <member name="M:Microsoft.FSharp.Quotations.DerivedPatternsModule.PropertySetterWithReflectedDefinitionPattern(System.Reflection.PropertyInfo)">
  <summary>An active pattern to recognize property setters that have an associated ReflectedDefinition</summary>
@@ -10126,11 +10128,11 @@
 <member name="M:Microsoft.FSharp.Quotations.DerivedPatternsModule.SpecificCallPattern(Microsoft.FSharp.Quotations.FSharpExpr)">
  <summary>A parameterized active pattern to recognize calls to a specified function or method.
  The returned elements are the optional target object (present if the target is an 
- instance method), the generic type instantation (non-empty if the target is a generic
+ instance method), the generic type instantiation (non-empty if the target is a generic
  instantiation), and the arguments to the function or method.</summary>
  <param name="templateParameter">The input template expression to specify the method to call.</param>
  <returns>The optional target object (present if the target is an 
- instance method), the generic type instantation (non-empty if the target is a generic
+ instance method), the generic type instantiation (non-empty if the target is a generic
  instantiation), and the arguments to the function or method.</returns>
 </member>
 <member name="M:Microsoft.FSharp.Quotations.DerivedPatternsModule.DecimalPattern(Microsoft.FSharp.Quotations.FSharpExpr)">
@@ -10282,7 +10284,7 @@
  <returns>(Expr * Var * Expr * Var * Expr) option</returns>
 </member>
 <member name="M:Microsoft.FSharp.Quotations.PatternsModule.SequentialPattern(Microsoft.FSharp.Quotations.FSharpExpr)">
- <summary>An active pattern to recognize expressions that represent sequential exeuction of one expression followed by another</summary>
+ <summary>An active pattern to recognize expressions that represent sequential execution of one expression followed by another</summary>
  <param name="input">The input expression to match against.</param>
  <returns>(Expr * Expr) option</returns>
 </member>
@@ -10515,7 +10517,7 @@
  <returns>The description of the union case reader.</returns>
 </member>
 <member name="M:Microsoft.FSharp.Reflection.FSharpValue.PreComputeUnionReader(Microsoft.FSharp.Reflection.UnionCaseInfo,Microsoft.FSharp.Core.FSharpOption{System.Reflection.BindingFlags})">
- <summary>Precomputes a function for reading all the fields for a particular discriminator case of a union type</summary>
+ <summary>Precompute a function for reading all the fields for a particular discriminator case of a union type</summary>
 
  <remarks>Using the computed function will typically be faster than executing a corresponding call to GetFields</remarks>
  <param name="unionCase">The description of the union case to read.</param>
@@ -10529,13 +10531,13 @@
  <returns>The description of the constructor of the given union case.</returns>
 </member>
 <member name="M:Microsoft.FSharp.Reflection.FSharpValue.PreComputeUnionConstructor(Microsoft.FSharp.Reflection.UnionCaseInfo,Microsoft.FSharp.Core.FSharpOption{System.Reflection.BindingFlags})">
- <summary>Precomputes a function for constructing a discriminated union value for a particular union case. </summary>
+ <summary>Precompute a function for constructing a discriminated union value for a particular union case. </summary>
  <param name="unionCase">The description of the union case.</param>
  <param name="bindingFlags">Optional binding flags.</param>
  <returns>A function for constructing values of the given union case.</returns>
 </member>
 <member name="M:Microsoft.FSharp.Reflection.FSharpValue.PreComputeTupleReader(System.Type)">
- <summary>Precomputes a function for reading the values of a particular tuple type</summary>
+ <summary>Precompute a function for reading the values of a particular tuple type</summary>
 
  <remarks>Assumes the given type is a TupleType.
  If not, ArgumentException is raised during pre-computation.</remarks>
@@ -10564,7 +10566,7 @@
  for large tuples.</returns>
 </member>
 <member name="M:Microsoft.FSharp.Reflection.FSharpValue.PreComputeTupleConstructor(System.Type)">
- <summary>Precomputes a function for reading the values of a particular tuple type</summary>
+ <summary>Precompute a function for reading the values of a particular tuple type</summary>
 
  <remarks>Assumes the given type is a TupleType.
  If not, ArgumentException is raised during pre-computation.</remarks>
@@ -10798,13 +10800,13 @@
  <returns>The description of the constructor of the given union case.</returns>
 </member>
 <member name="M:Microsoft.FSharp.Reflection.FSharpReflectionExtensions.FSharpValue.PreComputeUnionConstructor.Static(Microsoft.FSharp.Reflection.UnionCaseInfo,Microsoft.FSharp.Core.FSharpOption{System.Boolean})">
- <summary>Precomputes a function for constructing a discriminated union value for a particular union case. </summary>
+ <summary>Precompute a function for constructing a discriminated union value for a particular union case. </summary>
  <param name="unionCase">The description of the union case.</param>
  <param name="allowAccessToPrivateRepresentation">Optional flag that denotes accessibility of the private representation.</param>    
  <returns>A function for constructing values of the given union case.</returns>
 </member>
 <member name="M:Microsoft.FSharp.Reflection.FSharpReflectionExtensions.FSharpValue.PreComputeUnionReader.Static(Microsoft.FSharp.Reflection.UnionCaseInfo,Microsoft.FSharp.Core.FSharpOption{System.Boolean})">
- <summary>Precomputes a function for reading all the fields for a particular discriminator case of a union type</summary>
+ <summary>Precompute a function for reading all the fields for a particular discriminator case of a union type</summary>
 
  <remarks>Using the computed function will typically be faster than executing a corresponding call to GetFields</remarks>
  <param name="unionCase">The description of the union case to read.</param>
@@ -10912,7 +10914,7 @@
  If ShowProperties is set the printing process will evaluate properties of the values being
  displayed.  This may cause additional computation.  
 
- The ShowIEnumerable is set the printing process will force the evalution of IEnumerable objects
+ The ShowIEnumerable is set the printing process will force the evaluation of IEnumerable objects
  to a small, finite depth, as determined by the printing parameters.
  This may lead to additional computation being performed during printing.
 
@@ -10940,7 +10942,7 @@
 </member>
 <member name="M:Microsoft.FSharp.Text.StructuredPrintfImpl.Display.output_any``1(System.IO.TextWriter,``0)">
 <summary>
- Ouput any value to a channel using the same set of formatting rules
+ Output any value to a channel using the same set of formatting rules
  as any_to_string
 </summary>
 </member>
@@ -10962,7 +10964,7 @@
 </member>
 <member name="M:Microsoft.FSharp.Text.StructuredPrintfImpl.LayoutOps.unfoldL``2(Microsoft.FSharp.Core.FSharpFunc{``0,Microsoft.FSharp.Text.StructuredPrintfImpl.Layout},Microsoft.FSharp.Core.FSharpFunc{``1,Microsoft.FSharp.Core.FSharpOption{System.Tuple{``0,``1}}},``1,System.Int32)">
 <summary>
- For limitting layout of list-like sequences (lists,arrays,etc).
+ For limiting layout of list-like sequences (lists,arrays,etc).
  unfold a list of items using (project and z) making layout list via itemL.
  If reach maxLength (before exhausting) then truncate.
 </summary>
