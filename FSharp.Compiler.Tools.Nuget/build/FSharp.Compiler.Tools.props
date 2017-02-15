@@ -13,9 +13,21 @@ WARNING:  You CAN MODIFY this file, doesnt matter if you are not knowledgeable a
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
   <PropertyGroup>
-    <FscTaskAssemblyPath>$(MSBuildThisFileDirectory)\netcoreapp1.0\FSharp.Build.dll</FscTaskAssemblyPath>
-    <FscToolPath>$(MSBuildThisFileDirectory)\netcoreapp1.0</FscToolPath>
+
+    <!-- Default to netcoreapp fsc -->
+    <FscTaskAssemblyPath>$(MSBuildThisFileDirectory)netcoreapp1.0/FSharp.Build.dll</FscTaskAssemblyPath>
+    <FscToolPath>$(MSBuildThisFileDirectory)netcoreapp1.0</FscToolPath>
     <FscToolExe>fsc.dll</FscToolExe>
+    <FscToolFullPath>$(MSBuildThisFileDirectory)netcoreapp1.0/fsc.dll</FscToolFullPath>
+
+    <!-- specific netcoreapp1.0 fsc -->
+    <FscTaskAssemblyPath_netcoreapp1_0>$(MSBuildThisFileDirectory)netcoreapp1.0/FSharp.Build.dll</FscTaskAssemblyPath_netcoreapp1_0>
+    <FscToolFullPath_netcoreapp1_0>$(MSBuildThisFileDirectory)netcoreapp1.0/fsc.dll</FscToolFullPath_netcoreapp1_0>
+
+    <!-- specific .NET Framework fsc -->
+    <FscTaskAssemblyPath_net>$(MSBuildThisFileDirectory)../tools/FSharp.Build.dll</FscTaskAssemblyPath_net>
+    <FscToolFullPath_net>$(MSBuildThisFileDirectory)../tools/fsc.exe</FscToolFullPath_net>
+    
   </PropertyGroup>
 
 </Project>

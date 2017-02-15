@@ -13,8 +13,8 @@ WARNING:  You CAN MODIFY this file, doesnt matter if you are not knowledgeable a
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
   <PropertyGroup>
-    <FscTaskAssemblyPath>$(MSBuildThisFileDirectory)..\build\netcoreapp1.0\FSharp.Build.dll</FscTaskAssemblyPath>
-    <FscToolPath>$(MSBuildThisFileDirectory)..\build\netcoreapp1.0</FscToolPath>
+    <FscTaskAssemblyPath>$(MSBuildThisFileDirectory)../build/netcoreapp1.0/FSharp.Build.dll</FscTaskAssemblyPath>
+    <FscToolPath>$(MSBuildThisFileDirectory)../build/netcoreapp1.0</FscToolPath>
     <FscToolExe>fsc.dll</FscToolExe>
   </PropertyGroup>
 
