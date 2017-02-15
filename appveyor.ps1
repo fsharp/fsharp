@@ -1,6 +1,6 @@
 
 # the version under development, update after a release
-$version = '4.0.1.21'
+$version = '4.1.0.0'
 
 function isVersionTag($tag){
     $v = New-Object Version
@@ -20,22 +20,12 @@ if ($env:appveyor){
 
 $nuget = (gi .\.nuget\NuGet.exe).FullName
 
+$packagesOutDir = Join-Path $PSScriptRoot "lib\release\"
+
 function pack($nuspec){
     $dir = [IO.Path]::GetDirectoryName($nuspec)
-    rm "$dir\*.nupkg"
-    pushd $dir
-    & $nuget pack $nuspec -Version $version -NoDefaultExcludes
-    popd
+    & $nuget pack $nuspec -BasePath "$dir" -Version $version -OutputDirectory "$packagesOutDir" -NoDefaultExcludes -Verbosity d
 }
 
 pack(gi .\FSharp.Core.Nuget\FSharp.Core.nuspec)
 pack(gi .\FSharp.Compiler.Tools.Nuget\FSharp.Compiler.Tools.nuspec)
-
-# Merge the latest known .NET Core FSharp.Core nuget package with the one we build here
-pushd dotnet-tools
-& dotnet restore
-& dotnet mergenupkg --source ..\FSharp.Core.Nuget\FSharp.Core.$version.nupkg --other ..\packages\Microsoft.FSharp.Core.netcore.1.0.0-alpha-160831\Microsoft.FSharp.Core.netcore.1.0.0-alpha-160831.nupkg --framework netstandard1.6
-popd
-& copy FSharp.Core.Nuget\*.nupkg lib\release
-& copy FSharp.Compiler.Tools.Nuget\*.nupkg lib\release
-

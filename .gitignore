@@ -217,3 +217,6 @@ source_link.json
 /VSRelease/net40/bin
 System.ValueTuple.dll
 tests/fsharpqa/testenv/bin/System.ValueTuple.dll
+lib/netcore/fsc/bin/
+
+!lib/bootstrap/signed/**/*

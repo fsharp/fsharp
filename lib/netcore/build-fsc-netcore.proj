@@ -1,0 +1,78 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+
+  <PropertyGroup>
+    <RepoRoot>$(MSBuildThisFileDirectory)../..</RepoRoot>
+    <FscProjectDir>$(RepoRoot)/lib/netcore/fsc</FscProjectDir>
+    <FscOutDir>$(RepoRoot)/Release/netcoreapp1.0/bin</FscOutDir>
+  </PropertyGroup>
+
+  <Target Name="Build"
+          DependsOnTargets="RestoreFscNetcore">
+
+    <PropertyGroup>
+      <_FscPublishDir>$(FscProjectDir)/bin/publish</_FscPublishDir>
+    </PropertyGroup>
+
+    <Exec Command='dotnet publish -o "$(_FscPublishDir)"' WorkingDirectory="$(FscProjectDir)" />
+
+    <ItemGroup>
+
+      <!-- These files are not valid -->
+      <ExcludePublishedFscFiles Include="
+          $(_FscPublishDir)/fsc.deps.json;
+          $(_FscPublishDir)/fsc.runtimeconfig.json;
+          $(_FscPublishDir)/fsc.exe;
+          $(_FscPublishDir)/fsc.dll;
+          $(_FscPublishDir)/fsc.pdb;
+       "/>
+
+      <!-- These files are useless -->
+      <ExcludePublishedFscFiles Include="$(_FscPublishDir)/runtimes\any\**\*.*" />
+
+      <PublishedFscFiles 
+        Include="$(_FscPublishDir)/**/*.*"
+        Exclude="@(ExcludePublishedFscFiles)" />
+
+    </ItemGroup>
+
+    <Copy
+      SourceFiles="@(PublishedFscFiles)"
+      DestinationFiles="@(PublishedFscFiles -> '$(FscOutDir)/%(RecursiveDir)%(FileName)%(Extension)')"
+      SkipUnchangedFiles="true"
+      />
+
+    <Copy
+      SourceFiles="
+        $(_FscPublishDir)/runtimes/any/native/default.win32manifest;
+        $(_FscPublishDir)/fsc.exe;
+        $(RepoRoot)/FSharp.Compiler.Tools.Nuget/build/netcoreapp1.0/fsc.deps.json;
+        $(RepoRoot)/FSharp.Compiler.Tools.Nuget/build/netcoreapp1.0/fsc.runtimeconfig.json;
+        "
+      DestinationFiles="
+        $(FscOutDir)/default.win32manifest;
+        $(FscOutDir)/fsc.dll;
+        $(FscOutDir)/fsc.deps.json;
+        $(FscOutDir)/fsc.runtimeconfig.json;
+        "
+      SkipUnchangedFiles="true"
+      />
+
+  </Target>
+
+  <Target Name="RestoreFscNetcore"
+    Inputs="$(FscProjectDir)/project.json"
+    Outputs="$(FscProjectDir)/project.lock.json">
+    <!-- Restore once -->
+
+    <Exec Command="dotnet restore" WorkingDirectory="$(FscProjectDir)" />
+  </Target>
+
+  <Target Name="Clean">
+    <RemoveDir Directories="$(FscOutDir)" />
+    <Delete Files="$(FscProjectDir)/project.lock.json" />
+  </Target>
+
+  <Target Name="Rebuild"
+          DependsOnTargets="Clean;Build" />
+
+</Project>
