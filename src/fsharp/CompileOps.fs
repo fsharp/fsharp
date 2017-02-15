@@ -3423,7 +3423,7 @@ type TcAssemblyResolutions(results : AssemblyResolution list, unresolved : Unres
     member tcResolutions.TryFindByResolvedPath nm = resolvedPathToResolution.TryFind nm
     member tcResolutions.TryFindByOriginalReferenceText nm = originalReferenceToResolution.TryFind nm
         
-    static member Resolve (ctok, tcConfig:TcConfig, assemblyList:AssemblyReference list, knownUnresolved:UnresolvedAssemblyReference list) : TcAssemblyResolutions =
+    static member ResolveAssemblyReferences (ctok, tcConfig:TcConfig, assemblyList:AssemblyReference list, knownUnresolved:UnresolvedAssemblyReference list) : TcAssemblyResolutions =
         let fallBack() = 
             let resolutions = 
                 assemblyList 
