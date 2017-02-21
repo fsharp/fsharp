@@ -35,11 +35,11 @@
     <!-- Always qualify the IntermediateOutputPath by the TargetFramework if any exists -->
     <IntermediateOutputPath>obj\$(Configuration)\$(TargetFramework)\</IntermediateOutputPath>
     <IntermediateOutputPath Condition="'$(PortableProfileBeingReferenced)' != ''">obj\$(Configuration)\$(TargetFramework)\$(PortableProfileBeingReferenced)\</IntermediateOutputPath>
-    <UseMicroBuild>false</UseMicroBuild>
+    <MonoPackaging>true</MonoPackaging>
   </PropertyGroup>
 
-<!--
-  <PropertyGroup Condition="'$(OS)' != 'Unix'">
+  <PropertyGroup Condition="'$(MonoPackaging)' != 'true' AND '$(OS)' != 'Unix'">
+    <UseMicroBuild>true</UseMicroBuild>
     <UseSourceLink>true</UseSourceLink>
     <UseGatherBinaries>true</UseGatherBinaries>
     <AddVsSdkAttributesToSomeCoreComponents>true</AddVsSdkAttributesToSomeCoreComponents>
@@ -48,7 +48,6 @@
     <VsSDKIncludes Condition=" '$(VsSDKIncludes)' == '' ">$(MSBuildThisFileDirectory)..\packages\$(VSSDK_BUILDTOOLS_VERSION)\tools\vssdk\inc</VsSDKIncludes>
     <VsixSchemaPath Condition=" '$(VsixSchemaPath)' == '' ">$(MSBuildThisFileDirectory)..\packages\$(VSSDK_BUILDTOOLS_VERSION)\tools\vssdk\schemas\VSIXManifestSchema.xsd</VsixSchemaPath>
   </PropertyGroup>
--->
 
 	<PropertyGroup Condition=" '$(ProjectLanguage)' == 'FSharp' ">
     <!-- Things we do only for F# projects -->
@@ -122,13 +121,11 @@
     <FsiToolExe>fsi.exe</FsiToolExe>
     <FsLexToolExe>fslex.exe</FsLexToolExe>
     <FsYaccToolExe>fsyacc.exe</FsYaccToolExe>
-<!--
-    <RoslynVersion>2.0.0-rc3-61324-01</RoslynVersion>
-    <RoslynVSBinariesVersion>14.0</RoslynVSBinariesVersion>
-    <RoslynVSPackagesVersion>14.3.25407</RoslynVSPackagesVersion>
--->
-    <MSBuildVersionSuffix>v12.0</MSBuildVersionSuffix>
-    <MSBuildVersionFull>12.0.0.0</MSBuildVersionFull>	  
+      
+    <!-- The version of MSBuild assumed byt the F# compiler in the Mono packaging of F# -->
+    <MonoPackagingMSBuildVersionSuffix>v12.0</MonoPackagingMSBuildVersionSuffix>
+    <MonoPackagingMSBuildVersionFull>12.0.0.0</MonoPackagingMSBuildVersionFull>	  
+
     <!-- FSharp.Compiler.Tools is currently only used to get a working FSI.EXE to execute some scripts during the build -->
     <!-- The LKG FSI.EXE requires MSBuild 15 to be installed, which is painful -->
     <FsiToolPath>$(FSharpSourcesRoot)\..\packages\FSharp.Compiler.Tools.4.0.1.21\tools</FsiToolPath>
