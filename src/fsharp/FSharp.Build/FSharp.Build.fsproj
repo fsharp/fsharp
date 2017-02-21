@@ -50,12 +50,6 @@
     <Compile Include="CreateFSharpManifestResourceName.fsi" />
     <Compile Include="CreateFSharpManifestResourceName.fs" />
     <CopyAndSubstituteText Include="Microsoft.FSharp.targets">
-		<TargetFilename>Microsoft.FSharp.Targets</TargetFilename>
-		<Pattern1>{BuildSuffix}</Pattern1>
-		<Replacement1></Replacement1>
-	</CopyAndSubstituteText>
-	<CopyAndSubstituteText Include="Microsoft.Portable.FSharp.targets">
-	  <TargetFilename>Microsoft.Portable.FSharp.Targets</TargetFilename>
         <TargetFilename>Microsoft.FSharp.Targets</TargetFilename>
         <Pattern1>{BuildSuffix}</Pattern1>
         <Replacement1></Replacement1>
