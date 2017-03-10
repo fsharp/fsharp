@@ -15,32 +15,30 @@ WARNING:  You CAN MODIFY this file, doesnt matter if you are not knowledgeable a
   <PropertyGroup>
 
     <!-- specific netcoreapp1.0 fsc -->
-    <FscTaskAssemblyPath_netcoreapp1_0>$(MSBuildThisFileDirectory)netcoreapp1.0/FSharp.Build.dll</FscTaskAssemblyPath_netcoreapp1_0>
-    <FscToolFullPath_netcoreapp1_0>$(MSBuildThisFileDirectory)netcoreapp1.0/fsc.dll</FscToolFullPath_netcoreapp1_0>
-    <FscToolPath_netcoreapp1_0>$(MSBuildThisFileDirectory)netcoreapp1.0</FscToolPath_netcoreapp1_0>
+    <_FscTaskAssemblyPath_netcoreapp1_0>$(MSBuildThisFileDirectory)netcoreapp1.0/FSharp.Build.dll</_FscTaskAssemblyPath_netcoreapp1_0>
+    <_FscToolFullPath_netcoreapp1_0>$(MSBuildThisFileDirectory)netcoreapp1.0/fsc.dll</_FscToolFullPath_netcoreapp1_0>
 
     <!-- specific .NET Framework fsc -->
-    <FscTaskAssemblyPath_net>$(MSBuildThisFileDirectory)../tools/FSharp.Build.dll</FscTaskAssemblyPath_net>
-    <FscToolFullPath_net>$(MSBuildThisFileDirectory)../tools/fsc.exe</FscToolFullPath_net>
-    <FscToolPath_net>$(MSBuildThisFileDirectory)../tools</FscToolPath_net>
+    <_FscTaskAssemblyPath_net>$(MSBuildThisFileDirectory)../tools/FSharp.Build.dll</_FscTaskAssemblyPath_net>
+    <_FscToolFullPath_net>$(MSBuildThisFileDirectory)../tools/fsc.exe</_FscToolFullPath_net>
 
   </PropertyGroup>
 
   <Choose>
     <When Condition="'$(MSBuildRuntimeType)' == 'Core'">
       <PropertyGroup>
-        <FscTaskAssemblyPath>$(FscTaskAssemblyPath_netcoreapp1_0)</FscTaskAssemblyPath>
-        <FscToolPath>$(FscToolPath_netcoreapp1_0)</FscToolPath>
+        <FscTaskAssemblyPath>$(_FscTaskAssemblyPath_netcoreapp1_0)</FscTaskAssemblyPath>
+        <FscToolPath>$(MSBuildThisFileDirectory)netcoreapp1.0</FscToolPath>
         <FscToolExe>fsc.dll</FscToolExe>
-        <FscToolFullPath>$(FscToolFullPath_netcoreapp1_0)</FscToolFullPath>
+        <FscToolFullPath>$(_FscToolFullPath_netcoreapp1_0)</FscToolFullPath>
       </PropertyGroup>
     </When>
     <Otherwise>
       <PropertyGroup>
-        <FscTaskAssemblyPath>$(FscTaskAssemblyPath_net)</FscTaskAssemblyPath>
-        <FscToolPath>$(FscToolPath_net)</FscToolPath>
+        <FscTaskAssemblyPath>$(_FscTaskAssemblyPath_net)</FscTaskAssemblyPath>
+        <FscToolPath>$(MSBuildThisFileDirectory)../tools</FscToolPath>
         <FscToolExe>fsc.exe</FscToolExe>
-        <FscToolFullPath>$(FscToolFullPath_net)</FscToolFullPath>
+        <FscToolFullPath>$(_FscToolFullPath_net)</FscToolFullPath>
       </PropertyGroup>
     </Otherwise>
   </Choose>
