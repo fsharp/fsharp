@@ -54,8 +54,6 @@
    These are statically linked
     <file src="..\Release\net40\bin\Microsoft.DiaSymReader.dll" target="tools\Microsoft.DiaSymReader.dll" />
     <file src="..\Release\net40\bin\Microsoft.DiaSymReader.PortablePdb.dll" target="tools\Microsoft.DiaSymReader.PortablePdb.dll" />
-    <file src="..\Release\net40\bin\System.Collections.Immutable.dll" target="tools\System.Collections.Immutable.dll" />
-    <file src="..\Release\net40\bin\System.Reflection.Metadata.dll" target="tools\System.Reflection.Metadata.dll" />
 -->
     <file src="..\Release\net40\bin\Microsoft.Build.dll" target="tools\Microsoft.Build.dll" />
     <file src="..\Release\net40\bin\Microsoft.Build.Engine.dll" target="tools\Microsoft.Build.Engine.dll" />
