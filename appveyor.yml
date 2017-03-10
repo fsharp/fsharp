@@ -5,6 +5,7 @@ init:
 build_script: 
   - cmd: dotnet --version
   - cmd: build.bat
+  - cmd: build-netcore.bat
   - ps: .\appveyor.ps1
 
 test: off
