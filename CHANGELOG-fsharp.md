@@ -1,4 +1,4 @@
-4.1.0.1
+4.1.0.2
   * Include DiaSymReader DLLs in nuget package
 
 4.1.0.0
