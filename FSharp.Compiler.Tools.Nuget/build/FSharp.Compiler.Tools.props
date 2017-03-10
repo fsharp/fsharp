@@ -14,9 +14,6 @@ WARNING:  You CAN MODIFY this file, doesnt matter if you are not knowledgeable a
 
   <PropertyGroup>
 
-    <!-- Note: You may need to modify your fsproj to actually use this, otherwise it may just get overwritten -->
-    <FSharpTargetsPath>$(MSBuildThisFileDirectory)../tools/Microsoft.FSharp.Targets</FSharpTargetsPath>
-
     <!-- specific netcoreapp1.0 fsc -->
     <_FscTaskAssemblyPath_netcoreapp1_0>$(MSBuildThisFileDirectory)netcoreapp1.0/FSharp.Build.dll</_FscTaskAssemblyPath_netcoreapp1_0>
     <_FscToolFullPath_netcoreapp1_0>$(MSBuildThisFileDirectory)netcoreapp1.0/fsc.dll</_FscToolFullPath_netcoreapp1_0>
