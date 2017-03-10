@@ -25,10 +25,9 @@ WARNING:  You CAN MODIFY this file, doesnt matter if you are not knowledgeable a
     <FscToolPath_net>$(MSBuildThisFileDirectory)../tools</FscToolPath_net>
 
   </PropertyGroup>
-  
+
   <Choose>
-    <When Condition="('$(MSBuildRuntimeType)' != '') AND ('$(MSBuildRuntimeType)' != 'Full')">      
-      <!-- Default to netcoreapp fsc if it is neither empty (legacy msbuild) or full -->
+    <When Condition="'$(MSBuildRuntimeType)' == 'Core'">
       <PropertyGroup>
         <FscTaskAssemblyPath>$(FscTaskAssemblyPath_netcoreapp1_0)</FscTaskAssemblyPath>
         <FscToolPath>$(FscToolPath_netcoreapp1_0)</FscToolPath>
@@ -36,7 +35,7 @@ WARNING:  You CAN MODIFY this file, doesnt matter if you are not knowledgeable a
         <FscToolFullPath>$(FscToolFullPath_netcoreapp1_0)</FscToolFullPath>
       </PropertyGroup>
     </When>
-    <Otherwise>    
+    <Otherwise>
       <PropertyGroup>
         <FscTaskAssemblyPath>$(FscTaskAssemblyPath_net)</FscTaskAssemblyPath>
         <FscToolPath>$(FscToolPath_net)</FscToolPath>
