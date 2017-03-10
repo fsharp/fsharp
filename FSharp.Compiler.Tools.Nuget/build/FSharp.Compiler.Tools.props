@@ -35,6 +35,9 @@ WARNING:  You CAN MODIFY this file, doesnt matter if you are not knowledgeable a
     </When>
     <Otherwise>
       <PropertyGroup>
+        <!-- Note: You may need to modify your fsproj to actually use this, otherwise it may just get overwritten. -->
+        <FSharpTargetsPath>$(MSBuildThisFileDirectory)../tools/Microsoft.FSharp.Targets</FSharpTargetsPath>
+
         <FscTaskAssemblyPath>$(_FscTaskAssemblyPath_net)</FscTaskAssemblyPath>
         <FscToolPath>$(MSBuildThisFileDirectory)../tools</FscToolPath>
         <FscToolExe>fsc.exe</FscToolExe>
