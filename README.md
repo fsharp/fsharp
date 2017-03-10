@@ -61,6 +61,10 @@ The FSharp.Core NuGet package includes all of the FSharp.Core redistributables f
 The FSharp.Compiler.Tools package includes the F# compiler `fsc.exe`, F# Interactive `fsi.exe`, build support,
 a copy of FSharp.Core used to run the tools, and related DLLs.
 
+It can be used if you wish to use the latest F# compiler on a computer without relying on the installed version of Visual Studio.
+Adding it via nuget to a project will override the in-box compiler with the compiler from the nuget package.
+Note: due to how previous versions of the default project templates referenced ``Microsoft.FSharp.Targets``, you may need to manually modify your project file once (see https://github.com/fsharp/fsharp/issues/676). 
+
 A feed of nuget packages from builds is available from AppVeyor using the NuGet feed: https://ci.appveyor.com/nuget/fsgit-fsharp
 
 If using Paket, add the source at the top of `paket.dependencies`.
