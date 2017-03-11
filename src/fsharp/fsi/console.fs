@@ -17,7 +17,7 @@ module internal ConsoleOptions =
   let fixupRequired = false
 #else
   // Bug 4254 was fixed in Dev11 (Net4.5), so this flag tracks making this fix up version specific.
-  let fixupRequired = not FSharpEnvironment.IsRunningOnNetFx45OrAbove
+  let fixupRequired = not FSharpEnvironment.IsRunningOnNetFx45OrAbove && Type.GetType("Mono.Runtime") = null
 #endif
 
   let fixNonUnicodeSystemConsoleReadKey = ref fixupRequired
