@@ -52,6 +52,11 @@
 	<!-- Microsoft.FSharp.targets : Used in the source tree as of 08/04/2016 (prior this was Microsoft.FSharp.Targets) -->
 
     <file src="..\Release\net40\bin\Microsoft.FSharp.Targets" target="tools\Microsoft.FSharp.Targets" />
+	
+	<!-- Microsoft.Portable.FSharp.targets: used in source tree -->
+	<!-- Microsoft.Portable.FSharp.Targets: imported by project templates -->
+    <file src="..\Release\net40\bin\Microsoft.Portable.FSharp.targets" target="tools\Microsoft.Portable.FSharp.Targets" />
+	
     <file src="..\Release\net40\bin\Microsoft.Build.dll" target="tools\Microsoft.Build.dll" />
     <file src="..\Release\net40\bin\Microsoft.Build.Engine.dll" target="tools\Microsoft.Build.Engine.dll" />
     <file src="..\Release\net40\bin\Microsoft.Build.Framework.dll" target="tools\Microsoft.Build.Framework.dll" />
