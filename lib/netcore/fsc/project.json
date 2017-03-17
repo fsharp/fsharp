@@ -12,7 +12,7 @@
           "type": "platform",
           "version": "1.0.1"
         },
-        "Microsoft.FSharp.Compiler.netcore": "1.0.0-rc-170122",
+        "Microsoft.FSharp.Compiler.netcore": "1.0.0-rc-170316-0"
       },
       "imports": "dnxcore50"
     }
