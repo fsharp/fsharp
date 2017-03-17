@@ -1,3 +1,6 @@
+4.1.1
+  * Update compiler tools
+
 4.1.0.2
   * Include DiaSymReader DLLs in nuget package
 
