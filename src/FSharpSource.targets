@@ -35,7 +35,7 @@
                 <MicroBuildAssemblyFileLanguage>fs</MicroBuildAssemblyFileLanguage>
               </PropertyGroup>
             </When>
-            <When Condition="'$(AssemblyName)' == 'FSharp.Core' or '$(AssemblyName)' == 'FSharp.Build' or '$(AssemblyName)' == 'FSharp.Compiler' or '$(AssemblyName)' == 'FSharp.Compiler.Interactive.Settings' or '$(AssemblyName)' == 'FSharp.Compiler.Server.Shared' or '$(AssemblyName)' == 'fsc' or '$(AssemblyName)' == 'fsi' or '$(AssemblyName)' == 'fsiAnyCpu' or '$(AssemblyName)' == 'FSharp.Compiler.Unittests' or '$(AssemblyName)' == 'HostedCompilerServer'" >
+            <When Condition="'$(AssemblyName)' == 'FSharp.Core' or '$(AssemblyName)' == 'FSharp.Build' or '$(AssemblyName)' == 'FSharp.Compiler' or '$(AssemblyName)' == 'FSharp.Compiler.Interactive.Settings' or '$(AssemblyName)' == 'FSharp.Compiler.Server.Shared' or '$(AssemblyName)' == 'fsc' or '$(AssemblyName)' == 'fsi' or '$(AssemblyName)' == 'fsiAnyCpu' or '$(AssemblyName)' == 'FSharp.Compiler.Unittests' or '$(AssemblyName)' == 'HostedCompilerServer' or '$(AssemblyName)' == 'ILComparer'" >
               <PropertyGroup Condition="'$(AssemblyName)' == 'FSharp.Core' and ('$(TargetFramework)' == 'portable47' or '$(TargetFramework)' == 'portable7' or '$(TargetFramework)' == 'portable78' or '$(TargetFramework)' == 'portable259' or '$(TargetFramework)' == 'coreclr')">
                  <IsPortableProfile>true</IsPortableProfile>
               </PropertyGroup>
@@ -459,7 +459,7 @@
     <When Condition="'$(BuildWith)' == '' AND ('$(TargetFramework)'=='portable47' OR '$(TargetFramework)'=='portable7' OR '$(TargetFramework)'=='portable78' OR '$(TargetFramework)'=='portable259' OR '$(TargetFramework)'=='coreclr')">
       <!-- Compiling portable/coreclr with Proto, currently always use a .NET Framework/Mono proto -->
       <PropertyGroup>
-        <OutputPath Condition=" '$(CustomOutputPath)' != 'true' ">$(FSharpSourcesRoot)\..\$(Configuration)\$(TargetFrameworkOutputDirectory)\bin</OutputPath>
+        <OutputPath Condition=" '$(CustomOutputPath)' != 'true' ">$(FSharpSourcesRoot)\..\$(Configuration)\$(TargetFramework)\bin</OutputPath>
         <FscToolPath>$(FSharpSourcesRoot)\..\Proto\$(ProtoFlavour)\bin</FscToolPath>
         <FscToolExe>fsc-proto.exe</FscToolExe>
         <FSharpTargetsPath>..\Proto\$(ProtoFlavour)\bin\Microsoft.Portable.FSharp-proto.targets</FSharpTargetsPath>
@@ -483,6 +483,7 @@
     <Message Text="FSharpTargetsPath = $(FSharpTargetsPath)" />
     <Message Text="FSharpSourcesRoot = $(FSharpSourcesRoot)" />
     <Message Text="FscToolPath = $(FscToolPath)" />
+    <Message Text="FsSrGenToolPath = $(FsSrGenToolPath)" />
     <Message Text="FsiToolPath = $(FsiToolPath)" />
     <Message Text="FsLexToolPath = $(FsLexToolPath)" />
     <Message Text="FsYaccToolPath = $(FsYaccToolPath)" />
@@ -491,6 +492,7 @@
     <Error Text="Expect $(FSharpSourcesRoot)\..\Tools\lkg\fsc.exe to exist when BUILD_PROTO_WITH_CORECLR_LKG==1" Condition="'$(BUILD_PROTO_WITH_CORECLR_LKG)' == 1 AND !Exists('$(FSharpSourcesRoot)\..\Tools\lkg\fsc.exe')" />
     <Error Text="Expect $(FscToolPath)\$(FscToolExe) to exist" Condition="!Exists('$(FscToolPath)\$(FscToolExe)')" />
     <Error Text="Expect $(DotnetFscCompilerPath) to exist if non-empty" Condition="'$(DotnetFscCompilerPath)' != '' AND !Exists('$(DotnetFscCompilerPath)')" />
+    <Error Text="Expect $(FsSrGenToolPath)\fssrgen.exe to exist" Condition="!Exists('$(FsSrGenToolPath)\fssrgen.exe')" />
     <Error Text="Expect $(FsiToolPath)\$(FsiToolExe) to exist" Condition="!Exists('$(FsiToolPath)\$(FsiToolExe)')" />
     <Error Text="Expect $(FsLexToolPath)\$(FsLexToolExe) to exist" Condition="!Exists('$(FsLexToolPath)\$(FsLexToolExe)')" />
     <Error Text="Expect $(FsYaccToolPath)\$(FsYaccToolExe) to exist" Condition="!Exists('$(FsYaccToolPath)\$(FsYaccToolExe)')" />
@@ -592,10 +594,11 @@
     <PropertyGroup>
       <SrcRootDirectory>$([System.IO.Directory]::GetParent($(MSBuildThisFileDirectory.TrimEnd("\"))))</SrcRootDirectory>
     </PropertyGroup>
-    <Exec Command="git config &#45;&#45;get remote.origin.url" ConsoleToMsBuild="true">
+    <Exec Command="git config --get remote.origin.url" ConsoleToMsBuild="true">
       <Output TaskParameter="ConsoleOutput" PropertyName="RemoteUri" />
     </Exec>
 
+    <!-- https://raw.githubusercontent.com/KevinRansom/visualfsharp/98e8c9a2ca09a36ebd024eb424fc050a831053cd/build.cmd  -->
     <Exec Command="git rev-parse HEAD" ConsoleToMsBuild="true">
       <Output TaskParameter="ConsoleOutput" PropertyName="LatestCommit" />
     </Exec>
