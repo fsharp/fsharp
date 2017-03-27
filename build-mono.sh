@@ -21,15 +21,5 @@ chmod +x travis-autogen.sh
 # Generate the makefiles 
 # Bootstrap the compiler
 # Install the compiler
-./travis-autogen.sh &&
-make &&
-sudo make install
-
-echo "------------------------------ INSTALLED FILES --------------"
-ls -xlR /usr/lib/mono/fsharp
-ls -xlR /usr/lib/mono/xbuild
-ls -xlR /usr/lib/mono/gac/FSharp*
-ls -xlR /usr/lib/mono/Microsoft*
-ls -xlR /usr/lib/mono/Reference\ Assemblies
-echo "------------------------------ INSTALLED FILES --------------"
+./travis-autogen.sh && make && sudo make install && echo "------------------------------ INSTALLED FILES --------------" && ls -xlR /usr/lib/mono/fsharp /usr/lib/mono/xbuild /usr/lib/mono/gac/FSharp* /usr/lib/mono/Microsoft* /usr/lib/mono/Reference\ Assemblies
 

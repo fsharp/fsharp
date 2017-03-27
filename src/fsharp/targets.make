@@ -143,7 +143,6 @@ install-sdk-lib:
 # Install the library binaries in the GAC directory, 
 install-gac-lib:
 	@echo "Installing $(ASSEMBLY)"
-	@mkdir -p $(DESTDIR)$(monodir)/$(TARGET)
 	@if test "x$(DELAY_SIGN)" = "x1"; then \
 	    echo "Signing $(outdir)$(ASSEMBLY) with Mono key"; \
 	    $(monobindir)/sn -q -R $(outdir)$(ASSEMBLY) $(srcdir)../../../mono.snk; \
