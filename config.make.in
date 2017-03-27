@@ -39,19 +39,19 @@ endif
 ifeq (x-$(FSharpCoreBackVersion)-,x-3.0-)
 VERSION = 4.3.0.0
 REFASSEMPATH = .NETFramework/v4.0
-outsuffix = $(TargetFramework)/fsharp30
+outsuffix = fsharp30/$(TargetFramework)
 endif
 
 ifeq (x-$(FSharpCoreBackVersion)-,x-3.1-)
 VERSION = 4.3.1.0
 REFASSEMPATH = .NETFramework/v4.0
-outsuffix = $(TargetFramework)/fsharp31
+outsuffix = fsharp31/$(TargetFramework)
 endif
 
 ifeq (x-$(FSharpCoreBackVersion)-,x-4.0-)
 VERSION = 4.4.0.0
 REFASSEMPATH = .NETFramework/v4.0
-outsuffix = $(TargetFramework)/fsharp40
+outsuffix = fsharp40/$(TargetFramework)
 endif
 
 endif
