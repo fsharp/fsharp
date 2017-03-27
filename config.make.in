@@ -18,7 +18,7 @@ monotouchenabled := @MONOTOUCHENABLED@
 monodroidenabled := @MONODROIDENABLED@
 xamarinmacenabled := @XAMARINMACENABLED@
 
-gacdir := ${libdir}mono
+monodir := ${libdir}mono
 
 TargetFramework = net40
 CONFIG = release
@@ -29,10 +29,35 @@ outsuffix = $(TargetFramework)
 # Version number mappings for various versions of FSharp.Core
 
 ifeq (x-$(TargetFramework)-,x-net40-)
+
+ifeq (x-$(FSharpCoreBackVersion)-,x--)
 VERSION = 4.4.1.0
 TARGET = 4.5
 PKGINSTALL = yes
 REFASSEMPATH = .NETFramework/v4.0
+endif
+
+ifeq (x-$(FSharpCoreBackVersion)-,x-3.0-)
+VERSION = 4.3.0.0
+TARGET = 4.5
+REFASSEMPATH = .NETFramework/v4.0
+outsuffix = $(outsuffix)/fsharp30
+endif
+
+ifeq (x-$(FSharpCoreBackVersion)-,x-3.1-)
+VERSION = 4.3.1.0
+TARGET = 4.5
+REFASSEMPATH = .NETFramework/v4.0
+outsuffix = $(outsuffix)/fsharp31
+endif
+
+ifeq (x-$(FSharpCoreBackVersion)-,x-4.0-)
+VERSION = 4.4.0.0
+TARGET = 4.5
+REFASSEMPATH = .NETFramework/v4.0
+outsuffix = $(outsuffix)/fsharp40
+endif
+
 endif
 
 ifeq (x-$(TargetFramework)-,x-monodroid-)

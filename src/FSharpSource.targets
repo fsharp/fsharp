@@ -14,8 +14,12 @@
     <FSCoreVersion Condition="'$(TargetFramework)' == 'xamarintvos' ">3.98.41.0</FSCoreVersion>
     <FSCoreVersion Condition="'$(TargetFramework)' == 'xamarinmacmobile' ">3.99.41.0</FSCoreVersion>
     <FSCoreVersion Condition="'$(TargetFramework)' == 'xamarinmacfull' ">3.100.41.0</FSCoreVersion>
+    <FSCoreVersion Condition="'$(FSharpCoreBackVersion)' == '3.0' AND '$(FSCoreVersion)' == '4.4.1.0'">4.3.0.0</FSCoreVersion>
+    <FSCoreVersion Condition="'$(FSharpCoreBackVersion)' == '3.1' AND '$(FSCoreVersion)' == '4.4.1.0'">4.3.1.0</FSCoreVersion>
+    <FSCoreVersion Condition="'$(FSharpCoreBackVersion)' == '4.0' AND '$(FSCoreVersion)' == '4.4.1.0'">4.4.0.0</FSCoreVersion>
 
-  </PropertyGroup>
+  
+</PropertyGroup>
   <Choose>
     <When Condition="'$(Configuration)' == 'Debug' or '$(Configuration)' == 'Release' ">
       <PropertyGroup>
