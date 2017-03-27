@@ -37,16 +37,16 @@ build clean install:
 	$(MAKE) -C FSharp.Core TargetFramework=net40 FSharpCoreBackVersion=3.0 $@
 	$(MAKE) -C FSharp.Core TargetFramework=net40 FSharpCoreBackVersion=3.1 $@
 	$(MAKE) -C FSharp.Core TargetFramework=net40 FSharpCoreBackVersion=4.0 $@
-	$(MAKE) -C policy.2.0.FSharp.Core $@
-	$(MAKE) -C policy.2.3.FSharp.Core $@
-	$(MAKE) -C policy.3.3.FSharp.Core $@
-	$(MAKE) -C policy.3.7.FSharp.Core $@
-	$(MAKE) -C policy.3.47.FSharp.Core $@
-	$(MAKE) -C policy.3.78.FSharp.Core $@
-	$(MAKE) -C policy.3.259.FSharp.Core $@
-	$(MAKE) -C policy.4.0.FSharp.Core $@
-	$(MAKE) -C policy.4.3.FSharp.Core $@
-	$(MAKE) -C policy.4.4.FSharp.Core $@
+	$(MAKE) -C policy.2.0.FSharp.Core TargetFramework=net40 $@
+	$(MAKE) -C policy.2.3.FSharp.Core TargetFramework=net40 $@
+	$(MAKE) -C policy.3.3.FSharp.Core TargetFramework=net40 $@
+	$(MAKE) -C policy.3.7.FSharp.Core TargetFramework=net40 $@
+	$(MAKE) -C policy.3.47.FSharp.Core TargetFramework=net40 $@
+	$(MAKE) -C policy.3.78.FSharp.Core TargetFramework=net40 $@
+	$(MAKE) -C policy.3.259.FSharp.Core TargetFramework=net40 $@
+	$(MAKE) -C policy.4.0.FSharp.Core TargetFramework=net40 $@
+	$(MAKE) -C policy.4.3.FSharp.Core TargetFramework=net40 $@
+	$(MAKE) -C policy.4.4.FSharp.Core TargetFramework=net40 $@
 	$(MAKE) only-monotouch only-monodroid only-xamarinmac
 
 build-pcl-fsharp-core clean-pcl-fsharp-core install-pcl-fsharp-core:
