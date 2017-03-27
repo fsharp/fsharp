@@ -24,3 +24,12 @@ chmod +x travis-autogen.sh
 ./travis-autogen.sh &&
 make &&
 sudo make install
+
+echo "------------------------------ INSTALLED FILES --------------"
+ls -xR /usr/lib/mono/fsharp
+ls -xR /usr/lib/mono/xbuild
+ls -xR /usr/lib/mono/gac/FSharp*
+ls -xR /usr/lib/mono/Microsoft*
+ls -xR /usr/lib/mono/Reference\ Assemblies
+echo "------------------------------ INSTALLED FILES --------------"
+
