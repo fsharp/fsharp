@@ -17,22 +17,16 @@ If you are using Windows, you should fork the https://github.com/Microsoft/visua
 
 ### Contributing on Linux/OSX when using Mono
 
-If you are using Linux or OSX, you can prepare your contributions by forking this repository (the code is
-essentially the same). This will give you access to the cross-platform testing
-available from this repo. At the moment the process is:
+If you are using Linux or OSX, you can still contribute directly to  https://github.com/Microsoft/visualfsharp if you like,
+Your contributions will then be merged into this repo.
 
-1. Fork this repo.
-2. Build and test using the subset of tests available in this repo. If you like, submit a PR to this repo in order to trigger an automatic Travis run, or set up a Travis hook in your fork.
-3. Seek initial review by posting an issue in this repository or https://github.com/Microsoft/visualfsharp. Make it clear you are working on Linux or OSX.
-4. Cherry-pick your changes into a pull request for https://github.com/Microsoft/visualfsharp and submit for final testing and clearance.
-5. The change will then be merged into this repo at a later point.
-
-Contributions specifically related to cross-platform packaging should be made here.
-
+Alternatively, you can prepare your contributions by forking this repository (the code is
+essentially the same). This will give you access to some additional the cross-platform testing
+available from this repo. 
 
 ## Status
 
-The `master` branch is for F# 4.x. The `fsharp4` branch archives F# 4.0, the `fsharp31` branch archives F# 3.1.
+The `master` branch is for F# 4.x. 
 
 To bootstrap the compiler, binaries built from an earlier version of this project are used.
 
@@ -155,15 +149,6 @@ You can also build FSharp.Core.dll for other profiles:
 Change to ``` /p:Configuration=Debug``` for debug binaries.
 
 
-### Windows, using xbuild (e.g. if only Mono is installed):
-
-    xbuild src\fsharp-proto-build.proj
-    xbuild src\fsharp-library-build.proj
-    xbuild src\fsharp-compiler-build.proj
-
-Building using xbuild does not yet lay down a Mono-ready distribution (see src/fsharp/targets.make), so should only
-be used for private development rather than preparing distributions.
-
 ## Build Note: Strong Names
 
 The FSharp.Core.dll produced is only delay-signed (Mono does not require strong names).
@@ -174,41 +159,37 @@ If a strong-name signed FSharp.Core.dll is needed then use the one in
 
 ## How to Install
 
-Built main compiler binaries go to
-    Release/net40/bin
-
-
-`make install` sends the binaries to the `prefix` location, e.g.
-
-    /Library/Frameworks/Mono.framework/Versions/Current/lib/mono/2.0/FSharp.Core.dll
-    /Library/Frameworks/Mono.framework/Versions/Current/lib/mono/2.1/FSharp.Core.dll
-    /Library/Frameworks/Mono.framework/Versions/Current/lib/mono/4.0/fsc.exe
-    /Library/Frameworks/Mono.framework/Versions/Current/lib/mono/4.0/FSharp.Compiler.dll
-    ...
-    /Library/Frameworks/Mono.framework/Versions/Current/lib/mono/4.5/fsc.exe
-    /Library/Frameworks/Mono.framework/Versions/Current/lib/mono/4.5/FSharp.Compiler.dll
-    ...
-    /Library/Frameworks/Mono.framework/Versions/Current/lib/mono/gac/.../FSharp.Compiler.dll
-    /Library/Frameworks/Mono.framework/Versions/Current/lib/mono/gac/.../FSharp.Compiler.dll
-    ...
-
-plus some files for xbuild support
-
-    /Library/Frameworks/Mono.framework/Versions/Current/lib/mono/Microsoft\ F#/v4.0/*
-    /Library/Frameworks/Mono.framework/Versions/Current/lib/mono/Microsoft\ SDKs/F#/3.0/Framework/*
-
-(these names are the canonical names for Microsoft.FSharp.Targets used by project files coming from Visual Studio)
-
-plus scripts
-
-    /usr/bin/fsharpc   (F# compiler)
-    /usr/bin/fsharpi   (F# Interactive)
+    make install
 
 ## Development Notes
 
-### Submitting Pull Requests
 
-Feel free to send in-progress Pull Requests to ask for clarification or direction for a feature or task. 
+### How Linux Mono Packages are actully made (by Xamarin/Microsoft)
+
+See https://github.com/mono/linux-packaging-fsharp/
+
+* There is a tag for each upstream source tag
+* There is a tag for each "debianized" package
+* Packaging metadata lives in debian/
+* install files are files installed to disk
+* cligacinstall are GAC-installed libraries
+* `control` is the manifest of packages
+* rules is the Makefile which handles build/install.
+
+Jo Shields (@directhex) says:
+
+> I tend to only update the published packages when a) the same update has already been pulled in on Mac by Jason, and either b) something breaks horribly in the existing version on a new Mono, or c) someone explicitly asks me to.
+
+### How F# becomes part of Mono on OSX are actully made (by Xamarin/Microsoft)
+
+
+Jason Imison says:
+
+> We use a system called BockBuild that pushes versions of F# (sometimes with patches) out with Mono for OSX (F# is bundled with mono here, not a separate package).
+
+> You can see an example build script here (if you have access, ping me if not) https://github.com/xamarin/bockbuild/blob/2017-02/packages/fsharp.py. Unfortunately, you need to know the branch name here – 2017-02 is what is going to be released with VS for Mac aka Mono 4.9.x
+
+
 
 ### Integrating changes from 'visualfsharp'
 
