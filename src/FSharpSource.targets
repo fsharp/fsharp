@@ -553,16 +553,6 @@
   <Import Project="scripts\fssrgen.targets" />
 <!--  <Import Project="Microbuild.Settings.targets" Condition="'$(UseMicroBuild)' == 'true'"/> -->
 
-  <Target Name="ReorderCompileItems"
-      BeforeTargets="CoreCompile"
-      Condition="'$(GenerateTargetFrameworkAttribute)' == 'true' AND '$(AssemblyName)' == 'FSharp.Core'">  
-    <ItemGroup>
-        <!-- Infrastructure puts AssemblyAttributes.fs at the beginning of the list and this will result and error when compiling FSharp.Core because all primitive types are not defined yet - fixup is required-->
-        <CompileAfter Include="@(CompileBefore)"/>
-        <CompileBefore Remove="@(CompileBefore)"/>   
-    </ItemGroup>
-  </Target>
-
 <!-- Not included in Linux/Mono build because target 'CopyFilesToOutputDirectory' doesn't exist and this fails the Mono build -->
 <!-- 
   <Target Name="dotnetrestore" BeforeTargets="Build" Condition=" '$(TargetFramework)' == 'coreclr' ">

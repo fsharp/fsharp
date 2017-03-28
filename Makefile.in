@@ -16,12 +16,12 @@ build-proto: restore $(bootstrap)/FSharp.Core.dll $(bootstrap)/FSharp.Core.sigda
 	$(MAKE) -C src/fsharp/Fsc-proto Configuration=Proto $@
 
 build: restore
-	$(MAKE) -C src/fsharp $@
 	BUILD_NET40=1 BUILD_NET40_BACK_VERSIONS=1 TEST_NET40_COREUNIT_SUITE=1 MONO_ENV_OPTIONS=$(monoopts) $(XBUILD) /p:Configuration=$(Configuration) /p:TargetFramework=$(TargetFramework) build-everything.proj
+	$(MAKE) -C src/fsharp $@
 
 clean:
-	$(MAKE) -C src/fsharp $@
 	BUILD_NET40=1 BUILD_NET40_BACK_VERSIONS=1 TEST_NET40_COREUNIT_SUITE=1 MONO_ENV_OPTIONS=$(monoopts) $(XBUILD) /p:Configuration=$(Configuration) /p:TargetFramework=$(TargetFramework) build-everything.proj /t:Clean
+	$(MAKE) -C src/fsharp $@
 
 # Make the proto using the bootstrap, then make the final compiler using the proto
 # We call MAKE sequentially because we don't want build-final to explicitly depend on build-proto,
