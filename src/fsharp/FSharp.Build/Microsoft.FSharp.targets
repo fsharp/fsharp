@@ -286,7 +286,8 @@ this file.
             Overwrite="true"/>
 
         <ItemGroup>
-            <CompileBefore Include="$(TargetFrameworkMonikerAssemblyAttributesPath)" Condition="'$(AdditionalSourcesText)' != ''"/>
+            <CompileBefore Include="$(TargetFrameworkMonikerAssemblyAttributesPath)" Condition="'$(AdditionalSourcesText)' != '' AND '$(OutputType)' == 'Exe'"/>
+            <CompileAfter Include="$(TargetFrameworkMonikerAssemblyAttributesPath)" Condition="'$(AdditionalSourcesText)' != '' AND '$(OutputType)' != 'Exe'"/>
         </ItemGroup>
 
     </Target>
