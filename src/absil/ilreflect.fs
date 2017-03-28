@@ -617,7 +617,7 @@ let convFieldInit x =
 let TypeBuilderInstantiationT = 
     let ty = 
 #if ENABLE_MONO_SUPPORT
-        if runningOnMono && (isNull ty) then
+        if runningOnMono then
             let ty = Type.GetType("System.Reflection.MonoGenericClass")
             match ty with
             | null -> Type.GetType("System.Reflection.Emit.TypeBuilderInstantiation")
