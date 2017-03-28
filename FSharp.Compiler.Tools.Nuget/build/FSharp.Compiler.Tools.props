@@ -30,7 +30,7 @@ WARNING:  You CAN MODIFY this file, doesnt matter if you are not knowledgeable a
   <PropertyGroup Condition="'$(TargetFramework)' == '' and '$(TargetFrameworks)' == ''">
     <!-- when using the old SDK, override FSharpTargetsPath and PortableFSharpTargetsPath -->
     <FSharpTargetsPath>$(MSBuildThisFileDirectory)../tools/Microsoft.FSharp.Targets</FSharpTargetsPath>
-    <PortableFSharpTargetsPath>$(MSBuildThisFileDirectory)../tools/Microsoft.Portable.FSharp.Targets</FSharpTargetsPath>
+    <PortableFSharpTargetsPath>$(MSBuildThisFileDirectory)../tools/Microsoft.Portable.FSharp.Targets</PortableFSharpTargetsPath>
   </PropertyGroup>
   
   <Choose>
