@@ -1,9 +1,9 @@
-4.1.1
+4.1.0
   * [align fsc task and target file](https://github.com/fsharp/fsharp/pull/690)
   * [use install layout that includes mono/fsharp](https://github.com/fsharp/fsharp/pull/689)
   * [fix F# Intereactive on Mono 4.9+](https://github.com/fsharp/fsharp/pull/687)
 
-4.1.1
+4.1.0
   * Update compiler tools
 
 4.1.0.2

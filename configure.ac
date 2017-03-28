@@ -46,7 +46,7 @@ fi
 
 AC_ARG_WITH([bootstrap], 
         [  --with-bootstrap=<path>], 
-        [], [with_bootstrap=packages/FSharp.Compiler.Tools.4.1.1/tools])
+        [], [with_bootstrap=packages/FSharp.Compiler.Tools.4.1.0/tools])
 with_bootstrap=$(mkdir -p "$with_bootstrap" && cd "$with_bootstrap" && pwd)
 AC_MSG_NOTICE(Using bootstrap : $with_bootstrap)
 AC_SUBST(with_bootstrap)
