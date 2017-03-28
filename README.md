@@ -3,70 +3,94 @@
 The main purpose of this repository is to package the open editions of the F# compiler, core library
 and core tools for use across multiple platforms.  
 
-
 ### Contributing to the F# Compiler, Core Library and Tools
 
 Most contributions to the F# compiler/library/tools go first via the  
 repository at https://github.com/Microsoft/visualfsharp.  This ensures that the main
 packaging of F# on Windows (the Visual F# Tools) also includes any contributions that are made, and
-ensures that the versions do not diverge.
-
-### Contributing on Windows
+ensures that the versions do not diverge, and that very extensive QA is done.
 
 If you are using Windows, you should fork the https://github.com/Microsoft/visualfsharp repo and contribute directly there. Your contributions will then be merged into this repo.
 
-### Contributing on Linux/OSX when using Mono
-
 If you are using Linux or OSX, you can still contribute directly to  https://github.com/Microsoft/visualfsharp if you like,
-Your contributions will then be merged into this repo.
-
-Alternatively, you can prepare your contributions by forking this repository (the code is
+Your contributions will then be merged into this repo. Alternatively, you can prepare your contributions by forking this repository (the code is
 essentially the same). This will give you access to some additional the cross-platform testing
 available from this repo. 
 
+
 ## Status
 
-The `master` branch is for F# 4.x. 
-
-To bootstrap the compiler, binaries built from an earlier version of this project are used.
-
-This codebase uses the Apache 2.0 license.
-
-## Current Build Status
+The `master` branch is for F# 4.x.  To bootstrap the compiler, binaries built from an earlier version of this project are used. This codebase uses the Apache 2.0 license.
 
 | F#   | Branch        | OSX/Linux | Windows |
 |------|---------------|-----------|---------|
-| 4.0+ | ``master``    | [![Build Status](https://travis-ci.org/fsharp/fsharp.png?branch=master)](https://travis-ci.org/fsharp/fsharp/branches) | [![Build status](https://ci.appveyor.com/api/projects/status/7m5e2yr0snbbr7t9)](https://ci.appveyor.com/project/fsgit/fsharp) |
+| 4.1+ | ``master``    | [![Build Status](https://travis-ci.org/fsharp/fsharp.png?branch=master)](https://travis-ci.org/fsharp/fsharp/branches) | [![Build status](https://ci.appveyor.com/api/projects/status/7m5e2yr0snbbr7t9)](https://ci.appveyor.com/project/fsgit/fsharp) |
 | 4.0  | ``fsharp4``   | [![Build Status](https://travis-ci.org/fsharp/fsharp.png?branch=fsharp4)](https://travis-ci.org/fsharp/fsharp/branches) |
-| 3.1  | ``fsharp31``  | [![Build Status](https://travis-ci.org/fsharp/fsharp.png?branch=fsharp31)](https://travis-ci.org/fsharp/fsharp/branches) |
-| 3.0  | ``fsharp_30`` | [![Build Status](https://travis-ci.org/fsharp/fsharp.png?branch=fsharp_30)](https://travis-ci.org/fsharp/fsharp/branches) |
 
 
-## NuGet Feed of FSharp.Core and FSharp.Compiler.Tools packages
+## Outputs of this repository
 
-This repo is currently used to make two NuGet packages - FSharp.Core and FSharp.Compiler.Tools.
+### The ``FSharp.Core`` NuGet package
 
-Stable builds are available in the NuGet Gallery:
-[http://www.nuget.org/packages/FSharp.Core](http://www.nuget.org/packages/FSharp.Core) and [http://www.nuget.org/packages/FSharp.Compiler.Tools](http://www.nuget.org/packages/FSharp.Compiler.Tools).
+This repo is currently used to make [the FSharp.Core NuGet package](http://www.nuget.org/packages/FSharp.Core). This package includes
+* FSharp.Core.dll for .NET Framework/Mono
+* FSharp.Core.dll for .NET Core
+* FSharp.Core.dll for portable profiles
 
 
 The FSharp.Core NuGet package includes all of the FSharp.Core redistributables from Visual F#. In addition, they include assemblies for MonoAndroid and MonoTouch built from this repository.
 
-The FSharp.Compiler.Tools package includes the F# compiler `fsc.exe`, F# Interactive `fsi.exe`, build support,
-a copy of FSharp.Core used to run the tools, and related DLLs.
+### The ``FSharp.Compiler.Tools`` NuGet package
 
-It can be used if you wish to use the latest F# compiler on a computer without relying on the installed version of Visual Studio.
+This repo is currently used to make [the FSharp.Compiler.Tools NuGet package]((http://www.nuget.org/packages/FSharp.Compiler.Tools). This package includes the
+following for both .NET Core and .NET Framework/Mono:
+* the F# compiler `fsc.exe` 
+* F# Interactive `fsi.exe`
+* build support,
+* a copy of FSharp.Core used to run the tools
+* related DLLs.
+
+The ``FSharp.Compiler.Tools`` NuGet package can be used if you wish to use the latest F# compiler on a computer without relying on the installed version of Visual Studio.
 Adding it via nuget to a project will override the in-box compiler with the compiler from the nuget package.
-Note: due to how previous versions of the default project templates referenced ``Microsoft.FSharp.Targets``, you may need to manually modify your project file once (see https://github.com/fsharp/fsharp/issues/676). 
+Note: you will need to manually modify your project file once (see https://github.com/fsharp/fsharp/issues/676). 
+
+### The ``fsharp`` Debian Linux Package
+
+Usage: See http://fsharp.org/use/linux
+
+    apt-get install fsharp
+
+See https://github.com/mono/linux-packaging-fsharp/, a downstream variant of this repo, where this package is actually made.
+
+* There is a tag for each upstream source tag
+* There is a tag for each "debianized" package
+* Packaging metadata lives in debian/
+* install files are files installed to disk
+* cligacinstall are GAC-installed libraries
+* `control` is the manifest of packages
+* rules is the Makefile which handles build/install.
+
+Jo Shields (@directhex) says:
+
+> I tend to only update the published packages when a) the same update has already been pulled in on Mac by Jason, and either b) something breaks horribly in the existing version on a new Mono, or c) someone explicitly asks me to.
+
+### F# in Mono + OSX 
+
+F# is pacakged as part of Mono on OSX. Jason Imison says:
+
+> We use a system called BockBuild that pushes versions of F# (sometimes with patches) out with Mono for OSX (F# is bundled with mono here, not a separate package).
+
+> You can see an example build script here (if you have access, ping me if not) https://github.com/xamarin/bockbuild/blob/2017-02/packages/fsharp.py. Unfortunately, you need to know the branch name here – 2017-02 is what is going to be released with VS for Mac aka Mono 4.9.x
+
+
+### Package feeds
 
 A feed of nuget packages from builds is available from AppVeyor using the NuGet feed: https://ci.appveyor.com/nuget/fsgit-fsharp
 
 If using Paket, add the source at the top of `paket.dependencies`.
 
-```
-source https://www.nuget.org/api/v2
-source https://ci.appveyor.com/nuget/fsgit-fsharp
-```
+    source https://www.nuget.org/api/v2
+    source https://ci.appveyor.com/nuget/fsgit-fsharp
 
 Add the dependency on `FSharp.Core` and run `paket update`. See the AppVeyor [build history](https://ci.appveyor.com/project/fsgit/fsharp/history) for a list of available versions. Here are some options for specifying the dependency:
 
@@ -81,7 +105,11 @@ If using NuGet Package Manager, add the source to the list of available package 
 
 ![Available Package Sources](https://cloud.githubusercontent.com/assets/80104/8576204/3cf077f4-2555-11e5-80cc-5db185af7d1e.png)
 
-## Build Requirements
+
+
+## Development Guide
+
+### Build Requirements
 
 Building F# on Unix-type platforms requires
 [Mono](http://www.mono-project.com/download/) 4.4 or higher. If you
@@ -99,9 +127,8 @@ At a shell prompt, say:
 
 	xcode-select --install
 
-## How to Build
 
-### Linux and other Unix systems:
+### Building on Linux and other Unix systems:
 The usual:
 
 	./autogen.sh --prefix=/usr
@@ -110,7 +137,8 @@ The usual:
 
 By default that makes optimized binaries. To make debug, use ```make CONFIG=debug```
 
-### OS X
+
+### Building on OS X
 
 Use a prefix to your version of Mono:
 
@@ -120,7 +148,7 @@ Use a prefix to your version of Mono:
 
 By default that makes optimized binaries. To make debug, use ```make CONFIG=debug```
 
-### Windows, using msbuild
+### Building on Windows
 
 Build using:
 
@@ -128,28 +156,7 @@ Build using:
 
 This build the proto compiler, then the library, then the final compiler.
 
-You can also build these independently using:
-
-    msbuild src\fsharp-proto-build.proj
-    ngen install lib\proto\fsc-proto.exe
-    msbuild src\fsharp-library-build.proj /p:Configuration=Release
-    msbuild src\fsharp-compiler-build.proj /p:Configuration=Release
-
-You can also build FSharp.Core.dll for other profiles:
-
-    msbuild src\fsharp-library-build.proj /p:TargetFramework=net20 /p:Configuration=Release
-    msbuild src\fsharp-library-build.proj /p:TargetFramework=portable47 /p:Configuration=Release
-    msbuild src\fsharp-library-build.proj /p:TargetFramework=portable7 /p:Configuration=Release
-    msbuild src\fsharp-library-build.proj /p:TargetFramework=portable78 /p:Configuration=Release
-    msbuild src\fsharp-library-build.proj /p:TargetFramework=portable259 /p:Configuration=Release
-
-    msbuild src\fsharp-library-build.proj /p:TargetFramework=monodroid /p:Configuration=Release
-    msbuild src\fsharp-library-build.proj /p:TargetFramework=monotouch /p:Configuration=Release
-
-Change to ``` /p:Configuration=Debug``` for debug binaries.
-
-
-## Build Note: Strong Names
+### Build Note: Strong Names
 
 The FSharp.Core.dll produced is only delay-signed (Mono does not require strong names).
 If a strong-name signed FSharp.Core.dll is needed then use the one in
@@ -157,39 +164,16 @@ If a strong-name signed FSharp.Core.dll is needed then use the one in
     lib\bootstrap\signed\.NETFramework\v4.0\4.3.0.0\FSharp.Core.dll
     lib\bootstrap\signed\.NETFramework\v4.0\4.3.1.0\FSharp.Core.dll
 
-## How to Install
 
-    make install
+### Building on Linux  (Wheezy build)
 
-## Development Notes
-
-
-### How Linux Mono Packages are actully made (by Xamarin/Microsoft)
-
-See https://github.com/mono/linux-packaging-fsharp/
-
-* There is a tag for each upstream source tag
-* There is a tag for each "debianized" package
-* Packaging metadata lives in debian/
-* install files are files installed to disk
-* cligacinstall are GAC-installed libraries
-* `control` is the manifest of packages
-* rules is the Makefile which handles build/install.
-
-Jo Shields (@directhex) says:
-
-> I tend to only update the published packages when a) the same update has already been pulled in on Mac by Jason, and either b) something breaks horribly in the existing version on a new Mono, or c) someone explicitly asks me to.
-
-### How F# becomes part of Mono on OSX are actully made (by Xamarin/Microsoft)
-
-
-Jason Imison says:
-
-> We use a system called BockBuild that pushes versions of F# (sometimes with patches) out with Mono for OSX (F# is bundled with mono here, not a separate package).
-
-> You can see an example build script here (if you have access, ping me if not) https://github.com/xamarin/bockbuild/blob/2017-02/packages/fsharp.py. Unfortunately, you need to know the branch name here – 2017-02 is what is going to be released with VS for Mac aka Mono 4.9.x
-
-
+    vagrant up
+    vagrant ssh
+    cd /vagrant
+    sudo apt-get install dos2unix autoconf
+    ./autogen.sh --prefix=/usr
+    make
+    sudo make install
 
 ### Integrating changes from 'visualfsharp'
 
@@ -209,7 +193,7 @@ There are certain guidelines that need to be followed when integrating changes f
 
 ### Continuous Integration Build
 
-A continuous integration build is set up with Travis. See above.
+A continuous integration build is set up with Travis and AppVeyor. See above.
 
 ### Editing the Compiler with Visual Studio, Xamarin Studio or MonoDevelop
 
@@ -243,17 +227,6 @@ In 2016 the Microsoft http://visualfsharp.codeplex.com repo moved to GitHub at h
 
 This repository uses bootstrapping libraries, tools and F# compiler. The `lib/bootstrap/X.0` directories contain mono-built libraries, compiler and tools that can be used to bootstrap a build. You can also supply your own via the `--with-bootstrap` option.
 
-### Wheezy build
-
-```
-vagrant up
-vagrant ssh
-cd /vagrant
-sudo apt-get install dos2unix autoconf
-./autogen.sh --prefix=/usr
-make
-sudo make install
-```
 
 
 Maintainers
