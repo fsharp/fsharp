@@ -1,8 +1,10 @@
 .PHONY: install-sdk-lib install-gac-lib
 
 build:
+	MONO_ENV_OPTIONS=$(monoopts) $(XBUILD) /p:Configuration=$(Configuration) /p:TargetFramework=$(TargetFramework) /p:MonoLibDir40=$(monogacdir40)
 
 clean:
+	MONO_ENV_OPTIONS=$(monoopts) $(XBUILD) /p:Configuration=$(Configuration) /p:TargetFramework=$(TargetFramework) /t:Clean
 
 # Install .optdata/.sigdata if they exist (they go alongside FSharp.Core)
 # Install the .Targets file. The XBuild targets file gets installed into the place(s) expected for standard F# project
