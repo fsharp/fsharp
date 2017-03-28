@@ -15,4 +15,5 @@ script: ./build-mono.sh && ./test-mono.sh
 matrix:
   allow_failures:
     - os: osx
+	  mono: latest
 
