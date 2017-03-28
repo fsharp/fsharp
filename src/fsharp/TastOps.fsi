@@ -59,7 +59,7 @@ val ensureCcuHasModuleOrNamespaceAtPath : CcuThunk -> Ident list -> CompilationP
 
 val stripExpr : Expr -> Expr
 
-val valsOfBinds : Bindings -> FlatVals 
+val valsOfBinds : Bindings -> Vals 
 val (|ExprValWithPossibleTypeInst|_|) : Expr -> (ValRef * ValUseFlag * TType list * range) option
 
 //-------------------------------------------------------------------------
@@ -140,7 +140,7 @@ val mkCompGenLet : range -> Val -> Expr -> Expr -> Expr
 // Invisible bindings are never given a sequence point and should never have side effects
 val mkInvisibleLet : range -> Val -> Expr -> Expr -> Expr
 val mkInvisibleBind : Val -> Expr -> Binding
-val mkInvisibleFlatBindings : FlatVals -> FlatExprs -> Bindings
+val mkInvisibleBinds : Vals -> Exprs -> Bindings
 val mkLetRecBinds : range -> Bindings -> Expr -> Expr
  
 //-------------------------------------------------------------------------
@@ -227,7 +227,7 @@ val mkArrayElemAddress : TcGlobals -> ILReadonly * bool * ILArrayShape * TType *
 val maxTuple : int
 val goodTupleFields : int
 val isCompiledTupleTyconRef : TcGlobals -> TyconRef -> bool
-val mkCompiledTupleTyconRef : TcGlobals -> bool -> 'a list -> TyconRef
+val mkCompiledTupleTyconRef : TcGlobals -> bool -> int -> TyconRef
 val mkCompiledTupleTy : TcGlobals -> bool -> TTypes -> TType
 val mkCompiledTuple : TcGlobals -> bool -> TTypes * Exprs * range -> TyconRef * TTypes * Exprs * range
 val mkGetTupleItemN : TcGlobals -> range -> int -> ILType -> bool -> Expr -> TType -> Expr
@@ -982,7 +982,7 @@ val mkPrintfFormatTy : TcGlobals -> TType -> TType -> TType -> TType -> TType ->
 //------------------------------------------------------------------------- 
 
 type TypeDefMetadata = 
-     | ILTypeMetadata of ILScopeRef * ILTypeDef
+     | ILTypeMetadata of TILObjectReprData
      | FSharpOrArrayOrByrefOrTupleOrExnTypeMetadata 
 #if EXTENSIONTYPING
      | ProvidedTypeMetadata of  TProvidedTypeInfo
@@ -1014,17 +1014,18 @@ val rankOfArrayTy : TcGlobals -> TType -> int
 
 val isInterfaceTyconRef                 : TyconRef -> bool
 
-val isDelegateTy           : TcGlobals -> TType -> bool
-val isInterfaceTy          : TcGlobals -> TType -> bool
-val isRefTy                : TcGlobals -> TType -> bool
-val isSealedTy             : TcGlobals -> TType -> bool
-val isComInteropTy         : TcGlobals -> TType -> bool
-val underlyingTypeOfEnumTy : TcGlobals -> TType -> TType
-val normalizeEnumTy        : TcGlobals -> TType -> TType
-val isStructTy             : TcGlobals -> TType -> bool
-val isUnmanagedTy          : TcGlobals -> TType -> bool
-val isClassTy              : TcGlobals -> TType -> bool
-val isEnumTy               : TcGlobals -> TType -> bool
+val isDelegateTy                 : TcGlobals -> TType -> bool
+val isInterfaceTy                : TcGlobals -> TType -> bool
+val isRefTy                      : TcGlobals -> TType -> bool
+val isSealedTy                   : TcGlobals -> TType -> bool
+val isComInteropTy               : TcGlobals -> TType -> bool
+val underlyingTypeOfEnumTy       : TcGlobals -> TType -> TType
+val normalizeEnumTy              : TcGlobals -> TType -> TType
+val isStructTy                   : TcGlobals -> TType -> bool
+val isUnmanagedTy                : TcGlobals -> TType -> bool
+val isClassTy                    : TcGlobals -> TType -> bool
+val isEnumTy                     : TcGlobals -> TType -> bool
+val isStructRecordOrUnionTyconTy : TcGlobals -> TType -> bool
 
 /// For "type Class as self", 'self' is fixed up after initialization. To support this,
 /// it is converted behind the scenes to a ref. This function strips off the ref and
@@ -1224,7 +1225,7 @@ val mkCallFailInit           : TcGlobals -> range -> Expr
 val mkCallFailStaticInit    : TcGlobals -> range -> Expr 
 val mkCallCheckThis          : TcGlobals -> range -> TType -> Expr -> Expr 
 
-val mkCase : Test * DecisionTree -> DecisionTreeCase
+val mkCase : DecisionTreeTest * DecisionTree -> DecisionTreeCase
 
 val mkCallQuoteToLinqLambdaExpression : TcGlobals -> range -> TType -> Expr -> Expr
 
