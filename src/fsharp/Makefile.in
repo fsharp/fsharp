@@ -13,6 +13,7 @@ build clean install:
 	$(MAKE) -C FSharp.Compiler.Server.Shared $@
 	$(MAKE) -C fsi $@
 	$(MAKE) -C fsiAnyCpu $@
+	$(MAKE) -C FSharp.Core.Unittests $@
 	$(MAKE) -C FSharp.Core TargetFramework=net40 FSharpCoreBackVersion=3.0 $@
 	$(MAKE) -C FSharp.Core TargetFramework=net40 FSharpCoreBackVersion=3.1 $@
 	$(MAKE) -C FSharp.Core TargetFramework=net40 FSharpCoreBackVersion=4.0 $@
