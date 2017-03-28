@@ -6,22 +6,6 @@ srcdir := @abs_srcdir@/
 
 include @abs_top_builddir@/config.make
 
-FSC=$(protodir)fsc-proto.exe
-
-FLAGS += \
-	$(SIGN_FLAGS) \
-	--target:exe
-
-REFERENCES += \
-	-r:$(outdir)FSharp.Core.dll \
-	-r:$(outdir)FSharp.Compiler.dll \
-	-r:$(monogacdirXX)/System.Runtime.Remoting.dll \
-	-r:$(monogacdirXX)/System.Windows.Forms.dll
-
-sources = \
-	../../assemblyinfo/assemblyinfo.fsc.exe.fs \
-	../fscmain.fs
-
 include $(topdir)/src/fsharp/targets.make
 
 install: install-bin 

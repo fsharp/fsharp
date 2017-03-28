@@ -160,6 +160,7 @@ src/fsharp/FSharp.Build-proto/Makefile
 src/fsharp/FSharp.Compiler-proto/Makefile
 src/fsharp/Fsc-proto/Makefile
 src/fsharp/FSharp.Core/Makefile
+src/fsharp/FSharp.Core.Unittests/Makefile
 src/fsharp/FSharp.Build/Makefile
 src/fsharp/FSharp.Compiler/Makefile
 src/fsharp/Fsc/Makefile

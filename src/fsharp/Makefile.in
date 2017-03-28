@@ -2,29 +2,8 @@ srcdir := @abs_srcdir@/
 
 include @abs_top_builddir@/config.make
 
-# Make the proto using the bootstrap, then make the final compiler using the proto
-# We call MAKE sequentially because we don't want build-final to explicitly depend on build-proto,
-# as that causes a complete recompilation of both proto and final everytime you touch the
-# compiler sources.
-all:
-	$(MAKE) build-proto
-	$(MAKE) build
-
-# We need the bootstrap's FSharp.Core to run the proto
-build-proto: $(bootstrap)/FSharp.Core.dll $(bootstrap)/FSharp.Core.sigdata $(bootstrap)/FSharp.Core.optdata
-	@-mkdir -p $(protodir)
-	cp -p $(bootstrap)/FSharp.Core.dll $(protodir)FSharp.Core.dll
-	cp -p $(bootstrap)/FSharp.Core.sigdata $(protodir)FSharp.Core.sigdata
-	cp -p $(bootstrap)/FSharp.Core.optdata $(protodir)FSharp.Core.optdata
-	$(MAKE) -C FSharp.Build-proto Configuration=Proto $@
-	$(MAKE) -C FSharp.Compiler-proto Configuration=Proto $@
-	$(MAKE) -C Fsc-proto Configuration=Proto $@
 
 # The main targets
-#
-# - Only build a net20 version of FSharp.Core if net20 mscorlib exists
-#   Modern versions of mono no longer include net20 or net35 assemblies
-#
 build clean install:
 	$(MAKE) -C FSharp.Core TargetFramework=net40 $@
 	$(MAKE) -C FSharp.Build $@
@@ -34,19 +13,20 @@ build clean install:
 	$(MAKE) -C FSharp.Compiler.Server.Shared $@
 	$(MAKE) -C fsi $@
 	$(MAKE) -C fsiAnyCpu $@
-	$(MAKE) -C policy.2.0.FSharp.Core $@
-	$(MAKE) -C policy.2.3.FSharp.Core $@
-	$(MAKE) -C policy.3.3.FSharp.Core $@
-	$(MAKE) -C policy.3.7.FSharp.Core $@
-	$(MAKE) -C policy.3.47.FSharp.Core $@
-	$(MAKE) -C policy.3.78.FSharp.Core $@
-	$(MAKE) -C policy.3.259.FSharp.Core $@
-	$(MAKE) -C policy.4.0.FSharp.Core $@
-	$(MAKE) -C policy.4.3.FSharp.Core $@
-	$(MAKE) -C policy.4.4.FSharp.Core $@
-	$(MAKE) only-monotouch only-monodroid only-xamarinmac
-
-build-pcl-fsharp-core clean-pcl-fsharp-core install-pcl-fsharp-core:
+	$(MAKE) -C FSharp.Core.Unittests $@
+	$(MAKE) -C FSharp.Core TargetFramework=net40 FSharpCoreBackVersion=3.0 $@
+	$(MAKE) -C FSharp.Core TargetFramework=net40 FSharpCoreBackVersion=3.1 $@
+	$(MAKE) -C FSharp.Core TargetFramework=net40 FSharpCoreBackVersion=4.0 $@
+	$(MAKE) -C policy.2.0.FSharp.Core TargetFramework=net40 $@
+	$(MAKE) -C policy.2.3.FSharp.Core TargetFramework=net40 $@
+	$(MAKE) -C policy.3.3.FSharp.Core TargetFramework=net40 $@
+	$(MAKE) -C policy.3.7.FSharp.Core TargetFramework=net40 $@
+	$(MAKE) -C policy.3.47.FSharp.Core TargetFramework=net40 $@
+	$(MAKE) -C policy.3.78.FSharp.Core TargetFramework=net40 $@
+	$(MAKE) -C policy.3.259.FSharp.Core TargetFramework=net40 $@
+	$(MAKE) -C policy.4.0.FSharp.Core TargetFramework=net40 $@
+	$(MAKE) -C policy.4.3.FSharp.Core TargetFramework=net40 $@
+	$(MAKE) -C policy.4.4.FSharp.Core TargetFramework=net40 $@
 ifeq ("$(pclenabled47)", "yes")
 	$(MAKE) -C FSharp.Core TargetFramework=portable47 $@
 endif
@@ -59,59 +39,21 @@ endif
 ifeq ("$(pclenabled259)", "yes")
 	$(MAKE) -C FSharp.Core TargetFramework=portable259 $@
 endif
-
-all-monotouch-monodroid-xamarinmac:
-	$(MAKE) build-proto
-	$(MAKE) only-monotouch only-monodroid only-xamarinmac only-xamarinwatchos only-xamarintvos
-
-all-monotouch-xamarinmac:
-	$(MAKE) build-proto
-	$(MAKE) only-monotouch only-xamarinmac only-xamarinwatchos only-xamarintvos
-
-all-monotouch-monodroid:
-	$(MAKE) build-proto
-	$(MAKE) only-monotouch only-monodroid only-xamarinwatchos only-xamarintvos
-
-all-monotouch:
-	$(MAKE) build-proto
-	$(MAKE) only-monotouch only-xamarinwatchos only-xamarintvos
-
-only-monotouch:
 ifeq ("$(monotouchenabled)", "yes")
 	$(MAKE) -C FSharp.Core TargetFramework=monotouch build
 endif
-
-only-xamarinwatchos:
 ifeq ("$(monotouchenabled)", "yes")
 	$(MAKE) -C FSharp.Core TargetFramework=xamarinwatchos build
 endif
-
-only-xamarintvos:
 ifeq ("$(monotouchenabled)", "yes")
 	$(MAKE) -C FSharp.Core TargetFramework=xamarintvos build
 endif
-
-all-monodroid:
-	$(MAKE) build-proto
-	$(MAKE) only-monodroid
-
-only-monodroid:
 ifeq ("$(monodroidenabled)", "yes")
 	$(MAKE) -C FSharp.Core TargetFramework=monodroid build
 endif
-
-all-xamarinmac:
-	$(MAKE) build-proto
-	$(MAKE) only-xamarinmac
-
-only-xamarinmac: only-xamarinmacmobile only-xamarinmacfull
-
-only-xamarinmacmobile:
 ifeq ("$(xamarinmacenabled)", "yes")
 	$(MAKE) -C FSharp.Core TargetFramework=xamarinmacmobile build
 endif
-
-only-xamarinmacfull:
 ifeq ("$(xamarinmacenabled)", "yes")
 	$(MAKE) -C FSharp.Core TargetFramework=xamarinmacfull build
 endif

@@ -1,9 +1,48 @@
 include $(topsrcdir)config.make
 
-all clean install build build-proto all-monotouch-monodroid-xamarinmac all-monotouch-monodroid all-monotouch all-monodroid all-xamarinmac all-monotouch-xamarinmac:
+.PHONY: restore
+
+restore:
 	MONO_ENV_OPTIONS=$(monoopts) mono .nuget/NuGet.exe restore packages.config -PackagesDirectory packages -ConfigFile .nuget/NuGet.Config
+
+# We need the bootstrap's FSharp.Core to run the proto
+build-proto: restore $(bootstrap)/FSharp.Core.dll $(bootstrap)/FSharp.Core.sigdata $(bootstrap)/FSharp.Core.optdata
+	@-mkdir -p $(protodir)
+	cp -p $(bootstrap)/FSharp.Core.dll $(protodir)FSharp.Core.dll
+	cp -p $(bootstrap)/FSharp.Core.sigdata $(protodir)FSharp.Core.sigdata
+	cp -p $(bootstrap)/FSharp.Core.optdata $(protodir)FSharp.Core.optdata
+	$(MAKE) -C src/fsharp/FSharp.Build-proto Configuration=Proto $@
+	$(MAKE) -C src/fsharp/FSharp.Compiler-proto Configuration=Proto $@
+	$(MAKE) -C src/fsharp/Fsc-proto Configuration=Proto $@
+
+build: restore
 	$(MAKE) -C src/fsharp $@
-	BUILD_NET40=1 TEST_NET40_COREUNIT_SUITE=1 MONO_ENV_OPTIONS=$(monoopts) $(XBUILD) /p:Configuration=$(Configuration) /p:TargetFramework=$(TargetFramework) build-everything.proj
+
+clean:
+	$(MAKE) -C src/fsharp $@
+
+# Make the proto using the bootstrap, then make the final compiler using the proto
+# We call MAKE sequentially because we don't want build-final to explicitly depend on build-proto,
+# as that causes a complete recompilation of both proto and final everytime you touch the
+# compiler sources.
+all:
+	$(MAKE) build-proto
+	$(MAKE) build
+
+install:
+	-rm -fr $(DESTDIR)$(monodir)/fsharp
+	-rm -fr $(DESTDIR)$(monodir)/Microsoft\ F#
+	-rm -fr $(DESTDIR)$(monodir)/Microsoft\ SDKs/F#
+	-rm -fr $(DESTDIR)$(monodir)/gac/FSharp.Core
+	-rm -fr $(DESTDIR)$(monodir)/gac/FSharp.Compiler
+	-rm -fr $(DESTDIR)$(monodir)/xbuild/Microsoft/VisualStudio/v/FSharp
+	-rm -fr $(DESTDIR)$(monodir)/xbuild/Microsoft/VisualStudio/v11.0/FSharp
+	-rm -fr $(DESTDIR)$(monodir)/xbuild/Microsoft/VisualStudio/v12.0/FSharp
+	-rm -fr $(DESTDIR)$(monodir)/xbuild/Microsoft/VisualStudio/v14.0/FSharp
+	-rm -fr $(DESTDIR)$(monodir)/xbuild/Microsoft/VisualStudio/v15.0/FSharp
+	$(MAKE) -C src/fsharp $@
+	echo "------------------------------ INSTALLED FILES --------------"
+	ls -xlR $(DESTDIR)$(monodir)/fsharp $(DESTDIR)$(monodir)/xbuild $(DESTDIR)$(monodir)/gac/FSharp* $(DESTDIR)$(monodir)/Microsoft*
 
 dist:
 	-rm -r fsharp-$(DISTVERSION) fsharp-$(DISTVERSION).tar.bz2

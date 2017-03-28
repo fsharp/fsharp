@@ -22,7 +22,7 @@ build:
 clean: 
 	-rm -f $(outdir)$(NAME).dll 
 
-install: install-gac-lib
+install: install-sdk-lib install-gac-lib
 
 
 

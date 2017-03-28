@@ -14,8 +14,12 @@
     <FSCoreVersion Condition="'$(TargetFramework)' == 'xamarintvos' ">3.98.41.0</FSCoreVersion>
     <FSCoreVersion Condition="'$(TargetFramework)' == 'xamarinmacmobile' ">3.99.41.0</FSCoreVersion>
     <FSCoreVersion Condition="'$(TargetFramework)' == 'xamarinmacfull' ">3.100.41.0</FSCoreVersion>
+    <FSCoreVersion Condition="'$(FSharpCoreBackVersion)' == '3.0' AND '$(FSCoreVersion)' == '4.4.1.0'">4.3.0.0</FSCoreVersion>
+    <FSCoreVersion Condition="'$(FSharpCoreBackVersion)' == '3.1' AND '$(FSCoreVersion)' == '4.4.1.0'">4.3.1.0</FSCoreVersion>
+    <FSCoreVersion Condition="'$(FSharpCoreBackVersion)' == '4.0' AND '$(FSCoreVersion)' == '4.4.1.0'">4.4.0.0</FSCoreVersion>
 
-  </PropertyGroup>
+  
+</PropertyGroup>
   <Choose>
     <When Condition="'$(Configuration)' == 'Debug' or '$(Configuration)' == 'Release' ">
       <PropertyGroup>
@@ -430,7 +434,7 @@
     <TargetFrameworkOutputDirectory Condition="'$(FSharpCoreBackVersion)' == '3.0'">fsharp30\$(TargetFramework)</TargetFrameworkOutputDirectory>
     <TargetFrameworkOutputDirectory Condition="'$(FSharpCoreBackVersion)' == '3.1'">fsharp31\$(TargetFramework)</TargetFrameworkOutputDirectory>
     <TargetFrameworkOutputDirectory Condition="'$(FSharpCoreBackVersion)' == '4.0'">fsharp40\$(TargetFramework)</TargetFrameworkOutputDirectory>
-    <IntermediateOutputPath>obj\$(ConfigurationOutputDirectory)\$(TargetFrameworkOutputDirectory)\</IntermediateOutputPath>
+    <IntermediateOutputPath>obj\$(TargetFrameworkOutputDirectory)\</IntermediateOutputPath>
   </PropertyGroup>
 
   <Choose>
@@ -548,16 +552,6 @@
   </Target>
   <Import Project="scripts\fssrgen.targets" />
 <!--  <Import Project="Microbuild.Settings.targets" Condition="'$(UseMicroBuild)' == 'true'"/> -->
-
-  <Target Name="ReorderCompileItems"
-      BeforeTargets="CoreCompile"
-      Condition="'$(GenerateTargetFrameworkAttribute)' == 'true' AND '$(AssemblyName)' == 'FSharp.Core'">  
-    <ItemGroup>
-        <!-- Infrastructure puts AssemblyAttributes.fs at the beginning of the list and this will result and error when compiling FSharp.Core because all primitive types are not defined yet - fixup is required-->
-        <CompileAfter Include="@(CompileBefore)"/>
-        <CompileBefore Remove="@(CompileBefore)"/>   
-    </ItemGroup>
-  </Target>
 
 <!-- Not included in Linux/Mono build because target 'CopyFilesToOutputDirectory' doesn't exist and this fails the Mono build -->
 <!-- 

@@ -1,7 +1,6 @@
-NAME=FSharp.Core
+NAME=FSharp.Core.Unittests
 ASSEMBLY = $(NAME).dll
-DELAY_SIGN=1
-TOKEN=$(FSCORE_DELAY_SIGN_TOKEN)
+TOKEN=$(SIGN_TOKEN)
 
 srcdir := @abs_srcdir@/
 
@@ -9,6 +8,5 @@ include @abs_top_builddir@/config.make
 
 include $(topdir)/src/fsharp/targets.make
 
-install: install-sdk-lib install-gac-lib
-
+install: 
 
