@@ -24,6 +24,15 @@ WARNING:  You CAN MODIFY this file, doesnt matter if you are not knowledgeable a
 
   </PropertyGroup>
 
+
+  <!-- ref https://github.com/dotnet/standard/blob/master/Microsoft.Packaging.Tools/tasks/targets/Microsoft.Packaging.Tools.targets#L12 -->
+  <!-- Condition here is a hack until https://github.com/dotnet/sdk/issues/534 is fixed -->
+  <PropertyGroup Condition="'$(TargetFramework)' == '' and '$(TargetFrameworks)' == ''">
+    <!-- when using the old SDK, override FSharpTargetsPath and PortableFSharpTargetsPath -->
+    <FSharpTargetsPath>$(MSBuildThisFileDirectory)../tools/Microsoft.FSharp.Targets</FSharpTargetsPath>
+    <PortableFSharpTargetsPath>$(MSBuildThisFileDirectory)../tools/Microsoft.Portable.FSharp.Targets</PortableFSharpTargetsPath>
+  </PropertyGroup>
+  
   <Choose>
     <When Condition="'$(MSBuildRuntimeType)' == 'Core'">
       <PropertyGroup>
