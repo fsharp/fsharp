@@ -1,10 +1,8 @@
 .PHONY: install-sdk-lib install-gac-lib
 
 build:
-	MONO_ENV_OPTIONS=$(monoopts) $(XBUILD) /p:Configuration=$(Configuration) /p:TargetFramework=$(TargetFramework)
 
 clean:
-	MONO_ENV_OPTIONS=$(monoopts) $(XBUILD) /p:Configuration=$(Configuration) /p:TargetFramework=$(TargetFramework) /t:Clean
 
 # Install .optdata/.sigdata if they exist (they go alongside FSharp.Core)
 # Install the .Targets file. The XBuild targets file gets installed into the place(s) expected for standard F# project
@@ -103,6 +101,11 @@ install-sdk-lib:
 			mkdir -p $(DESTDIR)$(monodir)/fsharp/; \
 			$(INSTALL_LIB) $(outdir)$(NAME).dll $(DESTDIR)$(monodir)/fsharp/; \
 		fi; \
+	    if test -e $(outdir)$(NAME).dll.config; then \
+			echo "Installing $(outdir)$(NAME).dll to $(DESTDIR)$(monodir)/fsharp/"; \
+			mkdir -p $(DESTDIR)$(monodir)/fsharp/; \
+			$(INSTALL_LIB) $(outdir)$(NAME).dll.config $(DESTDIR)$(monodir)/fsharp/; \
+		fi; \
 	    if test -e $(outdir)$(NAME).xml; then \
 			echo "Installing $(outdir)$(NAME).xml into $(DESTDIR)$(monodir)/fsharp/"; \
 			mkdir -p $(DESTDIR)$(monodir)/fsharp/; \
@@ -176,6 +179,7 @@ install-bin:
 	@mkdir -p $(DESTDIR)$(monodir)/fsharp
 	@mkdir -p $(DESTDIR)$(bindir)
 	$(INSTALL_BIN) $(outdir)$(ASSEMBLY) $(DESTDIR)$(monodir)/fsharp
+	$(INSTALL_BIN) $(outdir)$(ASSEMBLY).config $(DESTDIR)$(monodir)/fsharp
 	$(INSTALL_BIN) $(outdir)$(subst fs,fsharp,$(NAME)) $(DESTDIR)$(bindir)
 
 

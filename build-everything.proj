@@ -12,6 +12,9 @@
     <ProjectsWithNet40 Include="src/fsharp/Fsc/Fsc.fsproj" />
     <ProjectsWithNet40 Include="src/fsharp/fsi/Fsi.fsproj" />
     <ProjectsWithNet40 Include="src/fsharp/fsiAnyCpu/FsiAnyCPU.fsproj"/>
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(BUILD_NET40_BACK_VERSIONS)'=='1'">
     <ProjectsWithNet40BackVersions Include="src/fsharp/FSharp.Core/FSharp.Core.fsproj" />
   </ItemGroup>
 
