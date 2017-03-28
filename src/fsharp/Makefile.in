@@ -2,13 +2,6 @@ srcdir := @abs_srcdir@/
 
 include @abs_top_builddir@/config.make
 
-# Make the proto using the bootstrap, then make the final compiler using the proto
-# We call MAKE sequentially because we don't want build-final to explicitly depend on build-proto,
-# as that causes a complete recompilation of both proto and final everytime you touch the
-# compiler sources.
-all:
-	$(MAKE) build-proto
-	$(MAKE) build
 
 # We need the bootstrap's FSharp.Core to run the proto
 build-proto: $(bootstrap)/FSharp.Core.dll $(bootstrap)/FSharp.Core.sigdata $(bootstrap)/FSharp.Core.optdata
@@ -21,10 +14,6 @@ build-proto: $(bootstrap)/FSharp.Core.dll $(bootstrap)/FSharp.Core.sigdata $(boo
 	$(MAKE) -C Fsc-proto Configuration=Proto $@
 
 # The main targets
-#
-# - Only build a net20 version of FSharp.Core if net20 mscorlib exists
-#   Modern versions of mono no longer include net20 or net35 assemblies
-#
 build clean install:
 	$(MAKE) -C FSharp.Core TargetFramework=net40 $@
 	$(MAKE) -C FSharp.Build $@

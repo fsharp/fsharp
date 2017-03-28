@@ -1,9 +1,23 @@
 include $(topsrcdir)config.make
 
-all clean install build build-proto all-monotouch-monodroid-xamarinmac all-monotouch-monodroid all-monotouch all-monodroid all-xamarinmac all-monotouch-xamarinmac:
+all clean build build-proto all-monotouch-monodroid-xamarinmac all-monotouch-monodroid all-monotouch all-monodroid all-xamarinmac all-monotouch-xamarinmac:
 	MONO_ENV_OPTIONS=$(monoopts) mono .nuget/NuGet.exe restore packages.config -PackagesDirectory packages -ConfigFile .nuget/NuGet.Config
-	$(MAKE) -C src/fsharp $@
 	BUILD_NET40=1 TEST_NET40_COREUNIT_SUITE=1 MONO_ENV_OPTIONS=$(monoopts) $(XBUILD) /p:Configuration=$(Configuration) /p:TargetFramework=$(TargetFramework) build-everything.proj
+	$(MAKE) -C src/fsharp $@
+
+# Make the proto using the bootstrap, then make the final compiler using the proto
+# We call MAKE sequentially because we don't want build-final to explicitly depend on build-proto,
+# as that causes a complete recompilation of both proto and final everytime you touch the
+# compiler sources.
+all:
+	$(MAKE) build-proto
+	$(MAKE) build
+
+install:
+	-rm -fr $(DESTDIR)$(monodir)/fsharp
+	$(MAKE) -C src/fsharp $@
+	echo "------------------------------ INSTALLED FILES --------------"
+	ls -xlR $(DESTDIR)$(monodir)/fsharp $(DESTDIR)$(monodir)/xbuild $(DESTDIR)$(monodir)/gac/FSharp* $(DESTDIR)$(monodir)/Microsoft*
 
 dist:
 	-rm -r fsharp-$(DISTVERSION) fsharp-$(DISTVERSION).tar.bz2
