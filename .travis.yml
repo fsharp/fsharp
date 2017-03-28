@@ -6,6 +6,7 @@ os:
 
 mono:
   - latest
+  - 4.8.0
   - 4.4.2
 
 install:
@@ -13,7 +14,12 @@ install:
 script: ./build-mono.sh && ./test-mono.sh
 
 matrix:
-  allow_failures:
-    - os: osx
-      mono: latest
+  exclude:
+  - os: osx
+    mono: 4.4.2
+  - os: osx
+    mono: 4.8.0
 
+#  allow_failures:
+#    - os: osx
+#      mono: latest
