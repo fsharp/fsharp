@@ -6,7 +6,7 @@ components that augment those available from other vendors, including:
 
 * FSharp.Compiler.Tools NuGet package
 * FSharp.Core NuGet package
-* FSharp.Compiler.Service NuGet package ([repo](http://github.com/fsharp/FSharp.Compiler.Service))
+* FSharp.Compiler.Service NuGet package ([derivative repo](http://github.com/fsharp/FSharp.Compiler.Service))
 * “fsharp” Linux packges for F# + Mono (debian, Gentoo and others) 
 * “fsharp” as bundled in OSX tooling for F# + Mono 
 * “fsharp” docker image
@@ -198,10 +198,8 @@ git pull visualfsharp master
 There are certain guidelines that need to be followed when integrating changes from upstream:
 * this repository does not undergo the QA test process that upstream does, so the `tests/fsharpqa` folder and all files within should be removed when merging
 * this repository does not contain any of the Visual Studio tooling or integrations, so the `vsintegration` directory and all files within should be removed when merging
-* anything referencing `FSharp.LaunguageService.Compiler` is a Microsoft-internal version of the open FSharp.Compiler.Service repository, and as such should be removed when merging
-* Windows-specific `update.cmd` and `runtests.cmd` aren't used in this repository, and so should be removed when merging
-* anything that references the `Salsa` testing library is used by Microsoft to test the Visual Studio integrations, and as such should be removed when merging
-* the foremost example of the above is the `root/unittests` folder, which contains tests for the Visual Studio integration using Salsa, and as such should be removed when merging
+* anything referencing `FSharp.LaunguageService.Compiler` is a Microsoft-internal version of the open FSharp.Compiler.Service repository, and should be removed when merging
+* Windows-specific scrips like `update.cmd` and `runtests.cmd` aren't used in this repository, and so should be removed when merging
 
 ### Continuous Integration Build
 
