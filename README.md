@@ -101,6 +101,9 @@ F# is pacakged as part of Mono on OSX. Jason Imison says:
 
 > We build fsharp/fsharp internally so that we’re not dependent on you pushing out fixes / bumping packages.  Miguel de Icaza  likes to ‘own’ the code that we ship precisely to stop these kind of emergency issues.
 
+@cartermp says: 
+
+> For future reference, [dependencies and code for the F# editing and F# Interactive support in Visual Studio for Mac/Xamaring Studio) is here](https://github.com/mono/monodevelop/blob/edcdc0d8daa4c25bb8ce36e2dd490c8a50439537/main/external/fsharpbinding/paket.dependencies)
 
 ### Package feeds
 
