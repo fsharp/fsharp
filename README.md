@@ -4,14 +4,15 @@ The main purpose of this repository is to deliver extra packagings of the F# com
 and core tools for use in different settings.  The F# community use this repo and others to publish
 components that augment those available from other vendors, including:
 
-* FSharp.Compiler.Tools NuGet package
-* FSharp.Core NuGet package
+* FSharp.Compiler.Tools NuGet package (this repo)
+* FSharp.Core NuGet package (this repo)
 * FSharp.Compiler.Service NuGet package ([derivative repo](http://github.com/fsharp/FSharp.Compiler.Service))
-* “fsharp” Linux packges for F# + Mono (debian, Gentoo and others) 
-* “fsharp” as bundled in OSX tooling for F# + Mono 
-* “fsharp” docker image
+* “fsharp” Debian Linux packges for F# + Mono ([derivative repo](https://github.com/mono/linux-packaging-fsharp/)) 
+* “fsharp” as bundled in OSX tooling for F# + Mono by Xamarin
+* “fsharp” docker image [related repo](https://github.com/fsprojects/docker-fsharp)
+* “fsharp” homebrew formula, part of [the mono homebrew formula](https://github.com/Homebrew/homebrew-core/blob/master/Formula/mono.rb)
 
-See notes below for most of these. Please contribute additional notes if you are packaging F# for other settings.
+See notes below for most of these. In theory an unlimited number of other packagings of F# are possible. Please contribute additional notes to this README.md if you are packaging F# for other settings.
 
 ### Contributing to the F# Compiler, Core Library and Tools
 
@@ -72,7 +73,7 @@ Usage: See http://fsharp.org/use/linux
 
     apt-get install fsharp
 
-See https://github.com/mono/linux-packaging-fsharp/, a downstream variant of this repo, where this package is actually made.
+See [the mono packaging repo](https://github.com/mono/linux-packaging-fsharp/), which is a downstream variant of this repo, where this package is actually made.
 
 * There is a tag for each upstream source tag
 * There is a tag for each "debianized" package
@@ -82,9 +83,13 @@ See https://github.com/mono/linux-packaging-fsharp/, a downstream variant of thi
 * `control` is the manifest of packages
 * rules is the Makefile which handles build/install.
 
-Jo Shields (@directhex) says:
+Jo Shields (@directhex) has done much of this work and says:
 
 > I tend to only update the published packages when a) the same update has already been pulled in on Mac by Jason, and either b) something breaks horribly in the existing version on a new Mono, or c) someone explicitly asks me to.
+
+> Linux package delivery is (now) based on packages built on our public Jenkins instance, and published automatically as a post-build step, based on two inputs - a Git repository in standard Debian git packaging format (which https://github.com/mono/linux-packaging-fsharp already is), and a tarball to consider as the canonical source of the next release (giving the same tarball in subsequent builds is how you indicate packaging-only changes such as alterations to metadata in debian/)
+
+> Alexander Köplinger  has admin access to Jenkins, SSH access to the Jenkins and repository servers, and has taken care of things for me in my absence in the past (but isn't a Debian packaging expert, so would be trusting that metadata changes are solid)
 
 ### F# packaging in Mono + OSX 
 
@@ -93,6 +98,8 @@ F# is pacakged as part of Mono on OSX. Jason Imison says:
 > We use a system called BockBuild that pushes versions of F# (sometimes with patches) out with Mono for OSX (F# is bundled with mono here, not a separate package).
 
 > You can see an example build script here (if you have access, ping me if not) https://github.com/xamarin/bockbuild/blob/2017-02/packages/fsharp.py. Unfortunately, you need to know the branch name here – 2017-02 is what is going to be released with VS for Mac aka Mono 4.9.x
+
+> We build fsharp/fsharp internally so that we’re not dependent on you pushing out fixes / bumping packages.  Miguel de Icaza  likes to ‘own’ the code that we ship precisely to stop these kind of emergency issues.
 
 
 ### Package feeds
