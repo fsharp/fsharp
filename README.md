@@ -1,7 +1,17 @@
-## The Cross-Platform Packaging of the F# Compiler, Core Library & Tools
+## Home of the Alternative Community-Provided Packagings for the F# Compiler, Core Library & Tools
 
-The main purpose of this repository is to package the open editions of the F# compiler, core library
-and core tools for use across multiple platforms.  
+The main purpose of this repository is to deliver extra packagings of the F# compiler, core library
+and core tools for use in different settings.  The F# community use this repo and others to publish
+components that augment those available from other vendors, including:
+
+* FSharp.Compiler.Tools NuGet package
+* FSharp.Core NuGet package
+* FSharp.Compiler.Service NuGet package ([repo](http://github.com/fsharp/FSharp.Compiler.Service))
+* “fsharp” Linux packges for F# + Mono (debian, Gentoo and others) 
+* “fsharp” as bundled in OSX tooling for F# + Mono 
+* “fsharp” docker image
+
+See notes below for most of these. Please contribute additional notes if you are packaging F# for other settings.
 
 ### Contributing to the F# Compiler, Core Library and Tools
 
@@ -12,10 +22,9 @@ ensures that the versions do not diverge, and that very extensive QA is done.
 
 If you are using Windows, you should fork the https://github.com/Microsoft/visualfsharp repo and contribute directly there. Your contributions will then be merged into this repo.
 
-If you are using Linux or OSX, you can still contribute directly to  https://github.com/Microsoft/visualfsharp if you like,
-Your contributions will then be merged into this repo. Alternatively, you can prepare your contributions by forking this repository (the code is
-essentially the same). This will give you access to some additional the cross-platform testing
-available from this repo. 
+If you are using Linux or OSX, you can  contribute directly to  https://github.com/Microsoft/visualfsharp if you like.
+CI for that repo runs on Linux. Your contributions will then be merged into this repo. Alternatively, you can prepare your contributions by forking this repository (the code is essentially the same). This will give you access to some additional testing
+available from this repo.
 
 
 ## Status
@@ -28,7 +37,7 @@ The `master` branch is for F# 4.x.  To bootstrap the compiler, binaries built fr
 | 4.0  | ``fsharp4``   | [![Build Status](https://travis-ci.org/fsharp/fsharp.png?branch=fsharp4)](https://travis-ci.org/fsharp/fsharp/branches) |
 
 
-## Outputs of this repository
+## Details on the various Alternative Packagings
 
 ### The ``FSharp.Core`` NuGet package
 
@@ -49,6 +58,9 @@ following for both .NET Core and .NET Framework/Mono:
 * build support,
 * a copy of FSharp.Core used to run the tools
 * related DLLs.
+
+The NuGet packages are exactly the ones produced by AppVeyor CI, e.g. [for version 4.1.2](https://ci.appveyor.com/project/fsgit/fsharp/build/4.1.2/artifacts).  They are pushed to http://nuget.org
+by someone with appropriate permissions.
 
 The ``FSharp.Compiler.Tools`` NuGet package can be used if you wish to use the latest F# compiler on a computer without relying on the installed version of Visual Studio.
 Adding it via nuget to a project will override the in-box compiler with the compiler from the nuget package.
@@ -74,7 +86,7 @@ Jo Shields (@directhex) says:
 
 > I tend to only update the published packages when a) the same update has already been pulled in on Mac by Jason, and either b) something breaks horribly in the existing version on a new Mono, or c) someone explicitly asks me to.
 
-### F# in Mono + OSX 
+### F# packaging in Mono + OSX 
 
 F# is pacakged as part of Mono on OSX. Jason Imison says:
 
