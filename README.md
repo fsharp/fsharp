@@ -1,4 +1,4 @@
-## Home of the Alternative Community-Provided Packagings for the F# Compiler, Core Library & Tools
+## Alternative Packagings for the F# Compiler, Core Library & Tools
 
 The main purpose of this repository is to deliver extra packagings of the F# compiler, core library
 and core tools for use in different settings.  The F# community use this repo and others to publish
