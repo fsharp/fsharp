@@ -1,3 +1,7 @@
+4.1.6
+  * [integrate visualfsahrp](https://github.com/fsharp/fsharp/pull/692)
+  * fix duplicate resources
+
 4.1.4
   * [align fsc task and target file](https://github.com/fsharp/fsharp/pull/690)
   * [use install layout that includes mono/fsharp](https://github.com/fsharp/fsharp/pull/689)
