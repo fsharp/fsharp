@@ -97,7 +97,7 @@ install-sdk-lib:
 	    $(INSTALL_LIB) $(tmpdir)Microsoft.Portable.FSharp.Targets $(DESTDIR)$(monodir)/xbuild/Microsoft/VisualStudio/v14.0/FSharp/; \
 	    $(INSTALL_LIB) $(tmpdir)Microsoft.Portable.FSharp.Targets $(DESTDIR)$(monodir)/xbuild/Microsoft/VisualStudio/v15.0/FSharp/; \
 	fi
-	@if test x-$(TargetFramework) = x-net40; then \
+	@if test x-$(outsuffix) = x-net40; then \
 	    if test -e $(outdir)$(NAME).dll; then \
 			echo "Installing $(outdir)$(NAME).dll to $(DESTDIR)$(monodir)/fsharp/"; \
 			mkdir -p $(DESTDIR)$(monodir)/fsharp/; \
