@@ -1,3 +1,6 @@
+4.1.6
+  * fix version of library going in /usr/lib/mono/fsharp
+
 4.1.4
   * [align fsc task and target file](https://github.com/fsharp/fsharp/pull/690)
   * [use install layout that includes mono/fsharp](https://github.com/fsharp/fsharp/pull/689)
