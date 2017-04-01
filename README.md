@@ -52,7 +52,7 @@ The FSharp.Core NuGet package includes all of the FSharp.Core redistributables f
 
 ### The ``FSharp.Compiler.Tools`` NuGet package
 
-This repo is currently used to make [the FSharp.Compiler.Tools NuGet package]((http://www.nuget.org/packages/FSharp.Compiler.Tools). This package includes the
+This repo is currently used to make [the FSharp.Compiler.Tools NuGet package](http://www.nuget.org/packages/FSharp.Compiler.Tools). This package includes the
 following for both .NET Core and .NET Framework/Mono:
 * the F# compiler `fsc.exe` 
 * F# Interactive `fsi.exe`
