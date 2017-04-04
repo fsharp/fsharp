@@ -305,8 +305,8 @@ this file.
             Overwrite="true"/>
 
         <ItemGroup>
-            <CompileBefore Include="$(TargetFrameworkMonikerAssemblyAttributesPath)" Condition="'$(AdditionalSourcesText)' != '' AND '$(OutputType)' == 'Exe'"/>
-            <CompileAfter Include="$(TargetFrameworkMonikerAssemblyAttributesPath)" Condition="'$(AdditionalSourcesText)' != '' AND '$(OutputType)' != 'Exe'"/>
+            <CompileBefore Include="$(TargetFrameworkMonikerAssemblyAttributesPath)" Condition="'$(AdditionalSourcesText)' != '' AND ('$(OutputType)' == 'Exe' OR '$(OutputType)' == 'WinExe')"/>
+            <CompileAfter Include="$(TargetFrameworkMonikerAssemblyAttributesPath)" Condition="'$(AdditionalSourcesText)' != '' AND '$(OutputType)' != 'Exe' AND '$(OutputType)' != 'WinExe'"/>
         </ItemGroup>
 
     </Target>
