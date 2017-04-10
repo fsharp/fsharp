@@ -264,9 +264,6 @@
       <Private>false</Private>
     </Reference>
   </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)' == 'coreclr'">
-    <None Include="project.json" />
-  </ItemGroup>
 
   <!-- References -->
   <Import Project="$(FSharpSourcesRoot)\.nuget\NuGet.targets" Condition="Exists('$(FSharpSourcesRoot)\.nuget\NuGet.targets')" />

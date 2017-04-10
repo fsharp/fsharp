@@ -54,9 +54,6 @@
       <Link>fsi.exe.config</Link>
     </None>
   </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)' == 'coreclr'">
-      <None Include="project.json" />
-  </ItemGroup>
   <ItemGroup  Condition="'$(TargetFramework)' != 'coreclr'">
     <Reference Include="mscorlib" />
     <Reference Include="System" />

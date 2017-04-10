@@ -24,9 +24,6 @@
     <Compile Include="AssemblyInfo.fs" />
     <Compile Include="FSharpInteractiveServer.fs" />
   </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)' == 'coreclr'">
-      <None Include="project.json" />
-  </ItemGroup>
   <ItemGroup  Condition="'$(TargetFramework)' != 'coreclr'">
     <Reference Include="mscorlib" />
     <Reference Include="System" />
