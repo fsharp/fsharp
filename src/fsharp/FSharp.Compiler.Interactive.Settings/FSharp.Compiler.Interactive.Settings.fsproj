@@ -38,9 +38,6 @@
       <Link>InteractiveSettings/fsiaux.fs</Link>
     </Compile>
   </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)' == 'coreclr'">
-      <None Include="project.json" />
-  </ItemGroup>
   <ItemGroup  Condition="'$(TargetFramework)' != 'coreclr'">
     <Reference Include="mscorlib" />
     <Reference Include="System" />
