@@ -210,7 +210,7 @@ this file.
         <ItemGroup>
             <ActualEmbeddedResources
                 Condition=" '$(UsingXBuild)' == true"
-                Include="@(_CoreCompileResourceInputs);@(ManifestResourceWithNoCulture);@(ManifestNonResxWithNoCultureOnDisk);@(CompiledLicenseFile);@(AdditionalEmbeddedResource)" />
+                Include="@(ManifestResourceWithNoCulture);@(ManifestNonResxWithNoCultureOnDisk);@(CompiledLicenseFile);@(AdditionalEmbeddedResource)" />
           <ActualEmbeddedResources
                 Condition=" '$(UsingXBuild)' != true"
                 Include="@(_CoreCompileResourceInputs);@(CompiledLicenseFile);@(AdditionalEmbeddedResource)" />

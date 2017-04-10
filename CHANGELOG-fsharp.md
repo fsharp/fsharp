@@ -1,3 +1,6 @@
+4.1.9
+  * Fix duplicate resources on OSX
+
 4.1.8
   * [Fix regression in Microsoft.Build.FSharp.targets](https://github.com/fsharp/fsharp/pull/707)
 
