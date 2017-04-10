@@ -145,30 +145,50 @@ install-sdk-lib:
 
 # Install the library binaries in the GAC directory, 
 install-gac-lib:
+	$(eval TARGET = "4.5")
 	@echo "Installing $(ASSEMBLY)"
 	@if test "x$(DELAY_SIGN)" = "x1"; then \
 	    echo "Signing $(outdir)$(ASSEMBLY) with Mono key"; \
 	    $(monobindir)/sn -q -R $(outdir)$(ASSEMBLY) $(srcdir)../../../mono.snk; \
 	fi
+
 	@if test -e $(outdir)$(NAME).dll; then \
-			echo "Installing $(outdir)$(NAME).dll to $(DESTDIR)$(monodir)/gac/$(NAME)/$(VERSION)__$(TOKEN)/"; \
-			mkdir -p $(DESTDIR)$(monodir)/gac/$(NAME)/$(VERSION)__$(TOKEN)/; \
-			$(INSTALL_LIB) $(outdir)$(NAME).dll $(DESTDIR)$(monodir)/gac/$(NAME)/$(VERSION)__$(TOKEN)/; \
+			if test x-$(NAME) = x-FSharp.Core && test x-$(PKGINSTALL) = x-yes; then \
+				echo "Using gacutil to install $(outdir)$(ASSEMBLY) into GAC root $(DESTDIR)$(libdir) as package $(TARGET)"; \
+				$(monobindir)/gacutil -i $(outdir)$(ASSEMBLY) -root $(DESTDIR)$(libdir) -package $(TARGET); \
+			else \
+				echo "Installing $(outdir)$(NAME).dll to $(DESTDIR)$(gacdir)/gac/$(NAME)/$(VERSION)__$(TOKEN)/"; \
+				mkdir -p $(DESTDIR)$(gacdir)/gac/$(NAME)/$(VERSION)__$(TOKEN)/; \
+				$(INSTALL_LIB) $(outdir)$(NAME).dll $(DESTDIR)$(gacdir)/gac/$(NAME)/$(VERSION)__$(TOKEN)/; \
+			fi; \
 	fi
+
 	@if test -e $(outdir)$(NAME).xml; then \
 			echo "Installing $(outdir)$(NAME).xml into $(DESTDIR)$(monodir)/gac/$(NAME)/$(VERSION)__$(TOKEN)/"; \
 			mkdir -p $(DESTDIR)$(monodir)/gac/$(NAME)/$(VERSION)__$(TOKEN)/; \
 			$(INSTALL_LIB) $(outdir)$(NAME).xml $(DESTDIR)$(monodir)/gac/$(NAME)/$(VERSION)__$(TOKEN)/; \
+			if test x-$(PKGINSTALL) = x-yes && test x-$(NAME) = x-FSharp.Core; then \
+				echo "Using linking to ../gac/$(NAME)/$(VERSION)__$(TOKEN)/$(NAME).xml to install $(DESTDIR)$(libdir)mono/$(TARGET)/$(NAME).xml"; \
+				ln -fs  ../gac/$(NAME)/$(VERSION)__$(TOKEN)/$(NAME).xml $(DESTDIR)$(libdir)mono/$(TARGET)/$(NAME).xml; \
+			fi; \
 	fi
 	@if test -e $(outdir)$(NAME).sigdata; then \
 			echo "Installing $(outdir)$(NAME).sigdata into $(DESTDIR)$(monodir)/gac/$(NAME)/$(VERSION)__$(TOKEN)/"; \
 			mkdir -p $(DESTDIR)$(monodir)/gac/$(NAME)/$(VERSION)__$(TOKEN)/; \
 			$(INSTALL_LIB) $(outdir)$(NAME).sigdata $(DESTDIR)$(monodir)/gac/$(NAME)/$(VERSION)__$(TOKEN)/; \
+			if test x-$(PKGINSTALL) = x-yes; then \
+				echo "Using linking to ../gac/$(NAME)/$(VERSION)__$(TOKEN)/$(NAME).sigdata to install $(DESTDIR)$(libdir)mono/$(TARGET)/$(NAME).sigdata"; \
+				ln -fs  ../gac/$(NAME)/$(VERSION)__$(TOKEN)/$(NAME).sigdata $(DESTDIR)$(libdir)mono/$(TARGET)/$(NAME).sigdata; \
+			fi; \
 	fi
 	@if test -e $(outdir)$(NAME).optdata; then \
 			echo "Installing $(outdir)$(NAME).optdata into $(DESTDIR)$(monodir)/gac/$(NAME)/$(VERSION)__$(TOKEN)/"; \
 			mkdir -p $(DESTDIR)$(monodir)/gac/$(NAME)/$(VERSION)__$(TOKEN)/; \
 			$(INSTALL_LIB) $(outdir)$(NAME).optdata $(DESTDIR)$(monodir)/gac/$(NAME)/$(VERSION)__$(TOKEN)/; \
+			if test x-$(PKGINSTALL) = x-yes; then \
+				echo "Using linking to ../gac/$(NAME)/$(VERSION)__$(TOKEN)/$(NAME).optdata to install $(DESTDIR)$(libdir)mono/$(TARGET)/$(NAME).optdata"; \
+				ln -fs  ../gac/$(NAME)/$(VERSION)__$(TOKEN)/$(NAME).optdata $(DESTDIR)$(libdir)mono/$(TARGET)/$(NAME).optdata; \
+			fi; \
 	fi
 
 
