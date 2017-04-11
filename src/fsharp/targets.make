@@ -157,9 +157,9 @@ install-gac-lib:
 				echo "Using gacutil to install $(outdir)$(ASSEMBLY) into GAC root $(DESTDIR)$(libdir) as package $(TARGET)"; \
 				$(monobindir)/gacutil -i $(outdir)$(ASSEMBLY) -root $(DESTDIR)$(libdir) -package $(TARGET); \
 			else \
-				echo "Installing $(outdir)$(NAME).dll to $(DESTDIR)$(gacdir)/gac/$(NAME)/$(VERSION)__$(TOKEN)/"; \
-				mkdir -p $(DESTDIR)$(gacdir)/gac/$(NAME)/$(VERSION)__$(TOKEN)/; \
-				$(INSTALL_LIB) $(outdir)$(NAME).dll $(DESTDIR)$(gacdir)/gac/$(NAME)/$(VERSION)__$(TOKEN)/; \
+				echo "Installing $(outdir)$(NAME).dll to $(DESTDIR)$(monodir)/gac/$(NAME)/$(VERSION)__$(TOKEN)/"; \
+				mkdir -p $(DESTDIR)$(monodir)/gac/$(NAME)/$(VERSION)__$(TOKEN)/; \
+				$(INSTALL_LIB) $(outdir)$(NAME).dll $(DESTDIR)$(monodir)/gac/$(NAME)/$(VERSION)__$(TOKEN)/; \
 			fi; \
 	fi
 
