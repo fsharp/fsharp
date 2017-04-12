@@ -1,3 +1,6 @@
+4.1.10
+  * Integrate visualfsharp to 55ffe91
+
 4.1.9
   * Fix duplicate resources on OSX
 
