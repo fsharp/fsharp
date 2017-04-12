@@ -1,6 +1,6 @@
 
 # the version under development, update after a release
-$version = '4.1.10'
+$version = '4.1.11'
 
 function isVersionTag($tag){
     $v = New-Object Version
@@ -20,7 +20,7 @@ if ($env:appveyor){
 
 $nuget = (gi .\.nuget\NuGet.exe).FullName
 
-$packagesOutDir = Join-Path $PSScriptRoot "lib\release\"
+$packagesOutDir = Join-Path $PSScriptRoot "release\"
 
 function pack($nuspec){
     $dir = [IO.Path]::GetDirectoryName($nuspec)

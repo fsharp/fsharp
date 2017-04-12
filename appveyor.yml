@@ -22,6 +22,5 @@ build_script:
 test: off
 version: '{build}'
 artifacts:
-  - path: lib\release
-    name: release
-  - path: lib\release\*.nupkg
+  - path: release
+  - path: release\*.nupkg
