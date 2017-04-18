@@ -93,7 +93,7 @@ Jo Shields (@directhex) has done much of this work and says:
 
 ### F# packaging in Mono + OSX 
 
-F# is pacakged as part of Mono on OSX. Jason Imison says:
+F# is packaged as part of Mono on OSX. Jason Imison says:
 
 > We use a system called BockBuild that pushes versions of F# (sometimes with patches) out with Mono for OSX (F# is bundled with mono here, not a separate package).
 
@@ -103,7 +103,7 @@ F# is pacakged as part of Mono on OSX. Jason Imison says:
 
 @cartermp says: 
 
-> For future reference, [dependencies and code for the F# editing and F# Interactive support in Visual Studio for Mac/Xamaring Studio) is here](https://github.com/mono/monodevelop/blob/edcdc0d8daa4c25bb8ce36e2dd490c8a50439537/main/external/fsharpbinding/paket.dependencies)
+> For future reference, [dependencies and code for the F# editing and F# Interactive support in Visual Studio for Mac/Xamarin Studio is here](https://github.com/mono/monodevelop/blob/edcdc0d8daa4c25bb8ce36e2dd490c8a50439537/main/external/fsharpbinding/paket.dependencies)
 
 ### Package feeds
 
