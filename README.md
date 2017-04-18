@@ -93,7 +93,7 @@ Jo Shields (@directhex) has done much of this work and says:
 
 ### F# packaging in Mono + OSX 
 
-F# is pacakged as part of Mono on OSX. Jason Imison says:
+F# is packaged as part of Mono on OSX. Jason Imison says:
 
 > We use a system called BockBuild that pushes versions of F# (sometimes with patches) out with Mono for OSX (F# is bundled with mono here, not a separate package).
 
