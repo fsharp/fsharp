@@ -8,7 +8,7 @@ components that augment those available from other vendors, including:
 * FSharp.Core NuGet package (this repo)
 * FSharp.Compiler.Service NuGet package ([derivative repo](http://github.com/fsharp/FSharp.Compiler.Service))
 * “fsharp” Debian Linux packges for F# + Mono ([derivative repo](https://github.com/mono/linux-packaging-fsharp/)) 
-* “fsharp” as bundled in OSX tooling for F# + Mono by Xamarin
+* “fsharp” as bundled in macOS tooling for F# + Mono by Xamarin
 * “fsharp” docker image [related repo](https://github.com/fsprojects/docker-fsharp)
 * “fsharp” homebrew formula, part of [the mono homebrew formula](https://github.com/Homebrew/homebrew-core/blob/master/Formula/mono.rb)
 
@@ -23,7 +23,7 @@ ensures that the versions do not diverge, and that very extensive QA is done.
 
 If you are using Windows, you should fork the https://github.com/Microsoft/visualfsharp repo and contribute directly there. Your contributions will then be merged into this repo.
 
-If you are using Linux or OSX, you can  contribute directly to  https://github.com/Microsoft/visualfsharp if you like.
+If you are using Linux or macOS, you can  contribute directly to  https://github.com/Microsoft/visualfsharp if you like.
 CI for that repo runs on Linux. Your contributions will then be merged into this repo. Alternatively, you can prepare your contributions by forking this repository (the code is essentially the same). This will give you access to some additional testing
 available from this repo.
 
@@ -32,7 +32,7 @@ available from this repo.
 
 The `master` branch is for F# 4.x.  To bootstrap the compiler, binaries built from an earlier version of this project are used. This codebase uses the Apache 2.0 license.
 
-| F#   | Branch        | OSX/Linux | Windows |
+| F#   | Branch        | macOS/Linux | Windows |
 |------|---------------|-----------|---------|
 | 4.1+ | ``master``    | [![Build Status](https://travis-ci.org/fsharp/fsharp.png?branch=master)](https://travis-ci.org/fsharp/fsharp/branches) | [![Build status](https://ci.appveyor.com/api/projects/status/7m5e2yr0snbbr7t9)](https://ci.appveyor.com/project/fsgit/fsharp) |
 | 4.0  | ``fsharp4``   | [![Build Status](https://travis-ci.org/fsharp/fsharp.png?branch=fsharp4)](https://travis-ci.org/fsharp/fsharp/branches) |
@@ -91,11 +91,11 @@ Jo Shields (@directhex) has done much of this work and says:
 
 > Alexander Köplinger  has admin access to Jenkins, SSH access to the Jenkins and repository servers, and has taken care of things for me in my absence in the past (but isn't a Debian packaging expert, so would be trusting that metadata changes are solid)
 
-### F# packaging in Mono + OSX 
+### F# packaging in Mono + macOS 
 
-F# is packaged as part of Mono on OSX. Jason Imison says:
+F# is packaged as part of Mono on macOS. Jason Imison says:
 
-> We use a system called BockBuild that pushes versions of F# (sometimes with patches) out with Mono for OSX (F# is bundled with mono here, not a separate package).
+> We use a system called BockBuild that pushes versions of F# (sometimes with patches) out with Mono for macOS (F# is bundled with mono here, not a separate package).
 
 > You can see an example build script here (if you have access, ping me if not) https://github.com/xamarin/bockbuild/blob/2017-02/packages/fsharp.py. Unfortunately, you need to know the branch name here – 2017-02 is what is going to be released with VS for Mac aka Mono 4.9.x
 
@@ -138,12 +138,12 @@ Building F# on Unix-type platforms requires
 get a complaint in subsequent steps about `xbuild` being missing, it means
 you don't have Mono installed.
 
-Building on OS X requires several development tools that are not installed
+Building on macOS requires several development tools that are not installed
 by default. Most can be installed via [Homebrew](http://brew.sh/):
 
 	brew install autoconf automake pkg-config
 
-Building on OS X also requires Xcode. If you don't want to install
+Building on macOS also requires Xcode. If you don't want to install
 the full GUI development environment, the command line tools are sufficient.
 At a shell prompt, say:
 
@@ -160,7 +160,7 @@ The usual:
 By default that makes optimized binaries. To make debug, use ```make CONFIG=debug```
 
 
-### Building on OS X
+### Building on macOS
 
 Use a prefix to your version of Mono:
 
@@ -221,7 +221,7 @@ Historically it is difficult to edit the compiler with Xamarin Studio or MonoDev
 
 ## How to Test and Validate
 
-### Linux and OSX
+### Linux and macOS
 
 Only a subset of the tests are currently enabled.
 
