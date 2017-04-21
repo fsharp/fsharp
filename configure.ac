@@ -36,21 +36,6 @@ if ! $PKG_CONFIG --atleast-version=$MONO_RECOMMENDED_VERSION mono; then
 	AC_MSG_WARN([Mono $MONO_RECOMMENDED_VERSION or higher is recommended, $MONO_RECOMMENDED_REASON])
 fi
 
-# Checks for libraries.
-
-# Checks for header files.
-
-# Checks for typedefs, structures, and compiler characteristics.
-
-# Checks for library functions.
-
-AC_ARG_WITH([bootstrap], 
-        [  --with-bootstrap=<path>], 
-        [], [with_bootstrap=packages/FSharp.Compiler.Tools.4.1.5/tools])
-with_bootstrap=$(mkdir -p "$with_bootstrap" && cd "$with_bootstrap" && pwd)
-AC_MSG_NOTICE(Using bootstrap : $with_bootstrap)
-AC_SUBST(with_bootstrap)
-
 AC_ARG_WITH([gacdir],
                     [  --with-gacdir=/path/to/gac      Specify the gac directory (ex: /usr/lib/mono/gac)],
                 [],
@@ -150,32 +135,8 @@ AC_SUBST(MONOGACDIR35)
 AC_SUBST(MONOGACDIR40)
 
 AC_CONFIG_FILES([
-launcher
-Makefile
-config.make
-src/fsharp/Makefile
-src/fsharp/FSharp.Build-proto/Makefile
-src/fsharp/FSharp.Compiler-proto/Makefile
-src/fsharp/Fsc-proto/Makefile
-src/fsharp/FSharp.Core/Makefile
-src/fsharp/FSharp.Core.Unittests/Makefile
-src/fsharp/FSharp.Build/Makefile
-src/fsharp/FSharp.Compiler/Makefile
-src/fsharp/Fsc/Makefile
-src/fsharp/FSharp.Compiler.Interactive.Settings/Makefile
-src/fsharp/FSharp.Compiler.Server.Shared/Makefile
-src/fsharp/fsi/Makefile
-src/fsharp/fsiAnyCpu/Makefile
-src/fsharp/policy.2.0.FSharp.Core/Makefile
-src/fsharp/policy.2.3.FSharp.Core/Makefile
-src/fsharp/policy.3.3.FSharp.Core/Makefile
-src/fsharp/policy.3.7.FSharp.Core/Makefile
-src/fsharp/policy.3.47.FSharp.Core/Makefile
-src/fsharp/policy.3.78.FSharp.Core/Makefile
-src/fsharp/policy.3.259.FSharp.Core/Makefile
-src/fsharp/policy.4.0.FSharp.Core/Makefile
-src/fsharp/policy.4.3.FSharp.Core/Makefile
-src/fsharp/policy.4.4.FSharp.Core/Makefile
+mono/launcher
+mono/config.make
 ])
 AC_OUTPUT
 

@@ -164,43 +164,43 @@
 		<DefineConstants>$(DefineConstants);FX_NO_REFLECTION_EMIT</DefineConstants>
 		<DefineConstants>$(DefineConstants);FX_NO_BIGINT</DefineConstants>
 		<DefineConstants>$(DefineConstants);FX_NO_STRUCTURAL_EQUALITY</DefineConstants>
-		<AssemblySearchPaths>$(FSharpSourcesRoot)\..\dependencies\mono\2.1\XamarinWatchOS;$(AssemblySearchPaths)</AssemblySearchPaths>
+		<AssemblySearchPaths>$(FSharpSourcesRoot)\..\mono\dependencies\2.1\XamarinWatchOS;$(AssemblySearchPaths)</AssemblySearchPaths>
 
 	</PropertyGroup>
 
 	<!-- Target MonoAndroid -->
 	<PropertyGroup Condition="'$(TargetFramework)'=='monodroid'">
-		<AssemblySearchPaths>$(FSharpSourcesRoot)\..\dependencies\mono\2.1\MonoAndroid;$(AssemblySearchPaths)</AssemblySearchPaths>
+		<AssemblySearchPaths>$(FSharpSourcesRoot)\..\mono\dependencies\2.1\MonoAndroid;$(AssemblySearchPaths)</AssemblySearchPaths>
 
 	</PropertyGroup>
 
 	<!-- Target MonoTouch: identical to MonoAndroid configurations, though we sanity check by building against the MonoTouch mscorlib -->
 	<PropertyGroup Condition="'$(TargetFramework)'=='monotouch'">
-		<AssemblySearchPaths>$(FSharpSourcesRoot)\..\dependencies\mono\2.1\MonoTouch;$(AssemblySearchPaths)</AssemblySearchPaths>
+		<AssemblySearchPaths>$(FSharpSourcesRoot)\..\mono\dependencies\2.1\MonoTouch;$(AssemblySearchPaths)</AssemblySearchPaths>
 
 	</PropertyGroup>
 
 	<!-- Target XamarinWatchOS: identical to MonoTouch configurations, though we sanity check by building against the Xamarin.WatchOS mscorlib -->
 	<PropertyGroup Condition="'$(TargetFramework)'=='xamarinwatchos'">
-		<AssemblySearchPaths>$(FSharpSourcesRoot)\..\dependencies\mono\2.1\XamarinWatchOS;$(AssemblySearchPaths)</AssemblySearchPaths>
+		<AssemblySearchPaths>$(FSharpSourcesRoot)\..\mono\dependencies\2.1\XamarinWatchOS;$(AssemblySearchPaths)</AssemblySearchPaths>
 
 	</PropertyGroup>
 
 	<!-- Target XamarinTVOS: identical to MonoTouch configurations, though we sanity check by building against the Xamarin.TVOS mscorlib -->
 	<PropertyGroup Condition="'$(TargetFramework)'=='xamarintvos'">
-		<AssemblySearchPaths>$(FSharpSourcesRoot)\..\dependencies\mono\2.1\XamarinTVOS;$(AssemblySearchPaths)</AssemblySearchPaths>
+		<AssemblySearchPaths>$(FSharpSourcesRoot)\..\mono\dependencies\2.1\XamarinTVOS;$(AssemblySearchPaths)</AssemblySearchPaths>
 
 	</PropertyGroup>
 
 	<!-- Target xamarinmacmobile similar to monotouch configurations, with Reflection.emit, structural equality, and BigInt -->
 	<PropertyGroup Condition="'$(TargetFramework)'=='xamarinmacmobile'">
-		<AssemblySearchPaths>$(FSharpSourcesRoot)\..\dependencies\mono\2.1\XamarinMac;$(AssemblySearchPaths)</AssemblySearchPaths>
+		<AssemblySearchPaths>$(FSharpSourcesRoot)\..\mono\dependencies\2.1\XamarinMac;$(AssemblySearchPaths)</AssemblySearchPaths>
 
 	</PropertyGroup>
 
 	<!-- Target xamarinmacfull should be identical to desktop with missing System.Config, System.Drawing etc -->
 	<PropertyGroup Condition="'$(TargetFramework)'=='xamarinmacfull'">
-		<AssemblySearchPaths>$(FSharpSourcesRoot)\..\dependencies\mono\4.5\XamarinMac;$(AssemblySearchPaths)</AssemblySearchPaths>
+		<AssemblySearchPaths>$(FSharpSourcesRoot)\..\mono\dependencies\4.5\XamarinMac;$(AssemblySearchPaths)</AssemblySearchPaths>
 
 	</PropertyGroup>
 

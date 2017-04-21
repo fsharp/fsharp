@@ -98,12 +98,11 @@ Release
 Proto
 sign_temp
 .libs
-Makefile
 configure
-launcher
+mono/launcher
 autom4te.cache
 config.log
-config.make
+mono/config.make
 config.status
 src/fsharp/FSharp.Compiler/illex.fs
 src/fsharp/FSharp.Compiler/ilpars.fs
@@ -206,6 +205,7 @@ tests/fsharpqa/Source/*FSharpQA_Failures.lst
 *.bak
 FSharp.Compiler.Tools.Nuget/*.nupkg
 FSharp.Core.Nuget/*.nupkg
+artifacts/*.nupkg
 *.orig
 *.mdf
 *.ldf
