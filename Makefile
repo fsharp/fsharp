@@ -94,7 +94,6 @@ install:
 	$(MAKE) -C mono/FSharp.Compiler.Server.Shared install
 	$(MAKE) -C mono/fsi install
 	$(MAKE) -C mono/fsiAnyCpu install
-	$(MAKE) -C mono/FSharp.Core.Unittests install
 	$(MAKE) -C mono/FSharp.Core TargetFramework=net40 FSharpCoreBackVersion=3.0 install
 	$(MAKE) -C mono/FSharp.Core TargetFramework=net40 FSharpCoreBackVersion=3.1 install
 	$(MAKE) -C mono/FSharp.Core TargetFramework=net40 FSharpCoreBackVersion=4.0 install
