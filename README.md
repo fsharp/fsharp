@@ -174,7 +174,7 @@ By default that makes optimized binaries. To make debug, use ```make CONFIG=debu
 
 Build using:
 
-    build.bat
+    mono\build.bat
 
 This build the proto compiler, then the library, then the final compiler.
 

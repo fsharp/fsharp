@@ -21,7 +21,6 @@
 *.rtf	 diff=astextplain
 *.RTF	 diff=astextplain
 
-targets.make text eol=lf
 install-sh text eol=lf
 *.in text eol=lf
 *.ac text eol=lf

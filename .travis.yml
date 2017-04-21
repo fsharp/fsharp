@@ -11,7 +11,7 @@ mono:
 
 install:
 
-script: ./build-mono.sh && ./test-mono.sh
+script: ./mono/build-mono.sh && ./mono/test-mono.sh
 
 matrix:
   exclude:

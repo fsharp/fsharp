@@ -15,9 +15,9 @@ init:
 
 build_script: 
   - cmd: dotnet --info
-  - cmd: build.bat
-  - cmd: build-netcore.bat
-  - ps: .\appveyor.ps1
+  - cmd: mono\build.bat
+  - cmd: mono\build-netcore.bat
+  - ps: .\mono\appveyor.ps1
 
 test: off
 version: '{build}'

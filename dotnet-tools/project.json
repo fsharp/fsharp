@@ -1,8 +1,0 @@
-{
-  "tools": {
-    "dotnet-mergenupkg": "1.0.*",
-  },
-  "frameworks": {
-    "netstandard1.6": {}
-  }
-}
