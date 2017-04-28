@@ -160,15 +160,10 @@
     <DefineConstants>$(DefineConstants);FX_NO_REFLECTION_EMIT</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_BIGINT</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_STRUCTURAL_EQUALITY</DefineConstants>
-    <AssemblySearchPaths>$(FSharpSourcesRoot)\..\mono\dependencies\2.1\XamarinWatchOS;$(AssemblySearchPaths)</AssemblySearchPaths>
-
-  </PropertyGroup>
-
-  <!-- Target MonoAndroid -->
-  <PropertyGroup Condition="'$(TargetFramework)'=='monoandroid10+monotouch10+xamarinios10'">
     <AssemblySearchPaths>$(FSharpSourcesRoot)\..\mono\dependencies\2.1\MonoAndroid;$(AssemblySearchPaths)</AssemblySearchPaths>
 
   </PropertyGroup>
+
 
   <!-- Target xamarinmacmobile similar to monoandroid10+monotouch10+xamarinios10 configurations, with Reflection.emit, structural equality, and BigInt -->
   <PropertyGroup Condition="'$(TargetFramework)'=='xamarinmacmobile'">
