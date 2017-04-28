@@ -28,6 +28,10 @@
     <ProjectsWithPortableFrameworks Include="src/fsharp/FSharp.Core/FSharp.Core.fsproj" />
   </ItemGroup>
 
+  <ItemGroup Condition="'$(BUILD_XAMARIN)'=='1'">
+    <ProjectsWithXamarinFrameworks Include="src/fsharp/FSharp.Core/FSharp.Core.fsproj" />
+  </ItemGroup>
+
   <ItemGroup Condition="'$(BUILD_VS)'=='1'">
     <ProjectsWithNet40 Include="vsintegration/fsharp-vsintegration-src-build.proj" />
     <ProjectsWithNet40 Include="vsintegration/Utils/LanguageServiceProfiling/LanguageServiceProfiling.fsproj" />
@@ -83,6 +87,8 @@
     <MSBuild Projects="@(ProjectsWithPortableFrameworks)" Targets="Build" BuildInParallel="true"  Properties="Configuration=$(Configuration);TargetFramework=portable47;BUILD_PUBLICSIGN=$(BUILD_PUBLICSIGN)" />
     <MSBuild Projects="@(ProjectsWithPortableFrameworks)" Targets="Build" BuildInParallel="true"  Properties="Configuration=$(Configuration);TargetFramework=portable78;BUILD_PUBLICSIGN=$(BUILD_PUBLICSIGN)" />
     <MSBuild Projects="@(ProjectsWithPortableFrameworks)" Targets="Build" BuildInParallel="true"  Properties="Configuration=$(Configuration);TargetFramework=portable259;BUILD_PUBLICSIGN=$(BUILD_PUBLICSIGN)" />
+    <MSBuild Projects="@(ProjectsWithXamarinFrameworks)" Targets="Build" BuildInParallel="true"  Properties="Configuration=$(Configuration);TargetFramework=monoandroid10+monotouch10+xamarinios10;BUILD_PUBLICSIGN=$(BUILD_PUBLICSIGN)" />
+    <MSBuild Projects="@(ProjectsWithXamarinFrameworks)" Targets="Build" BuildInParallel="true"  Properties="Configuration=$(Configuration);TargetFramework=xamarinmacmobile;BUILD_PUBLICSIGN=$(BUILD_PUBLICSIGN)" />
     <MSBuild Projects="@(ProjectsWithCoreClr)"           Targets="Build" BuildInParallel="false" Properties="Configuration=$(Configuration);TargetFramework=coreclr;BUILD_PUBLICSIGN=$(BUILD_PUBLICSIGN)" />
     <MSBuild Projects="@(SetupProjects)"                 Targets="Build" BuildInParallel="false" Properties="Configuration=$(Configuration);BUILD_PUBLICSIGN=$(BUILD_PUBLICSIGN)" />
   </Target>
@@ -94,6 +100,8 @@
     <MSBuild Projects="@(ProjectsWithPortableFrameworks)" Targets="Rebuild" BuildInParallel="true"  Properties="Configuration=$(Configuration);TargetFramework=portable47;BUILD_PUBLICSIGN=$(BUILD_PUBLICSIGN)" />
     <MSBuild Projects="@(ProjectsWithPortableFrameworks)" Targets="Rebuild" BuildInParallel="true"  Properties="Configuration=$(Configuration);TargetFramework=portable78;BUILD_PUBLICSIGN=$(BUILD_PUBLICSIGN)" />
     <MSBuild Projects="@(ProjectsWithPortableFrameworks)" Targets="Rebuild" BuildInParallel="true"  Properties="Configuration=$(Configuration);TargetFramework=portable259;BUILD_PUBLICSIGN=$(BUILD_PUBLICSIGN)" />
+    <MSBuild Projects="@(ProjectsWithXamarinFrameworks)" Targets="Rebuild" BuildInParallel="true"  Properties="Configuration=$(Configuration);TargetFramework=monoandroid10+monotouch10+xamarinios10;BUILD_PUBLICSIGN=$(BUILD_PUBLICSIGN)" />
+    <MSBuild Projects="@(ProjectsWithXamarinFrameworks)" Targets="Rebuild" BuildInParallel="true"  Properties="Configuration=$(Configuration);TargetFramework=xamarinmacmobile;BUILD_PUBLICSIGN=$(BUILD_PUBLICSIGN)" />
     <MSBuild Projects="@(ProjectsWithCoreClr)"           Targets="Rebuild" BuildInParallel="false" Properties="Configuration=$(Configuration);TargetFramework=coreclr;BUILD_PUBLICSIGN=$(BUILD_PUBLICSIGN)" />
     <MSBuild Projects="@(SetupProjects)"                 Targets="Rebuild" BuildInParallel="false" Properties="Configuration=$(Configuration);BUILD_PUBLICSIGN=$(BUILD_PUBLICSIGN)" />
   </Target>
@@ -105,6 +113,8 @@
     <MSBuild Projects="@(ProjectsWithPortableFrameworks)" Targets="Clean" BuildInParallel="true"  Properties="Configuration=$(Configuration);TargetFramework=portable47;BUILD_PUBLICSIGN=$(BUILD_PUBLICSIGN)" />
     <MSBuild Projects="@(ProjectsWithPortableFrameworks)" Targets="Clean" BuildInParallel="true"  Properties="Configuration=$(Configuration);TargetFramework=portable78;BUILD_PUBLICSIGN=$(BUILD_PUBLICSIGN)" />
     <MSBuild Projects="@(ProjectsWithPortableFrameworks)" Targets="Clean" BuildInParallel="true"  Properties="Configuration=$(Configuration);TargetFramework=portable259;BUILD_PUBLICSIGN=$(BUILD_PUBLICSIGN)" />
+    <MSBuild Projects="@(ProjectsWithXamarinFrameworks)" Targets="Clean" BuildInParallel="true"  Properties="Configuration=$(Configuration);TargetFramework=monoandroid10+monotouch10+xamarinios10;BUILD_PUBLICSIGN=$(BUILD_PUBLICSIGN)" />
+    <MSBuild Projects="@(ProjectsWithXamarinFrameworks)" Targets="Clean" BuildInParallel="true"  Properties="Configuration=$(Configuration);TargetFramework=xamarinmacmobile;BUILD_PUBLICSIGN=$(BUILD_PUBLICSIGN)" />
     <MSBuild Projects="@(ProjectsWithCoreClr)"           Targets="Clean" BuildInParallel="false" Properties="Configuration=$(Configuration);TargetFramework=coreclr;BUILD_PUBLICSIGN=$(BUILD_PUBLICSIGN)" />
     <MSBuild Projects="@(SetupProjects)"                 Targets="Clean" BuildInParallel="false" Properties="Configuration=$(Configuration);BUILD_PUBLICSIGN=$(BUILD_PUBLICSIGN)" />
   </Target>
