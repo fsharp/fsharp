@@ -1,3 +1,9 @@
+4.1.18
+  * Set executable bit correctly on output
+
+4.1.17
+  * Integrate visualfsharp
+
 4.1.15
   * fix regression on binding redirects for System.Collections.Immutable
 
