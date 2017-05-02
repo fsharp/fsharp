@@ -1,18 +1,20 @@
-## Alternative Packagings for the F# Compiler, Core Library & Tools
+## Downstream Packaging Repo for the Alternative Packagings of the F# Compiler, Core Library & Tools
 
 The main purpose of this repository is to deliver extra packagings of the F# compiler, core library
-and core tools for use in different settings.  The F# community use this repo and others to publish
-components that augment those available from other vendors, including:
+and core tools for use in different settings.  Most contributions to the F# compiler/library/tools go to
+the [upstream development repository](https://github.com/Microsoft/visualfsharp).
 
-* FSharp.Compiler.Tools NuGet package (this repo)
-* FSharp.Core NuGet package (this repo)
-* FSharp.Compiler.Service NuGet package ([derivative repo](http://github.com/fsharp/FSharp.Compiler.Service))
-* “fsharp” Debian Linux packges for F# + Mono ([derivative repo](https://github.com/mono/linux-packaging-fsharp/)) 
+The F# community use this repo and others to publish these components:
+
+* FSharp.Compiler.Tools NuGet package (published from this repo)
+* FSharp.Core NuGet package (published from this repo)
+* FSharp.Compiler.Service NuGet package (published from [derivative repo](http://github.com/fsharp/FSharp.Compiler.Service))
+* “fsharp” Debian Linux packges for F# + Mono (published from [derivative repo](https://github.com/mono/linux-packaging-fsharp/)) 
 * “fsharp” as bundled in macOS tooling for F# + Mono by Xamarin
-* “fsharp” docker image [related repo](https://github.com/fsprojects/docker-fsharp)
-* “fsharp” homebrew formula, part of [the mono homebrew formula](https://github.com/Homebrew/homebrew-core/blob/master/Formula/mono.rb)
+* “fsharp” docker image (published from [related repo](https://github.com/fsprojects/docker-fsharp))
+* “fsharp” homebrew formula (published as part of [the mono homebrew formula](https://github.com/Homebrew/homebrew-core/blob/master/Formula/mono.rb))
 
-See notes below for most of these. In theory an unlimited number of other packagings of F# are possible. Please contribute additional notes to this README.md if you are packaging F# for other settings.
+See notes below for most of these. Because the core logic of F# is made available as [a library component](http://github.com/fsharp/FSharp.Compiler.Service), an unlimited number of other packagings of F# are possible. Please contribute additional notes to this README.md if you are packaging F# for other settings.
 
 ### Contributing to the F# Compiler, Core Library and Tools
 
