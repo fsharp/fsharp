@@ -1,4 +1,4 @@
-## Downstream Packaging Repo for the Alternative Packagings of the F# Compiler, Core Library & Tools
+## Downstream Packaging Repo for the F# Compiler, Core Library & Tools
 
 The main purpose of this repository is to deliver extra packagings of the F# compiler, core library
 and core tools for use in different settings.  Most contributions to the F# compiler/library/tools go to
