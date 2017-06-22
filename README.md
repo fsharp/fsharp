@@ -4,7 +4,9 @@ This repository is the [F# Software Foundation](http://fsharp.org) repository fo
 
 > The F# Software Foundation... maintains a core open-source F# code repository and distributions made available to the public free of charge for use across multiple platforms. This includes the F# compiler, F# language specification, the F# core library and assorted tools and applications.
 
-The process for contributing to the F# Compiler, Core Library and Tools is described [here](https://fsharp.github.io/2014/06/18/fsharp-contributions.html). Currently, this is a downstream "mirror" repository and the main practical purpose of this repository is to deliver extra packagings of the F# compiler, core library and core tools for use in different settings.  Most contributions to the F# compiler/library/tools go first via the  
+The process for contributing to the F# Compiler, Core Library and Tools is described [here](https://fsharp.github.io/2014/06/18/fsharp-contributions.html). 
+
+Currently, this is, practically speaking, a downstream "mirror" repository and the main practical purpose of this repository is to deliver extra packagings of the F# compiler, core library and core tools for use in different settings.  Most contributions to the F# compiler/library/tools go first via the  
 [upstream development repository](https://github.com/Microsoft/visualfsharp).  This ensures that versions do not diverge, and that
 very extensive QA is done.
 
