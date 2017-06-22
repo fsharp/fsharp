@@ -12,8 +12,6 @@ The F# community use this repo and others to publish these components:
 
 * FSharp.Compiler.Tools NuGet package (published from this repo)
 
-* FSharp.Core NuGet package (published from this repo)
-
 * FSharp.Compiler.Service NuGet package (published from [derivative repo](http://github.com/fsharp/FSharp.Compiler.Service))
 
 * “fsharp” Debian Linux packges for F# + Mono (published from [derivative repo](https://github.com/mono/linux-packaging-fsharp/)) 
