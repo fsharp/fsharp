@@ -137,26 +137,14 @@ If using NuGet Package Manager, add the source to the list of available package 
 
 ## Development Guide
 
-### Build Requirements
+
+### Building on Linux and other Unix systems:
 
 Building F# on Unix-type platforms requires
 [Mono](http://www.mono-project.com/download/) 4.4 or higher. If you
 get a complaint in subsequent steps about `xbuild` being missing, it means
 you don't have Mono installed.
 
-Building on macOS requires several development tools that are not installed
-by default. Most can be installed via [Homebrew](http://brew.sh/):
-
-	brew install autoconf automake pkg-config
-
-Building on macOS also requires Xcode. If you don't want to install
-the full GUI development environment, the command line tools are sufficient.
-At a shell prompt, say:
-
-	xcode-select --install
-
-
-### Building on Linux and other Unix systems:
 The usual:
 
 	./autogen.sh --prefix=/usr
@@ -168,6 +156,8 @@ By default that makes optimized binaries. To make debug, use ```make CONFIG=debu
 
 ### Building on macOS
 
+Building on macOS requires an install of the Xamarin tools.
+
 Use a prefix to your version of Mono:
 
 	./autogen.sh --prefix=/Library/Frameworks/Mono.framework/Versions/Current/
@@ -177,6 +167,8 @@ Use a prefix to your version of Mono:
 By default that makes optimized binaries. To make debug, use ```make CONFIG=debug```
 
 ### Building on Windows
+
+Install [.NET 4.5.1](http://www.microsoft.com/en-us/download/details.aspx?id=40779) and  [MSBuild 12.0](http://www.microsoft.com/en-us/download/details.aspx?id=40760)
 
 Build using:
 
