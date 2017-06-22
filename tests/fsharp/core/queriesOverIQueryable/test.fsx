@@ -968,11 +968,13 @@ module QueryExecutionOverIQueryable =
                  yield (i.Cost + j.Cost) }) 
         "db.Join(db, i => i.Name, j => j.Name, (i, j) => new AnonymousObject`2(Item1 = i, Item2 = j)).Select(_arg3 => (_arg3.Item1.Cost + _arg3.Item2.Cost))"
 
+#if !MONO // https://github.com/fsharp/fsharp/issues/745
     checkLinqQueryText "lqtcnewnc06yh9Q3" 
         (query { for i in db do 
                  join j in db on (i.Quantity ?= j.Quantity.GetValueOrDefault())
                  yield (i.Cost + j.Cost) }) 
         "db.Join(db, i => i.Quantity, j => Convert(j.Quantity.GetValueOrDefault()), (i, j) => new AnonymousObject`2(Item1 = i, Item2 = j)).Select(_arg1 => (_arg1.Item1.Cost + _arg1.Item2.Cost))"
+#endif
 
     checkLinqQueryText "lqtcnewnc06yh9Q4" 
         (query { for i in db do 
