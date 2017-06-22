@@ -6,8 +6,7 @@ This repository is the [F# Software Foundation](http://fsharp.org) repository fo
 
 The process for contributing to the F# Compiler, Core Library and Tools is described [here](https://fsharp.github.io/2014/06/18/fsharp-contributions.html). 
 
-Currently, this is, practically speaking, a downstream "mirror" repository and the main practical purpose of this repository is to deliver extra packagings of the F# compiler, core library and core tools for use in different settings.  Most contributions to the F# compiler/library/tools go first via the  
-[upstream development repository](https://github.com/Microsoft/visualfsharp).  This ensures that versions do not diverge, and that
+Currently, this is, practically speaking, a downstream "mirror" repository of the [upstream development repository](https://github.com/Microsoft/visualfsharp). The main day-to-day purpose of this repository is to deliver extra packagings of the F# compiler, core library and core tools for use in different settings.  Most contributions to the F# compiler/library/tools go first via the [upstream development repository](https://github.com/Microsoft/visualfsharp).  This ensures that versions do not diverge, and that
 very extensive QA is done.
 
 The F# community use this repo and others to publish these components:
