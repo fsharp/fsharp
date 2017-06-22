@@ -1,32 +1,38 @@
-## Downstream Packaging Repo for the F# Compiler, Core Library & Tools
+## The F# Compiler, Core Library & Tools
 
-The main purpose of this repository is to deliver extra packagings of the F# compiler, core library
-and core tools for use in different settings.  Most contributions to the F# compiler/library/tools go to
-the [upstream development repository](https://github.com/Microsoft/visualfsharp).
+This repository is the [F# Software Foundation](http://fsharp.org) repository for F#, as described in [the mission statement of the Foundation](http://foundation.fsharp.org/):
+
+> The F# Software Foundation... maintains a core open-source F# code repository and distributions made available to the public free of charge for use across multiple platforms. This includes the F# compiler, F# language specification, the F# core library and assorted tools and applications.
+
+The process for contributing to the F# Compiler, Core Library and Tools is described [here](https://fsharp.github.io/2014/06/18/fsharp-contributions.html). Currently, this is a downstream "mirror" repository and the main practical purpose of this repository is to deliver extra packagings of the F# compiler, core library and core tools for use in different settings.  Most contributions to the F# compiler/library/tools go first via the  
+[upstream development repository](https://github.com/Microsoft/visualfsharp).  This ensures that versions do not diverge, and that
+very extensive QA is done.
 
 The F# community use this repo and others to publish these components:
 
 * FSharp.Compiler.Tools NuGet package (published from this repo)
+
 * FSharp.Core NuGet package (published from this repo)
+
 * FSharp.Compiler.Service NuGet package (published from [derivative repo](http://github.com/fsharp/FSharp.Compiler.Service))
+
 * “fsharp” Debian Linux packges for F# + Mono (published from [derivative repo](https://github.com/mono/linux-packaging-fsharp/)) 
+
 * “fsharp” as bundled in macOS tooling for F# + Mono by Xamarin
+
 * “fsharp” docker image (published from [related repo](https://github.com/fsprojects/docker-fsharp))
+
 * “fsharp” homebrew formula (published as part of [the mono homebrew formula](https://github.com/Homebrew/homebrew-core/blob/master/Formula/mono.rb))
 
 See notes below for most of these. Because the core logic of F# is made available as [a library component](http://github.com/fsharp/FSharp.Compiler.Service), an unlimited number of other packagings of F# are possible. Please contribute additional notes to this README.md if you are packaging F# for other settings.
 
 ### Contributing to the F# Compiler, Core Library and Tools
 
-Most contributions to the F# compiler/library/tools go first via the  
-repository at https://github.com/Microsoft/visualfsharp.  This ensures that the main
-packaging of F# on Windows (the Visual F# Tools) also includes any contributions that are made, and
-ensures that the versions do not diverge, and that very extensive QA is done.
 
-If you are using Windows, you should fork the https://github.com/Microsoft/visualfsharp repo and contribute directly there. Your contributions will then be merged into this repo.
+If you are using Windows, you should fork the [upstream development repository](https://github.com/Microsoft/visualfsharp) repo and contribute directly there. Your contributions will then be merged into this repo.
 
-If you are using Linux or macOS, you can  contribute directly to  https://github.com/Microsoft/visualfsharp if you like.
-CI for that repo runs on Linux. Your contributions will then be merged into this repo. Alternatively, you can prepare your contributions by forking this repository (the code is essentially the same). This will give you access to some additional testing
+If you are using Linux or macOS, you can  contribute directly to  [upstream development repository](https://github.com/Microsoft/visualfsharp) if you like.
+Some CI for that repo runs on Linux. Your contributions will then be merged into this repo. Alternatively, you can prepare your contributions by forking this repository (the code is essentially the same). This will give you access to some additional testing
 available from this repo.
 
 
