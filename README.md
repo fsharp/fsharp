@@ -207,8 +207,12 @@ If a strong-name signed FSharp.Core.dll is needed then use the one in
 
 To integrate latest changes from https://github.com/Microsoft/visualfsharp, use
 ```
+git checkout -b integrate
 git remote add visualfsharp https://github.com/Microsoft/visualfsharp
 git pull visualfsharp master
+git rm -fr vsintegraton
+git rm -fr setup
+git rm -fr tests/fsharpqa
 ```
 
 There are certain guidelines that need to be followed when integrating changes from upstream:
