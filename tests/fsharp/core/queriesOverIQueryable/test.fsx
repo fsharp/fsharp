@@ -2449,11 +2449,13 @@ module Problem2 =
     let l = [box item]
     let items = l.AsQueryable()
 
+#if !MONO // https://github.com/fsharp/fsharp/issues/745
     QueryExecutionOverIQueryable.checkLinqQueryText "ltcjhnwec7eweww2" 
        (query { for item in items do
                 where (item :? Item)
                 select (item :?> Item) })
        "[1].Where(item => (item Is Item)).Select(item => Convert(item))"
+#endif
 
     checkCommuteSeq "ltcjhnwec7eweww2b" 
        (query { for item in items do
