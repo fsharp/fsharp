@@ -1012,11 +1012,13 @@ module QueryExecutionOverIQueryable =
 
 
 
+#if !MONO // https://github.com/fsharp/fsharp/issues/745
     checkLinqQueryText "ltcnewnc06yh9Q6" 
         (query { for i in db do 
                  groupJoin j in db on (i.Quantity ?= j.Quantity.GetValueOrDefault()) into group
                  yield group  } ) 
         "db.GroupJoin(db, i => i.Quantity, j => Convert(j.Quantity.GetValueOrDefault()), (i, group) => new AnonymousObject`2(Item1 = i, Item2 = group)).Select(_arg1 => _arg1.Item2)"
+#endif
 
     checkLinqQueryText "ltcnewnc06yh9Q7" 
         (query { for i in db do 
