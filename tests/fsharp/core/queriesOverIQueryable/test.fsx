@@ -1000,6 +1000,7 @@ module QueryExecutionOverIQueryable =
 
 
 
+#if !MONO // https://github.com/fsharp/fsharp/issues/745
     checkLinqQueryText "ltcnewnc06yh9Q6" 
         (query { for i in db do 
                  groupJoin j in db on (i.Quantity ?= j.Quantity.GetValueOrDefault()) into group
@@ -1011,6 +1012,7 @@ module QueryExecutionOverIQueryable =
                  groupJoin j in db on (i.Quantity.GetValueOrDefault() =? j.Quantity) into group
                  yield group} ) 
         "db.GroupJoin(db, i => Convert(i.Quantity.GetValueOrDefault()), j => j.Quantity, (i, group) => new AnonymousObject`2(Item1 = i, Item2 = group)).Select(_arg1 => _arg1.Item2)"
+#endif
 
     checkLinqQueryText "ltcnewnc06yh9Q8" 
         (query { for i in db do groupJoin j in db on (i.Quantity ?=? j.Quantity) into group; yield group } ) 
@@ -2449,11 +2451,13 @@ module Problem2 =
     let l = [box item]
     let items = l.AsQueryable()
 
+#if !MONO // https://github.com/fsharp/fsharp/issues/745
     QueryExecutionOverIQueryable.checkLinqQueryText "ltcjhnwec7eweww2" 
        (query { for item in items do
                 where (item :? Item)
                 select (item :?> Item) })
        "[1].Where(item => (item Is Item)).Select(item => Convert(item))"
+#endif
 
     checkCommuteSeq "ltcjhnwec7eweww2b" 
        (query { for item in items do
