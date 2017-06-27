@@ -14,8 +14,8 @@ type T() =
   member this.Foo(x:float<kg>) = ()
   member this.Foo(x:float) = ()
 
-  member this.Bong(x:float32<kg>) = ()
-  member this.Bong(x:float32<s>) = ()
+  member this.Bazz(x:float32<kg>) = ()
+  member this.Bazz(x:float32<s>) = ()
 
   member this.Bar(x:C<kg>) = ()
   member this.Bar(x:C<s>) = ()

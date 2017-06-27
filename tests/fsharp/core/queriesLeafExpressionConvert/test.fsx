@@ -806,9 +806,11 @@ module LeafExpressionEvaluationTests =
         checkEval "adddp2oin209v31z" <@ Nullable 4.0 ?+? Nullable () @> (Nullable ())
         checkEval "adddp2oin209v33x" <@ Nullable () ?+? Nullable () @> (Nullable ())
 
-        checkText "p2oin209v33x" <@ Nullable 2 ?+? Nullable () @> "(Convert(2) + new Nullable`1())"
-        checkText "p2oin209v33x" <@ Nullable 2 ?+ 3 @> "(Convert(2) + Convert(3))"
-        checkText "p2oin209v33x" <@ 2 +? Nullable 3 @> "(Convert(2) + Convert(3))"
+#if !MONO // https://github.com/fsharp/fsharp/issues/745
+        checkText "p2oin209v33x1" <@ Nullable 2 ?+? Nullable () @> "(Convert(2) + new Nullable`1())"
+        checkText "p2oin209v33x2" <@ Nullable 2 ?+ 3 @> "(Convert(2) + Convert(3))"
+        checkText "p2oin209v33x3" <@ 2 +? Nullable 3 @> "(Convert(2) + Convert(3))"
+#endif
 
     module NullableAddDoubleMeasure = 
         open Microsoft.FSharp.Linq.NullableOperators
@@ -881,9 +883,11 @@ module LeafExpressionEvaluationTests =
         checkEval "minusp2oin209v30adt" <@ Nullable now ?-? Nullable System.TimeSpan.Zero @> (Nullable now)
         checkEval "minusp2oin209v30kdt" <@ Nullable now ?-? Nullable<System.TimeSpan> () @> (Nullable ())
 
-        checkText "p2oin209v33x" <@ Nullable 2 ?-? Nullable () @> "(Convert(2) - new Nullable`1())"
-        checkText "p2oin209v33x" <@ Nullable 2 ?- 3 @> "(Convert(2) - Convert(3))"
-        checkText "p2oin209v33x" <@ 2 -? Nullable 3 @> "(Convert(2) - Convert(3))"
+#if !MONO // https://github.com/fsharp/fsharp/issues/745
+        checkText "p2oin209v33x4" <@ Nullable 2 ?-? Nullable () @> "(Convert(2) - new Nullable`1())"
+        checkText "p2oin209v33x5" <@ Nullable 2 ?- 3 @> "(Convert(2) - Convert(3))"
+        checkText "p2oin209v33x6" <@ 2 -? Nullable 3 @> "(Convert(2) - Convert(3))"
+#endif
 
     module NullableMultiply = 
 
@@ -909,10 +913,11 @@ module LeafExpressionEvaluationTests =
         checkEval "multp2oin209v31z" <@ Nullable 4 ?*? Nullable () @> (Nullable ())
         checkEval "multp2oin209v33x" <@ Nullable () ?*? Nullable () @> (Nullable ())
 
-        checkText "p2oin209v33x" <@ Nullable 2 ?*? Nullable () @> "(Convert(2) * new Nullable`1())"
-        checkText "p2oin209v33x" <@ Nullable 2 ?* 3 @> "(Convert(2) * Convert(3))"
-        checkText "p2oin209v33x" <@ 2 *? Nullable 3 @> "(Convert(2) * Convert(3))"
-
+#if !MONO // https://github.com/fsharp/fsharp/issues/745
+        checkText "p2oin209v33x7" <@ Nullable 2 ?*? Nullable () @> "(Convert(2) * new Nullable`1())"
+        checkText "p2oin209v33x8" <@ Nullable 2 ?* 3 @> "(Convert(2) * Convert(3))"
+        checkText "p2oin209v33x9" <@ 2 *? Nullable 3 @> "(Convert(2) * Convert(3))"
+#endif
 
     module NullableDivide = 
 
@@ -938,9 +943,11 @@ module LeafExpressionEvaluationTests =
         checkEval "divp2oin209v31z" <@ Nullable 4 ?/? Nullable () @> (Nullable ())
         checkEval "divp2oin209v33x" <@ Nullable () ?/? Nullable () @> (Nullable ())
 
-        checkText "p2oin209v33x" <@ Nullable 2 ?/? Nullable () @> "(Convert(2) / new Nullable`1())"
-        checkText "p2oin209v33x" <@ Nullable 2 ?/ 3 @> "(Convert(2) / Convert(3))"
-        checkText "p2oin209v33x" <@ 2 /? Nullable 3 @> "(Convert(2) / Convert(3))"
+#if !MONO // https://github.com/fsharp/fsharp/issues/745
+        checkText "p2oin209v33xA" <@ Nullable 2 ?/? Nullable () @> "(Convert(2) / new Nullable`1())"
+        checkText "p2oin209v33xB" <@ Nullable 2 ?/ 3 @> "(Convert(2) / Convert(3))"
+        checkText "p2oin209v33xC" <@ 2 /? Nullable 3 @> "(Convert(2) / Convert(3))"
+#endif
 
     module NullableModulo = 
 
@@ -967,9 +974,10 @@ module LeafExpressionEvaluationTests =
         checkEval "modp2oin209v33x" <@ Nullable () ?%? Nullable () @> (Nullable ())
 
 
+#if !MONO // https://github.com/fsharp/fsharp/issues/745
         checkText "p2oin209v33x" <@ Nullable 2 ?%? Nullable () @> "(Convert(2) % new Nullable`1())"
         checkText "p2oin209v33x" <@ Nullable 2 ?% 3 @> "(Convert(2) % Convert(3))"
-
+#endif
 
 #if TESTS_AS_APP
 let RUN() = !failures

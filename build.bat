@@ -26,7 +26,7 @@ set BUILD_XAMARIN=1
 set TEST_NET40_COREUNIT_SUITE=1
 set TEST_PORTABLE_COREUNIT_SUITE=1
 
-%_msbuildexe% src\fsharp-proto-build.proj
+%_msbuildexe% src\fsharp-proto-build.proj /p:Configuration=Proto
 @if ERRORLEVEL 1 echo Error: "%_msbuildexe% src\fsharp-proto-build.proj" failed  && goto :failure
 
 %_ngenexe% install Proto\net440\bin\fsc-proto.exe
