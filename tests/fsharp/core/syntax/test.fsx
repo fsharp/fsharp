@@ -71,7 +71,7 @@ module MoreDynamicOpTests  =
 
      let x : System.DateTime Doge = Doge ()
 
-     let y = x |~> (fun dt -> dt.Year) // error on this line around 'dt.Year'
+//     let y = x |~> (fun dt -> dt.Year) // error on this line around 'dt.Year'
 
 
     module Test2 = 
