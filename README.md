@@ -25,7 +25,7 @@ The F# community use this repo and others to publish these components:
 
 * “fsharp” homebrew formula (published as part of [the mono homebrew formula](https://github.com/Homebrew/homebrew-core/blob/master/Formula/mono.rb))
 
-* other packagings such as: the [F# support in Jupyter Notebooks (iFSharp)](https://github.com/fsprojects/IfSharp); the F# support in Azure Functions; and [WebSharper](https://github.com/intellifactory/websharper) all using the FSharp.Compiler.Service NuGet package
+* other packagings such as: the [F# support in Jupyter Notebooks - iFSharp](https://github.com/fsprojects/IfSharp); the F# support in Azure Functions; and [WebSharper](https://github.com/intellifactory/websharper) all using the FSharp.Compiler.Service NuGet package
 
 
 See notes below for most of these. Because the core logic of F# is made available as [a library component](http://github.com/fsharp/FSharp.Compiler.Service), an unlimited number of other packagings of F# are possible. Please contribute additional notes to this README.md if you are packaging F# for other settings.
