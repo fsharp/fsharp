@@ -1,3 +1,6 @@
+4.1.19
+  * Integrate changes from visualfsharp
+
 4.1.15
   * fix regression on binding redirects for System.Collections.Immutable
 
