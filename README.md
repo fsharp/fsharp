@@ -6,8 +6,8 @@ This repository is the [F# Software Foundation](http://fsharp.org) repository fo
 
 The process for contributing to the F# Compiler, Core Library and Tools is described [here](https://fsharp.github.io/2014/06/18/fsharp-contributions.html). 
 
-Currently, this is, practically speaking, a downstream "mirror" repository of the [upstream development repository](https://github.com/Microsoft/visualfsharp). The main day-to-day purpose of this repository is to deliver extra packagings of the F# compiler, core library and core tools for use in different settings.  Most contributions to the F# compiler/library/tools go first via the [upstream development repository](https://github.com/Microsoft/visualfsharp).  This ensures that versions do not diverge, and that
-very extensive QA is done.
+The main day-to-day purpose of this repository is to deliver extra packagings of the F# compiler, core library and core tools for use in different settings.  This repo accepts direct contributions related to the cross-platform packaging of F#. Most other contributions to the F# compiler/library/tools go first via the [upstream repository](https://github.com/Microsoft/visualfsharp) which is also used to package the Visual F# Tools and .NET SDK tooling for F#.  This repo mirrors the core implementation of the F# language from the upstream repository. This arrangement ensures that  versions do not diverge, and that very extensive QA is done on all core contributions.
+
 
 The F# community use this repo and others to publish these components:
 
@@ -28,10 +28,9 @@ See notes below for most of these. Because the core logic of F# is made availabl
 ### Contributing to the F# Compiler, Core Library and Tools
 
 
-If you are using Windows, you should fork the [upstream development repository](https://github.com/Microsoft/visualfsharp) repo and contribute directly there. Your contributions will then be merged into this repo.
+If you are using Windows, you should normally fork the [upstream repository](https://github.com/Microsoft/visualfsharp) repo and contribute directly there. Your contributions will then be merged into this repo.
 
-If you are using Linux or macOS, you can  contribute directly to  [upstream development repository](https://github.com/Microsoft/visualfsharp) if you like.
-Some CI for that repo runs on Linux. Your contributions will then be merged into this repo. Alternatively, you can prepare your contributions by forking this repository (the code is essentially the same). This will give you access to some additional testing
+If you are using Linux or macOS, you can  contribute directly to  [upstream repository](https://github.com/Microsoft/visualfsharp) if you like. Some CI for that repo runs on Linux. Your contributions will then be merged into this repo. Alternatively, you can prepare your contributions by forking this repository (the code is essentially the same). This will give you access to some additional testing
 available from this repo.
 
 
@@ -49,18 +48,17 @@ The `master` branch is for F# 4.x.  To bootstrap the compiler, binaries built fr
 
 ### The ``FSharp.Core`` NuGet package
 
-This repo is currently used to make [the FSharp.Core NuGet package](http://www.nuget.org/packages/FSharp.Core). This package includes
+[The FSharp.Core NuGet package](http://www.nuget.org/packages/FSharp.Core) was previously published from this repo.
+With the informal consent of the F# Software Foundation this package is now published by Microsoft.
 * FSharp.Core.dll for .NET Framework/Mono
 * FSharp.Core.dll for .NET Core
 * FSharp.Core.dll for portable profiles
 
-
-The FSharp.Core NuGet package includes all of the FSharp.Core redistributables from Visual F#. In addition, they include assemblies for MonoAndroid and MonoTouch built from this repository.
+The FSharp.Core NuGet package includes all of the FSharp.Core redistributables from Visual F#.
 
 ### The ``FSharp.Compiler.Tools`` NuGet package
 
-This repo is currently used to make [the FSharp.Compiler.Tools NuGet package](http://www.nuget.org/packages/FSharp.Compiler.Tools). This package includes the
-following for both .NET Core and .NET Framework/Mono:
+This repo is currently used to make [the FSharp.Compiler.Tools NuGet package](http://www.nuget.org/packages/FSharp.Compiler.Tools). This package includes the following for both .NET Core and .NET Framework/Mono:
 * the F# compiler `fsc.exe` 
 * F# Interactive `fsi.exe`
 * build support,
