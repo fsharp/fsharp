@@ -27,5 +27,4 @@ function pack($nuspec){
     & $nuget pack $nuspec -BasePath "$dir" -Version $version -OutputDirectory "$packagesOutDir" -NoDefaultExcludes -Verbosity d
 }
 
-pack(gi .\FSharp.Core.Nuget\FSharp.Core.nuspec)
 pack(gi .\FSharp.Compiler.Tools.Nuget\FSharp.Compiler.Tools.nuspec)
