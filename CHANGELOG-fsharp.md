@@ -1,4 +1,4 @@
-4.1.20
+4.1.21
   * Fix nuget package for FSharp.Compiler.Tools
 
 4.1.19
