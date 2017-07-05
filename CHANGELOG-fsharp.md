@@ -1,3 +1,6 @@
+4.1.20
+  * Fix nuget package for FSharp.Compiler.Tools
+
 4.1.19
   * Integrate changes from visualfsharp
 
