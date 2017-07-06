@@ -1,3 +1,6 @@
+4.1.22
+  * Fix nuget package for FSharp.Compiler.Tools System.ValueTuple.dll
+
 4.1.21
   * Fix nuget package for FSharp.Compiler.Tools
 

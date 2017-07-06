@@ -44,6 +44,7 @@
     <file src="..\Release\net40\bin\FSharp.Build.xml" target="tools\FSharp.Build.xml" />
     <file src="..\Release\net40\bin\System.Collections.Immutable.dll" target="tools\System.Collections.Immutable.dll" />
     <file src="..\Release\net40\bin\System.Reflection.Metadata.dll" target="tools\System.Reflection.Metadata.dll" />
+    <file src="..\Release\net40\bin\System.ValueTuple.dll" target="tools\System.ValueTuple.dll" />
     <file src="..\Release\net40\bin\Microsoft.DiaSymReader.dll" target="tools\Microsoft.DiaSymReader.dll" />
     <file src="..\Release\net40\bin\Microsoft.DiaSymReader.PortablePdb.dll" target="tools\Microsoft.DiaSymReader.PortablePdb.dll" />
 
