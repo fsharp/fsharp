@@ -1641,7 +1641,7 @@ let GetDefaultFSharpCoreReference() = typeof<list<int>>.Assembly.Location
 let GetDefaultSystemValueTupleReference() = 
     let path = Path.GetDirectoryName(GetDefaultFSharpCoreReference())
     let file = Path.Combine(path, "System.ValueTuple.dll")
-    if File.SafeExists file then Some file
+    if FileSystem.SafeExists file then Some file
     else None
 
 let GetFsiLibraryName () = "FSharp.Compiler.Interactive.Settings"  
