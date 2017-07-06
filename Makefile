@@ -41,32 +41,32 @@ build:
 	mkdir -p $(Configuration)/fsharp30/net40/bin
 	mkdir -p $(Configuration)/fsharp31/net40/bin
 	mkdir -p $(Configuration)/fsharp40/net40/bin
-	cp -p packages\FSharp.Core.3.0.2\lib\net40\* $(Configuration)/fsharp30/net40/bin
-	cp -p packages\FSharp.Core.3.1.2.5\lib\net40\* $(Configuration)/fsharp31/net40/bin
-	cp -p packages\FSharp.Core.4.0.0.1\lib\net40\* $(Configuration)/fsharp41/net40/bin
+	cp -p packages/FSharp.Core.3.0.2/lib/net40/* $(Configuration)/fsharp30/net40/bin
+	cp -p packages/FSharp.Core.3.1.2.5/lib/net40/* $(Configuration)/fsharp31/net40/bin
+	cp -p packages/FSharp.Core.4.0.0.1/lib/net40/* $(Configuration)/fsharp41/net40/bin
 ifeq ("$(pclenabled47)", "yes")
 	mkdir -p $(Configuration)/portable7/bin
-	cp -p packages\FSharp.Core.4.1.17\lib\profiles\portable-net45+netcore45 $(Configuration)/portable7/bin
+	cp -p packages/FSharp.Core.4.1.17/lib/profiles/portable-net45+netcore45 $(Configuration)/portable7/bin
 endif
 ifeq ("$(pclenabled7)", "yes")
 	mkdir -p $(Configuration)/portable47/bin
-	cp -p packages\FSharp.Core.4.1.17\lib\profiles\portable-net45+sl5+netcore45 $(Configuration)/portable47/bin
+	cp -p packages/FSharp.Core.4.1.17/lib/profiles/portable-net45+sl5+netcore45 $(Configuration)/portable47/bin
 endif
 ifeq ("$(pclenabled78)", "yes")
 	mkdir -p $(Configuration)/portable78/bin
-	cp -p packages\FSharp.Core.4.1.17\lib\profiles\portable-net45+netcore45+wp8 $(Configuration)/portable78/bin
+	cp -p packages/FSharp.Core.4.1.17/lib/profiles/portable-net45+netcore45+wp8 $(Configuration)/portable78/bin
 endif
 ifeq ("$(pclenabled259)", "yes")
 	mkdir -p $(Configuration)/portable259/bin
-	cp -p packages\FSharp.Core.4.1.17\lib\profiles\portable-net45+netcore45+wpa81+wp8 $(Configuration)/portable250/bin
+	cp -p packages/FSharp.Core.4.1.17/lib/profiles/portable-net45+netcore45+wpa81+wp8 $(Configuration)/portable250/bin
 endif
 ifeq ("$(monodroidenabled)", "yes")
 	mkdir -p $(Configuration)/monoandroid10+monotouch10+xamarinios10/bin
-	cp -p packages\FSharp.Core.4.1.17\lib\profiles\portable-net45+monoandroid10+monotouch10+xamarinios10 $(Configuration)/monoandroid10+monotouch10+xamarinios10/bin
+	cp -p packages/FSharp.Core.4.1.17/lib/profiles/portable-net45+monoandroid10+monotouch10+xamarinios10 $(Configuration)/monoandroid10+monotouch10+xamarinios10/bin
 endif
 ifeq ("$(xamarinmacenabled)", "yes")
 	mkdir -p $(Configuration)/xamarinmacmobile/bin
-	cp -p packages\FSharp.Core.4.1.17\lib\profiles\portable-net45+monoandroid10+monotouch10+xamarinios10 $(Configuration)/xamarinmacmobile/bin
+	cp -p packages/FSharp.Core.4.1.17/lib/profiles/portable-net45+monoandroid10+monotouch10+xamarinios10 $(Configuration)/xamarinmacmobile/bin
 endif
 
 
