@@ -194,10 +194,6 @@
 
   <!-- If building an FSharp.Core for a back version (Mono Debian source builds only), put it in a qualified directory -->
   <PropertyGroup>
-    <TargetFrameworkOutputDirectory Condition="'$(FSharpCoreBackVersion)' == ''">$(TargetDotnetProfile)</TargetFrameworkOutputDirectory>
-    <TargetFrameworkOutputDirectory Condition="'$(FSharpCoreBackVersion)' == '3.0'">fsharp30\$(TargetDotnetProfile)</TargetFrameworkOutputDirectory>
-    <TargetFrameworkOutputDirectory Condition="'$(FSharpCoreBackVersion)' == '3.1'">fsharp31\$(TargetDotnetProfile)</TargetFrameworkOutputDirectory>
-    <TargetFrameworkOutputDirectory Condition="'$(FSharpCoreBackVersion)' == '4.0'">fsharp40\$(TargetDotnetProfile)</TargetFrameworkOutputDirectory>
     <IntermediateOutputPath>obj\$(TargetFrameworkOutputDirectory)\</IntermediateOutputPath>
   </PropertyGroup>
 

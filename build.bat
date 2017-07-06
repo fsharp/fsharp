@@ -21,10 +21,7 @@ if not exist %_ngenexe% echo Note: Could not find ngen.exe.
 %_ngenexe% install packages\FSharp.Compiler.Tools.4.1.23\tools\fsc.exe
 
 set BUILD_NET40=1
-set BUILD_PORTABLE=1
-set BUILD_XAMARIN=1
 set TEST_NET40_COREUNIT_SUITE=1
-set TEST_PORTABLE_COREUNIT_SUITE=1
 
 %_msbuildexe% src\fsharp-proto-build.proj /p:Configuration=Proto
 @if ERRORLEVEL 1 echo Error: "%_msbuildexe% src\fsharp-proto-build.proj" failed  && goto :failure

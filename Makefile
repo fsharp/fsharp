@@ -28,9 +28,6 @@ build:
 	MONO_ENV_OPTIONS=$(monoopts) $(MSBUILD) /p:Configuration=$(Configuration) /p:TargetDotnetProfile=net40 src/fsharp/fsi/Fsi.fsproj
 	MONO_ENV_OPTIONS=$(monoopts) $(MSBUILD) /p:Configuration=$(Configuration) /p:TargetDotnetProfile=net40 src/fsharp/fsiAnyCpu/FsiAnyCPU.fsproj
 	MONO_ENV_OPTIONS=$(monoopts) $(MSBUILD) /p:Configuration=$(Configuration) /p:TargetDotnetProfile=net40 src/fsharp/FSharp.Core.Unittests/FSharp.Core.Unittests.fsproj
-	MONO_ENV_OPTIONS=$(monoopts) $(MSBUILD) /p:Configuration=$(Configuration) /p:TargetDotnetProfile=net40 /p:FSharpCoreBackVersion=3.0 src/fsharp/FSharp.Core/FSharp.Core.fsproj
-	MONO_ENV_OPTIONS=$(monoopts) $(MSBUILD) /p:Configuration=$(Configuration) /p:TargetDotnetProfile=net40 /p:FSharpCoreBackVersion=3.1 src/fsharp/FSharp.Core/FSharp.Core.fsproj
-	MONO_ENV_OPTIONS=$(monoopts) $(MSBUILD) /p:Configuration=$(Configuration) /p:TargetDotnetProfile=net40 /p:FSharpCoreBackVersion=4.0 src/fsharp/FSharp.Core/FSharp.Core.fsproj
 	$(MAKE) -C mono/policy.2.0.FSharp.Core TargetDotnetProfile=net40 $@
 	$(MAKE) -C mono/policy.2.3.FSharp.Core TargetDotnetProfile=net40 $@
 	$(MAKE) -C mono/policy.3.3.FSharp.Core TargetDotnetProfile=net40 $@
@@ -41,23 +38,35 @@ build:
 	$(MAKE) -C mono/policy.4.0.FSharp.Core TargetDotnetProfile=net40 $@
 	$(MAKE) -C mono/policy.4.3.FSharp.Core TargetDotnetProfile=net40 $@
 	$(MAKE) -C mono/policy.4.4.FSharp.Core TargetDotnetProfile=net40 $@
+	mkdir -p $(Configuration)/fsharp30/net40/bin
+	mkdir -p $(Configuration)/fsharp31/net40/bin
+	mkdir -p $(Configuration)/fsharp40/net40/bin
+	cp -p packages\FSharp.Core.3.0.2\lib\net40\* $(Configuration)/fsharp30/net40/bin
+	cp -p packages\FSharp.Core.3.1.2.5\lib\net40\* $(Configuration)/fsharp31/net40/bin
+	cp -p packages\FSharp.Core.4.0.0.1\lib\net40\* $(Configuration)/fsharp41/net40/bin
 ifeq ("$(pclenabled47)", "yes")
-	MONO_ENV_OPTIONS=$(monoopts) $(MSBUILD) /p:Configuration=$(Configuration) /p:TargetDotnetProfile=portable47 src/fsharp/FSharp.Core/FSharp.Core.fsproj
+	mkdir -p $(Configuration)/portable7/bin
+	cp -p packages\FSharp.Core.4.1.17\lib\profiles\portable-net45+netcore45 $(Configuration)/portable7/bin
 endif
 ifeq ("$(pclenabled7)", "yes")
-	MONO_ENV_OPTIONS=$(monoopts) $(MSBUILD) /p:Configuration=$(Configuration) /p:TargetDotnetProfile=portable7 src/fsharp/FSharp.Core/FSharp.Core.fsproj
+	mkdir -p $(Configuration)/portable47/bin
+	cp -p packages\FSharp.Core.4.1.17\lib\profiles\portable-net45+sl5+netcore45 $(Configuration)/portable47/bin
 endif
 ifeq ("$(pclenabled78)", "yes")
-	MONO_ENV_OPTIONS=$(monoopts) $(MSBUILD) /p:Configuration=$(Configuration) /p:TargetDotnetProfile=portable78 src/fsharp/FSharp.Core/FSharp.Core.fsproj
+	mkdir -p $(Configuration)/portable78/bin
+	cp -p packages\FSharp.Core.4.1.17\lib\profiles\portable-net45+netcore45+wp8 $(Configuration)/portable78/bin
 endif
 ifeq ("$(pclenabled259)", "yes")
-	MONO_ENV_OPTIONS=$(monoopts) $(MSBUILD) /p:Configuration=$(Configuration) /p:TargetDotnetProfile=portable259 src/fsharp/FSharp.Core/FSharp.Core.fsproj
+	mkdir -p $(Configuration)/portable259/bin
+	cp -p packages\FSharp.Core.4.1.17\lib\profiles\portable-net45+netcore45+wpa81+wp8 $(Configuration)/portable250/bin
 endif
 ifeq ("$(monodroidenabled)", "yes")
-	MONO_ENV_OPTIONS=$(monoopts) $(MSBUILD) /p:Configuration=$(Configuration) /p:TargetDotnetProfile=monoandroid10+monotouch10+xamarinios10 src/fsharp/FSharp.Core/FSharp.Core.fsproj
+	mkdir -p $(Configuration)/monoandroid10+monotouch10+xamarinios10/bin
+	cp -p packages\FSharp.Core.4.1.17\lib\profiles\portable-net45+monoandroid10+monotouch10+xamarinios10 $(Configuration)/monoandroid10+monotouch10+xamarinios10/bin
 endif
 ifeq ("$(xamarinmacenabled)", "yes")
-	MONO_ENV_OPTIONS=$(monoopts) $(MSBUILD) /p:Configuration=$(Configuration) /p:TargetDotnetProfile=xamarinmacmobile src/fsharp/FSharp.Core/FSharp.Core.fsproj
+	mkdir -p $(Configuration)/xamarinmacmobile/bin
+	cp -p packages\FSharp.Core.4.1.17\lib\profiles\portable-net45+monoandroid10+monotouch10+xamarinios10 $(Configuration)/xamarinmacmobile/bin
 endif
 
 
