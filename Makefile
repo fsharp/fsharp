@@ -17,8 +17,8 @@ build-proto: restore
 	MONO_ENV_OPTIONS=$(monoopts) $(MSBUILD) /p:Configuration=Proto /p:TargetDotnetProfile=$(TargetDotnetProfile) src/fsharp/FSharp.Build-proto/FSharp.Build-proto.fsproj
 	MONO_ENV_OPTIONS=$(monoopts) $(MSBUILD) /p:Configuration=Proto /p:TargetDotnetProfile=$(TargetDotnetProfile) src/fsharp/Fsc-proto/Fsc-proto.fsproj
 
-
-mainbuild:
+# The main targets
+build:
 	MONO_ENV_OPTIONS=$(monoopts) $(MSBUILD) /p:Configuration=$(Configuration) /p:TargetDotnetProfile=net40 src/fsharp/FSharp.Core/FSharp.Core.fsproj
 	MONO_ENV_OPTIONS=$(monoopts) $(MSBUILD) /p:Configuration=$(Configuration) /p:TargetDotnetProfile=net40 src/fsharp/FSharp.Build/FSharp.Build.fsproj
 	MONO_ENV_OPTIONS=$(monoopts) $(MSBUILD) /p:Configuration=$(Configuration) /p:TargetDotnetProfile=net40 src/fsharp/FSharp.Compiler.Private/FSharp.Compiler.Private.fsproj
@@ -28,8 +28,6 @@ mainbuild:
 	MONO_ENV_OPTIONS=$(monoopts) $(MSBUILD) /p:Configuration=$(Configuration) /p:TargetDotnetProfile=net40 src/fsharp/fsi/Fsi.fsproj
 	MONO_ENV_OPTIONS=$(monoopts) $(MSBUILD) /p:Configuration=$(Configuration) /p:TargetDotnetProfile=net40 src/fsharp/fsiAnyCpu/FsiAnyCPU.fsproj
 	MONO_ENV_OPTIONS=$(monoopts) $(MSBUILD) /p:Configuration=$(Configuration) /p:TargetDotnetProfile=net40 src/fsharp/FSharp.Core.Unittests/FSharp.Core.Unittests.fsproj
-
-policyfiles:
 	$(MAKE) -C mono/policy.2.0.FSharp.Core TargetDotnetProfile=net40 $@
 	$(MAKE) -C mono/policy.2.3.FSharp.Core TargetDotnetProfile=net40 $@
 	$(MAKE) -C mono/policy.3.3.FSharp.Core TargetDotnetProfile=net40 $@
@@ -40,8 +38,6 @@ policyfiles:
 	$(MAKE) -C mono/policy.4.0.FSharp.Core TargetDotnetProfile=net40 $@
 	$(MAKE) -C mono/policy.4.3.FSharp.Core TargetDotnetProfile=net40 $@
 	$(MAKE) -C mono/policy.4.4.FSharp.Core TargetDotnetProfile=net40 $@
-
-oldlibs:
 	mkdir -p $(Configuration)/fsharp30/net40/bin
 	mkdir -p $(Configuration)/fsharp31/net40/bin
 	mkdir -p $(Configuration)/fsharp40/net40/bin
@@ -73,8 +69,6 @@ ifeq ("$(xamarinmacenabled)", "yes")
 	cp -p packages/FSharp.Core.4.1.17/lib/profiles/portable-net45+monoandroid10+monotouch10+xamarinios10 $(Configuration)/xamarinmacmobile/bin
 endif
 
-# The main targets
-build: mainbuild policyfiles oldlibs
 
 
 install:
