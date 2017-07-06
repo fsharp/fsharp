@@ -46,6 +46,15 @@ MONOPREFIX=$(cd `$PKG_CONFIG --variable=prefix mono` && pwd)
 MONOBINDIR="$MONOPREFIX"/bin
 MONOLIBDIR="$MONOPREFIX"/lib
 
+AC_PATH_PROG(MSBUILD, msbuild, no)
+msbuild_from_pkg_config="$MONOBINDIR"/msbuild
+if test -e $msbuild_from_pkg_config; then
+    MSBUILD=$msbuild_from_pkg_config
+elif test "x$MSBUILD" == "xno"; then
+    AC_MSG_ERROR([Could not find msbuild])
+fi
+AC_MSG_NOTICE(msbuild: $MSBUILD)
+
 MONOGACDIR="$MONOLIBDIR"/mono
 if ! test "x$with_gacdir" = "xno"; then
 	MONOGACDIR=$(cd "$with_gacdir/.." && pwd)
