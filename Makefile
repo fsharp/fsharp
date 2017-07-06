@@ -77,11 +77,11 @@ install:
 	-rm -fr $(DESTDIR)$(monodir)/Microsoft\ SDKs/F#
 	-rm -fr $(DESTDIR)$(monodir)/gac/FSharp.Core
 	-rm -fr $(DESTDIR)$(monodir)/gac/FSharp.Compiler.Private
-	-rm -fr $(DESTDIR)$(monodir)/MSBUILD/Microsoft/VisualStudio/v/FSharp
-	-rm -fr $(DESTDIR)$(monodir)/MSBUILD/Microsoft/VisualStudio/v11.0/FSharp
-	-rm -fr $(DESTDIR)$(monodir)/MSBUILD/Microsoft/VisualStudio/v12.0/FSharp
-	-rm -fr $(DESTDIR)$(monodir)/MSBUILD/Microsoft/VisualStudio/v14.0/FSharp
-	-rm -fr $(DESTDIR)$(monodir)/MSBUILD/Microsoft/VisualStudio/v15.0/FSharp
+	-rm -fr $(DESTDIR)$(monodir)/msbuild/Microsoft/VisualStudio/v/FSharp
+	-rm -fr $(DESTDIR)$(monodir)/msbuild/Microsoft/VisualStudio/v11.0/FSharp
+	-rm -fr $(DESTDIR)$(monodir)/msbuild/Microsoft/VisualStudio/v12.0/FSharp
+	-rm -fr $(DESTDIR)$(monodir)/msbuild/Microsoft/VisualStudio/v14.0/FSharp
+	-rm -fr $(DESTDIR)$(monodir)/msbuild/Microsoft/VisualStudio/v15.0/FSharp
 	$(MAKE) -C mono/FSharp.Core TargetDotnetProfile=net40 install
 	$(MAKE) -C mono/FSharp.Build install
 	$(MAKE) -C mono/FSharp.Compiler.Private install
@@ -122,7 +122,7 @@ ifeq ("$(xamarinmacenabled)", "yes")
 	$(MAKE) -C mono/FSharp.Core TargetDotnetProfile=xamarinmacmobile install
 endif
 	echo "------------------------------ INSTALLED FILES --------------"
-	ls -xlR $(DESTDIR)$(monodir)/fsharp $(DESTDIR)$(monodir)/MSBUILD $(DESTDIR)$(monodir)/gac/FSharp* $(DESTDIR)$(monodir)/Microsoft*
+	ls -xlR $(DESTDIR)$(monodir)/fsharp $(DESTDIR)$(monodir)/msbuild $(DESTDIR)$(monodir)/gac/FSharp* $(DESTDIR)$(monodir)/Microsoft*
 
 dist:
 	-rm -r fsharp-$(DISTVERSION) fsharp-$(DISTVERSION).tar.bz2
