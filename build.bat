@@ -18,7 +18,7 @@ if not exist %_ngenexe% echo Note: Could not find ngen.exe.
 .\.nuget\NuGet.exe restore packages.config -PackagesDirectory packages -ConfigFile .nuget\nuget.config
 @if ERRORLEVEL 1 echo Error: Nuget restore failed  && goto :failure
 
-%_ngenexe% install packages\FSharp.Compiler.Tools.4.1.21\tools\fsc.exe
+%_ngenexe% install packages\FSharp.Compiler.Tools.4.1.23\tools\fsc.exe
 
 set BUILD_NET40=1
 set BUILD_PORTABLE=1
