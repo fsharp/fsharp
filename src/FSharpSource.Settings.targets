@@ -114,6 +114,7 @@
     <DefineConstants Condition="'$(VisualStudioVersion)'=='15.0' AND '$(ProjectLanguage)' == 'VisualBasic'">$(DefineConstants),VS_VERSION_DEV15=True</DefineConstants>
     <DefineConstants Condition="'$(VisualStudioVersion)'=='15.0' AND '$(ProjectLanguage)' != 'VisualBasic'">$(DefineConstants);VS_VERSION_DEV15</DefineConstants>
     <!-- VisualStudioVersion is not defined when using xbuild on Mono. Assume 14.0, the last shipped in-the-box with Mono -->
+    <!-- Note we probably just need to add imports of Microsoft.Common.props -->
     <DefineConstants Condition="'$(VisualStudioVersion)'=='' AND '$(ProjectLanguage)' == 'VisualBasic'">$(DefineConstants),VS_VERSION_DEV14=True</DefineConstants>
     <DefineConstants Condition="'$(VisualStudioVersion)'=='' AND '$(ProjectLanguage)' != 'VisualBasic'">$(DefineConstants);VS_VERSION_DEV14</DefineConstants>
   </PropertyGroup>

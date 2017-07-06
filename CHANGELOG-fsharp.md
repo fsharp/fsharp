@@ -1,3 +1,6 @@
+4.1.22
+  * Build using Mono 5.0 and msbuild
+
 4.1.21
   * Fix nuget package for FSharp.Compiler.Tools
 

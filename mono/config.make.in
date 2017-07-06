@@ -105,7 +105,7 @@ INSTALL = $(SHELL) $(topdir)/mono/install-sh
 INSTALL_BIN = $(INSTALL) -c -m 755
 INSTALL_LIB = $(INSTALL_BIN)
 
-XBUILD = @XBUILD@
+MSBUILD = @MSBUILD@
 
 EXTRA_DIST = configure
 NO_DIST = .gitignore lib/debug lib/proto lib/release
