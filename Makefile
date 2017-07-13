@@ -58,7 +58,7 @@ ifeq ("$(pclenabled78)", "yes")
 endif
 ifeq ("$(pclenabled259)", "yes")
 	mkdir -p $(Configuration)/portable259/bin
-	cp -p packages/FSharp.Core.4.1.17/lib/portable-net45+netcore45+wpa81+wp8/* $(Configuration)/portable250/bin
+	cp -p packages/FSharp.Core.4.1.17/lib/portable-net45+netcore45+wpa81+wp8/* $(Configuration)/portable259/bin
 endif
 ifeq ("$(monodroidenabled)", "yes")
 	mkdir -p $(Configuration)/monoandroid10+monotouch10+xamarinios10/bin
