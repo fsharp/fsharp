@@ -66,7 +66,7 @@ ifeq ("$(monodroidenabled)", "yes")
 endif
 ifeq ("$(xamarinmacenabled)", "yes")
 	mkdir -p $(Configuration)/xamarinmacmobile/bin
-	cp -p packages/FSharp.Core.4.1.17/lib/portable-xamarinmac20/* $(Configuration)/xamarinmacmobile/bin
+	cp -p packages/FSharp.Core.4.1.17/lib/xamarinmac20/* $(Configuration)/xamarinmacmobile/bin
 endif
 
 
