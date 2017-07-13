@@ -194,6 +194,7 @@
 
   <!-- If building an FSharp.Core for a back version (Mono Debian source builds only), put it in a qualified directory -->
   <PropertyGroup>
+    <TargetFrameworkOutputDirectory>$(TargetDotnetProfile)</TargetFrameworkOutputDirectory>
     <IntermediateOutputPath>obj\$(TargetFrameworkOutputDirectory)\</IntermediateOutputPath>
   </PropertyGroup>
 
