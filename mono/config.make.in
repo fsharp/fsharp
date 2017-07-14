@@ -13,14 +13,6 @@ monogacdir := @MONOGACDIR@
 
 monogacdir40 := @MONOGACDIR40@
 
-pclenabled47 := @PCLENABLED47@
-pclenabled7 := @PCLENABLED7@
-pclenabled78 := @PCLENABLED78@
-pclenabled259 := @PCLENABLED259@
-monotouchenabled := @MONOTOUCHENABLED@
-monodroidenabled := @MONODROIDENABLED@
-xamarinmacenabled := @XAMARINMACENABLED@
-
 monodir := ${libdir}mono
 
 TargetDotnetProfile = net40
