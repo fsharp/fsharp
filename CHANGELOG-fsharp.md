@@ -1,3 +1,9 @@
+4.1.24
+  * Build using Mono 5.0 and msbuild
+
+4.1.23
+  * Fix nuget package for FSharp.Compiler.Tools System.ValueTuple.dll
+
 4.1.21
   * Fix nuget package for FSharp.Compiler.Tools
 

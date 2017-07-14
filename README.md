@@ -144,31 +144,24 @@ If using NuGet Package Manager, add the source to the list of available package 
 
 ### Building on Linux and other Unix systems:
 
-Building F# on Unix-type platforms requires
-[Mono](http://www.mono-project.com/download/) 4.4 or higher. If you
-get a complaint in subsequent steps about `xbuild` being missing, it means
-you don't have Mono installed.
-
-The usual:
+Building F# on Unix-type platforms requires [Mono](http://www.mono-project.com/download/) 5.0 or higher. 
 
 	./autogen.sh --prefix=/usr
 	make
 	sudo make install
 
-By default that makes optimized binaries. To make debug, use ```make CONFIG=debug```
+That build and installs optimized binaries. To make debug, use ```make CONFIG=debug```
 
 
 ### Building on macOS
 
-Building on macOS requires an install of the Xamarin tools.
-
-Use a prefix to your version of Mono:
+Building on macOS requires an install of the latest Xamarin tools or Mono package. Use a prefix to your version of Mono:
 
 	./autogen.sh --prefix=/Library/Frameworks/Mono.framework/Versions/Current/
 	make
 	sudo make install
 
-By default that makes optimized binaries. To make debug, use ```make CONFIG=debug```
+That build and installs optimized binaries. To make debug, use ```make CONFIG=debug```
 
 ### Building on Windows
 

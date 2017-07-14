@@ -48,7 +48,7 @@
 
     <FSharpCore41TargetVersion>4.1.18</FSharpCore41TargetVersion>
     <FSharpCore41FrozenPortableVersion>4.1.20</FSharpCore41FrozenPortableVersion>
-    <FSharpCore41FrozenPortableTargetVersion>4.1.21</FSharpCore41FrozenPortableTargetVersion>
+    <FSharpCore41FrozenPortableTargetVersion>4.1.23</FSharpCore41FrozenPortableTargetVersion>
     <FSharpCore42TargetVersion>4.2.2</FSharpCore42TargetVersion>
   </PropertyGroup>
 
@@ -114,6 +114,7 @@
     <DefineConstants Condition="'$(VisualStudioVersion)'=='15.0' AND '$(ProjectLanguage)' == 'VisualBasic'">$(DefineConstants),VS_VERSION_DEV15=True</DefineConstants>
     <DefineConstants Condition="'$(VisualStudioVersion)'=='15.0' AND '$(ProjectLanguage)' != 'VisualBasic'">$(DefineConstants);VS_VERSION_DEV15</DefineConstants>
     <!-- VisualStudioVersion is not defined when using xbuild on Mono. Assume 14.0, the last shipped in-the-box with Mono -->
+    <!-- Note we probably just need to add imports of Microsoft.Common.props -->
     <DefineConstants Condition="'$(VisualStudioVersion)'=='' AND '$(ProjectLanguage)' == 'VisualBasic'">$(DefineConstants),VS_VERSION_DEV14=True</DefineConstants>
     <DefineConstants Condition="'$(VisualStudioVersion)'=='' AND '$(ProjectLanguage)' != 'VisualBasic'">$(DefineConstants);VS_VERSION_DEV14</DefineConstants>
   </PropertyGroup>
@@ -143,7 +144,7 @@
 
     <!-- FSharp.Compiler.Tools is currently only used to get a working FSI.EXE to execute some scripts during the build -->
     <!-- The LKG FSI.EXE requires MSBuild 15 to be installed, which is painful -->
-    <FsiToolPath>$(FSharpSourcesRoot)\..\packages\FSharp.Compiler.Tools.4.1.5\tools</FsiToolPath>
+    <FsiToolPath>$(FSharpSourcesRoot)\..\packages\FSharp.Compiler.Tools.4.1.23\tools</FsiToolPath>
   </PropertyGroup>
 
   <Import Project="../Tools/Build.Common.props" Condition="'$(TargetDotnetProfile)'=='coreclr'"/>

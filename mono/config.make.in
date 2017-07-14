@@ -30,6 +30,7 @@ DISTVERSION = 201011
 
 # Version number mappings for various versions of FSharp.Core
 
+
 ifeq (x-$(TargetDotnetProfile)-,x-net40-)
 
 ifeq (x-$(FSharpCoreBackVersion)-,x--)
@@ -105,7 +106,7 @@ INSTALL = $(SHELL) $(topdir)/mono/install-sh
 INSTALL_BIN = $(INSTALL) -c -m 755
 INSTALL_LIB = $(INSTALL_BIN)
 
-XBUILD = @XBUILD@
+MSBUILD = @MSBUILD@
 
 EXTRA_DIST = configure
 NO_DIST = .gitignore lib/debug lib/proto lib/release
