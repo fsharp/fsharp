@@ -251,21 +251,23 @@ let evaluateSession(argv: string[]) =
                 member __.ReportUserCommandLineArgs args = fsiConfig0.ReportUserCommandLineArgs args
                 member __.EventLoopRun() = 
 #if !FX_NO_WINFORMS
-                    match fsiWinFormsLoop.Value with 
+                    match (if fsiSession.IsGui then fsiWinFormsLoop.Value else None) with 
                     | Some l -> (l :> IEventLoop).Run()
                     | _ -> 
 #endif
                     fsiConfig0.EventLoopRun()
+
                 member __.EventLoopInvoke(f) = 
 #if !FX_NO_WINFORMS
-                    match fsiWinFormsLoop.Value with 
+                    match (if fsiSession.IsGui then fsiWinFormsLoop.Value else None) with 
                     | Some l -> (l :> IEventLoop).Invoke(f)
                     | _ -> 
 #endif
                     fsiConfig0.EventLoopInvoke(f)
+
                 member __.EventLoopScheduleRestart() = 
 #if !FX_NO_WINFORMS
-                    match fsiWinFormsLoop.Value with 
+                    match (if fsiSession.IsGui then fsiWinFormsLoop.Value else None) with 
                     | Some l -> (l :> IEventLoop).ScheduleRestart()
                     | _ -> 
 #endif

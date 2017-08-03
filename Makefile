@@ -99,6 +99,8 @@ install:
 	$(MAKE) -C mono/FSharp.Core TargetDotnetProfile=xamarinmacmobile install
 	echo "------------------------------ INSTALLED FILES --------------"
 	ls -xlR $(DESTDIR)$(monodir)/fsharp $(DESTDIR)$(monodir)/msbuild $(DESTDIR)$(monodir)/gac/FSharp* $(DESTDIR)$(monodir)/Microsoft* || true
+	echo "------------------------------ STARTUP FSI  --------------"
+	echo "#q;;" | fsharpi
 
 dist:
 	-rm -r fsharp-$(DISTVERSION) fsharp-$(DISTVERSION).tar.bz2
