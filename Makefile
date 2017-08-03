@@ -98,7 +98,7 @@ install:
 	$(MAKE) -C mono/FSharp.Core TargetDotnetProfile=monoandroid10+monotouch10+xamarinios10 install
 	$(MAKE) -C mono/FSharp.Core TargetDotnetProfile=xamarinmacmobile install
 	echo "------------------------------ INSTALLED FILES --------------"
-	ls -xlR $(DESTDIR)$(monodir)/fsharp $(DESTDIR)$(monodir)/msbuild $(DESTDIR)$(monodir)/gac/FSharp* $(DESTDIR)$(monodir)/Microsoft*
+	ls -xlR $(DESTDIR)$(monodir)/fsharp $(DESTDIR)$(monodir)/msbuild $(DESTDIR)$(monodir)/gac/FSharp* $(DESTDIR)$(monodir)/Microsoft* || true
 
 dist:
 	-rm -r fsharp-$(DISTVERSION) fsharp-$(DISTVERSION).tar.bz2
