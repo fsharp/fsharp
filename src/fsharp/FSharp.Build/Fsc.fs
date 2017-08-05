@@ -60,10 +60,17 @@ type FscCommandLineBuilder () =
         if s <> String.Empty then
             args <- s :: args
 
-    member x.AppendSwitchIfNotNull(switch:string, value:string) =
+    member x.AppendSwitchIfNotNull(switch:string, value:string, ?metadataNames:string array) =
+        let metadataNames = defaultArg metadataNames [||]
         builder.AppendSwitchIfNotNull(switch, value)
         let tmp = new CommandLineBuilder()
         tmp.AppendSwitchUnquotedIfNotNull(switch, value)
+        let providedMetaData =
+            metadataNames
+            |> Array.filter (String.IsNullOrWhiteSpace >> not)
+        if providedMetaData.Length > 0 then
+            tmp.AppendTextUnquoted ","
+            tmp.AppendTextUnquoted (providedMetaData|> String.concat ",")
         let s = tmp.ToString()
         if s <> String.Empty then
             args <- s :: args
@@ -160,6 +167,7 @@ type [<Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:Iden
         | Some s -> s
         | None -> ""
     let mutable treatWarningsAsErrors : bool = false
+    let mutable useStandardResourceNames : bool = false
     let mutable warningsAsErrors : string = null
     let mutable versionFile : string = null
     let mutable warningLevel : string = null
@@ -242,7 +250,10 @@ type [<Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:Iden
         // Resources
         if resources <> null then 
             for item in resources do
-                builder.AppendSwitchIfNotNull("--resource:", item.ItemSpec)
+                match useStandardResourceNames with
+                | true -> builder.AppendSwitchIfNotNull("--resource:", item.ItemSpec, [|item.GetMetadata("LogicalName"); item.GetMetadata("Access")|])
+                | false -> builder.AppendSwitchIfNotNull("--resource:", item.ItemSpec)
+                
         // VersionFile
         builder.AppendSwitchIfNotNull("--versionfile:", versionFile)
         // References
@@ -450,7 +461,10 @@ type [<Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:Iden
     member fsc.TargetType
         with get() = targetType
         and set(s) = targetType <- s
-
+    // When set to true, generate resource names in the same way as C# with root namespace and folder names
+    member fsc.UseStandardResourceNames
+        with get() = useStandardResourceNames
+        and set(s) = useStandardResourceNames <- s
     // --version-file <string>: 
     member fsc.VersionFile
         with get() = versionFile

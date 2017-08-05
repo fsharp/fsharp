@@ -46,6 +46,7 @@ type Fsc = class
              member TargetType : string with get,set
              member ToolPath : string with get,set
              member TreatWarningsAsErrors : bool with get,set
+             member UseStandardResourceNames : bool with get,set
              member Utf8Output : bool with get,set
              member VisualStudioStyleErrors : bool with get,set
              member LCID : string with get,set
