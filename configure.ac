@@ -55,25 +55,8 @@ elif test "x$MSBUILD" == "xno"; then
 fi
 AC_MSG_NOTICE(msbuild: $MSBUILD)
 
-MONOGACDIR="$MONOLIBDIR"/mono
-if ! test "x$with_gacdir" = "xno"; then
-	MONOGACDIR=$(cd "$with_gacdir/.." && pwd)
-fi
-
-MONOGACDIR40="$MONOGACDIR"/4.0
-MONOGACDIR45="$MONOGACDIR"/4.5
-
-if ! test -e $MONOGACDIR45/mscorlib.dll; then
-	AC_ERROR(Couldn't find the mono gac directory or mscorlib.dll in the usual places. Set --with-gacdir=<path>)
-fi
-
 AC_SUBST(MONOBINDIR)
 AC_SUBST(MONOLIBDIR)
-AC_SUBST(MONOGACDIR)
-
-AC_SUBST(MONOGACDIR20)
-AC_SUBST(MONOGACDIR35)
-AC_SUBST(MONOGACDIR40)
 
 AC_CONFIG_FILES([
 mono/launcher
