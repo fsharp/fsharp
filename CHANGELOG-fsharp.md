@@ -1,3 +1,7 @@
+4.1.25
+  * [Make F# resources work more like C#](https://github.com/fsharp/fsharp/pull/761)
+  * Fix [Warning regarding WinForms on launch of `fsharpi` on mono](https://github.com/fsharp/fsharp/pull/767)
+
 4.1.24
   * Build using Mono 5.0 and msbuild
 
