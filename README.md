@@ -19,7 +19,7 @@ The F# community use this repo and others to publish these components:
 
 * “fsharp” Debian Linux packges for F# + Mono (published from [derivative repo](https://github.com/mono/linux-packaging-fsharp/)) 
 
-* “fsharp” as bundled in macOS tooling for F# + Mono by Xamarin and installed either from [the Mono Project Download page](http://www.mono-project.com/download/#download-mac) or via homebrew cask as part of the `mono-mdk` cask (`brew cask install mono-mdk`)
+* “fsharp” as bundled in macOS tooling for F# + Mono by Xamarin and installed either from [the Mono Project Download page](http://www.mono-project.com/download/#download-mac) or via homebrew cask as part of the [`mono-mdk`](https://github.com/caskroom/homebrew-cask/blob/master/Casks/mono-mdk.rb) cask (`brew cask install mono-mdk`)
 
 * “fsharp” docker image (published from [related repo](https://github.com/fsprojects/docker-fsharp))
 
