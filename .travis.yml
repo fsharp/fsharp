@@ -1,4 +1,6 @@
 language: csharp
+dist: trusty
+sudo: true
 
 os:
   - linux
