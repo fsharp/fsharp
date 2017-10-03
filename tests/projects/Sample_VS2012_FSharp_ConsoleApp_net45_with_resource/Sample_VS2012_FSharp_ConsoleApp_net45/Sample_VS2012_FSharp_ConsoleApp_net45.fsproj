@@ -138,7 +138,7 @@
 		<None Include="App.config" />
 		<EmbeddedResource Include="ExplicitCompiledResource.resources" />
 		<EmbeddedResource Include="ResxResource.resx" />
-		<EmbeddedResource Include="ResxResourceWithLogicalName.resx">
+		<EmbeddedResource Include="ResxResourceWithLogicalName.resx" />
 		<EmbeddedText Include="FSComp.txt" />
 		<EmbeddedText Include="..\FSCompLinkedInSuperDir.txt">
 			<Link>FSCompLinkedInSuperDir.txt</Link>
@@ -168,7 +168,7 @@
 		<EmbeddedResource Include="SubDir\ExplicitCompiledResourceInSubDir.resources" />
 		<EmbeddedResource Include="SubDir\NonResxResourceInSubDir.txt" />
 		<EmbeddedResource Include="SubDir\ResxResourceInSubDir.resx" />
-		<EmbeddedResource Include="SubDir\ResxResourceWithLogicalNameInSubDir.resx">
+		<EmbeddedResource Include="SubDir\ResxResourceWithLogicalNameInSubDir.resx" />
 		<EmbeddedResource Include="SubDir\ResxResourceInSubDir.resx">
 			<GenerateSource>true</GenerateSource>
 		</EmbeddedResource>
