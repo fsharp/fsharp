@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
+// Copyright (c) Microsoft Corporation.  All Rights Reserved.  See License.txt in the project root for license information.
 
 // -------------------------------------------------------------------- 
 // Erase discriminated unions.
@@ -8,14 +8,12 @@
 module internal Microsoft.FSharp.Compiler.AbstractIL.Extensions.ILX.EraseUnions
 
 open System.Collections.Generic
-open Internal.Utilities
+
 open Microsoft.FSharp.Compiler.AbstractIL 
 open Microsoft.FSharp.Compiler.AbstractIL.IL 
-open Microsoft.FSharp.Compiler.AbstractIL.Internal 
 open Microsoft.FSharp.Compiler.AbstractIL.Internal.Library 
 open Microsoft.FSharp.Compiler.AbstractIL.Extensions.ILX
 open Microsoft.FSharp.Compiler.AbstractIL.Extensions.ILX.Types
-open Microsoft.FSharp.Compiler.AbstractIL.Morphs 
 
 
 [<Literal>]
@@ -318,6 +316,12 @@ let rec extraTysAndInstrsForStructCtor (ilg: ILGlobals) cidx =
         let tys, instrs = extraTysAndInstrsForStructCtor ilg (cidx - 7)
         (ilg.typ_UInt32 :: tys, mkLdcInt32 0 :: instrs)
 
+let takesExtraParams (alts: IlxUnionAlternative[]) = 
+    alts.Length > 1 && 
+    (alts |> Array.exists (fun d -> d.FieldDefs.Length > 0) ||
+     // Check if not all lengths are distinct
+     alts |> Array.countBy (fun d -> d.FieldDefs.Length) |> Array.length <> alts.Length) 
+
 let convNewDataInstrInternal ilg cuspec cidx = 
     let alt = altOfUnionSpec cuspec cidx
     let altTy = tyForAlt cuspec alt
@@ -344,7 +348,7 @@ let convNewDataInstrInternal ilg cuspec cidx =
             | _ -> [], []
         let ctorFieldTys = alt.FieldTypes |> Array.toList
         let extraTys, extraInstrs = 
-            if cuspec.AlternativesArray.Length > 1 && cuspec.AlternativesArray |> Array.exists (fun d -> d.FieldDefs.Length > 0) then
+            if takesExtraParams cuspec.AlternativesArray then
                 extraTysAndInstrsForStructCtor ilg cidx
             else 
                 [], []
@@ -578,7 +582,7 @@ let emitDataSwitch ilg (cg: ICodeGen<'Mark>) (avoidHelpers, cuspec, cases) =
         | [] -> cg.EmitInstrs  [ AI_pop ]
         | _ ->
         // Use a dictionary to avoid quadratic lookup in case list
-        let dict = System.Collections.Generic.Dictionary<int,_>()
+        let dict = Dictionary<int,_>()
         for (i,case) in cases do dict.[i] <- case
         let failLab = cg.GenerateDelayMark ()
         let emitCase i _ = 
@@ -949,7 +953,7 @@ let mkClassUnionDef (addMethodGeneratedAttrs, addPropertyGeneratedAttrs, addProp
                 | Some typ -> Some typ.TypeSpec
 
             let extraParamsForCtor = 
-                if isStruct && cud.cudAlternatives.Length > 1 && cud.cudAlternatives |> Array.exists (fun d -> d.FieldDefs.Length > 0)  then 
+                if isStruct && takesExtraParams cud.cudAlternatives then 
                     let extraTys, _extraInstrs = extraTysAndInstrsForStructCtor ilg cidx 
                     List.map mkILParamAnon extraTys 
                 else 
