@@ -1,5 +1,8 @@
-4.1.26
+4.1.27
   * Integrate visualfsharp master
+
+4.1.26
+  * Tag latest
 
 4.1.25
   * [Make F# resources work more like C#](https://github.com/fsharp/fsharp/pull/761)
