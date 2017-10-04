@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
+// Copyright (c) Microsoft Corporation.  All Rights Reserved.  See License.txt in the project root for license information.
 
 /// Functions to format error message details
 module internal Microsoft.FSharp.Compiler.ErrorResolutionHints
@@ -13,7 +13,7 @@ let minStringLengthForThreshold = 3
 /// We report a candidate if its edit distance is <= the threshold.
 /// The threshold is set to about a quarter of the number of characters.
 let IsInEditDistanceProximity idText suggestion =
-    let editDistance = EditDistance.CalcEditDistance(idText,suggestion)
+    let editDistance = EditDistance.CalcEditDistance(idText, suggestion)
     let threshold =
         match idText.Length with
         | x when x < 5 -> 1
@@ -48,16 +48,16 @@ let FilterPredictions (idText:string) (suggestionF:ErrorLogger.Suggestions) =
         let suggestedText = suggestion.ToUpperInvariant()
         let similarity = EditDistance.JaroWinklerDistance uppercaseText suggestedText
         if similarity >= highConfidenceThreshold || suggestion.EndsWith ("." + idText) then
-            Some(similarity,suggestion)
+            Some(similarity, suggestion)
         elif similarity < minThresholdForSuggestions && suggestedText.Length > minStringLengthForThreshold then
             None
         elif IsInEditDistanceProximity uppercaseText suggestedText then
-            Some(similarity,suggestion)
+            Some(similarity, suggestion)
         else
             None)
     |> Seq.sortByDescending fst
-    |> Seq.mapi (fun i x -> i,x) 
-    |> Seq.takeWhile (fun (i,_) -> i < maxSuggestions) 
+    |> Seq.mapi (fun i x -> i, x) 
+    |> Seq.takeWhile (fun (i, _) -> i < maxSuggestions) 
     |> Seq.map snd 
     |> Seq.toList
 

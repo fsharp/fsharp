@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
+// Copyright (c) Microsoft Corporation.  All Rights Reserved.  See License.txt in the project root for license information.
 
 /// Defines derived expression manipulation and construction functions.
 module internal Microsoft.FSharp.Compiler.Tastops 
@@ -740,9 +740,12 @@ val tyOfExpr : TcGlobals -> Expr -> TType
 // Top expressions to implement top types
 //------------------------------------------------------------------------- 
 
+[<RequireQualifiedAccess>]
+type AllowTypeDirectedDetupling = Yes | No
+
 val stripTopLambda : Expr * TType -> Typars * Val list list * Expr * TType
-val InferArityOfExpr : TcGlobals -> TType -> Attribs list list -> Attribs -> Expr -> ValReprInfo
-val InferArityOfExprBinding : TcGlobals -> Val -> Expr -> ValReprInfo
+val InferArityOfExpr : TcGlobals -> AllowTypeDirectedDetupling -> TType -> Attribs list list -> Attribs -> Expr -> ValReprInfo
+val InferArityOfExprBinding : TcGlobals -> AllowTypeDirectedDetupling -> Val -> Expr -> ValReprInfo
 
 //-------------------------------------------------------------------------
 //  Copy expressions and types
