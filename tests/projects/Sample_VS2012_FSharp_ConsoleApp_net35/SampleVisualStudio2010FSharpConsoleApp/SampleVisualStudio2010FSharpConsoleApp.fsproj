@@ -23,6 +23,7 @@
     <WarningLevel>3</WarningLevel>
     <PlatformTarget>x86</PlatformTarget>
     <DocumentationFile>bin\Debug\SampleVisualStudio2010FSharpConsoleApp.XML</DocumentationFile>
+    <DocumentationFile>bin\Debug\SampleVisualStudio2010FSharpConsoleApp.xml</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <DebugType>pdbonly</DebugType>
@@ -33,6 +34,7 @@
     <WarningLevel>3</WarningLevel>
     <PlatformTarget>x86</PlatformTarget>
     <DocumentationFile>bin\Release\SampleVisualStudio2010FSharpConsoleApp.XML</DocumentationFile>
+    <DocumentationFile>bin\Release\SampleVisualStudio2010FSharpConsoleApp.xml</DocumentationFile>
     <DebugSymbols>false</DebugSymbols>
   </PropertyGroup>
   <ItemGroup>

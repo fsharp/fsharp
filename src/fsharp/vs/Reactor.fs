@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
+// Copyright (c) Microsoft Corporation.  All Rights Reserved.  See License.txt in the project root for license information.
 
 namespace Microsoft.FSharp.Compiler.SourceCodeServices
 open System
@@ -19,7 +19,7 @@ type internal IReactorOperations =
 [<NoEquality; NoComparison>]
 type internal ReactorCommands = 
     /// Kick off a build.
-    | SetBackgroundOp of ( (* userOpName: *) string * (* opName: *) string * (* opArg: *) string * (CompilationThreadToken -> bool)) option
+    | SetBackgroundOp of ( (* userOpName: *) string * (* opName: *) string * (* opArg: *) string * (CompilationThreadToken -> CancellationToken -> bool)) option
     /// Do some work not synchronized in the mailbox.
     | Op of userOpName: string * opName: string * opArg: string * CancellationToken * (CompilationThreadToken -> unit) * (unit -> unit)
     /// Finish the background building
@@ -35,10 +35,11 @@ type Reactor() =
     static let theReactor = Reactor()
     let mutable pauseBeforeBackgroundWork = pauseBeforeBackgroundWorkDefault
 
-    // We need to store the culture for the VS thread that is executing now,
+    // We need to store the culture for the VS thread that is executing now, 
     // so that when the reactor picks up a thread from the threadpool we can set the culture
     let culture = new CultureInfo(CultureInfo.CurrentUICulture.Name)
 
+    let mutable bgOpCts = new CancellationTokenSource()
     /// Mailbox dispatch function.
     let builder = 
         MailboxProcessor<_>.Start <| fun inbox ->
@@ -74,6 +75,7 @@ type Reactor() =
                     | Some (SetBackgroundOp bgOpOpt) -> 
                         //Trace.TraceInformation("Reactor: --> set background op, remaining {0}", inbox.CurrentQueueLength)
                         return! loop (bgOpOpt, onComplete, false)
+
                     | Some (Op (userOpName, opName, opArg, ct, op, ccont)) -> 
                         if ct.IsCancellationRequested then ccont() else
                         Trace.TraceInformation("Reactor: {0:n3} --> {1}.{2} ({3}), remaining {4}", DateTime.Now.TimeOfDay.TotalSeconds, userOpName, opName, opArg, inbox.CurrentQueueLength)
@@ -92,13 +94,21 @@ type Reactor() =
                         | None -> ()
                         | Some (bgUserOpName, bgOpName, bgOpArg, bgOp) -> 
                             Trace.TraceInformation("Reactor: {0:n3} --> wait for background {1}.{2} ({3}), remaining {4}", DateTime.Now.TimeOfDay.TotalSeconds, bgUserOpName, bgOpName, bgOpArg, inbox.CurrentQueueLength)
-                            while bgOp ctok do 
+                            bgOpCts.Dispose()
+                            bgOpCts <- new CancellationTokenSource()
+                            while not bgOpCts.IsCancellationRequested && bgOp ctok bgOpCts.Token do 
                                 ()
+
+                            if bgOpCts.IsCancellationRequested then 
+                                Trace.TraceInformation("FCS: <-- wait for background was cancelled {0}.{1}", bgUserOpName, bgOpName)
+
                         channel.Reply(())
                         return! loop (None, onComplete, false)
+
                     | Some (CompleteAllQueuedOps channel) -> 
                         Trace.TraceInformation("Reactor: {0:n3} --> stop background work and complete all queued ops, remaining {1}", DateTime.Now.TimeOfDay.TotalSeconds, inbox.CurrentQueueLength)
                         return! loop (None, Some channel, false)
+
                     | None -> 
                         match bgOpOpt, onComplete with 
                         | _, Some onComplete -> onComplete.Reply()
@@ -106,7 +116,11 @@ type Reactor() =
                             Trace.TraceInformation("Reactor: {0:n3} --> background step {1}.{2} ({3})", DateTime.Now.TimeOfDay.TotalSeconds, bgUserOpName, bgOpName, bgOpArg)
                             let time = Stopwatch()
                             time.Start()
-                            let res = bgOp ctok
+                            bgOpCts.Dispose()
+                            bgOpCts <- new CancellationTokenSource()
+                            let res = bgOp ctok bgOpCts.Token
+                            if bgOpCts.IsCancellationRequested then 
+                                Trace.TraceInformation("FCS: <-- background step {0}.{1}, was cancelled", bgUserOpName, bgOpName)
                             time.Stop()
                             let taken = time.Elapsed.TotalMilliseconds
                             //if span.TotalMilliseconds > 100.0 then 
@@ -120,13 +134,18 @@ type Reactor() =
                 try 
                     do! loop (None, None, false)
                 with e -> 
-                    Debug.Assert(false,String.Format("unexpected failure in reactor loop {0}, restarting", e))
+                    Debug.Assert(false, String.Format("unexpected failure in reactor loop {0}, restarting", e))
         }
 
     // [Foreground Mailbox Accessors] -----------------------------------------------------------                
     member r.SetBackgroundOp(bgOpOpt) = 
         Trace.TraceInformation("Reactor: {0:n3} enqueue start background, length {1}", DateTime.Now.TimeOfDay.TotalSeconds, builder.CurrentQueueLength)
+        bgOpCts.Cancel()
         builder.Post(SetBackgroundOp bgOpOpt)
+
+    member r.CancelBackgroundOp() = 
+        Trace.TraceInformation("FCS: trying to cancel any active background work")
+        bgOpCts.Cancel()
 
     member r.EnqueueOp(userOpName, opName, opArg, op) =
         Trace.TraceInformation("Reactor: {0:n3} enqueue {1}.{2} ({3}), length {4}", DateTime.Now.TimeOfDay.TotalSeconds, userOpName, opName, opArg, builder.CurrentQueueLength)
@@ -153,7 +172,7 @@ type Reactor() =
         async { 
             let! ct = Async.CancellationToken
             let resultCell = AsyncUtil.AsyncResultCell<_>()
-            r.EnqueueOpPrim(userOpName, opName, opArg, ct,
+            r.EnqueueOpPrim(userOpName, opName, opArg, ct, 
                 op=(fun ctok ->
                     let result =
                         try 
@@ -162,7 +181,7 @@ type Reactor() =
                           | ValueOrCancelled.Cancelled e -> AsyncUtil.AsyncCanceled e
                         with e -> e |> AsyncUtil.AsyncException
 
-                    resultCell.RegisterResult(result)),
+                    resultCell.RegisterResult(result)), 
                     ccont=(fun () -> resultCell.RegisterResult (AsyncUtil.AsyncCanceled(OperationCanceledException(ct))) )
 
             )

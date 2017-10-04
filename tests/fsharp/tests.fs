@@ -357,6 +357,8 @@ module CoreTests =
 
         fsc cfg "%s -a -o:lib.dll -g" cfg.fsc_flags ["lib.fs"]
 
+        copy_y cfg  (cfg.FSCBinPath ++ "System.ValueTuple.dll") ("." ++ "System.ValueTuple.dll")
+
         peverify cfg "lib.dll"
 
         csc cfg """/nologo /target:library /r:"%s" /r:lib.dll /out:lib2.dll""" cfg.FSCOREDLLPATH ["lib2.cs"]
@@ -1672,6 +1674,20 @@ module TypecheckTests =
 
 #if !FSHARP_SUITE_DRIVES_CORECLR_TESTS
     [<Test>]
+    let ``sigs pos27`` () = 
+        let cfg = testConfig "typecheck/sigs"
+        fsc cfg "%s --target:exe -o:pos27.exe" cfg.fsc_flags ["pos27.fs"]
+        copy_y cfg  (cfg.FSCBinPath ++ "System.ValueTuple.dll") ("." ++ "System.ValueTuple.dll")
+
+        peverify cfg "pos27.exe"
+
+    [<Test>]
+    let ``sigs pos28`` () = 
+        let cfg = testConfig "typecheck/sigs"
+        fsc cfg "%s --target:exe -o:pos28.exe" cfg.fsc_flags ["pos28.fs"]
+        peverify cfg "pos28.exe"
+
+    [<Test>]
     let ``sigs pos26`` () = 
         let cfg = testConfig "typecheck/sigs"
         fsc cfg "%s --target:exe -o:pos26.exe" cfg.fsc_flags ["pos26.fsi"; "pos26.fs"]
@@ -2127,6 +2143,21 @@ module TypecheckTests =
     let ``type check neg97`` () = singleNegTest (testConfig "typecheck/sigs") "neg97"
 
     [<Test>] 
+    let ``type check neg98`` () = singleNegTest (testConfig "typecheck/sigs") "neg98"
+
+    [<Test>] 
+    let ``type check neg99`` () = singleNegTest (testConfig "typecheck/sigs") "neg99"
+
+    [<Test>] 
+    let ``type check neg100`` () = 
+        let cfg = testConfig "typecheck/sigs"
+        let cfg = { cfg with fsc_flags = cfg.fsc_flags + " --warnon:3218" }
+        singleNegTest cfg "neg100"
+
+    [<Test>] 
+    let ``type check neg101`` () = singleNegTest (testConfig "typecheck/sigs") "neg101"
+
+    [<Test>] 
     let ``type check neg_byref_1`` () = singleNegTest (testConfig "typecheck/sigs") "neg_byref_1"
 
     [<Test>] 
@@ -2191,6 +2222,7 @@ module TypecheckTests =
 
     [<Test>] 
     let ``type check neg_byref_23`` () = singleNegTest (testConfig "typecheck/sigs") "neg_byref_23"
+
 
 module FscTests =                 
     [<Test>]

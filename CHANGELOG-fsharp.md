@@ -1,3 +1,9 @@
+4.1.27
+  * Integrate visualfsharp master
+
+4.1.26
+  * Tag latest
+
 4.1.25
   * [Make F# resources work more like C#](https://github.com/fsharp/fsharp/pull/761)
   * Fix [Warning regarding WinForms on launch of `fsharpi` on mono](https://github.com/fsharp/fsharp/pull/767)
@@ -5,7 +11,7 @@
 4.1.24
   * Build using Mono 5.0 and msbuild
 
-4.1.23
+4.1.27
   * Fix nuget package for FSharp.Compiler.Tools System.ValueTuple.dll
 
 4.1.21

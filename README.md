@@ -13,13 +13,13 @@ The F# community use this repo and others to publish these components:
 
 * FSharp.Compiler.Tools NuGet package (published from this repo)
 
-* FSharp.Compiler.Service NuGet package (published from [derivative repo](http://github.com/fsharp/FSharp.Compiler.Service))
+* FSharp.Compiler.Service NuGet package (published from [derivative repo](https://github.com/fsharp/FSharp.Compiler.Service))
 
 * [Fable](http://fable.io/), the F# compiler for JavaScript, published from its own repo but using FSharp.Compiler.Service NuGet package
 
 * “fsharp” Debian Linux packges for F# + Mono (published from [derivative repo](https://github.com/mono/linux-packaging-fsharp/)) 
 
-* “fsharp” as bundled in macOS tooling for F# + Mono by Xamarin
+* “fsharp” as bundled in macOS tooling for F# + Mono by Xamarin and installed either from [the Mono Project Download page](http://www.mono-project.com/download/#download-mac) or via homebrew cask as part of the [`mono-mdk`](https://github.com/caskroom/homebrew-cask/blob/master/Casks/mono-mdk.rb) cask (`brew cask install mono-mdk`)
 
 * “fsharp” docker image (published from [related repo](https://github.com/fsprojects/docker-fsharp))
 
@@ -28,7 +28,7 @@ The F# community use this repo and others to publish these components:
 * other packagings such as: the [F# support in Jupyter Notebooks - iFSharp](https://github.com/fsprojects/IfSharp); the F# support in Azure Functions; and [WebSharper](https://github.com/intellifactory/websharper) all using the FSharp.Compiler.Service NuGet package
 
 
-See notes below for most of these. Because the core logic of F# is made available as [a library component](http://github.com/fsharp/FSharp.Compiler.Service), an unlimited number of other packagings of F# are possible. Please contribute additional notes to this README.md if you are packaging F# for other settings.
+See notes below for most of these. Because the core logic of F# is made available as [a library component](https://github.com/fsharp/FSharp.Compiler.Service), an unlimited number of other packagings of F# are possible. Please contribute additional notes to this `README.md` if you are packaging F# for other settings.
 
 ### Contributing to the F# Compiler, Core Library and Tools
 
@@ -53,7 +53,7 @@ The `master` branch is for F# 4.x.  To bootstrap the compiler, binaries built fr
 
 ### The ``FSharp.Core`` NuGet package
 
-[The FSharp.Core NuGet package](http://www.nuget.org/packages/FSharp.Core) was previously published from this repo.
+[The FSharp.Core NuGet package](https://www.nuget.org/packages/FSharp.Core) was previously published from this repo.
 With the informal consent of the F# Software Foundation this package is now published by Microsoft.
 * FSharp.Core.dll for .NET Framework/Mono
 * FSharp.Core.dll for .NET Core
@@ -63,14 +63,14 @@ The FSharp.Core NuGet package includes all of the FSharp.Core redistributables f
 
 ### The ``FSharp.Compiler.Tools`` NuGet package
 
-This repo is currently used to make [the FSharp.Compiler.Tools NuGet package](http://www.nuget.org/packages/FSharp.Compiler.Tools). This package includes the following for both .NET Core and .NET Framework/Mono:
+This repo is currently used to make [the FSharp.Compiler.Tools NuGet package](https://www.nuget.org/packages/FSharp.Compiler.Tools). This package includes the following for both .NET Core and .NET Framework/Mono:
 * the F# compiler `fsc.exe` 
 * F# Interactive `fsi.exe`
 * build support,
 * a copy of FSharp.Core used to run the tools
 * related DLLs.
 
-The NuGet packages are exactly the ones produced by AppVeyor CI, e.g. [for version 4.1.2](https://ci.appveyor.com/project/fsgit/fsharp/build/4.1.2/artifacts).  They are pushed to http://nuget.org
+The NuGet packages are exactly the ones produced by AppVeyor CI, e.g. [for version 4.1.2](https://ci.appveyor.com/project/fsgit/fsharp/build/4.1.2/artifacts).  They are pushed to https://nuget.org
 by someone with appropriate permissions.
 
 The ``FSharp.Compiler.Tools`` NuGet package can be used if you wish to use the latest F# compiler on a computer without relying on the installed version of Visual Studio.
@@ -99,7 +99,7 @@ Jo Shields (@directhex) has done much of this work and says:
 
 > Linux package delivery is (now) based on packages built on our public Jenkins instance, and published automatically as a post-build step, based on two inputs - a Git repository in standard Debian git packaging format (which https://github.com/mono/linux-packaging-fsharp already is), and a tarball to consider as the canonical source of the next release (giving the same tarball in subsequent builds is how you indicate packaging-only changes such as alterations to metadata in debian/)
 
-> Alexander Köplinger  has admin access to Jenkins, SSH access to the Jenkins and repository servers, and has taken care of things for me in my absence in the past (but isn't a Debian packaging expert, so would be trusting that metadata changes are solid)
+> Alexander Köplinger has admin access to Jenkins, SSH access to the Jenkins and repository servers, and has taken care of things for me in my absence in the past (but isn't a Debian packaging expert, so would be trusting that metadata changes are solid)
 
 ### F# packaging in Mono + macOS 
 
@@ -165,7 +165,7 @@ That build and installs optimized binaries. To make debug, use ```make CONFIG=de
 
 ### Building on Windows
 
-Install [.NET 4.5.1](http://www.microsoft.com/en-us/download/details.aspx?id=40779) and  [MSBuild 12.0](http://www.microsoft.com/en-us/download/details.aspx?id=40760)
+Install [.NET 4.5.1](http://www.microsoft.com/en-us/download/details.aspx?id=40779) and  [MSBuild 12.0](https://www.microsoft.com/en-us/download/details.aspx?id=40760)
 
 Build using:
 
@@ -242,7 +242,7 @@ F# compiler sources as initially dropped are available from [fsharppowerpack.cod
 On 4 April 2014, Microsoft Open Tech published the F# compiler sources  at http://visualfsharp.codeplex.com and began
 accepting contributions to the F# compiler/library and tools.  
 
-In 2016 the Microsoft http://visualfsharp.codeplex.com repo moved to GitHub at http://github.com/Microsoft/visualfsharp.
+In 2016 the Microsoft http://visualfsharp.codeplex.com repo moved to GitHub at https://github.com/Microsoft/visualfsharp.
 
 This repository uses bootstrapping libraries, tools and F# compiler. The `lib/bootstrap/X.0` directories contain mono-built libraries, compiler and tools that can be used to bootstrap a build. You can also supply your own via the `--with-bootstrap` option.
 
@@ -253,5 +253,5 @@ Maintainers
 
 The maintainers of this repository appointed by the F# Core Engineering Group are:
 
- - [Enrico Sada](https://github.com/enricosada), [Don Syme](http://github.com/dsyme)
- - with help and guidance from [Tomas Petricek](http://github.com/tpetricek), [Robin Neatherway](https://github.com/rneatherway), [Cameron Taggart](http://github.com/ctaggart), [Dave Thomas](http://github.com/7sharp9), [Jo Shields](http://github.com/directhex),  [Kevin Ransom](http://github.com/KevinRansom) and [Henrik Feldt](http://github.com/haf) and many others
+ - [Enrico Sada](https://github.com/enricosada), [Don Syme](https://github.com/dsyme)
+ - with help and guidance from [Tomas Petricek](https://github.com/tpetricek), [Robin Neatherway](https://github.com/rneatherway), [Cameron Taggart](https://github.com/ctaggart), [Dave Thomas](https://github.com/7sharp9), [Jo Shields](https://github.com/directhex),  [Kevin Ransom](https://github.com/KevinRansom) and [Henrik Feldt](https://github.com/haf) and many others

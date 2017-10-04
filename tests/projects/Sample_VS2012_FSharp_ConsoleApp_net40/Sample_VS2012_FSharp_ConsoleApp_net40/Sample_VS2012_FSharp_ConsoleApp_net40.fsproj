@@ -23,6 +23,7 @@
     <WarningLevel>3</WarningLevel>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <DocumentationFile>bin\Debug\Sample_VS2012_FSharp_ConsoleApp_net40.XML</DocumentationFile>
+    <DocumentationFile>bin\Debug\Sample_VS2012_FSharp_ConsoleApp_net40.xml</DocumentationFile>
     <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
@@ -34,6 +35,7 @@
     <WarningLevel>3</WarningLevel>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <DocumentationFile>bin\Release\Sample_VS2012_FSharp_ConsoleApp_net40.XML</DocumentationFile>
+    <DocumentationFile>bin\Release\Sample_VS2012_FSharp_ConsoleApp_net40.xml</DocumentationFile>
     <Prefer32Bit>true</Prefer32Bit>
     <DebugSymbols>False</DebugSymbols>
   </PropertyGroup>

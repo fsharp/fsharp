@@ -7,6 +7,15 @@
 # (These aren't generally useful to commit directly; if anything, they should be applied.)
 scripts/*.patch
 
+/fcs/FSharp.Compiler.Service/illex.fs
+/fcs/FSharp.Compiler.Service/ilpars.fs
+/fcs/FSharp.Compiler.Service/ilpars.fsi
+/fcs/FSharp.Compiler.Service/lex.fs
+/fcs/FSharp.Compiler.Service/pars.fs
+/fcs/FSharp.Compiler.Service/pars.fsi
+/fcs/FSharp.Compiler.Service/pplex.fs
+/fcs/FSharp.Compiler.Service/pppars.fs
+/fcs/FSharp.Compiler.Service/pppars.fsi
 /src/*.userprefs
 /src/fsharp/FSStrings.resources
 /src/fsharp/FSharp.Build/*.resx
@@ -26,15 +35,6 @@ scripts/*.patch
 /src/fsharp/FSharp.Compiler.Private/*.sln
 /src/fsharp/FSharp.Compiler.Private/*.userprefs
 /src/*.log
-/src/fsharp/FSharp.Compiler.Private/illex.fs
-/src/fsharp/FSharp.Compiler.Private/ilpars.fs
-/src/fsharp/FSharp.Compiler.Private/ilpars.fsi
-/src/fsharp/FSharp.Compiler.Private/lex.fs
-/src/fsharp/FSharp.Compiler.Private/pars.fs
-/src/fsharp/FSharp.Compiler.Private/pars.fsi
-/src/fsharp/FSharp.Compiler.Private/pplex.fs
-/src/fsharp/FSharp.Compiler.Private/pppars.fs
-/src/fsharp/FSharp.Compiler.Private/pppars.fsi
 /src/fsharp/Fsc-proto/illex.fs
 /src/fsharp/Fsc-proto/ilpars.fs
 /src/fsharp/Fsc-proto/ilpars.fsi
@@ -199,6 +199,7 @@ FSharp.Core.Nuget/*.nupkg
 tests/fsharpqa/Source/*FSharpQA_Failures.env
 tests/fsharpqa/Source/*FSharpQA_Failures.lst
 *.csproj.user
+*.fsproj.user
 *.sln.DotSettings.user
 *.ide
 *.log

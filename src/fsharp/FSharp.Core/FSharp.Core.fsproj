@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information. -->
+<!-- Copyright (c) Microsoft Corporation.  All Rights Reserved.  See License.txt in the project root for license information. -->
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
   <PropertyGroup>
@@ -34,6 +34,11 @@
     <OtherFlags Condition=" '$(TargetDotnetProfile)'=='portable78'">$(OtherFlags)  --compiling-fslib-40 --compiling-fslib-nobigint</OtherFlags>
     <OtherFlags Condition=" '$(TargetDotnetProfile)'=='portable259'">$(OtherFlags) --compiling-fslib-40 --compiling-fslib-nobigint</OtherFlags>
     <OtherFlags>$(OtherFlags)       --compiling-fslib-40</OtherFlags>
+    <OtherFlags>$(OtherFlags) --warnon:1182 --compiling-fslib --extraoptimizationloops:1</OtherFlags>
+    <OtherFlags>$(OtherFlags) --warnon:3218</OtherFlags>
+    <OtherFlags>$(OtherFlags) --maxerrors:20</OtherFlags>
+    <OtherFlags>$(OtherFlags) --warnon:1182 --compiling-fslib --maxerrors:20 --extraoptimizationloops:1</OtherFlags>
+    <OtherFlags Condition="'$(TargetDotnetProfile)' == 'net40'">$(OtherFlags) --compiling-fslib-40</OtherFlags>
   </PropertyGroup>
 
   <!-- Nuget packaging configuration -->
@@ -55,16 +60,23 @@
     <CustomAdditionalCompileInputs Include="$(FSharpSourcesRoot)\..\Proto\$(ProtoFlavour)\bin\fsc-proto.exe">
       <Visible>false</Visible>
     </CustomAdditionalCompileInputs>
+  </ItemGroup>
+
+  <ItemGroup>
     <EmbeddedResource Include="FSCore.resx">
+      <GenerateSource>true</GenerateSource>
+      <GenerateLegacyCode>true</GenerateLegacyCode>
+      <GenerateLiterals>false</GenerateLiterals>
+      <GeneratedModuleName>Microsoft.FSharp.Core.SR</GeneratedModuleName>
       <Link>FSCore.resx</Link>
     </EmbeddedResource>
-    <Compile Include="prim-types-prelude.fsi">
+    <CompileBefore Include="prim-types-prelude.fsi">
       <Link>Primitives/prim-types-prelude.fsi</Link>
-    </Compile>
-    <Compile Include="prim-types-prelude.fs">
+    </CompileBefore>
+    <CompileBefore Include="prim-types-prelude.fs">
       <Link>Primitives/prim-types-prelude.fs</Link>
-    </Compile>
-    <Compile Include="SR.fs">
+    </CompileBefore>
+    <Compile Include="SR.fs" Condition="'$(Configuration)' == 'Proto'">
       <Link>Primitives/SR.fs</Link>
     </Compile>
     <Compile Include="prim-types.fsi">

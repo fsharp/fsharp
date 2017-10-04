@@ -24,6 +24,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
     <DocumentationFile>bin\Debug\Sample_VS2013_FSharp_Portable_Library_net451.XML</DocumentationFile>
+    <DocumentationFile>bin\Debug\Sample_VS2013_FSharp_Portable_Library_net451.xml</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -33,6 +34,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
     <DocumentationFile>bin\Release\Sample_VS2013_FSharp_Portable_Library_net451.XML</DocumentationFile>
+    <DocumentationFile>bin\Release\Sample_VS2013_FSharp_Portable_Library_net451.xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="FSharp.Core">

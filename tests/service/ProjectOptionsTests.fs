@@ -1,5 +1,5 @@
 ﻿#if INTERACTIVE
-#r "../../Debug/net40/bin/FSharp.Compiler.Service.dll" // note, run 'build fcs' to generate this, this DLL has a public API so can be used from F# Interactive
+#r "../../Debug/fcs/net45/FSharp.Compiler.Service.dll" // note, run 'build fcs debug' to generate this, this DLL has a public API so can be used from F# Interactive
 #r "../../Debug/net40/bin/FSharp.Compiler.Service.ProjectCracker.dll"
 #r "../../packages/NUnit.3.5.0/lib/net45/nunit.framework.dll"
 #load "FsUnit.fs"
@@ -44,8 +44,9 @@ let getCompiledFilenames =
         else None)
     >> Array.distinct
 
+(*
 [<Test>]
-let ``Project file parsing example 1 Default Configuration`` () = 
+  let ``Project file parsing example 1 Default Configuration`` () = 
     let projectFile = __SOURCE_DIRECTORY__ + @"/FSharp.Compiler.Service.Tests.fsproj"
     let options = ProjectCracker.GetProjectOptionsFromProjectFile(projectFile)
 
@@ -85,6 +86,7 @@ let ``Project file parsing example 1 Default configuration relative path`` () =
     checkOption options.OtherOptions "--flaterrors"
     checkOption options.OtherOptions "--simpleresolution"
     checkOption options.OtherOptions "--noframework"
+*)
 
 [<Test>]
 let ``Project file parsing VS2013_FSharp_Portable_Library_net45``() = 
@@ -135,21 +137,26 @@ let ``Project file parsing -- compile files 2``() =
 [<Test>]
 let ``Project file parsing -- bad project file``() =
   let f = normalizePath (__SOURCE_DIRECTORY__ + @"/data/Malformed.fsproj")
-  let log = snd (ProjectCracker.GetProjectOptionsFromProjectFileLogged(f))
-  log.[f] |> should contain "Microsoft.Build.Exceptions.InvalidProjectFileException"
+  try 
+    ProjectCracker.GetProjectOptionsFromProjectFileLogged(f) |> ignore
+    failwith "Expected exception"
+  with e -> 
+    Assert.That(e.Message, Contains.Substring "The project file could not be loaded.")
 
 [<Test>]
 let ``Project file parsing -- non-existent project file``() =
   let f = normalizePath (__SOURCE_DIRECTORY__ + @"/data/DoesNotExist.fsproj")
-  let log = snd (ProjectCracker.GetProjectOptionsFromProjectFileLogged(f, enableLogging=true))
-  log.[f] |> should contain "System.IO.FileNotFoundException"
+  try
+    ProjectCracker.GetProjectOptionsFromProjectFileLogged(f, enableLogging=true) |> ignore
+  with e -> 
+    Assert.That(e.Message, Contains.Substring "Could not find file")
 
 [<Test>]
 let ``Project file parsing -- output file``() =
   let p = ProjectCracker.GetProjectOptionsFromProjectFile(__SOURCE_DIRECTORY__ + @"/data/Test1.fsproj")
 
   let expectedOutputPath =
-    normalizePath (__SOURCE_DIRECTORY__ + "/data/Test1/bin/Debug/Test1.dll")
+    normalizePath (__SOURCE_DIRECTORY__ + "/data/bin/Debug/Test1.dll")
 
   p.OtherOptions
   |> getOutputFile
@@ -215,6 +222,19 @@ let ``Project file parsing -- Logging``() =
   else
     Assert.That(log, Is.StringContaining("""Using "ResolveAssemblyReference" task from assembly "Microsoft.Build.Tasks.Core, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a"."""))
 
+[<Test>]
+let ``Project file parsing -- FSharpProjectOptions.SourceFiles contains both fs and fsi files``() =
+  let projectFileName = normalizePath (__SOURCE_DIRECTORY__ + @"/data/FsAndFsiFiles.fsproj")
+  let options, log = ProjectCracker.GetProjectOptionsFromProjectFileLogged(projectFileName, enableLogging=true)
+  printfn "%A" log
+  let expectedSourceFiles =
+    [| "Test1File2.fsi"
+       "Test1File2.fs"
+       "Test1File1.fs"
+       "Test1File0.fsi"
+       "Test1File0.fs" |]
+  Assert.That(options.SourceFiles |> Array.map Path.GetFileName, Is.EqualTo expectedSourceFiles, "source files")
+  
 [<Test>]
 let ``Project file parsing -- Full path``() =
   let f = normalizePath (__SOURCE_DIRECTORY__ + @"/data/ToolsVersion12.fsproj")
@@ -371,6 +391,7 @@ let ``Project file parsing -- PCL profile259 project``() =
 
     checkOption options.OtherOptions "--targetprofile:netcore"
 
+(*
 [<Test>]
 let ``Project file parsing -- Exe with a PCL reference``() =
 
@@ -390,7 +411,7 @@ let ``Project file parsing -- Exe with a PCL reference``() =
     references |> should contain "mscorlib.dll"
     references |> should contain "System.Reflection.dll"
     references |> should contain "System.Reflection.Emit.Lightweight.dll"
-
+*)
 
 [<Test>]
 let ``Project file parsing -- project file contains project reference to out-of-solution project and is used in release mode``() =
