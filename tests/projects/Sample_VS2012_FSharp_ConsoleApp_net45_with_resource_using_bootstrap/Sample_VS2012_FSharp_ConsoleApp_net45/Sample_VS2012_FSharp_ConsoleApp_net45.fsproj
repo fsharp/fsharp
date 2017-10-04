@@ -14,9 +14,7 @@
 		<ProductVersion>10.0.0</ProductVersion>
 		<UsePartialTypes>False</UsePartialTypes>
 		<TargetFSharpCoreVersion>4.4.0.0</TargetFSharpCoreVersion>
-		<LkgPath>$(MSBuildProjectDirectory)\..\..\..\..\packages\FSharp.Compiler.Tools.4.1.23\tools</LkgPath>
-		<LkgPath>$(MSBuildProjectDirectory)\..\..\..\..\packages\FSharp.Compiler.Tools\tools</LkgPath>
-		<LkgPath>$(MSBuildProjectDirectory)\..\..\..\..\packages\FSharp.Compiler.Tools.4.1.5\tools</LkgPath>
+		<LkgPath>$(MSBuildProjectDirectory)\..\..\..\..\packages\FSharp.Compiler.Tools.4.1.27\tools</LkgPath>
 	</PropertyGroup>
 	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
 		<DebugSymbols>True</DebugSymbols>
@@ -48,20 +46,6 @@
 	<Import Project="$(LkgPath)\Microsoft.FSharp.Targets" />
 	<ItemGroup>
 		<Compile Include="Program.fs" />
-		<FsSrGen Include="FSComp.txt" />
-		<FsSrGen Include="..\FSCompLinkedInSuperDir.txt">
-			<Link>FSCompLinkedInSuperDir.txt</Link>
-		</FsSrGen>
-		<FsSrGen Include="FSCompLinkedInSameDir.txt">
-			<Link>FSCompLinkedInSameDir.txt</Link>
-		</FsSrGen>
-		<FsSrGen Include="SubDir\FSCompLinkedInSubDir.txt">
-			<Link>FSCompLinkedInSubDir.txt</Link>
-		</FsSrGen>
-		<None Include="App.config" />
-		<EmbeddedResource Include="ExplicitCompiledResource.resources" />
-		<EmbeddedResource Include="ResxResource.resx" />
-		<EmbeddedResource Include="ResxResourceWithLogicalName.resx">
 		<EmbeddedText Include="FSComp.txt" />
 		<EmbeddedText Include="..\FSCompLinkedInSuperDir.txt">
 			<Link>FSCompLinkedInSuperDir.txt</Link>
@@ -90,8 +74,6 @@
 		</Content>
 		<EmbeddedResource Include="SubDir\ExplicitCompiledResourceInSubDir.resources" />
 		<EmbeddedResource Include="SubDir\NonResxResourceInSubDir.txt" />
-		<EmbeddedResource Include="SubDir\ResxResourceInSubDir.resx" />
-		<EmbeddedResource Include="SubDir\ResxResourceWithLogicalNameInSubDir.resx">
 		<EmbeddedResource Include="SubDir\ResxResourceInSubDir.resx">
 			<GenerateSource>true</GenerateSource>
 		</EmbeddedResource>
@@ -112,9 +94,5 @@
 		<Reference Include="System.Core" />
 		<Reference Include="System.Numerics" />
 	</ItemGroup>
-	<PropertyGroup>
-		<FsSrGenToolPath>$(MSBuildProjectDirectory)\tools</FsSrGenToolPath>
-	</PropertyGroup>
-	<Import Project="tools\FSharp.SRGen.targets" />
 
 </Project>
