@@ -43,16 +43,10 @@ available from this repo.
 
 The `master` branch is for F# 4.x.  To bootstrap the compiler, binaries built from an earlier version of this project are used. This codebase uses the Apache 2.0 license.
 
-<<<<<<< HEAD
 | F#   | Branch        | macOS/Linux | Windows |
 |------|---------------|-----------|---------|
 | 4.1+ | ``master``    | [![Build Status](https://travis-ci.org/fsharp/fsharp.png?branch=master)](https://travis-ci.org/fsharp/fsharp/branches) | [![Build status](https://ci.appveyor.com/api/projects/status/7m5e2yr0snbbr7t9)](https://ci.appveyor.com/project/fsgit/fsharp) |
 | 4.0  | ``fsharp4``   | [![Build Status](https://travis-ci.org/fsharp/fsharp.png?branch=fsharp4)](https://travis-ci.org/fsharp/fsharp/branches) |
-=======
-To setup Visual Studio to use the latest nightly releases of the Visual F# Tools:
-
-https://blogs.msdn.microsoft.com/dotnet/2017/03/14/announcing-nightly-releases-for-the-visual-f-tools/
->>>>>>> 9893e723694ce1ac054c8f10e3abb5436de389cd
 
 
 ## Details on the various Alternative Packagings
