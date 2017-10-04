@@ -37,7 +37,7 @@ namespace Microsoft.FSharp.NativeInterop
         /// <param name="index">The index by which to offset the pointer.</param>
         /// <returns>A typed pointer.</returns>
         val inline add : address:nativeptr<'T> -> index:int -> nativeptr<'T>
-        
+
         [<Unverifiable>]
         [<NoDynamicInvocation>]
         [<CompiledName("GetPointerInlined")>]
