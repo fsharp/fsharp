@@ -51,4 +51,4 @@ module NativePtr =
 
     [<NoDynamicInvocation>]
     [<CompiledName("ToByRefInlined")>]
-    let inline toByRef (x: nativeptr<'T>) : byref<'T> = (# "" x : 'T byref  #)
+    let inline toByRef (address: nativeptr<'T>) : byref<'T> = (# "" address : 'T byref  #)
