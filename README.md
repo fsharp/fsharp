@@ -17,7 +17,7 @@ The F# community use this repo and others to publish these components:
 
 * [Fable](http://fable.io/), the F# compiler for JavaScript, published from its own repo but using FSharp.Compiler.Service NuGet package
 
-* “fsharp” Debian Linux packges for F# + Mono (published from [derivative repo](https://github.com/mono/linux-packaging-fsharp/)) 
+* “fsharp” Debian Linux packages for F# + Mono (published from [derivative repo](https://github.com/mono/linux-packaging-fsharp/)) 
 
 * “fsharp” as bundled in macOS tooling for F# + Mono by Xamarin and installed either from [the Mono Project Download page](http://www.mono-project.com/download/#download-mac) or via homebrew cask as part of the [`mono-mdk`](https://github.com/caskroom/homebrew-cask/blob/master/Casks/mono-mdk.rb) cask (`brew cask install mono-mdk`)
 
@@ -74,7 +74,7 @@ The NuGet packages are exactly the ones produced by AppVeyor CI, e.g. [for versi
 by someone with appropriate permissions.
 
 The ``FSharp.Compiler.Tools`` NuGet package can be used if you wish to use the latest F# compiler on a computer without relying on the installed version of Visual Studio.
-Adding it via nuget to a project will override the in-box compiler with the compiler from the nuget package.
+Adding it via NuGet to a project will override the in-box compiler with the compiler from the NuGet package.
 Note: you will need to manually modify your project file once (see https://github.com/fsharp/fsharp/issues/676). 
 
 ### The ``fsharp`` Debian Linux Package
@@ -117,7 +117,7 @@ F# is packaged as part of Mono on macOS. Jason Imison says:
 
 ### Package feeds
 
-A feed of nuget packages from builds is available from AppVeyor using the NuGet feed: https://ci.appveyor.com/nuget/fsgit-fsharp
+A feed of NuGet packages from builds is available from AppVeyor using the NuGet feed: https://ci.appveyor.com/nuget/fsgit-fsharp
 
 If using Paket, add the source at the top of `paket.dependencies`.
 
@@ -171,7 +171,7 @@ Build using:
 
     mono\build.bat
 
-This build the proto compiler, then the library, then the final compiler.
+This builds the proto compiler, then the library, then the final compiler.
 
 ### Build Note: Strong Names
 
@@ -208,7 +208,7 @@ There are certain guidelines that need to be followed when integrating changes f
 * this repository does not undergo the QA test process that upstream does, so the `tests/fsharpqa` folder and all files within should be removed when merging
 * this repository does not contain any of the Visual Studio tooling or integrations, so the `vsintegration` directory and all files within should be removed when merging
 * anything referencing `FSharp.LaunguageService.Compiler` is a Microsoft-internal version of the open FSharp.Compiler.Service repository, and should be removed when merging
-* Windows-specific scrips like `update.cmd` and `runtests.cmd` aren't used in this repository, and so should be removed when merging
+* Windows-specific scripts like `update.cmd` and `runtests.cmd` aren't used in this repository, and so should be removed when merging
 
 ### Continuous Integration Build
 
