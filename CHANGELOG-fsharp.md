@@ -1,3 +1,6 @@
+4.1.29
+  * Integrate visualfsharp master to d903cf6277e40646563f24bbe2790e8a292d5f9b
+
 4.1.28
   * Remove FSharp.Core from GAC
 

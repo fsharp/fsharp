@@ -227,6 +227,11 @@ source_link.json
 /VSRelease/net40/bin
 System.ValueTuple.dll
 tests/fsharpqa/testenv/bin/System.ValueTuple.dll
-lib/netcore/fsc/bin/
 
 !lib/bootstrap/signed/**/*
+*/.fake
+/fcs/packages/
+*/paket-files/
+/fcs/TestResult.xml
+/tests/fcs/
+/fcs/.paket/Paket.Restore.targets
