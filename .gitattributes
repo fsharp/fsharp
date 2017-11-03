@@ -22,6 +22,11 @@
 *.RTF	 diff=astextplain
 
 install-sh text eol=lf
-*.in text eol=lf
-*.ac text eol=lf
-*.sh text eol=lf
+autogen.sh text eol=lf
+launcher.in text eol=lf
+config.make.in text eol=lf
+targets.make text eol=lf
+configure.ac text eol=lf
+Makefile.in text eol=lf
+
+*.bsl linguist-vendored=true
