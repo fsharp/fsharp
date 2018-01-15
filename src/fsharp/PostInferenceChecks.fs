@@ -7,7 +7,6 @@ module internal Microsoft.FSharp.Compiler.PostTypeCheckSemanticChecks
 open System.Collections.Generic
 
 open Microsoft.FSharp.Compiler
-open Microsoft.FSharp.Compiler.AbstractIL
 open Microsoft.FSharp.Compiler.AbstractIL.IL
 open Microsoft.FSharp.Compiler.AbstractIL.Internal
 open Microsoft.FSharp.Compiler.AbstractIL.Internal.Library
@@ -1379,7 +1378,7 @@ let CheckRecdField isUnion cenv env (tycon:Tycon) (rfield:RecdField) =
         CheckForByrefLikeType cenv env rfield.FormalType (fun () -> errorR(Error(FSComp.SR.chkCantStoreByrefValue(), tycon.Range)))
 
 let CheckEntityDefn cenv env (tycon:Entity) =
-#if EXTENSIONTYPING
+#if !NO_EXTENSIONTYPING
   if not tycon.IsProvidedGeneratedTycon then
 #endif
     let env = { env with reflect = env.reflect || HasFSharpAttribute cenv.g cenv.g.attrib_ReflectedDefinitionAttribute tycon.Attribs }

@@ -18,7 +18,6 @@ open Microsoft.FSharp.Compiler.NameResolution
 open Microsoft.FSharp.Compiler.TcGlobals
 open Microsoft.FSharp.Compiler.Lib
 open Microsoft.FSharp.Compiler.Tastops
-open Microsoft.FSharp.Compiler.PrettyNaming
 open Internal.Utilities
 
 type FSharpAccessibility(a:Accessibility, ?isProtected) = 
@@ -128,7 +127,7 @@ module Impl =
     /// Convert an IL type definition accessibility into an F# accessibility
     let getApproxFSharpAccessibilityOfEntity (entity: EntityRef) = 
         match metadataOfTycon entity.Deref with 
-#if EXTENSIONTYPING
+#if !NO_EXTENSIONTYPING
         | ProvidedTypeMetadata _info -> 
             // This is an approximation - for generative type providers some type definitions can be private.
             taccessPublic
@@ -230,7 +229,7 @@ and FSharpEntity(cenv:cenv, entity:EntityRef) =
     inherit FSharpSymbol(cenv, 
                          (fun () -> 
                               checkEntityIsResolved(entity); 
-                              if entity.IsModule then Item.ModuleOrNamespaces [entity] 
+                              if entity.IsModuleOrNamespace then Item.ModuleOrNamespaces [entity] 
                               else Item.UnqualifiedType [entity]), 
                          (fun _this thisCcu2 ad -> 
                              checkForCrossProjectAccessibility (thisCcu2, ad) (cenv.thisCcu, getApproxFSharpAccessibilityOfEntity entity)) 
@@ -288,7 +287,7 @@ and FSharpEntity(cenv:cenv, entity:EntityRef) =
     member x.QualifiedName = 
         checkIsResolved()
         let fail() = invalidOp (sprintf "the type '%s' does not have a qualified name" x.LogicalName)
-#if EXTENSIONTYPING
+#if !NO_EXTENSIONTYPING
         if entity.IsTypeAbbrev || entity.IsProvidedErasedTycon || entity.IsNamespace then fail()
         #else
         if entity.IsTypeAbbrev || entity.IsNamespace then fail()
@@ -305,7 +304,7 @@ and FSharpEntity(cenv:cenv, entity:EntityRef) =
     
     member x.TryFullName = 
         if isUnresolved() then None
-#if EXTENSIONTYPING
+#if !NO_EXTENSIONTYPING
         elif entity.IsTypeAbbrev || entity.IsProvidedErasedTycon then None
         #else
         elif entity.IsTypeAbbrev then None
@@ -346,7 +345,7 @@ and FSharpEntity(cenv:cenv, entity:EntityRef) =
     member __.ArrayRank  = 
         checkIsResolved()
         rankOfArrayTyconRef cenv.g entity
-#if EXTENSIONTYPING
+#if !NO_EXTENSIONTYPING
     member __.IsProvided  = 
         isResolved() &&
         entity.IsProvided
@@ -366,7 +365,7 @@ and FSharpEntity(cenv:cenv, entity:EntityRef) =
     member __.IsClass = 
         isResolved() &&
         match metadataOfTycon entity.Deref with
-#if EXTENSIONTYPING 
+#if !NO_EXTENSIONTYPING 
         | ProvidedTypeMetadata info -> info.IsClass
 #endif
         | ILTypeMetadata (TILObjectReprData(_, _, td)) -> (td.tdKind = ILTypeDefKind.Class)
@@ -387,7 +386,7 @@ and FSharpEntity(cenv:cenv, entity:EntityRef) =
     member __.IsDelegate = 
         isResolved() &&
         match metadataOfTycon entity.Deref with 
-#if EXTENSIONTYPING
+#if !NO_EXTENSIONTYPING
         | ProvidedTypeMetadata info -> info.IsDelegate ()
 #endif
         | ILTypeMetadata (TILObjectReprData(_, _, td)) -> (td.tdKind = ILTypeDefKind.Delegate)
@@ -530,7 +529,7 @@ and FSharpEntity(cenv:cenv, entity:EntityRef) =
 
     member x.StaticParameters = 
         match entity.TypeReprInfo with 
-#if EXTENSIONTYPING
+#if !NO_EXTENSIONTYPING
         | TProvidedTypeExtensionPoint info -> 
             let m = x.DeclarationLocation
             let typeBeforeArguments = info.ProvidedType 
@@ -1796,6 +1795,7 @@ and FSharpMemberOrFunctionOrValue(cenv, d:FSharpMemberOrValData, item) =
     member x.IsConstructor =
         match d with
         | C _ -> true
+        | V v -> v.IsConstructor
         | _ -> false
 
     member x.Data = d
@@ -1803,6 +1803,11 @@ and FSharpMemberOrFunctionOrValue(cenv, d:FSharpMemberOrValData, item) =
     member x.IsValCompiledAsMethod =
         match d with
         | V valRef -> IlxGen.IsValCompiledAsMethod cenv.g valRef.Deref
+        | _ -> false
+
+    member x.IsValue =
+        match d with
+        | V valRef -> not (SymbolHelpers.isFunction cenv.g valRef.Type)
         | _ -> false
 
     override x.Equals(other: obj) =
@@ -2055,7 +2060,7 @@ and FSharpAttribute(cenv: cenv, attrib: AttribInfo) =
 
     override __.ToString() = 
         if entityIsUnresolved attrib.TyconRef then "attribute ???" else "attribute " + attrib.TyconRef.CompiledName + "(...)" 
-#if EXTENSIONTYPING    
+#if !NO_EXTENSIONTYPING    
 and FSharpStaticParameter(cenv, sp: Tainted< ExtensionTyping.ProvidedParameterInfo >, m) = 
     inherit FSharpSymbol(cenv, 
                          (fun () -> 
@@ -2178,7 +2183,7 @@ and FSharpAssembly internal (cenv, ccu: CcuThunk) =
     member __.CodeLocation = ccu.SourceCodeDirectory
     member __.FileName = ccu.FileName
     member __.SimpleName = ccu.AssemblyName 
-    #if EXTENSIONTYPING
+    #if !NO_EXTENSIONTYPING
     member __.IsProviderGenerated = ccu.IsProviderGenerated
     #endif
     member __.Contents = FSharpAssemblySignature(cenv, ccu)
@@ -2280,11 +2285,11 @@ type FSharpSymbolUse(g:TcGlobals, denv: DisplayEnv, symbol:FSharpSymbol, itemOcc
     member __.Symbol  = symbol
     member __.DisplayContext  = FSharpDisplayContext(fun _ -> denv)
     member x.IsDefinition = x.IsFromDefinition
-    member __.IsFromDefinition = (match itemOcc with ItemOccurence.Binding -> true | _ -> false)
-    member __.IsFromPattern = (match itemOcc with ItemOccurence.Pattern -> true | _ -> false)
-    member __.IsFromType = (match itemOcc with ItemOccurence.UseInType -> true | _ -> false)
-    member __.IsFromAttribute = (match itemOcc with ItemOccurence.UseInAttribute -> true | _ -> false)
-    member __.IsFromDispatchSlotImplementation = (match itemOcc with ItemOccurence.Implemented -> true | _ -> false)
+    member __.IsFromDefinition = itemOcc = ItemOccurence.Binding
+    member __.IsFromPattern = itemOcc = ItemOccurence.Pattern
+    member __.IsFromType = itemOcc = ItemOccurence.UseInType
+    member __.IsFromAttribute = itemOcc = ItemOccurence.UseInAttribute
+    member __.IsFromDispatchSlotImplementation = itemOcc = ItemOccurence.Implemented
     member __.IsFromComputationExpression = 
         match symbol.Item, itemOcc with 
         // 'seq' in 'seq { ... }' gets colored as keywords
@@ -2292,7 +2297,7 @@ type FSharpSymbolUse(g:TcGlobals, denv: DisplayEnv, symbol:FSharpSymbol, itemOcc
         // custom builders, custom operations get colored as keywords
         | (Item.CustomBuilder _ | Item.CustomOperation _), ItemOccurence.Use ->  true
         | _ -> false
-
+    member __.IsFromOpenStatement = itemOcc = ItemOccurence.Open
     member __.FileName = range.FileName
     member __.Range = Range.toZ range
     member __.RangeAlternate = range
