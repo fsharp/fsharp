@@ -22,6 +22,7 @@
 
   <ItemGroup>
     <EmbeddedText Include="..\FSInteractiveSettings.txt" />
+    <Compile Include="InternalsVisibleTo.fs" />
     <Compile Include="..\..\utils\reshapedreflection.fs" />
     <Compile Include="..\fsiattrs.fs" />
     <Compile Include="..\fsiaux.fsi" />

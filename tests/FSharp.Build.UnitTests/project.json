@@ -8,10 +8,10 @@
   "dependencies": {
     "nunit": "3.5.0",
     "nunitlite": "3.5.0",
-    "Microsoft.Build": "15.1.548",
-    "Microsoft.Build.Framework": "15.1.548",
-    "Microsoft.Build.Tasks.Core": "15.1.548",
-    "Microsoft.Build.Utilities.Core": "15.1.548"
+    "Microsoft.Build": "14.3.0",
+    "Microsoft.Build.Framework": "14.3.0",
+    "Microsoft.Build.Tasks.Core": "14.3.0",
+    "Microsoft.Build.Utilities.Core": "14.3.0"
   },
   "runtimes": {
     "win7-x86": {},
