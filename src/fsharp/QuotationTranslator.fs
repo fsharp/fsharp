@@ -4,9 +4,7 @@ module internal Microsoft.FSharp.Compiler.QuotationTranslator
 
 open Internal.Utilities
 open Microsoft.FSharp.Compiler 
-open Microsoft.FSharp.Compiler.AbstractIL
 open Microsoft.FSharp.Compiler.AbstractIL.IL 
-open Microsoft.FSharp.Compiler.AbstractIL.Internal 
 open Microsoft.FSharp.Compiler.AbstractIL.Internal.Library
 open Microsoft.FSharp.Compiler.AbstractIL.Diagnostics
 open Microsoft.FSharp.Compiler.Tast
@@ -16,7 +14,6 @@ open Microsoft.FSharp.Compiler.Ast
 open Microsoft.FSharp.Compiler.PrettyNaming
 open Microsoft.FSharp.Compiler.ErrorLogger
 open Microsoft.FSharp.Compiler.TcGlobals
-open Microsoft.FSharp.Compiler.TypeRelations
 open Microsoft.FSharp.Compiler.Range
 open System.Collections.Generic
 
@@ -802,7 +799,7 @@ and ConvType cenv env m typ =
 
     | TType_ucase(UCRef(tcref,_),tyargs) // Note: we erase union case 'types' when converting to quotations
     | TType_app(tcref,tyargs) -> 
-#if EXTENSIONTYPING
+#if !NO_EXTENSIONTYPING
         match TryElimErasableTyconRef cenv m tcref with 
         | Some baseTy -> ConvType cenv env m baseTy
         | _ ->  
@@ -926,7 +923,7 @@ and ConvDecisionTree cenv env tgs typR x =
 and IsILTypeRefStaticLinkLocal cenv m (tr:ILTypeRef) =
         ignore cenv; ignore m
         match tr.Scope with 
-#if EXTENSIONTYPING
+#if !NO_EXTENSIONTYPING
         | ILScopeRef.Assembly aref 
             when not cenv.g.isInteractive &&
                  aref.Name <> cenv.g.ilg.primaryAssemblyName && // optimization to avoid this check in the common case
@@ -985,7 +982,7 @@ and ConvILType cenv env m ty =
     | ILType.FunctionPointer _ -> wfail(Error(FSComp.SR.crefQuotationsCantContainThisType(), m))
   
 
-#if EXTENSIONTYPING
+#if !NO_EXTENSIONTYPING
 and TryElimErasableTyconRef cenv m (tcref:TyconRef) = 
     match tcref.TypeReprInfo with 
     // Get the base type
@@ -994,7 +991,7 @@ and TryElimErasableTyconRef cenv m (tcref:TyconRef) =
 #endif
 
 and ConvTyconRef cenv (tcref:TyconRef) m = 
-#if EXTENSIONTYPING
+#if !NO_EXTENSIONTYPING
     match TryElimErasableTyconRef cenv m tcref with 
     | Some baseTy -> ConvTyconRef cenv (tcrefOfAppTy cenv.g baseTy) m
     | None ->  

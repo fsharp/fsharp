@@ -4,8 +4,8 @@
 module internal Microsoft.FSharp.Compiler.Import
 
 open System.Reflection
+open System.Collections.Concurrent
 open System.Collections.Generic
-open Internal.Utilities
 
 open Microsoft.FSharp.Compiler.AbstractIL.IL
 open Microsoft.FSharp.Compiler.AbstractIL.Internal.Library
@@ -13,11 +13,10 @@ open Microsoft.FSharp.Compiler
 open Microsoft.FSharp.Compiler.Range
 open Microsoft.FSharp.Compiler.Tast
 open Microsoft.FSharp.Compiler.Tastops
-open Microsoft.FSharp.Compiler.AbstractIL.IL
 open Microsoft.FSharp.Compiler.TcGlobals
 open Microsoft.FSharp.Compiler.Ast
 open Microsoft.FSharp.Compiler.ErrorLogger
-#if EXTENSIONTYPING
+#if !NO_EXTENSIONTYPING
 open Microsoft.FSharp.Compiler.ExtensionTyping
 #endif
 
@@ -27,7 +26,7 @@ type AssemblyLoader =
 
     /// Resolve an Abstract IL assembly reference to a Ccu
     abstract FindCcuFromAssemblyRef : CompilationThreadToken * range * ILAssemblyRef -> CcuResolutionResult
-#if EXTENSIONTYPING
+#if !NO_EXTENSIONTYPING
 
     /// Get a flag indicating if an assembly is a provided assembly, plus the
     /// table of information recording remappings from type names in the provided assembly to type
@@ -54,7 +53,7 @@ type AssemblyLoader =
 /// serves as an interface through to the tables stored in the primary TcImports structures defined in CompileOps.fs. 
 [<Sealed>]
 type ImportMap(g:TcGlobals,assemblyLoader:AssemblyLoader) =
-    let typeRefToTyconRefCache = new System.Collections.Generic.Dictionary<ILTypeRef,TyconRef>()
+    let typeRefToTyconRefCache = ConcurrentDictionary<ILTypeRef,TyconRef>()
     member this.g = g
     member this.assemblyLoader = assemblyLoader
     member this.ILTypeRefToTyconRefCache = typeRefToTyconRefCache
@@ -100,7 +99,7 @@ let ImportTypeRefData (env:ImportMap) m (scoref,path,typeName) =
             fakeTyconRef.Deref
         with _ ->
             error (Error(FSComp.SR.impReferencedTypeCouldNotBeFoundInAssembly(String.concat "." (Array.append path  [| typeName |]), ccu.AssemblyName),m))
-#if EXTENSIONTYPING
+#if !NO_EXTENSIONTYPING
     // Validate (once because of caching)
     match tycon.TypeReprInfo with
     | TProvidedTypeExtensionPoint info ->
@@ -195,7 +194,7 @@ let rec CanImportILType (env:ImportMap) m typ =
     | ILType.Modified(_,_,ty) -> CanImportILType env m ty
     | ILType.TypeVar _u16 -> true
 
-#if EXTENSIONTYPING
+#if !NO_EXTENSIONTYPING
 
 /// Import a provided type reference as an F# type TyconRef
 let ImportProvidedNamedType (env:ImportMap) (m:range) (st:Tainted<ProvidedType>) = 
@@ -566,7 +565,7 @@ let ImportILAssembly(amap:(unit -> ImportMap),m,auxModuleLoader,sref,sourceDir,f
         let ccuData : CcuData = 
           { IsFSharp=false
             UsesFSharp20PlusQuotations=false
-#if EXTENSIONTYPING
+#if !NO_EXTENSIONTYPING
             InvalidateEvent=invalidateCcu
             IsProviderGenerated = false
             ImportProvidedType = (fun ty -> ImportProvidedType (amap()) m ty)

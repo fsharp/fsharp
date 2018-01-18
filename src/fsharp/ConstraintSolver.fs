@@ -1,6 +1,5 @@
 // Copyright (c) Microsoft Corporation.  All Rights Reserved.  See License.txt in the project root for license information.
 
-module internal Microsoft.FSharp.Compiler.ConstraintSolver
 
 //-------------------------------------------------------------------------
 // Incremental type inference constraint solving.  
@@ -30,11 +29,13 @@ module internal Microsoft.FSharp.Compiler.ConstraintSolver
 //
 //------------------------------------------------------------------------- 
 
+
+module internal Microsoft.FSharp.Compiler.ConstraintSolver
+
 open Internal.Utilities.Collections
 
 open Microsoft.FSharp.Compiler 
 open Microsoft.FSharp.Compiler.AbstractIL 
-open Microsoft.FSharp.Compiler.AbstractIL.Internal 
 open Microsoft.FSharp.Compiler.AbstractIL.Internal.Library
 open Microsoft.FSharp.Compiler.Ast
 open Microsoft.FSharp.Compiler.ErrorLogger
@@ -58,10 +59,10 @@ open Microsoft.FSharp.Compiler.TypeRelations
 // of the constraint resolution carried out by type checking.
 //------------------------------------------------------------------------- 
    
-let compgen_id = mkSynId range0 unassignedTyparName
+let compgenId = mkSynId range0 unassignedTyparName
 
 let NewCompGenTypar (kind, rigid, staticReq, dynamicReq, error) = 
-    NewTypar(kind, rigid, Typar(compgen_id, staticReq, true), error, dynamicReq, [], false, false) 
+    NewTypar(kind, rigid, Typar(compgenId, staticReq, true), error, dynamicReq, [], false, false) 
     
 let anon_id m = mkSynId m unassignedTyparName
 
@@ -75,7 +76,7 @@ let NewInferenceMeasurePar () = NewCompGenTypar (TyparKind.Measure, TyparRigidit
 
 let NewErrorTypar () = NewCompGenTypar (TyparKind.Type, TyparRigidity.Flexible, NoStaticReq, TyparDynamicReq.No, true)
 let NewErrorMeasureVar () = NewCompGenTypar (TyparKind.Measure, TyparRigidity.Flexible, NoStaticReq, TyparDynamicReq.No, true)
-let NewInferenceType () = mkTyparTy (NewTypar (TyparKind.Type, TyparRigidity.Flexible, Typar(compgen_id, NoStaticReq, true), false, TyparDynamicReq.No, [], false, false))
+let NewInferenceType () = mkTyparTy (NewTypar (TyparKind.Type, TyparRigidity.Flexible, Typar(compgenId, NoStaticReq, true), false, TyparDynamicReq.No, [], false, false))
 let NewErrorType () = mkTyparTy (NewErrorTypar ())
 let NewErrorMeasure () = Measure.Var (NewErrorMeasureVar ())
 
@@ -369,7 +370,6 @@ let ShowAccessDomain ad =
 // Solve
 
 exception NonRigidTypar of DisplayEnv * string option * range * TType * TType * range
-exception LocallyAbortOperationThatFailsToResolveOverload
 exception LocallyAbortOperationThatLosesAbbrevs 
 let localAbortD = ErrorD LocallyAbortOperationThatLosesAbbrevs
 
@@ -738,19 +738,19 @@ and solveTypMeetsTyparConstraints (csenv:ConstraintSolverEnv) ndeep m2 trace ty 
               | Some destTypar ->
                   AddConstraint csenv ndeep m2 trace destTypar (TyparConstraint.DefaultsTo(priority, dty, m))
           
-      | TyparConstraint.SupportsNull m2                -> SolveTypSupportsNull               csenv ndeep m2 trace ty
-      | TyparConstraint.IsEnum(underlying, m2)         -> SolveTypIsEnum                     csenv ndeep m2 trace ty underlying
-      | TyparConstraint.SupportsComparison(m2)         -> SolveTypeSupportsComparison        csenv ndeep m2 trace ty
-      | TyparConstraint.SupportsEquality(m2)           -> SolveTypSupportsEquality           csenv ndeep m2 trace ty
+      | TyparConstraint.SupportsNull m2                 -> SolveTypSupportsNull               csenv ndeep m2 trace ty
+      | TyparConstraint.IsEnum(underlying, m2)          -> SolveTypIsEnum                     csenv ndeep m2 trace ty underlying
+      | TyparConstraint.SupportsComparison(m2)          -> SolveTypeSupportsComparison        csenv ndeep m2 trace ty
+      | TyparConstraint.SupportsEquality(m2)            -> SolveTypSupportsEquality           csenv ndeep m2 trace ty
       | TyparConstraint.IsDelegate(aty, bty, m2)        -> SolveTypIsDelegate                 csenv ndeep m2 trace ty aty bty
-      | TyparConstraint.IsNonNullableStruct m2         -> SolveTypIsNonNullableValueType     csenv ndeep m2 trace ty
-      | TyparConstraint.IsUnmanaged m2                 -> SolveTypIsUnmanaged                csenv ndeep m2 trace ty
-      | TyparConstraint.IsReferenceType m2             -> SolveTypIsReferenceType            csenv ndeep m2 trace ty
-      | TyparConstraint.RequiresDefaultConstructor m2  -> SolveTypRequiresDefaultConstructor csenv ndeep m2 trace ty
+      | TyparConstraint.IsNonNullableStruct m2          -> SolveTypIsNonNullableValueType     csenv ndeep m2 trace ty
+      | TyparConstraint.IsUnmanaged m2                  -> SolveTypIsUnmanaged                csenv ndeep m2 trace ty
+      | TyparConstraint.IsReferenceType m2              -> SolveTypIsReferenceType            csenv ndeep m2 trace ty
+      | TyparConstraint.RequiresDefaultConstructor m2   -> SolveTypRequiresDefaultConstructor csenv ndeep m2 trace ty
       | TyparConstraint.SimpleChoice(tys, m2)           -> SolveTypChoice                     csenv ndeep m2 trace ty tys
       | TyparConstraint.CoercesTo(ty2, m2)              -> SolveTypSubsumesTypKeepAbbrevs     csenv ndeep m2 trace None ty2 ty
-      | TyparConstraint.MayResolveMember(traitInfo, m2) -> 
-          SolveMemberConstraint csenv false false ndeep m2 trace traitInfo ++ (fun _ -> CompleteD) 
+      | TyparConstraint.MayResolveMember(traitInfo, m2) ->
+          SolveMemberConstraint csenv false ndeep m2 trace traitInfo ++ (fun _ -> CompleteD)
     )))
 
         
@@ -760,14 +760,13 @@ and SolveTypEqualsTyp (csenv:ConstraintSolverEnv) ndeep m2 (trace: OptionalTrace
     let ndeep = ndeep + 1
     let aenv = csenv.EquivEnv
     let g = csenv.g
+    if ty1 === ty2 then CompleteD else
 
     match cxsln with
     | Some (traitInfo, traitSln) when traitInfo.Solution.IsNone -> 
         // If this is an overload resolution at this point it's safe to assume the candidate member being evaluated solves this member constraint.
         TransactMemberConstraintSolution traitInfo trace traitSln
     | _ -> ()
-
-    if ty1 === ty2 then CompleteD else
 
     let canShortcut = not trace.HasTrace
     let sty1 = stripTyEqnsA csenv.g canShortcut ty1
@@ -942,7 +941,7 @@ and SolveDimensionlessNumericType (csenv:ConstraintSolverEnv) ndeep m2 trace ty 
 /// We pretend int and other types support a number of operators.  In the actual IL for mscorlib they 
 /// don't, however the type-directed static optimization rules in the library code that makes use of this 
 /// will deal with the problem. 
-and SolveMemberConstraint (csenv:ConstraintSolverEnv) ignoreUnresolvedOverload permitWeakResolution ndeep m2 trace (TTrait(tys, nm, memFlags, argtys, rty, sln)): OperationResult<bool> =
+and SolveMemberConstraint (csenv:ConstraintSolverEnv) permitWeakResolution ndeep m2 trace (TTrait(tys,nm,memFlags,argtys,rty,sln)) :  OperationResult<bool> =
     // Do not re-solve if already solved
     if sln.Value.IsSome then ResultD true else
     let g = csenv.g
@@ -1299,12 +1298,9 @@ and SolveMemberConstraint (csenv:ConstraintSolverEnv) ignoreUnresolvedOverload p
                   let frees = GetFreeTyparsOfMemberConstraint csenv traitInfo
 
                   // If there's nothing left to learn then raise the errors 
-                  (if (permitWeakResolution && isNil support) || isNil frees then errors  
-                   // Otherwise re-record the trait waiting for canonicalization 
-                   else AddMemberConstraint csenv ndeep m2 trace traitInfo support frees) ++ (fun () -> 
-                       match errors with
-                       | ErrorResult (_, UnresolvedOverloading _) when not ignoreUnresolvedOverload && (not (nm = "op_Explicit" || nm = "op_Implicit")) -> ErrorD LocallyAbortOperationThatFailsToResolveOverload
-                       | _ -> ResultD TTraitUnsolved)
+                  (if (permitWeakResolution && isNil support) || isNil frees then errors
+                  // Otherwise re-record the trait waiting for canonicalization 
+                   else AddMemberConstraint csenv ndeep m2 trace traitInfo support frees) ++ (fun () -> ResultD TTraitUnsolved)
     ) 
     ++ 
     (fun res -> RecordMemberConstraintSolution csenv.SolverState m trace traitInfo res))
@@ -1333,7 +1329,7 @@ and RecordMemberConstraintSolution css m trace traitInfo res =
 
 /// Convert a MethInfo into the data we save in the TAST
 and MemberConstraintSolutionOfMethInfo css m minfo minst = 
-#if EXTENSIONTYPING
+#if !NO_EXTENSIONTYPING
 #else
     // to prevent unused parameter warning
     ignore css
@@ -1347,7 +1343,7 @@ and MemberConstraintSolutionOfMethInfo css m minfo minst =
        FSMethSln(typ, vref, minst)
     | MethInfo.DefaultStructCtor _ -> 
        error(InternalError("the default struct constructor was the unexpected solution to a trait constraint", m))
-#if EXTENSIONTYPING
+#if !NO_EXTENSIONTYPING
     | ProvidedMeth(amap, mi, _, m) -> 
         let g = amap.g
         let minst = []   // GENERIC TYPE PROVIDERS: for generics, we would have an minst here
@@ -1446,7 +1442,7 @@ and SolveRelevantMemberConstraintsForTypar (csenv:ConstraintSolverEnv) ndeep per
     cxs 
     |> AtLeastOneD (fun (traitInfo, m2) -> 
         let csenv = { csenv with m = m2 }
-        SolveMemberConstraint csenv true permitWeakResolution (ndeep+1) m2 trace traitInfo)
+        SolveMemberConstraint csenv permitWeakResolution (ndeep+1) m2 trace traitInfo)
 
 and CanonicalizeRelevantMemberConstraints (csenv:ConstraintSolverEnv) ndeep trace tps =
     SolveRelevantMemberConstraints csenv ndeep true trace tps
@@ -1961,12 +1957,10 @@ and CanMemberSigsMatchUpToCheck
 // to allow us to report the outer types involved in the constraint 
 and private SolveTypSubsumesTypWithReport (csenv:ConstraintSolverEnv) ndeep m trace cxsln ty1 ty2 =
     TryD (fun () -> SolveTypSubsumesTypKeepAbbrevs csenv ndeep m trace cxsln ty1 ty2)
-         (function
-          | LocallyAbortOperationThatFailsToResolveOverload -> CompleteD
-          | res ->
-                match csenv.eContextInfo with
-                | ContextInfo.RuntimeTypeTest isOperator ->
-                    // test if we can cast other way around
+         (fun res ->
+            match csenv.eContextInfo with
+            | ContextInfo.RuntimeTypeTest isOperator ->
+                // test if we can cast other way around
                     match CollectThenUndo (fun newTrace -> SolveTypSubsumesTypKeepAbbrevs csenv ndeep m (OptionalTrace.WithTrace newTrace) cxsln ty2 ty1) with 
                     | OkResult _ -> ErrorD (ErrorsFromAddingSubsumptionConstraint(csenv.g, csenv.DisplayEnv, ty1, ty2, res, ContextInfo.DowncastUsedInsteadOfUpcast isOperator, m))
                     | _ -> ErrorD (ErrorsFromAddingSubsumptionConstraint(csenv.g, csenv.DisplayEnv, ty1, ty2, res, ContextInfo.NoContext, m))
@@ -1974,9 +1968,7 @@ and private SolveTypSubsumesTypWithReport (csenv:ConstraintSolverEnv) ndeep m tr
 
 and private SolveTypEqualsTypWithReport (csenv:ConstraintSolverEnv) ndeep  m trace cxsln ty1 ty2 = 
     TryD (fun () -> SolveTypEqualsTypKeepAbbrevsWithCxsln csenv ndeep m trace cxsln ty1 ty2)
-         (function
-          | LocallyAbortOperationThatFailsToResolveOverload -> CompleteD
-          | res -> ErrorD (ErrorFromAddingTypeEquation(csenv.g, csenv.DisplayEnv, ty1, ty2, res, m)))
+         (fun res -> ErrorD (ErrorFromAddingTypeEquation(csenv.g, csenv.DisplayEnv, ty1, ty2, res, m)))
   
 and ArgsMustSubsumeOrConvert 
         (csenv:ConstraintSolverEnv)
@@ -2050,7 +2042,7 @@ and ReportNoCandidatesError (csenv:ConstraintSolverEnv) (nUnnamedCallerArgs, nNa
                 let predictFields() =
                     minfo.DeclaringEntityRef.AllInstanceFieldsAsList
                     |> List.map (fun p -> p.Name.Replace("@", ""))
-                    |> Set.ofList
+                    |> System.Collections.Generic.HashSet
 
                 ErrorWithSuggestions((msgNum, FSComp.SR.csCtorHasNoArgumentOrReturnProperty(methodName, id.idText, msgText)), id.idRange, id.idText, predictFields)
             else
@@ -2542,7 +2534,7 @@ let AddCxTypeMustSubsumeType contextInfo denv css m trace ty1 ty2 =
     |> RaiseOperationResult
 
 let AddCxMethodConstraint denv css m trace traitInfo  =
-    TryD (fun () -> SolveMemberConstraint (MakeConstraintSolverEnv ContextInfo.NoContext css m denv) true false 0 m trace traitInfo ++ (fun _ -> CompleteD))
+    TryD (fun () -> SolveMemberConstraint (MakeConstraintSolverEnv ContextInfo.NoContext css m denv) false 0 m trace traitInfo ++ (fun _ -> CompleteD))
          (fun res -> ErrorD (ErrorFromAddingConstraint(denv, res, m)))
     |> RaiseOperationResult
 
@@ -2600,7 +2592,7 @@ let CodegenWitnessThatTypSupportsTraitConstraint tcVal g amap m (traitInfo:Trait
           InfoReader = new InfoReader(g, amap) }
 
     let csenv = MakeConstraintSolverEnv ContextInfo.NoContext css m (DisplayEnv.Empty g)
-    SolveMemberConstraint csenv true true 0 m NoTrace traitInfo ++ (fun _res -> 
+    SolveMemberConstraint csenv true 0 m NoTrace traitInfo ++ (fun _res -> 
         let sln = 
               match traitInfo.Solution with 
               | None -> Choice4Of4()
@@ -2725,4 +2717,3 @@ let IsApplicableMethApprox g amap m (minfo:MethInfo) availObjTy =
         | _ -> true
     else
         true
-

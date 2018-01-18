@@ -16,7 +16,7 @@
       FSharp.Compiler.Tools built by F# Software Foundation
       This package includes the F# compiler and the F# Interactive.
     </description>
-    <summary>FSharp.Compiler.Tools for F# 4.1 - This package includes the F# compiler and the F# Interactive.</summary>
+    <summary>FSharp.Compiler.Tools for F# 4.1 - This package includes the F# compiler and F# Interactive.</summary>
     <tags>F#, FSharp, FSharp.Core, fsi, fsc</tags>
   </metadata>
   <files>
@@ -58,16 +58,5 @@
 	<!-- Microsoft.Portable.FSharp.Targets: imported by project templates -->
     <file src="..\Release\net40\bin\Microsoft.Portable.FSharp.targets" target="tools\Microsoft.Portable.FSharp.Targets" />
 	
-    <file src="..\Release\net40\bin\Microsoft.Build.dll" target="tools\Microsoft.Build.dll" />
-    <file src="..\Release\net40\bin\Microsoft.Build.Engine.dll" target="tools\Microsoft.Build.Engine.dll" />
-    <file src="..\Release\net40\bin\Microsoft.Build.Framework.dll" target="tools\Microsoft.Build.Framework.dll" />
-    <file src="..\Release\net40\bin\Microsoft.Build.Tasks.v12.0.dll" target="tools\Microsoft.Build.Tasks.v12.0.dll" />
-    <file src="..\Release\net40\bin\Microsoft.Build.Utilities.v12.0.dll" target="tools\Microsoft.Build.Utilities.v12.0.dll" />
-
-    <!-- Add fsc published as framework dependent netcoreapp -->
-    <file src="..\Release\netcoreapp1.0\bin\**" target="build\netcoreapp1.0" />
-    <!-- Add auto-imported props to locate fsc and FSharp.Build -->
-    <file src=".\build\FSharp.Compiler.Tools.props" target="build\FSharp.Compiler.Tools.props" />
-    <file src=".\buildCrossTargeting\FSharp.Compiler.Tools.props" target="buildCrossTargeting\FSharp.Compiler.Tools.props" />
   </files>
 </package>
