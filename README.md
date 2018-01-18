@@ -194,21 +194,75 @@ If a strong-name signed FSharp.Core.dll is needed then use the one in
 
 ### Integrating changes from 'visualfsharp'
 
-To integrate latest changes from https://github.com/Microsoft/visualfsharp, use
-```
-git checkout -b integrate
-git remote add visualfsharp https://github.com/Microsoft/visualfsharp
-git pull visualfsharp master
-git rm -fr vsintegration
-git rm -fr setup
-git rm -fr tests/fsharpqa
-```
+To integrate latest changes from https://github.com/Microsoft/visualfsharp, first understand that this repo is
+basically a cut-down version of "visualfsharp" with these (and other) files striped out:
+* `fcs`: these files are specific to the F# compiler service 
+* `vsintegration` : this repos does not contain any of the Visual Studio IDE tooling 
+* `tests/fsharpqa` : this repo does not undergo the full QA test process, so tests that are not run are stripped
+* `tests/service` : this repo does not run the FSharp.Compiler.Service tests
+* `setup`: these files are specific to the VS packaging of F#
+* `src/buildfromsource`: support for the .NET SDK build-from-source, not needed in this repo
+* `TESTGUIDE.md`: support for the .NET SDK build-from-source, not needed in this repo
 
-There are certain guidelines that need to be followed when integrating changes from upstream:
-* this repository does not undergo the QA test process that upstream does, so the `tests/fsharpqa` folder and all files within should be removed when merging
-* this repository does not contain any of the Visual Studio tooling or integrations, so the `vsintegration` directory and all files within should be removed when merging
-* anything referencing `FSharp.LaunguageService.Compiler` is a Microsoft-internal version of the open FSharp.Compiler.Service repository, and should be removed when merging
-* Windows-specific scripts like `update.cmd` and `runtests.cmd` aren't used in this repository, and so should be removed when merging
+To integrate latest changes from https://github.com/Microsoft/visualfsharp, first fork + clone, then use
+
+    git checkout master
+    git pull https://github.com/fsharp/fsharp master
+    git checkout -b NAMEOFBRANCH
+
+Choose a different branch name as necessary.  Then choose a visualfsharp commit to integrate up to.  Normally just try:
+
+    git pull https://github.com/Microsoft/visualfsharp master
+
+but if you run into trouble reset and try again at a specific hash. Then remove stripped files:
+
+    git rm -fr vsintegration setup tests/fsharpqa tests/service TESTGUIDE.md src/buildfromsource*
+
+then 
+
+    git status
+
+and resolve any remaining conflicts. Resolving conflicts should normally be easy, but anything in ``Unmerged paths`` may need attention:
+* Files "deleted by us" indicate a stripped file has been changed.  We don't care about those, so  generally add them to the ``git rm -fr`` line above, or ``git rm -f`` them one by one.  
+* Outright conflicts will need work and may indicate some change in this repository hasn't yet gone back to ``visualfsharp``
+
+One you're happy, commit any changes you needed to make
+
+    git commit -a -m "integration from visualfsharp master"
+    git push origin NAMEOFBRANCH
+
+then submit the PR to this repo calling it "integration from visualfsharp master" and wait until it's green. 
+
+**Tagging a release**
+
+Add a tag by updating the version number in
+
+    mono\appveyor.ps1
+
+and editing the release notes in 
+
+    CHANGELOG-fsharp.md
+
+either by a new PR or as part of the integration PR. Then apply the tag as follows (if you have push permission) 
+
+    git tag YOURTAG
+    git push https://github.com/fsharp/fsharp --tags
+
+
+**Releasing FSharp.Compiler.Tools nuget**
+
+After the AppVeyor CI for the tag is green the Artifacts folder of the CI will contain the FSharp.Compiler.Tools nuget package release.  You can download and push this package to nuget manually. 
+
+    set APIKEY=...
+    .nuget\nuget.exe push Downloads\FSharp.Compiler.Tools...nupkg %APIKEY% -Source https://nuget.org 
+
+We only generally push packages coming from AppVeyor CI and not locally built packages.
+
+**Improving this**
+
+1. Work out how to fully automate easy integrations?
+2. Work out how to pick up the version tag rather than having it in `appveyor.ps1`?
+3. Automate more of the release process?     
 
 ### Continuous Integration Build
 
