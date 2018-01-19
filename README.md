@@ -223,7 +223,7 @@ then
     git status
 
 and resolve any remaining conflicts. Resolving conflicts should normally be easy, but anything in ``Unmerged paths`` may need attention:
-* Files "deleted by us" indicate a stripped file has been changed.  We don't care about those, so  generally add them to the ``git rm -fr`` line above, or ``git rm -f`` them one by one.  
+* Files "deleted by us" indicate a stripped file has been changed.  We don't care about those, so  generally add them to the ``git rm -fr`` line above, or ``git rm -f`` them one by one.  To remove them all in one go on macOS or Linux, `git status | grep "deleted by us" | awk '{print $4}' | xargs git rm`.
 * Outright conflicts will need work and may indicate some change in this repository hasn't yet gone back to ``visualfsharp``
 
 One you're happy, commit any changes you needed to make
