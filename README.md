@@ -216,7 +216,7 @@ Choose a different branch name as necessary.  Then choose a visualfsharp commit 
 
 but if you run into trouble reset and try again at a specific hash. Then remove stripped files:
 
-    git rm -fr vsintegration setup tests/fsharpqa tests/service TESTGUIDE.md src/buildfromsource*
+    git rm -fr --ignore-unmatch vsintegration setup tests/fsharpqa tests/service TESTGUIDE.md src/buildfromsource* fcs netci.groovy src/fsharp/FSharp.Compiler.nuget scripts/dotnet-install.sh before_install.sh build.cmd build.sh
 
 then 
 
