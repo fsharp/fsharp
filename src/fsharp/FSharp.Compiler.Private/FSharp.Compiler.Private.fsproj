@@ -645,13 +645,14 @@
       <Link>FSIstrings.txt</Link>
     </EmbeddedText>
     <Compile Include="..\fsi\fsi.fsi">
-      <Link>InteractiveSession\fsi.fsi</Link>
+      <Link>InteractiveSession/fsi.fsi</Link>
     </Compile>
     <Compile Include="..\fsi\fsi.fs">
-      <Link>InteractiveSession\fsi.fs</Link>
+      <Link>InteractiveSession/fsi.fs</Link>
     </Compile>
 
     <Compile Include="..\MSBuildReferenceResolver.fs" Condition="'$(MonoPackaging)' != 'true'">
+    <Compile Include="..\MSBuildReferenceResolver.fs"  Condition="'$(MonoPackaging)' != 'true'">
       <Link>Misc/MSBuildReferenceResolver.fs</Link>
     </Compile>
     <!-- an old API for testing the compiler and gathering diagnostics in-memory -->
@@ -679,6 +680,10 @@
     <Reference Include="Microsoft.DiaSymReader">
       <HintPath>..\..\..\packages\Microsoft.DiaSymReader.1.1.0\lib\portable-net45+win8\Microsoft.DiaSymReader.dll</HintPath>
       <Private>true</Private>
+      <HintPath>..\..\..\packages\Microsoft.DiaSymReader.PortablePdb.$(MicrosoftDiaSymReaderPortablePdbPackageVersion)\lib\netstandard1.1\Microsoft.DiaSymReader.PortablePdb.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.DiaSymReader">
+      <HintPath>..\..\..\packages\Microsoft.DiaSymReader.$(MicrosoftDiaSymReaderPackageVersion)\lib\netstandard1.1\Microsoft.DiaSymReader.dll</HintPath>
     </Reference>
     <Reference Include="System.Reflection.Metadata">
       <HintPath>..\..\..\packages\System.Reflection.Metadata.1.4.2\lib\portable-net45+win8\System.Reflection.Metadata.dll</HintPath>
