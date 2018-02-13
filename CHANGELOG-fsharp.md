@@ -1,3 +1,6 @@
+4.1.32
+ * Integrate visualfsahrp master to bc7ce194a09474b0bfea185ec15300b54e7aaf9e
+
 4.1.31
   * Integrate visualfsharp master to 31ec0e0fb
   * Remove .NET Core version of compiler in FSharp.Compiler.Tools (now only for .NET Framework and Mono)
