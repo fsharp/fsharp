@@ -54,12 +54,9 @@ The `master` branch is for F# 4.x.  To bootstrap the compiler, binaries built fr
 ### The ``FSharp.Core`` NuGet package
 
 [The FSharp.Core NuGet package](https://www.nuget.org/packages/FSharp.Core) was previously published from this repo.
-With the informal consent of the F# Software Foundation this package is now published by Microsoft.
+With the consent of the F# Software Foundation this package is now published by Microsoft.
 * FSharp.Core.dll for .NET Framework/Mono
-* FSharp.Core.dll for .NET Core
-* FSharp.Core.dll for portable profiles
-
-The FSharp.Core NuGet package includes all of the FSharp.Core redistributables from Visual F#.
+* FSharp.Core.dll for .NET Standard
 
 ### The ``FSharp.Compiler.Tools`` NuGet package
 
