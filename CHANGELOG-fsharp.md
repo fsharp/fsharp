@@ -1,3 +1,6 @@
+4.1.34
+ * Use strong-name signed FSharp.Compiler.Interactive.Settings.dll in FSharp.Compiler.Tools package
+
 4.1.33
  * Cherry pick https://github.com/Microsoft/visualfsharp/pull/4348/
 

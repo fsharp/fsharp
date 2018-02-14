@@ -35,8 +35,7 @@
     <file src="..\Release\net40\bin\FSharp.Compiler.Private.xml" target="tools\FSharp.Compiler.Private.xml" />
     <file src="..\Release\net40\bin\FSharp.Compiler.Server.Shared.dll" target="tools\FSharp.Compiler.Server.Shared.dll" />
     <file src="..\Release\net40\bin\FSharp.Compiler.Server.Shared.xml" target="tools\FSharp.Compiler.Server.Shared.xml" />
-    <file src="..\Release\net40\bin\FSharp.Compiler.Interactive.Settings.dll" target="tools\FSharp.Compiler.Interactive.Settings.dll" />
-    <file src="..\Release\net40\bin\FSharp.Compiler.Interactive.Settings.xml" target="tools\FSharp.Compiler.Interactive.Settings.xml" />
+    <file src="..\lib\bootstrap\signed\SDK\4.1\FSharp.Compiler.Interactive.Settings.dll" target="tools\FSharp.Compiler.Interactive.Settings.dll" />
     <file src="..\Release\net40\bin\fsiAnyCpu.exe" target="tools\fsiAnyCpu.exe" />
     <file src="..\Release\net40\bin\fsiAnyCpu.exe.config" target="tools\fsiAnyCpu.exe.config" />
     <file src="..\Release\net40\bin\fsiAnyCpu.xml" target="tools\fsiAnyCpu.xml" />
