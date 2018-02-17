@@ -106,10 +106,7 @@ Proto
 sign_temp
 .libs
 configure
-mono/launcher
-autom4te.cache
 config.log
-mono/config.make
 config.status
 src/fsharp/FSharp.Compiler/illex.fs
 src/fsharp/FSharp.Compiler/ilpars.fs
