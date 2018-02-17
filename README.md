@@ -143,7 +143,6 @@ If using NuGet Package Manager, add the source to the list of available package 
 
 Building F# on Unix-type platforms requires [Mono](http://www.mono-project.com/download/) 5.0 or higher. 
 
-	./autogen.sh --prefix=/usr
 	make
 	sudo make install
 
@@ -152,9 +151,8 @@ That build and installs optimized binaries. To make debug, use ```make CONFIG=de
 
 ### Building on macOS
 
-Building on macOS requires an install of the latest Xamarin tools or Mono package. Use a prefix to your version of Mono:
+Building on macOS requires an install of the latest Visual Studio for Mac tools or Mono package.
 
-	./autogen.sh --prefix=/Library/Frameworks/Mono.framework/Versions/Current/
 	make
 	sudo make install
 
@@ -162,7 +160,7 @@ That build and installs optimized binaries. To make debug, use ```make CONFIG=de
 
 ### Building on Windows
 
-Install [.NET 4.5.1](http://www.microsoft.com/en-us/download/details.aspx?id=40779) and  [MSBuild 12.0](https://www.microsoft.com/en-us/download/details.aspx?id=40760)
+Install [.NET 4.5.1](http://www.microsoft.com/en-us/download/details.aspx?id=40779).
 
 Build using:
 
@@ -184,8 +182,7 @@ If a strong-name signed FSharp.Core.dll is needed then use the one in
     vagrant up
     vagrant ssh
     cd /vagrant
-    sudo apt-get install dos2unix autoconf
-    ./autogen.sh --prefix=/usr
+    sudo apt-get install mono-complete
     make
     sudo make install
 
@@ -295,7 +292,7 @@ accepting contributions to the F# compiler/library and tools.
 
 In 2016 the Microsoft http://visualfsharp.codeplex.com repo moved to GitHub at https://github.com/Microsoft/visualfsharp.
 
-This repository uses bootstrapping libraries, tools and F# compiler. The `lib/bootstrap/X.0` directories contain mono-built libraries, compiler and tools that can be used to bootstrap a build. You can also supply your own via the `--with-bootstrap` option.
+This repository uses bootstrapping libraries, tools and F# compiler. The `lib/bootstrap/X.0` directories contain mono-built libraries, compiler and tools that can be used to bootstrap a build. Y
 
 
 
