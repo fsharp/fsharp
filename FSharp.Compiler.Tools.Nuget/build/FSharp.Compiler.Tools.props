@@ -1,0 +1,38 @@
+<!--
+***********************************************************************************************
+FSharp.Compiler.Tools.props
+
+WARNING:  You CAN MODIFY this file, doesnt matter if you are not knowledgeable about MSBuild and
+          without a backup copy.
+          Incorrect changes to this file will make it impossible to load or build your projects
+          from the command-line or the IDE. 
+          Just remove FSharp.Compiler.Tools package from nuget cache and re-restore.
+
+***********************************************************************************************
+-->
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!-- ref https://github.com/dotnet/standard/blob/master/Microsoft.Packaging.Tools/tasks/targets/Microsoft.Packaging.Tools.targets#L12 -->
+  <!-- Condition here is a hack until https://github.com/dotnet/sdk/issues/534 is fixed -->
+  <PropertyGroup Condition="'$(TargetFramework)' == '' and '$(TargetFrameworks)' == ''">
+    <!-- when using the old SDK, override FSharpTargetsPath and PortableFSharpTargetsPath -->
+    <FSharpTargetsPath>$(MSBuildThisFileDirectory)../tools/Microsoft.FSharp.Targets</FSharpTargetsPath>
+    <PortableFSharpTargetsPath>$(MSBuildThisFileDirectory)../tools/Microsoft.Portable.FSharp.Targets</PortableFSharpTargetsPath>
+  </PropertyGroup>
+  <PropertyGroup>
+    <FscToolPath>$(MSBuildThisFileDirectory)../tools</FscToolPath>
+    <FscToolExe>fsc.exe</FscToolExe>
+    <FscToolFullPath>$(MSBuildThisFileDirectory)../tools/fsc.exe</FscToolFullPath>
+  </PropertyGroup>
+  <Choose>
+    <When Condition="'$(MSBuildRuntimeType)' == 'Core'">
+      <PropertyGroup>
+        <FscTaskAssemblyPath>$(MSBuildThisFileDirectory)../tools/netcoreapp1.0/FSharp.Build.dll</FscTaskAssemblyPath>
+      </PropertyGroup>
+    </When>
+    <Otherwise>
+      <PropertyGroup>
+        <FscTaskAssemblyPath>$(MSBuildThisFileDirectory)../tools/FSharp.Build.dll</FscTaskAssemblyPath>
+      </PropertyGroup>
+    </Otherwise>
+  </Choose>
+</Project>
