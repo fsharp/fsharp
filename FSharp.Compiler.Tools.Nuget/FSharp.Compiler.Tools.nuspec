@@ -14,7 +14,11 @@
       FSharp.Compiler.Tools for F# 4.1
 
       FSharp.Compiler.Tools built by F# Software Foundation
-      This package includes the F# compiler and the F# Interactive.
+      This package includes the F# compiler (fsc.exe), F# Interactive (fsi.exe, fsiAnyCpu.exe)
+      and the MSBuild component (FSharp.Build.dll).
+
+      NOTE: the compiler executes with .NET Framework and/or Mono.  It does not execute with .NET Core.
+      For a compiler that executes with .NET Core use the .NET Core SDK, which includes an F# compiler.
     </description>
     <summary>FSharp.Compiler.Tools for F# 4.1 - This package includes the F# compiler and F# Interactive.</summary>
     <tags>F#, FSharp, FSharp.Core, fsi, fsc</tags>
@@ -56,6 +60,15 @@
 	<!-- Microsoft.Portable.FSharp.targets: used in source tree -->
 	<!-- Microsoft.Portable.FSharp.Targets: imported by project templates -->
     <file src="..\Release\net40\bin\Microsoft.Portable.FSharp.targets" target="tools\Microsoft.Portable.FSharp.Targets" />
-	
+    <!-- Add auto-imported props to locate fsc and FSharp.Build -->
+    <file src=".\build\FSharp.Compiler.Tools.props" target="build\FSharp.Compiler.Tools.props" />
+    <file src=".\buildCrossTargeting\FSharp.Compiler.Tools.props" target="buildCrossTargeting\FSharp.Compiler.Tools.props" />
+
+
+    <!-- Binary snapshots of FSharp.Build.dll needed to support use of FSharp.Compiler.Tools nuget with "dotnet", i.e. MSBuild -->
+    <!-- This is because FSharp.Build.dll is not a .NET Standard component and we need different copies to plug into .NET Core MSBuild and.NET Framework MSBuild -->
+    <file src=".\sdk\2.1.4\FSharp.Core.dll" target="tools\netcoreapp1.0\FSharp.Core.dll" />
+    <file src=".\sdk\2.1.4\FSharp.Build.dll" target="tools\netcoreapp1.0\FSharp.Build.dll" />
+
   </files>
 </package>

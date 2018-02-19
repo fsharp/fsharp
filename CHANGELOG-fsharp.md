@@ -1,3 +1,7 @@
+10.0.1
+ * Switch to new versioning for F# compiler tools
+ * add FSharp.Compiler.Tools.props back into nuget package
+
 4.1.34
  * Use strong-name signed FSharp.Compiler.Interactive.Settings.dll in FSharp.Compiler.Tools package
 
