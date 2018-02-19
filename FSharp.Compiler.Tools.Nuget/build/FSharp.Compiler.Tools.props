@@ -17,6 +17,8 @@ WARNING:  You CAN MODIFY this file, doesnt matter if you are not knowledgeable a
     <!-- when using the old SDK, override FSharpTargetsPath and PortableFSharpTargetsPath -->
     <FSharpTargetsPath>$(MSBuildThisFileDirectory)../tools/Microsoft.FSharp.Targets</FSharpTargetsPath>
     <PortableFSharpTargetsPath>$(MSBuildThisFileDirectory)../tools/Microsoft.Portable.FSharp.Targets</PortableFSharpTargetsPath>
+  </PropertyGroup>
+  <PropertyGroup>
     <FscToolPath>$(MSBuildThisFileDirectory)../tools</FscToolPath>
     <FscToolExe>fsc.exe</FscToolExe>
     <FscToolFullPath>$(MSBuildThisFileDirectory)../tools/fsc.exe</FscToolFullPath>
