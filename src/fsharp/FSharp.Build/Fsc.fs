@@ -81,8 +81,16 @@ type public Fsc () as this =
     let mutable vslcid : string = null
     let mutable utf8output : bool = false
 
+#if ENABLE_MONO_SUPPORT
+    // The property YieldDuringToolExecution is not available on Mono.
+    // So we only set it if available (to avoid a compile-time dependency). 
+    let runningOnMono = try System.Type.GetType("Mono.Runtime") <> null with e-> false         
+    do if not runningOnMono then  
+        typeof<ToolTask>.InvokeMember("YieldDuringToolExecution",(BindingFlags.Instance ||| BindingFlags.SetProperty ||| BindingFlags.Public),null,this,[| box true |])  |> ignore 
+#else
     // See bug 6483; this makes parallel build faster, and is fine to set unconditionally
     do this.YieldDuringToolExecution <- true
+#endif 
 
     let generateCommandLineBuilder () =
         let builder = new FSharpCommandLineBuilder()
