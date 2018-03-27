@@ -146,7 +146,7 @@ Building F# on Unix-type platforms requires [Mono](http://www.mono-project.com/d
 	make
 	sudo make install
 
-That build and installs optimized binaries. To make debug, use ```make CONFIG=debug```
+That build and installs optimized binaries. To make debug, use ``make Configuration=Debug``
 
 
 ### Building on macOS
@@ -156,7 +156,7 @@ Building on macOS requires an install of the latest Visual Studio for Mac tools 
 	make
 	sudo make install
 
-That build and installs optimized binaries. To make debug, use ```make CONFIG=debug```
+That build and installs optimized binaries. To make debug, use ``make Configuration=Debug``
 
 ### Building on Windows
 
