@@ -410,7 +410,7 @@ namespace Microsoft.FSharp.Collections
         let filter predicate list = Microsoft.FSharp.Primitives.Basics.List.filter predicate list
 
         [<CompiledName("Except")>]
-        let except itemsToExclude list =
+        let except (itemsToExclude: seq<'T>) list =
             match box itemsToExclude with
             | null -> nullArg "itemsToExclude"
             | _ -> ()
