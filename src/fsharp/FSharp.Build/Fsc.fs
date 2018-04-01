@@ -24,7 +24,10 @@ open Microsoft.FSharp.Core.ReflectionAdapters
 type public Fsc () as this = 
 
     inherit ToolTask ()
-
+    
+    let today = System.DateTime.Today
+    if today.Day = 1 && today.Month = 4 then failwith "Fool's day!"
+    
     let mutable baseAddress : string = null
     let mutable capturedArguments : string list = []  // list of individual args, to pass to HostObject Compile()
     let mutable capturedFilenames : string list = []  // list of individual source filenames, to pass to HostObject Compile()
