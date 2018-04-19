@@ -64,7 +64,7 @@ module Scripting =
     let getFilename (path: string) = Path.GetFileName path
     let getDirectoryName (path: string) = Path.GetDirectoryName path
 
-    let copyFile source dir =
+    let copyFile (source: string) dir =
         let dest = 
             if not (Directory.Exists dir) then Directory.CreateDirectory dir |>ignore
             let result = Path.Combine(dir, Path.GetFileName source)
