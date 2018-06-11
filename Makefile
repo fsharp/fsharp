@@ -46,19 +46,19 @@ build:
 	cp -p packages/FSharp.Core.3.0.2/lib/net40/* $(Configuration)/fsharp30/net40/bin
 	cp -p packages/FSharp.Core.3.1.2.5/lib/net40/* $(Configuration)/fsharp31/net40/bin
 	cp -p packages/FSharp.Core.4.0.0.1/lib/net40/* $(Configuration)/fsharp40/net40/bin
-	cp -p packages/FSharp.Core.4.1.17/lib/net40/* $(Configuration)/fsharp41/net40/bin
+	cp -p packages/FSharp.Core.4.1.18/lib/net40/* $(Configuration)/fsharp41/net40/bin
 	mkdir -p $(Configuration)/portable7/bin
-	cp -p packages/FSharp.Core.4.1.17/lib/portable-net45+netcore45/* $(Configuration)/portable7/bin
+	cp -p packages/FSharp.Core.4.1.18/lib/portable-net45+netcore45/* $(Configuration)/portable7/bin
 	mkdir -p $(Configuration)/portable47/bin
-	cp -p packages/FSharp.Core.4.1.17/lib/portable-net45+sl5+netcore45/* $(Configuration)/portable47/bin
+	cp -p packages/FSharp.Core.4.1.18/lib/portable-net45+sl5+netcore45/* $(Configuration)/portable47/bin
 	mkdir -p $(Configuration)/portable78/bin
-	cp -p packages/FSharp.Core.4.1.17/lib/portable-net45+netcore45+wp8/* $(Configuration)/portable78/bin
+	cp -p packages/FSharp.Core.4.1.18/lib/portable-net45+netcore45+wp8/* $(Configuration)/portable78/bin
 	mkdir -p $(Configuration)/portable259/bin
-	cp -p packages/FSharp.Core.4.1.17/lib/portable-net45+netcore45+wpa81+wp8/* $(Configuration)/portable259/bin
+	cp -p packages/FSharp.Core.4.1.18/lib/portable-net45+netcore45+wpa81+wp8/* $(Configuration)/portable259/bin
 	mkdir -p $(Configuration)/monoandroid10+monotouch10+xamarinios10/bin
-	cp -p packages/FSharp.Core.4.1.17/lib/portable-net45+monoandroid10+monotouch10+xamarinios10/* $(Configuration)/monoandroid10+monotouch10+xamarinios10/bin
+	cp -p packages/FSharp.Core.4.1.18/lib/portable-net45+monoandroid10+monotouch10+xamarinios10/* $(Configuration)/monoandroid10+monotouch10+xamarinios10/bin
 	mkdir -p $(Configuration)/xamarinmacmobile/bin
-	cp -p packages/FSharp.Core.4.1.17/lib/xamarinmac20/* $(Configuration)/xamarinmacmobile/bin
+	cp -p packages/FSharp.Core.4.1.18/lib/xamarinmac20/* $(Configuration)/xamarinmacmobile/bin
 
 
 

@@ -1795,10 +1795,10 @@ type private TypeInThisAssembly = class end
 // or the System.ValueTuple.dll that sits alongside the compiler.  (Note we always ship one with the compiler)
 let GetDefaultSystemValueTupleReference () =
     try
-        let asm = typeof<System.ValueTuple<int, int>>.Assembly 
-        if asm.FullName.StartsWith "System.ValueTuple" then  
-            Some asm.Location
-        else
+        //let asm = typeof<System.ValueTuple<int, int>>.Assembly 
+        //if asm.FullName.StartsWith "System.ValueTuple" then  
+        //    Some asm.Location
+        //else
             let location = Path.GetDirectoryName(typeof<TypeInThisAssembly>.Assembly.Location)
             let valueTuplePath = Path.Combine(location, "System.ValueTuple.dll")
             if File.Exists(valueTuplePath) then

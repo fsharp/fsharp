@@ -65,7 +65,7 @@ set TEST_NET40_COREUNIT_SUITE=1
 %_msbuildexe% src\fsharp-proto-build.proj /p:Configuration=Proto
 @if ERRORLEVEL 1 echo Error: "%_msbuildexe% src\fsharp-proto-build.proj" failed  && goto :failure
 
-%_ngenexe% install Proto\net40\bin\fsc-proto.exe
+%_ngenexe% install Proto\net40\bin\fsc.exe
 
 %_msbuildexe% %msbuildflags% build-everything.proj /p:TargetDotnetProfile=net40 /p:Configuration=Release
 @if ERRORLEVEL 1 echo Error: "%_msbuildexe% %msbuildflags% src\fsharp-library-build.proj /p:TargetDotnetProfile=net40 /p:Configuration=Release" failed  && goto :failure

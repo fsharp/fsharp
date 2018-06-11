@@ -15223,7 +15223,7 @@ module EstablishTypeDefinitionCores =
                      else ty)
 
               // Allow super type to be a function type but convert back to FSharpFunc<A,B> to make sure it has metadata
-              let super = super |> Option.map (helpEnsureTypeHasMetadata cenv.g)
+              let super = super |> Option.map (convertToTypeWithMetadataIfPossible cenv.g)
 
               // Publish the super type
               tycon.TypeContents.tcaug_super <- super
