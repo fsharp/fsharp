@@ -1,3 +1,9 @@
+10.1.1
+ * Bump versions
+
+10.1.0
+ * Integrte visualfsharp master
+
 10.0.2
  * Cherry-pick https://github.com/Microsoft/visualfsharp/pull/4804
 
