@@ -1,12 +1,24 @@
 @echo off
 
 :: Check prerequisites
-set _msbuildexe="%ProgramFiles(x86)%\MSBuild\14.0\Bin\MSBuild.exe"
-if not exist %_msbuildexe% set _msbuildexe="%ProgramFiles%\MSBuild\14.0\Bin\MSBuild.exe"
-if not exist %_msbuildexe% set _msbuildexe="%ProgramFiles(x86)%\MSBuild\12.0\Bin\MSBuild.exe"
-if not exist %_msbuildexe% set _msbuildexe="%ProgramFiles%\MSBuild\12.0\Bin\MSBuild.exe"
-if not exist %_msbuildexe% echo Error: Could not find MSBuild.exe.  Please see http://www.microsoft.com/en-us/download/details.aspx?id=40760. && goto :eof
+if exist "%VS150COMNTOOLS%\..\..\MSBuild\15.0\Bin\MSBuild.exe" (
+    set _msbuildexe="%VS150COMNTOOLS%\..\..\MSBuild\15.0\Bin\MSBuild.exe"
+    goto :havemsbuild
+)
+if exist "%ProgramFiles(x86)%\MSBuild\%VisualStudioVersion%\Bin\MSBuild.exe" (
+    set _msbuildexe="%ProgramFiles(x86)%\MSBuild\%VisualStudioVersion%\Bin\MSBuild.exe"
+    goto :havemsbuild
+)
+if exist "%ProgramFiles%\MSBuild\%VisualStudioVersion%\Bin\MSBuild.exe" (
+    set _msbuildexe="%ProgramFiles%\MSBuild\%VisualStudioVersion%\Bin\MSBuild.exe"
+    goto :havemsbuild
+)
+echo Error: Could not find MSBuild.exe. && goto :failure
+goto :eof
 
+:havemsbuild
+
+echo "_msbuildexe=%_msbuildexe%"
 set msbuildflags=/maxcpucount
 set _ngenexe="%SystemRoot%\Microsoft.NET\Framework\v4.0.30319\ngen.exe"
 if not exist %_ngenexe% echo Note: Could not find ngen.exe. 
@@ -42,7 +54,7 @@ if /i "%PROCESSOR_ARCHITECTURE%"=="AMD64" (
 
 %_ngenexe% install .\.nuget\NuGet.exe 
 
-.\.nuget\NuGet.exe restore packages.config -PackagesDirectory packages -ConfigFile .nuget\nuget.config
+.\.nuget\NuGet.exe restore packages.config -PackagesDirectory packages -ConfigFile NuGet.Config
 @if ERRORLEVEL 1 echo Error: Nuget restore failed  && goto :failure
 
 %_ngenexe% install packages\FSharp.Compiler.Tools.4.1.27\tools\fsc.exe
