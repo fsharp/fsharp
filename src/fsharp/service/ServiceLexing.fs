@@ -77,6 +77,9 @@ module FSharpTokenTag =
     let STRUCT = tagOfToken STRUCT
     let CLASS = tagOfToken CLASS
     let TRY = tagOfToken TRY
+    let NEW = tagOfToken NEW
+    let WITH = tagOfToken WITH
+    let OWITH = tagOfToken OWITH
 
            
 /// This corresponds to a token categorization originally used in Visual Studio 2003.
@@ -256,7 +259,7 @@ module internal TokenClassifications =
         | ELIF | RARROW | LARROW | SIG | STRUCT 
         | UPCAST   | DOWNCAST   | NULL   | RESERVED    | MODULE    | AND    | AS   | ASSERT   | ASR
         | DOWNTO   | EXCEPTION   | FALSE   | FOR   | FUN   | FUNCTION
-        | FINALLY   | LAZY   | MATCH  | MUTABLE   | NEW   | OF    | OPEN   | OR | VOID | EXTERN
+        | FINALLY   | LAZY   | MATCH  | MATCH_BANG  | MUTABLE   | NEW   | OF    | OPEN   | OR | VOID | EXTERN
         | INTERFACE | REC   | TO   | TRUE   | TRY   | TYPE   |  VAL   | INLINE   | WHEN  | WHILE   | WITH
         | IF | THEN  | ELSE | DO | DONE | LET(_) | IN (*| NAMESPACE*) | CONST
         | HIGH_PRECEDENCE_PAREN_APP | FIXED

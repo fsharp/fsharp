@@ -12,6 +12,7 @@
     "Microsoft.Build.Framework": "14.3.0",
     "Microsoft.Build.Tasks.Core": "14.3.0",
     "Microsoft.Build.Utilities.Core": "14.3.0"
+    "Testing.FSharp.Core": "4.2.4",
   },
   "runtimes": {
     "win7-x86": {},
