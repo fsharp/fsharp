@@ -3,6 +3,8 @@
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <FSharpSourcesRoot>$(MSBuildProjectDirectory)\..\..</FSharpSourcesRoot>
+    <ProjectLanguage>FSharp</ProjectLanguage>
+    <UseFSharpProductVersion>true</UseFSharpProductVersion>
   </PropertyGroup>
   <Import Project="$(FSharpSourcesRoot)\FSharpSource.Settings.targets" />
   <PropertyGroup>
@@ -31,26 +33,11 @@
     <Compile Include="FSharpEmbedResXSource.fs" />
     <Compile Include="WriteCodeFragment.fs" />
     <Compile Include="CreateFSharpManifestResourceName.fs" />
-    <CopyAndSubstituteText Include="Microsoft.FSharp.Targets">
-        <TargetFilename>Microsoft.FSharp.Targets</TargetFilename>
-        <Pattern1>{BuildSuffix}</Pattern1>
-        <Replacement1></Replacement1>
-    </CopyAndSubstituteText>
-    <CopyAndSubstituteText Include="Microsoft.Portable.FSharp.Targets">
-      <TargetFilename>Microsoft.Portable.FSharp.Targets</TargetFilename>
-      <Pattern1>{BuildSuffix}</Pattern1>
-      <Replacement1></Replacement1>
-    </CopyAndSubstituteText>
-    <CopyAndSubstituteText Include="Microsoft.FSharp.NetSdk.props">
-        <TargetFilename>Microsoft.FSharp.NetSdk.props</TargetFilename>
-        <Pattern1>{BuildSuffix}</Pattern1>
-        <Replacement1></Replacement1>
-    </CopyAndSubstituteText>
-    <CopyAndSubstituteText Include="Microsoft.FSharp.NetSdk.targets">
-        <TargetFilename>Microsoft.FSharp.NetSdk.targets</TargetFilename>
-        <Pattern1>{BuildSuffix}</Pattern1>
-        <Replacement1></Replacement1>
-    </CopyAndSubstituteText>
+    <None Include="Microsoft.FSharp.Targets" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="Microsoft.Portable.FSharp.Targets" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="Microsoft.FSharp.NetSdk.props" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="Microsoft.FSharp.NetSdk.targets" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="Microsoft.FSharp.Overrides.NetSdk.targets" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup Condition=" '$(TargetDotnetProfile)' != 'coreclr'">
@@ -71,6 +58,9 @@
     </Reference>
     <Reference Include="Microsoft.Build.Tasks.Core, Version=$(VisualStudioVersion).0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
       <HintPath>$(FSharpSourcesRoot)\..\packages\Microsoft.VisualFSharp.Msbuild.15.0.1.0.1\lib\net45\Microsoft.Build.Tasks.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="FSharp.Data.TypeProviders.dll, Version=4.3.0.0">
+      <HintPath>$(FSharpSourcesRoot)\..\packages\Microsoft.VisualFSharp.Type.Providers.Redist.$(MicrosoftVisualFSharpTypeProvidersRedistPackageVersion)\content\4.3.0.0\FSharp.Data.TypeProviders.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetDotnetProfile)' != 'coreclr' AND '$(MonoPackaging)' == 'true' ">

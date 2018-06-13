@@ -1,12 +1,64 @@
 @echo off
 
-:: Check prerequisites
-set _msbuildexe="%ProgramFiles(x86)%\MSBuild\14.0\Bin\MSBuild.exe"
-if not exist %_msbuildexe% set _msbuildexe="%ProgramFiles%\MSBuild\14.0\Bin\MSBuild.exe"
-if not exist %_msbuildexe% set _msbuildexe="%ProgramFiles(x86)%\MSBuild\12.0\Bin\MSBuild.exe"
-if not exist %_msbuildexe% set _msbuildexe="%ProgramFiles%\MSBuild\12.0\Bin\MSBuild.exe"
-if not exist %_msbuildexe% echo Error: Could not find MSBuild.exe.  Please see http://www.microsoft.com/en-us/download/details.aspx?id=40760. && goto :eof
+:: Try find installation path of VS2017 with vswhere.exe
+if "%VS150COMNTOOLS%" EQU "" if exist "%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\" (
+    for /f "usebackq delims=" %%i in (`"%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe" -latest -prerelease -property installationPath`) do set VS_INSTALLATION_PATH=%%i
+)
 
+if "%VS_INSTALLATION_PATH%" NEQ "" (
+    call "%VS_INSTALLATION_PATH%\Common7\Tools\VsDevCmd.bat"
+)
+
+:: If there's no installation of VS2017 or VS2017 Preview, use the build tools
+if "%VS150COMNTOOLS%" EQU "" if exist "%ProgramFiles(x86)%\Microsoft Visual Studio\2017\BuildTools\Common7\Tools\VsDevCmd.bat" (
+    call "%ProgramFiles(x86)%\Microsoft Visual Studio\2017\BuildTools\Common7\Tools\VsDevCmd.bat"
+)
+
+echo.
+echo Environment
+set
+echo.
+echo.
+:: Check prerequisites
+if not "%VisualStudioVersion%" == "" goto vsversionset
+if exist "%VS150COMNTOOLS%\..\ide\devenv.exe" set VisualStudioVersion=15.0
+if not "%VisualStudioVersion%" == "" goto vsversionset
+
+if not "%VisualStudioVersion%" == "" goto vsversionset
+if exist "%VS150COMNTOOLS%\..\..\ide\devenv.exe" set VisualStudioVersion=15.0
+if not "%VisualStudioVersion%" == "" goto vsversionset
+
+if exist "%VS140COMNTOOLS%\..\ide\devenv.exe" set VisualStudioVersion=14.0
+if exist "%ProgramFiles(x86)%\Microsoft Visual Studio 14.0\common7\ide\devenv.exe" set VisualStudioVersion=14.0
+if exist "%ProgramFiles%\Microsoft Visual Studio 14.0\common7\ide\devenv.exe" set VisualStudioVersion=14.0
+if not "%VisualStudioVersion%" == "" goto vsversionset
+
+if exist "%VS120COMNTOOLS%\..\ide\devenv.exe" set VisualStudioVersion=12.0
+if exist "%ProgramFiles(x86)%\Microsoft Visual Studio 12.0\common7\ide\devenv.exe" set VisualStudioVersion=12.0
+if exist "%ProgramFiles%\Microsoft Visual Studio 12.0\common7\ide\devenv.exe" set VisualStudioVersion=12.0
+
+:vsversionset
+if "%VisualStudioVersion%" == "" echo Error: Could not find an installation of Visual Studio && goto :failure
+
+:: Check prerequisites
+if exist "%VS150COMNTOOLS%\..\..\MSBuild\15.0\Bin\MSBuild.exe" (
+    set _msbuildexe="%VS150COMNTOOLS%\..\..\MSBuild\15.0\Bin\MSBuild.exe"
+    goto :havemsbuild
+)
+if exist "%ProgramFiles(x86)%\MSBuild\%VisualStudioVersion%\Bin\MSBuild.exe" (
+    set _msbuildexe="%ProgramFiles(x86)%\MSBuild\%VisualStudioVersion%\Bin\MSBuild.exe"
+    goto :havemsbuild
+)
+if exist "%ProgramFiles%\MSBuild\%VisualStudioVersion%\Bin\MSBuild.exe" (
+    set _msbuildexe="%ProgramFiles%\MSBuild\%VisualStudioVersion%\Bin\MSBuild.exe"
+    goto :havemsbuild
+)
+echo Error: Could not find MSBuild.exe. && goto :failure
+goto :eof
+
+:havemsbuild
+
+echo "_msbuildexe=%_msbuildexe%"
 set msbuildflags=/maxcpucount
 set _ngenexe="%SystemRoot%\Microsoft.NET\Framework\v4.0.30319\ngen.exe"
 if not exist %_ngenexe% echo Note: Could not find ngen.exe. 
@@ -42,7 +94,7 @@ if /i "%PROCESSOR_ARCHITECTURE%"=="AMD64" (
 
 %_ngenexe% install .\.nuget\NuGet.exe 
 
-.\.nuget\NuGet.exe restore packages.config -PackagesDirectory packages -ConfigFile .nuget\nuget.config
+.\.nuget\NuGet.exe restore packages.config -PackagesDirectory packages -ConfigFile NuGet.Config
 @if ERRORLEVEL 1 echo Error: Nuget restore failed  && goto :failure
 
 %_ngenexe% install packages\FSharp.Compiler.Tools.4.1.27\tools\fsc.exe
@@ -53,7 +105,7 @@ set TEST_NET40_COREUNIT_SUITE=1
 %_msbuildexe% src\fsharp-proto-build.proj /p:Configuration=Proto
 @if ERRORLEVEL 1 echo Error: "%_msbuildexe% src\fsharp-proto-build.proj" failed  && goto :failure
 
-%_ngenexe% install Proto\net40\bin\fsc-proto.exe
+%_ngenexe% install Proto\net40\bin\fsc.exe
 
 %_msbuildexe% %msbuildflags% build-everything.proj /p:TargetDotnetProfile=net40 /p:Configuration=Release
 @if ERRORLEVEL 1 echo Error: "%_msbuildexe% %msbuildflags% src\fsharp-library-build.proj /p:TargetDotnetProfile=net40 /p:Configuration=Release" failed  && goto :failure

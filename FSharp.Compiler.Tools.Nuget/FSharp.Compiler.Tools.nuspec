@@ -25,10 +25,8 @@
   </metadata>
   <files>
     <!-- use signed FSharp.Core in package -->
-    <file src="..\lib\bootstrap\signed\.NETFramework\v4.0\4.4.1.0\FSharp.Core.dll" target="tools\FSharp.Core.dll" />
-    <file src="..\lib\bootstrap\signed\.NETFramework\v4.0\4.4.1.0\FSharp.Core.optdata" target="tools\FSharp.Core.optdata" />
-    <file src="..\lib\bootstrap\signed\.NETFramework\v4.0\4.4.1.0\FSharp.Core.sigdata" target="tools\FSharp.Core.sigdata" />
-    <file src="..\lib\bootstrap\signed\.NETFramework\v4.0\4.4.1.0\FSharp.Core.xml" target="tools\FSharp.Core.xml" />
+    <file src="..\lib\bootstrap\signed\.NETFramework\v4.0\4.4.3.0\FSharp.Core.dll" target="tools\FSharp.Core.dll" />
+    <file src="..\lib\bootstrap\signed\.NETFramework\v4.0\4.4.3.0\FSharp.Core.xml" target="tools\FSharp.Core.xml" />
     <file src="..\Release\net40\bin\fsc.exe" target="tools\fsc.exe" />
     <file src="..\Release\net40\bin\fsc.exe.config" target="tools\fsc.exe.config" />
     <file src="..\Release\net40\bin\fsc.xml" target="tools\fsc.xml" />

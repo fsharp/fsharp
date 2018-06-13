@@ -173,9 +173,7 @@ This builds the proto compiler, then the library, then the final compiler.
 The FSharp.Core.dll produced is only delay-signed (Mono does not require strong names).
 If a strong-name signed FSharp.Core.dll is needed then use the one in
 
-    lib\bootstrap\signed\.NETFramework\v4.0\4.3.0.0\FSharp.Core.dll
-    lib\bootstrap\signed\.NETFramework\v4.0\4.3.1.0\FSharp.Core.dll
-
+    lib\bootstrap\signed\.NETFramework\v4.0\...
 
 ### Building on Linux  (Wheezy build)
 
