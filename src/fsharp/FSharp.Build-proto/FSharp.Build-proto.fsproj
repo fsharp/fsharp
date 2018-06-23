@@ -39,19 +39,24 @@
     <Compile Include="..\FSharp.Build\WriteCodeFragment.fs">
       <Link>WriteCodeFragment.fs</Link>
     </Compile>
-    <None Include="..\FSharp.Build\Microsoft.FSharp.Targets" CopyToOutputDirectory="PreserveNewest">
+    <None Include="..\FSharp.Build\Microsoft.FSharp.Targets">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>Microsoft.FSharp.Targets</Link>
     </None>
-    <None Include="..\FSharp.Build\Microsoft.Portable.FSharp.Targets" CopyToOutputDirectory="PreserveNewest">
+    <None Include="..\FSharp.Build\Microsoft.Portable.FSharp.Targets">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>Microsoft.Portable.FSharp.Targets</Link>
     </None>
-    <None Include="..\FSharp.Build\Microsoft.FSharp.NetSdk.props" CopyToOutputDirectory="PreserveNewest">
+    <None Include="..\FSharp.Build\Microsoft.FSharp.NetSdk.props">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>Microsoft.FSharp.NetSdk.props</Link>
     </None>
-    <None Include="..\FSharp.Build\Microsoft.FSharp.NetSdk.targets" CopyToOutputDirectory="PreserveNewest">
+    <None Include="..\FSharp.Build\Microsoft.FSharp.NetSdk.targets">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>Microsoft.FSharp.NetSdk.targets</Link>
     </None>
-    <None Include="..\FSharp.Build\Microsoft.FSharp.Overrides.NetSdk.targets" CopyToOutputDirectory="PreserveNewest">
+    <None Include="..\FSharp.Build\Microsoft.FSharp.Overrides.NetSdk.targets">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>Microsoft.FSharp.Overrides.NetSdk.targets</Link>
     </None>
   </ItemGroup>
