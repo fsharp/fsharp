@@ -57,6 +57,8 @@
     }
   ],
   "exclude": [
+    "e_sqlite3.dll",
+    "FSharp.Core.4.5.2.nupkg",
     "FSharp.Data.TypeProviders.dll",
     "Microsoft.Build.Conversion.Core.dll",
     "Microsoft.Build.dll",
@@ -67,7 +69,6 @@
     "Newtonsoft.Json.dll",
     "System.Collections.Immutable.dll",
     "System.Reflection.Metadata.dll",
-    "System.ValueTuple.4.3.1.nupkg",
     "System.ValueTuple.4.4.0.nupkg",
     "System.ValueTuple.dll"
   ]
