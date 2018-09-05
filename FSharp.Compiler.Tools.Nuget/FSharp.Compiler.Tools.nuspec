@@ -3,7 +3,7 @@
   <metadata>
     <id>FSharp.Compiler.Tools</id>
     <version>0.0.0</version>
-    <title>FSharp.Compiler.Tools for F# 4.1</title>
+    <title>FSharp.Compiler.Tools for F# 4.5</title>
     <authors>F# Software Foundation</authors>
     <owners>F# Software Foundation</owners>
     <licenseUrl>https://github.com/fsharp/fsharp/blob/master/LICENSE</licenseUrl>
@@ -11,7 +11,7 @@
     <iconUrl>http://fsharp.org/img/logo.png</iconUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>
-      FSharp.Compiler.Tools for F# 4.1
+      FSharp.Compiler.Tools for F# 4.5
 
       FSharp.Compiler.Tools built by F# Software Foundation
       This package includes the F# compiler (fsc.exe), F# Interactive (fsi.exe, fsiAnyCpu.exe)
@@ -20,7 +20,7 @@
       NOTE: the compiler executes with .NET Framework and/or Mono.  It does not execute with .NET Core.
       For a compiler that executes with .NET Core use the .NET Core SDK, which includes an F# compiler.
     </description>
-    <summary>FSharp.Compiler.Tools for F# 4.1 - This package includes the F# compiler and F# Interactive.</summary>
+    <summary>FSharp.Compiler.Tools for F# 4.5 - This package includes the F# compiler and F# Interactive.</summary>
     <tags>F#, FSharp, FSharp.Core, fsi, fsc</tags>
   </metadata>
   <files>
