@@ -31,7 +31,7 @@ DISTVERSION = 201011
 ifeq (x-$(TargetDotnetProfile)-,x-net40-)
 
 ifeq (x-$(FSharpCoreBackVersion)-,x--)
-VERSION = 4.4.3.0
+VERSION = 4.4.5.0
 PKGINSTALL = yes
 REFASSEMPATH = .NETFramework/v4.0
 outsuffix = $(TargetDotnetProfile)
@@ -59,6 +59,12 @@ ifeq (x-$(FSharpCoreBackVersion)-,x-4.1-)
 VERSION = 4.4.1.0
 REFASSEMPATH = .NETFramework/v4.0
 outsuffix = fsharp41/$(TargetDotnetProfile)
+endif
+
+ifeq (x-$(FSharpCoreBackVersion)-,x-4.3-)
+VERSION = 4.4.3.0
+REFASSEMPATH = .NETFramework/v4.0
+outsuffix = fsharp43/$(TargetDotnetProfile)
 endif
 
 endif
