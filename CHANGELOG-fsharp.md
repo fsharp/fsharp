@@ -1,3 +1,6 @@
+10.2.1
+ * Bump versions to match [versioning spec](https://github.com/fsharp/fslang-design/blob/master/tooling/FST-1004-versioning-plan.md)
+
 10.1.2
  * Bump versions and integrate visualfsharp master
 
