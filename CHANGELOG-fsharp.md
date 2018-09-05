@@ -1,3 +1,6 @@
+10.1.2
+ * Bump versions and integrate visualfsharp master
+
 10.1.1
  * Bump versions
 
