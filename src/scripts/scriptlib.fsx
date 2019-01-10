@@ -93,7 +93,7 @@ module Scripting =
 
     module Process =
 
-        let processExePath baseDir exe =
+        let processExePath baseDir (exe: string) =
             if Path.IsPathRooted(exe) then exe
             else 
                 match Path.GetDirectoryName(exe) with
