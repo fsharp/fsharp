@@ -9,6 +9,7 @@ os:
 mono:
   - nightly
   - latest
+  - 5.18.0
   - 5.10.0
   - 5.8.0
 
@@ -16,6 +17,5 @@ install:
 
 script: ./mono/build-mono.sh && ./mono/test-mono.sh
 
-#  allow_failures:
-#    - os: osx
-#      mono: latest
+allow_failures:
+  - mono: nightly
