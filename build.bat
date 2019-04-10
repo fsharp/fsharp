@@ -97,7 +97,7 @@ if /i "%PROCESSOR_ARCHITECTURE%"=="AMD64" (
 .\.nuget\NuGet.exe restore packages.config -PackagesDirectory packages -ConfigFile NuGet.Config
 @if ERRORLEVEL 1 echo Error: Nuget restore failed  && goto :failure
 
-%_ngenexe% install packages\FSharp.Compiler.Tools.4.1.27\tools\fsc.exe
+%_ngenexe% install packages\FSharp.Compiler.Tools.10.2.1\tools\fsc.exe
 
 set BUILD_NET40=1
 set TEST_NET40_COREUNIT_SUITE=1

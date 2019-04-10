@@ -4,7 +4,7 @@ include $(topsrcdir)mono/config.make
 
 restore:
 	MONO_ENV_OPTIONS=$(monoopts) mono .nuget/NuGet.exe restore packages.config -PackagesDirectory packages -ConfigFile ./NuGet.Config
-	chmod u+x packages/FSharp.Compiler.Tools.4.1.27/tools/fsi.exe 
+	chmod u+x packages/FSharp.Compiler.Tools.10.2.1/tools/fsi.exe 
 	chmod u+x packages/FsLexYacc.7.0.6/build/fslex.exe
 	chmod u+x packages/FsLexYacc.7.0.6/build/fsyacc.exe
 
