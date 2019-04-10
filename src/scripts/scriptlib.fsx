@@ -68,7 +68,7 @@ module Scripting =
     let copyFile (source: string) dir =
         let dest = 
             if not (Directory.Exists dir) then Directory.CreateDirectory dir |>ignore
-            let result = Path.Combine(dir, Path.GetFileName source)
+            let result = Path.Combine(dir, getFilename source)
             result
         //printfn "Copy %s --> %s" source dest
         File.Copy(source, dest, true)
@@ -93,10 +93,10 @@ module Scripting =
 
     module Process =
 
-        let processExePath baseDir exe =
+        let processExePath baseDir (exe: string) =
             if Path.IsPathRooted(exe) then exe
             else 
-                match Path.GetDirectoryName(exe) with
+                match getDirectoryName exe with
                 | "" -> exe
                 | _ -> Path.Combine(baseDir,exe) |> Path.GetFullPath
 
@@ -159,9 +159,9 @@ module Scripting =
 
             match p.ExitCode with
             | 0 -> Success
-            | err -> 
+            | errCode -> 
                 let msg = sprintf "Error running command '%s' with args '%s' in directory '%s'.\n---- stdout below --- \n%s\n---- stderr below --- \n%s " exePath arguments workDir (out.ToString()) (err.ToString())
-                ErrorLevel (msg, err)
+                ErrorLevel (msg, errCode)
 
     type OutPipe (writer: TextWriter) =
         member x.Post (msg:string) = lock writer (fun () -> writer.WriteLine(msg))

@@ -189,7 +189,7 @@ type range(code:int64) =
     override r.Equals(obj) = match obj with :? range as r2 -> code = r2.Code | _ -> false
     override r.GetHashCode() = hash code
 
-let mkRange f b e =
+let mkRange (f: string) b e =
     // remove relative parts from full path
     let normalizedFilePath = if Path.IsPathRooted f then try Path.GetFullPath f with _ -> f else f
     range (fileIndexOfFile normalizedFilePath, b, e)

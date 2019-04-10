@@ -535,7 +535,7 @@ module String =
             Some()
         else None
 
-    let (|Contains|_|) pattern value =
+    let (|Contains|_|) (pattern:string) (value:string) =
         if String.IsNullOrWhiteSpace value then
             None
         elif value.Contains pattern then
