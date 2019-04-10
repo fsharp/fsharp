@@ -36,7 +36,7 @@
 4.1.28
   * Remove FSharp.Core from GAC
 
-4.1.27
+10.2.1
   * Integrate visualfsharp master
 
 4.1.26

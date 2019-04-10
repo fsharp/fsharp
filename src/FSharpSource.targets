@@ -107,7 +107,7 @@
         <FSharpNetCoreLkgPath>$(MSBuildThisFileDirectory)..\Tools\dotnet20\sdk\$(DotnetSdkVersion)\FSharp</FSharpNetCoreLkgPath>
 
         <!-- When using coreclr to bootstrap to proto. We acquire the FSharp.Core LKG, targets LKG, the FSharp.Build LKG from the .NET Framework compiler tools LKG package. -->
-        <FSharpTargetsPath>..\packages\FSharp.Compiler.Tools.4.1.27\tools\Microsoft.FSharp.Targets</FSharpTargetsPath>
+        <FSharpTargetsPath>..\packages\FSharp.Compiler.Tools.10.2.1\tools\Microsoft.FSharp.Targets</FSharpTargetsPath>
 
         <!-- When using coreclr to bootstrap, the compiler binary comes from the coreclr LKG, invoked using corehost.exe -->
         <FscToolPath>$(FSharpSourcesRoot)\..\Tools\dotnet20</FscToolPath>
@@ -120,7 +120,7 @@
        <!-- Use .NET Framework to bootstrap to proto -->
       <PropertyGroup >
         <OutputPath>$(FSharpSourcesRoot)\..\$(Configuration)\$(ProtoFlavour)\bin</OutputPath>
-        <FSharpTargetsPath>..\packages\FSharp.Compiler.Tools.4.1.27\tools\Microsoft.FSharp.Targets</FSharpTargetsPath>
+        <FSharpTargetsPath>..\packages\FSharp.Compiler.Tools.10.2.1\tools\Microsoft.FSharp.Targets</FSharpTargetsPath>
       </PropertyGroup>
     </When>
     <When Condition="'$(BuildWith)' == '' AND '$(TargetDotnetProfile)'=='coreclr'">
