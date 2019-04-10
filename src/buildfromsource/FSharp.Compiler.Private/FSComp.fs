@@ -4338,14 +4338,10 @@ type internal SR private() =
     static member tcIsReadOnlyNotStruct() = (3231, GetStringFunc("tcIsReadOnlyNotStruct",",,,") )
     /// Struct members cannot return the address of fields of the struct by reference
     /// (Originally from ..\FSComp.txt:1437)
-<<<<<<< HEAD
-    static member chkStructsMayNotReturnAddressesOfContents() = (3232, GetStringFunc("chkStructsMayNotReturnAddressesOfContents",",,,") )
-=======
     static member tcIsReadOnlyNotStruct() = (3232, GetStringFunc("tcIsReadOnlyNotStruct",",,,") )
     /// Struct members cannot return the address of fields of the struct by reference
     /// (Originally from ..\FSComp.txt:1438)
     static member chkStructsMayNotReturnAddressesOfContents() = (3234, GetStringFunc("chkStructsMayNotReturnAddressesOfContents",",,,") )
->>>>>>> 15d9391
     /// The function or method call cannot be used at this point, because one argument that is a byref of a non-stack-local Span or IsByRefLike type is used with another argument that is a stack-local Span or IsByRefLike type. This is to ensure the address of the local value does not escape its scope.
     /// (Originally from ..\FSComp.txt:1438)
     static member chkNoByrefLikeFunctionCall() = (3233, GetStringFunc("chkNoByrefLikeFunctionCall",",,,") )
