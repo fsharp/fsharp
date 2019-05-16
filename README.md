@@ -2,7 +2,7 @@
 
 Please go to https://github.com/dotnet/fsharp/. All contributions to the F# compiler/library/tools go there.
 
-This repository is the old [F# Software Foundation](http://fsharp.org) repository for F#,. The process for contributing to the F# Compiler, Core Library and Tools is described [here](https://fsharp.github.io/2014/06/18/fsharp-contributions.html).  
+This repository is the old [F# Software Foundation](http://fsharp.org) repository for alternative packagings of F#. The process for contributing to the F# Compiler, Core Library and Tools is described [here](https://fsharp.github.io/2014/06/18/fsharp-contributions.html).  
 
 See notes below for most of these. Because the core logic of F# is made available as [a library component](https://github.com/fsharp/FSharp.Compiler.Service), an unlimited number of other packagings of F# are possible. Please contribute additional notes to this `README.md` if you are packaging F# for other settings.
 
