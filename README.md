@@ -1,12 +1,12 @@
 ## The F# repository has moved
 
-Please go to https://github.com/dotnet/fsharp/. All contributions to the F# compiler/library/tools now go there.
+**Please go to https://github.com/dotnet/fsharp/. All contributions to the F# compiler/library/tools now go there.**
 
-This repository is the old [F# Software Foundation](http://fsharp.org) repository for alternative packagings of F#.  See notes below for historical notes on these. Because the core logic of F# is made available as [a library component](https://github.com/fsharp/FSharp.Compiler.Service), an unlimited number of other packagings of F# are possible. 
+This repository is the old repository for alternative packagings of F#.  See notes below for historical notes on these. The core logic of F# is made available as a library component called FSharp.Compiler.Service, and F# is open soruce, so an unlimited number of other packagings of F# are possible. 
 
-## Details on the various Alternative Packagings
+## Archival: Details on the various Alternative Packagings
 
-### The ``FSharp.Compiler.Tools`` NuGet package
+### Archival: The ``FSharp.Compiler.Tools`` NuGet package
 
 This repo is currently used to make [the FSharp.Compiler.Tools NuGet package](https://www.nuget.org/packages/FSharp.Compiler.Tools). This package includes the following for both .NET Core and .NET Framework/Mono:
 * the F# compiler `fsc.exe` 
@@ -22,7 +22,7 @@ The ``FSharp.Compiler.Tools`` NuGet package can be used if you wish to use the l
 Adding it via NuGet to a project will override the in-box compiler with the compiler from the NuGet package.
 Note: you will need to manually modify your project file once (see https://github.com/fsharp/fsharp/issues/676). 
 
-### The ``fsharp`` Debian Linux Package
+### Archival: The ``fsharp`` Debian Linux Package
 
 Usage: See http://fsharp.org/use/linux
 
@@ -46,7 +46,7 @@ Jo Shields (@directhex) has done much of this work and says:
 
 > Alexander Köplinger has admin access to Jenkins, SSH access to the Jenkins and repository servers, and has taken care of things for me in my absence in the past (but isn't a Debian packaging expert, so would be trusting that metadata changes are solid)
 
-### F# packaging in Mono + macOS 
+### Archival: F# packaging in Mono + macOS 
 
 F# is packaged as part of Mono on macOS. Jason Imison says:
 
@@ -61,25 +61,17 @@ F# is packaged as part of Mono on macOS. Jason Imison says:
 > For future reference, [dependencies and code for the F# editing and F# Interactive support in Visual Studio for Mac/Xamarin Studio is here](https://github.com/mono/monodevelop/blob/edcdc0d8daa4c25bb8ce36e2dd490c8a50439537/main/external/fsharpbinding/paket.dependencies)
 
 
-**Releasing FSharp.Compiler.Tools nuget**
+## Archival: History
 
-After the AppVeyor CI for the tag is green the Artifacts folder of the CI will contain the FSharp.Compiler.Tools nuget package release.  You can download and push this package to nuget manually. 
-
-    set APIKEY=...
-    .nuget\nuget.exe push Downloads\FSharp.Compiler.Tools...nupkg %APIKEY% -Source https://nuget.org 
-
-We only generally push packages coming from AppVeyor CI and not locally built packages.
-
-
-## History
+See https://fsharp.org/history
 
 F# compiler sources as initially dropped are available from [fsharppowerpack.codeplex.com](http://fsharppowerpack.codeplex.com).
 
 On 4 April 2014, Microsoft Open Tech published the F# compiler sources  at http://visualfsharp.codeplex.com and began
 accepting contributions to the F# compiler/library and tools.  
 
-In 2016 the Microsoft http://visualfsharp.codeplex.com repo moved to GitHub at https://github.com/Microsoft/visualfsharp.
+In 2016 the http://visualfsharp.codeplex.com repo moved to GitHub at https://github.com/Microsoft/visualfsharp.
 
-In 2019 Microsoft and the F# community unified repositories at https://github.com/dotnet/fsharp.
+In 2019 the .NET Foundation and the F# community unified repositories at https://github.com/dotnet/fsharp.
 
 
