@@ -2,7 +2,7 @@
 
 **Please go to https://github.com/dotnet/fsharp/. All contributions to the F# compiler/library/tools now go there.**
 
-This repository is the old repository for alternative packagings of F#.  See notes below for historical notes on these. The core logic of F# is made available as a library component called FSharp.Compiler.Service, and F# is open soruce, so an unlimited number of other packagings of F# are possible. 
+This repository is the old repository for alternative packagings of F#.  See notes below for historical notes on these. The core logic of F# is made available as a library component called FSharp.Compiler.Service, and F# is open source, so an unlimited number of other packagings of F# are possible. 
 
 ## Archival: Details on the various Alternative Packagings
 
