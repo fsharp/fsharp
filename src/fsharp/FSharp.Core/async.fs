@@ -1379,6 +1379,9 @@ namespace Microsoft.FSharp.Control
                     fake()
                 | _ -> 
                     ctxt.econt edi)
+
+        static member Sleep(dueTime: TimeSpan) : Async<unit> =
+            Async.Sleep (int dueTime.TotalMilliseconds)
         
         /// Wait for a wait handle. Both timeout and cancellation are supported
         static member AwaitWaitHandle(waitHandle: WaitHandle, ?millisecondsTimeout:int) =
