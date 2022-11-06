@@ -667,7 +667,7 @@ and
     /// F# syntax: &expr, &&expr
     | AddressOf of  isByref:bool * SynExpr * range * range:range
 
-    /// F# syntax: ((typar1 or ... or typarN): (member-dig) expr)
+    /// F# syntax: ((typar1 or ... or typarN): (member-sig) expr)
     | TraitCall of SynTypar list * SynMemberSig * SynExpr * range:range
 
     /// F# syntax: ... in ...
